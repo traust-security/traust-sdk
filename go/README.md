@@ -153,6 +153,26 @@ client := ledger.NewClient(provider)
 
 ## Storage SDK
 
+Storage compatibility constants are generated from the pinned contracts
+`storage/v1/metadata.json`, not maintained separately in Go. The revision-one reset
+uses baseline `traust-storage-20260922`; initialization checks format, revision and
+baseline together. This deliberately rejects earlier stores even if they also
+reported revision 1. Missing/empty metadata and existing unstamped storage objects
+are not adopted or repaired automatically. SQLite temporary objects cannot shadow
+reserved storage names.
+
+This requires an explicit clean bootstrap/re-import or separately reviewed migration.
+Stop and fence older clients before recreating storage; they do not understand the
+new baseline. Never relabel an old database by editing its revision row. Package
+versions continue normally and this change does not declare a GA release. The
+baseline is a compatibility identifier, not cryptographic schema attestation.
+
+For bidirectional Python/Go compatibility tests, set `TRAUST_CONTRACTS_PYTHON` to
+an interpreter with the matching contracts installed and run the storage tests.
+SQLite uses temporary files; PostgreSQL uses the same dedicated local test database
+and destructive schema-isolation fixture documented below. Never point it at a
+shared/live database.
+
 Storage retains exact artifact evidence and its canonical relational projection in
 one SQLite or PostgreSQL transaction. PostgreSQL relations use the fixed
 `traust_storage` schema so application tables and `search_path` cannot redirect

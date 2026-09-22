@@ -31,6 +31,9 @@ func (c *Client) GetEvidence(ctx context.Context, digest string) ([]byte, error)
 		return nil, wrap(OperationRead, PhaseConnect, err)
 	}
 	defer func() { _ = conn.Close() }()
+	if err := c.store.prepareConnection(ctx, conn); err != nil {
+		return nil, err
+	}
 	return c.store.readEvidence(ctx, conn, digest)
 }
 
@@ -46,6 +49,9 @@ func (c *Client) GetBinding(ctx context.Context, bindingID string) (BindingRecor
 		return BindingRecord{}, wrap(OperationRead, PhaseConnect, err)
 	}
 	defer func() { _ = conn.Close() }()
+	if err := c.store.prepareConnection(ctx, conn); err != nil {
+		return BindingRecord{}, err
+	}
 	record, found, err := c.store.getBinding(ctx, conn, bindingID)
 	if err != nil {
 		return BindingRecord{}, err
@@ -75,6 +81,9 @@ func getTypedArtifact[T any](
 		return zero, wrap(OperationRead, PhaseConnect, err)
 	}
 	defer func() { _ = conn.Close() }()
+	if err := store.prepareConnection(ctx, conn); err != nil {
+		return zero, err
+	}
 
 	record, found, err := store.getBinding(ctx, conn, bindingID)
 	if err != nil {
