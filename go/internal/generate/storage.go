@@ -98,6 +98,10 @@ func GenerateStorage(storageSourceDir, schemasDir, storageOutDir, fixtureDir, sa
 }
 
 func generateSQL(source, ddlOutput, queriesOutput, ref string) error {
+	metadata, err := readStorageMetadata(source)
+	if err != nil {
+		return err
+	}
 	tables := map[string][]sqlColumn{}
 	for _, dialect := range []string{"postgres", "sqlite"} {
 		entries, err := os.ReadDir(filepath.Join(source, dialect, "schema"))
@@ -239,6 +243,24 @@ func generateSQL(source, ddlOutput, queriesOutput, ref string) error {
 	}
 	var ddl strings.Builder
 	fmt.Fprintf(&ddl, "// Code generated from traust-contracts %s SQL DDL. DO NOT EDIT.\n\npackage storage\n\n", ref)
+	fmt.Fprintf(&ddl, "const storageFormatVersion = %q\nconst contractRevision = %d\nconst storageBaselineID = %q\n\n", metadata.ContractVersion, metadata.Revision, metadata.BaselineID)
+	objects := map[string]bool{}
+	declaration := regexp.MustCompile(`(?i)CREATE\s+(?:UNIQUE\s+)?(?:TABLE|VIEW|INDEX)\s+(?:IF\s+NOT\s+EXISTS\s+)?([a-z_][a-z0-9_]*)`)
+	for _, statement := range boot["sqlite"] {
+		for _, match := range declaration.FindAllStringSubmatch(statement, -1) {
+			objects[match[1]] = true
+		}
+	}
+	names := make([]string, 0, len(objects))
+	for name := range objects {
+		names = append(names, name)
+	}
+	sort.Strings(names)
+	ddl.WriteString("var storageObjectNames = map[string]bool{\n")
+	for _, name := range names {
+		fmt.Fprintf(&ddl, "\t%q: true,\n", name)
+	}
+	ddl.WriteString("}\n\n")
 	for _, d := range []string{"postgres", "sqlite"} {
 		fmt.Fprintf(&ddl, "var bootstrap%s = []string{\n", storagePascal(d))
 		for _, s := range boot[d] {

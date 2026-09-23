@@ -1,4 +1,4 @@
-// Code generated from traust-contracts bfd089d4336ae2588b486d494a84a9f68419d5ab SQL queries. DO NOT EDIT.
+// Code generated from traust-contracts 7cb54f28297860c1c1bd5d498fbeb0a5dcd5fdc0 SQL queries. DO NOT EDIT.
 
 package storage
 
@@ -1297,7 +1297,7 @@ func (q queries) threatExposureList(ctx context.Context, conn *sql.Conn, p threa
 }
 
 const traustStorageMetaExistsPostgres = "SELECT to_regclass('traust_storage.traust_storage_meta');"
-const traustStorageMetaExistsSQLite = "SELECT name\nFROM sqlite_master\nWHERE type = 'table' AND name = 'traust_storage_meta';"
+const traustStorageMetaExistsSQLite = "SELECT name\nFROM main.sqlite_schema\nWHERE type = 'table' AND lower(name) = 'traust_storage_meta';"
 
 type traustStorageMetaExistsParams struct {
 }
@@ -1310,8 +1310,8 @@ func (q queries) traustStorageMetaExists(ctx context.Context, conn *sql.Conn, p 
 	return conn.QueryRowContext(ctx, statement)
 }
 
-const traustStorageMetaGetPostgres = "SELECT contract_version, revision\nFROM traust_storage.traust_storage_meta\nWHERE id = 1;"
-const traustStorageMetaGetSQLite = "SELECT contract_version, revision\nFROM traust_storage_meta\nWHERE id = 1;"
+const traustStorageMetaGetPostgres = "SELECT contract_version, revision, baseline_id\nFROM traust_storage.traust_storage_meta\nWHERE id = 1;"
+const traustStorageMetaGetSQLite = "SELECT contract_version, revision, baseline_id\nFROM traust_storage_meta\nWHERE id = 1;"
 
 type traustStorageMetaGetParams struct {
 }
@@ -1339,12 +1339,13 @@ func (q queries) traustStorageMetaLock(ctx context.Context, conn *sql.Conn, p tr
 	return err
 }
 
-const traustStorageMetaUpsertPostgres = "INSERT INTO traust_storage.traust_storage_meta (\n    id,\n    contract_version,\n    revision,\n    applied_at\n)\nVALUES (\n    1,\n    $1,\n    $2,\n    $3\n)\nON CONFLICT (id) DO UPDATE SET\n    contract_version = EXCLUDED.contract_version,\n    revision = EXCLUDED.revision,\n    applied_at = EXCLUDED.applied_at;"
-const traustStorageMetaUpsertSQLite = "INSERT INTO traust_storage_meta (\n    id,\n    contract_version,\n    revision,\n    applied_at\n)\nVALUES (\n    1,\n    ?,\n    ?,\n    ?\n)\nON CONFLICT (id) DO UPDATE SET\n    contract_version = EXCLUDED.contract_version,\n    revision = EXCLUDED.revision,\n    applied_at = EXCLUDED.applied_at;"
+const traustStorageMetaUpsertPostgres = "INSERT INTO traust_storage.traust_storage_meta (\n    id,\n    contract_version,\n    revision,\n    baseline_id,\n    applied_at\n)\nVALUES (\n    1,\n    $1,\n    $2,\n    $3,\n    $4\n)\nON CONFLICT (id) DO NOTHING;"
+const traustStorageMetaUpsertSQLite = "INSERT INTO traust_storage_meta (\n    id,\n    contract_version,\n    revision,\n    baseline_id,\n    applied_at\n)\nVALUES (\n    1,\n    ?,\n    ?,\n    ?,\n    ?\n)\nON CONFLICT (id) DO NOTHING;"
 
 type traustStorageMetaUpsertParams struct {
 	contractVersion string
 	revision        int64
+	baselineId      string
 	appliedAt       string
 }
 
@@ -1353,7 +1354,7 @@ func (q queries) traustStorageMetaUpsert(ctx context.Context, conn *sql.Conn, p 
 	if q.dialect == dialectPostgres {
 		statement = traustStorageMetaUpsertPostgres
 	}
-	_, err := conn.ExecContext(ctx, statement, p.contractVersion, p.revision, p.appliedAt)
+	_, err := conn.ExecContext(ctx, statement, p.contractVersion, p.revision, p.baselineId, p.appliedAt)
 	return err
 }
 

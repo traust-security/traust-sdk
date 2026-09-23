@@ -7,8 +7,6 @@ import (
 )
 
 const (
-	storageFormatVersion   = "v1"
-	contractRevision       = 1
 	minimumPostgresVersion = 140000
 )
 
@@ -93,17 +91,23 @@ func (s *sqlStore) init(ctx context.Context) (err error) {
 		}
 	}
 
+	if err = s.requireNoStorageObjects(ctx, conn, true); err != nil {
+		return err
+	}
 	exists, err := s.storageMetadataExists(ctx, conn)
 	if err != nil {
 		return err
 	}
 	if exists {
 		err = s.requireStorageRevision(ctx, conn)
-		if err != nil && !errors.Is(err, sql.ErrNoRows) {
+		if err != nil {
 			return err
 		}
 	}
-	if !exists || errors.Is(err, sql.ErrNoRows) {
+	if !exists {
+		if err = s.requireNoStorageObjects(ctx, conn, false); err != nil {
+			return err
+		}
 		if err = s.bootstrap(ctx, conn); err != nil {
 			return err
 		}
@@ -129,12 +133,12 @@ func (s *sqlStore) storageMetadataExists(ctx context.Context, conn *sql.Conn) (b
 }
 
 func (s *sqlStore) requireStorageRevision(ctx context.Context, conn *sql.Conn) error {
-	var version string
+	var version, baseline string
 	var revision int
-	if err := s.queries.traustStorageMetaGet(ctx, conn, traustStorageMetaGetParams{}).Scan(&version, &revision); err != nil {
+	if err := s.queries.traustStorageMetaGet(ctx, conn, traustStorageMetaGetParams{}).Scan(&version, &revision, &baseline); err != nil {
 		return wrap(OperationInit, PhaseRevision, err)
 	}
-	if version != storageFormatVersion || revision != contractRevision {
+	if version != storageFormatVersion || revision != contractRevision || baseline != storageBaselineID {
 		return wrap(OperationInit, PhaseRevision, ErrIncompatibleRevision)
 	}
 	return nil
@@ -149,6 +153,7 @@ func (s *sqlStore) bootstrap(ctx context.Context, conn *sql.Conn) error {
 	if err := s.queries.traustStorageMetaUpsert(ctx, conn, traustStorageMetaUpsertParams{
 		contractVersion: storageFormatVersion,
 		revision:        contractRevision,
+		baselineId:      storageBaselineID,
 		appliedAt:       nowUTC(),
 	}); err != nil {
 		return wrap(OperationInit, PhaseRevision, err)

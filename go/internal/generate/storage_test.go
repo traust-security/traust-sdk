@@ -100,6 +100,11 @@ func TestGenerateSQLDeterministicAndDialectTripwire(t *testing.T) {
 		t.Fatal(err)
 	}
 	ddlText := string(ddlSource)
+	for _, expected := range []string{`storageFormatVersion = "v1"`, `contractRevision = 7`, `storageBaselineID = "test-baseline"`} {
+		if !strings.Contains(ddlText, expected) {
+			t.Errorf("generated metadata missing %s", expected)
+		}
+	}
 	namespaceAt := strings.Index(ddlText, "CREATE SCHEMA IF NOT EXISTS traust_storage")
 	tableAt := strings.Index(ddlText, "CREATE TABLE IF NOT EXISTS traust_storage.report")
 	if namespaceAt < 0 || tableAt < 0 || namespaceAt > tableAt {
@@ -226,6 +231,9 @@ func canonicalQueryMethods(t *testing.T, source string) []string {
 func writeMinimalCanonicalStorage(t *testing.T) string {
 	t.Helper()
 	root := t.TempDir()
+	if err := os.WriteFile(filepath.Join(root, "metadata.json"), []byte(`{"contract_version":"v1","revision":7,"baseline_id":"test-baseline"}`), 0o600); err != nil {
+		t.Fatal(err)
+	}
 	profiles := `{"version":1,"artifacts":{"triage":{"class":"run-bound","required":["subject_id","run_id"],"projection":"report"},"vuln-findings":{"class":"run-bound","required":["subject_id","run_id"],"projection":"report"},"report":{"class":"run-bound","required":["subject_id","run_id"],"projection":"report"}}}`
 	if err := os.WriteFile(filepath.Join(root, "profiles.json"), []byte(profiles), 0o600); err != nil {
 		t.Fatal(err)

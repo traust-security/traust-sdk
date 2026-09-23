@@ -2,6 +2,18 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.15.0]
+
+### Changed
+
+- Generate storage format, revision and baseline identity from pinned contracts
+  metadata. The new `traust-storage-20260922` baseline starts at revision 1.
+- Reject legacy, mismatched, empty or missing compatibility metadata on existing
+  stores; initialization never rewrites history or relabels an old schema.
+- Add bidirectional Python/Go initialization tests for SQLite and PostgreSQL.
+  A clean bootstrap/re-import or separately reviewed migration is required;
+  older clients must be fenced out before reset. No live database reset occurs.
+
 ## [0.14.1]
 
 ### Fixed

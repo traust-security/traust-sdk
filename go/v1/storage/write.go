@@ -173,6 +173,9 @@ func (s *sqlStore) prepareConnection(ctx context.Context, conn *sql.Conn) error 
 	if s.dialect != dialectSQLite {
 		return nil
 	}
+	if err := s.requireNoStorageObjects(ctx, conn, true); err != nil {
+		return err
+	}
 	_, err := conn.ExecContext(ctx, "PRAGMA foreign_keys = ON")
 	return err
 }
