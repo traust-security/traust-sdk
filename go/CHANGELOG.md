@@ -2,6 +2,18 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.15.0]
+
+### Added
+
+- `v1/routing/work`: typed, deterministic repository risk classification and rescan
+  change-table evaluation, preserving the existing Python thresholds, rule order,
+  lanes, and reasons. Invalid measurements return structured input errors.
+- Offline parity fixtures generated from pinned Python source, plus threshold,
+  precedence, exposure, optional-value, and input-validation coverage. This first
+  slice does not assemble complete worklists, evaluate budgets/models, or dispatch
+  jobs; existing skill execution remains unchanged.
+
 ## [0.14.1]
 
 ### Fixed
