@@ -4,6 +4,54 @@
 go get github.com/traust-security/traust-sdk/go@v0.9.0
 ```
 
+## Work routing: first decision-table slice
+
+`v1/routing/work` ports Traust's repository risk classification and ordered rescan
+decision table into Go. It accepts normalized measurements and returns the matched
+rule, lane, and explanation without I/O or dispatch:
+
+```go
+import "github.com/traust-security/traust-sdk/go/v1/routing/work"
+
+decision, err := work.EvaluateTable(work.TableInput{
+    RiskTier:     work.RiskP1,
+    Exposure:     work.ExposurePrivateInternal,
+    ChangedLines: 8000,
+})
+if err != nil {
+    return err
+}
+// decision.Rule == "rule-2", decision.Lane == work.LaneFullAudit
+```
+
+Use `ClassifyRisk(RiskInput)` to derive the risk band from the live critical/high
+finding count and archival/dormancy state. `P0MinLive` mirrors Python's
+`P0_MIN_LIVE` policy constant (5); it is not a runtime configuration setting.
+Invalid inputs return `*InputError`.
+Optional ratio, audit-age, and commits-ahead pointers distinguish unknown values
+from measured zero. Other zero/false measurements must represent collected data.
+
+**This is not the complete work router.** Handle bootstrap, events, unavailable or
+deferred comparisons, and missing baseline commits before calling `EvaluateTable`.
+IaC/threat-model companion work, fleet ordering, quarterly drain selection, and
+budget/model gates remain separate worklist stages. A selected lane is not dispatch
+authorization; `diff-scan-quarterly` belongs to a deferred pool. No configuration
+file, scheduler, or execution provider is introduced by this package. Its typed
+inputs are Go call parameters, not a new published JSON artifact contract.
+
+The fixed policy matches
+[Traust's Python implementation at the pinned revision](https://github.com/traust-security/traust/blob/0f95c95f48d36509b70234d18b500c0b738e23e8/src/traust/cli/build_rescan_worklist.py).
+Offline tests compare full decisions with outputs from that Python source. To
+regenerate those fixtures, supply the source file from that exact revision:
+
+```bash
+python3 v1/routing/work/testdata/generate.py /path/to/build_rescan_worklist.py
+go test ./v1/routing/work
+```
+
+The generator verifies the source SHA-256 and evaluates only the pure reference
+definitions. Normal Go tests need neither Python nor a Traust checkout.
+
 ## Skills SDK
 
 Import a skill, plug in your provider, call it — typed input in, typed result out:
