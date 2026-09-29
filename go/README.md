@@ -4,7 +4,47 @@
 go get github.com/traust-security/traust-sdk/go@v0.9.0
 ```
 
-## Work routing: first decision-table slice
+## Work routing: primary scan selection
+
+`work.DecidePrimary(PrimaryInput)` selects primary scan work for one repository
+from supplied inventory/audit membership, observation status, measurements, and
+already-correlated events. It applies event precedence, missing-SHA and
+quota-deferred guards, the existing change table, and never-audited bootstrap:
+
+```go
+import "github.com/traust-security/traust-sdk/go/v1/routing/work"
+
+result, err := work.DecidePrimary(work.PrimaryInput{
+    Inventory: &work.InventoryInput{Designation: work.DesignationExternal},
+    // Audit is nil: this repository is known to have no HEAD code-audit baseline.
+})
+if err != nil {
+    return err
+}
+// result.Decisions[0]: rule-1-bootstrap, full-audit, P2, private-external
+```
+
+The caller obtains facts from its authoritative views, deduplicates audit
+baselines, resolves event URL/key aliases and designation rules, and collects
+comparison measurements. Nil `Audit`/`Inventory` means known population absence;
+an unavailable view must be reported as a collection failure instead. An existing
+audit without a recoverable SHA remains an `Audit` with `StatusNoPinnedSHA`.
+
+`EventsHonored` records recognized, unconsumed events, including those without an
+audited target or without a queued lane. Unknown sources and consumed events are
+ignored. Indexes refer to the original input event slice; multiple queued events
+retain their order and suppress ordinary table selection. A nonqueued event does
+not suppress it. The SDK never consumes events or mutates input facts. Preserve
+the original event payloads for subsequent companion processing.
+
+`Audit.Change == nil` distinguishes an unavailable comparison from measured zero.
+Explicit observation statuses are required. A changed repository with `StatusOK`
+needs comparison measurements unless a queued event supersedes the table. Other
+failure statuses retain Python's age-rule fallback and remain visible on every
+decision; `StatusQuotaDeferred` and `StatusNoPinnedSHA` take their dedicated paths.
+Validation rejects invalid supplied measurements even if an event would match.
+
+### Lower-level change table
 
 `v1/routing/work` ports Traust's repository risk classification and ordered rescan
 decision table into Go. It accepts normalized measurements and returns the matched
@@ -31,11 +71,13 @@ Invalid inputs return `*InputError`.
 Optional ratio, audit-age, and commits-ahead pointers distinguish unknown values
 from measured zero. Other zero/false measurements must represent collected data.
 
-**This is not the complete work router.** Handle bootstrap, events, unavailable or
-deferred comparisons, and missing baseline commits before calling `EvaluateTable`.
-IaC/threat-model companion work, fleet ordering, quarterly drain selection, and
-budget/model gates remain separate worklist stages. A selected lane is not dispatch
-authorization; `diff-scan-quarterly` belongs to a deferred pool. No configuration
+**This is not the complete work router.** `DecidePrimary` handles the primary
+event/bootstrap/comparison flow; `EvaluateTable` evaluates only the ordinary table.
+IaC/threat-model companion work, tripwire/refusal pre-routing, fleet ordering,
+quarterly drain selection, and budget/model gates remain separate worklist stages.
+A selected lane is not dispatch authorization; `diff-scan-quarterly` belongs to a
+deferred pool and `release-passthrough` hands off to branch/container/RPM processing.
+Release-driven threat-model companion work remains a separate stage. No configuration
 file, scheduler, or execution provider is introduced by this package. Its typed
 inputs are Go call parameters, not a new published JSON artifact contract.
 
@@ -46,11 +88,16 @@ regenerate those fixtures, supply the source file from that exact revision:
 
 ```bash
 python3 v1/routing/work/testdata/generate.py /path/to/build_rescan_worklist.py
+python3 v1/routing/work/testdata/generate_primary.py /path/to/build_rescan_worklist.py
 go test ./v1/routing/work
 ```
 
-The generator verifies the source SHA-256 and evaluates only the pure reference
-definitions. Normal Go tests need neither Python nor a Traust checkout.
+Both generators verify the source SHA-256. The first evaluates pure reference
+definitions; the primary generator executes the original event/comparison loops
+and bootstrap function using temporary event/graph files. Companion stages are
+excluded, and canonical identities are supplied. Normal Go tests need neither
+Python nor a Traust checkout. The fixtures cover selection, not identity matching,
+measurement collection, fleet ordering, or the complete CLI pipeline.
 
 ## Skills SDK
 
