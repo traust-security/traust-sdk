@@ -2,9 +2,28 @@ package work
 
 import "math"
 
-// P0MinLive is the minimum live critical/high finding count for P0 risk.
-// It mirrors Traust's P0_MIN_LIVE policy constant.
-const P0MinLive = 5
+// Policy constants mirroring Traust's build_rescan_worklist at the pinned
+// commit. Named to match the Python originals for parity review.
+const (
+	// P0MinLive is the minimum live critical/high finding count for P0 risk.
+	P0MinLive = 5
+
+	// ChurnFullLines is rule-2's absolute line-change threshold (C).
+	ChurnFullLines int64 = 8000
+	// ChurnFullRatio is rule-2's coverage-change ratio threshold (R).
+	ChurnFullRatio = 0.10
+	// SensitiveMinLines is rule-3's minimum sensitive-file changed lines.
+	SensitiveMinLines int64 = 200
+
+	// TierCeilingP0 / P1 / P2 are rule-4's ordinary audit-age ceilings (days).
+	TierCeilingP0 int64 = 180
+	TierCeilingP1 int64 = 270
+	TierCeilingP2 int64 = 365
+
+	// TightenedCeilingP1 / P2 apply to external-exposure repos.
+	TightenedCeilingP1 int64 = 180
+	TightenedCeilingP2 int64 = 270
+)
 
 // ClassifyRisk reproduces Traust's risk_tier rule. Live critical/high findings
 // take precedence over archival/dormancy: P0MinLive or more means P0; a positive
@@ -36,10 +55,10 @@ func EvaluateTable(in TableInput) (Decision, error) {
 	}
 
 	switch {
-	case in.ChangedLines >= 8000 || (in.CoverageChangeRatio != nil && *in.CoverageChangeRatio >= 0.10):
+	case in.ChangedLines >= ChurnFullLines || (in.CoverageChangeRatio != nil && *in.CoverageChangeRatio >= ChurnFullRatio):
 		return decision("rule-2", LaneFullAudit,
 			"coverage-map churn (R>=10% or C>=8000 first-party lines)"), nil
-	case in.SensitiveChange && in.SensitiveChangedLines >= 200:
+	case in.SensitiveChange && in.SensitiveChangedLines >= SensitiveMinLines:
 		lane := LaneDiffScan
 		if in.RiskTier == RiskP0 || in.RiskTier == RiskP1 {
 			lane = LaneFullAudit
@@ -72,18 +91,18 @@ func overCeiling(in TableInput) bool {
 	var ceiling int64
 	switch in.RiskTier {
 	case RiskP0:
-		ceiling = 180
+		ceiling = TierCeilingP0
 	case RiskP1:
-		ceiling = 270
+		ceiling = TierCeilingP1
 	case RiskP2:
-		ceiling = 365
+		ceiling = TierCeilingP2
 	}
 	if in.Exposure == ExposurePublicExternal || in.Exposure == ExposurePrivateExternal {
 		switch in.RiskTier {
 		case RiskP1:
-			ceiling = 180
+			ceiling = TightenedCeilingP1
 		case RiskP2:
-			ceiling = 270
+			ceiling = TightenedCeilingP2
 		}
 	}
 	return *in.AuditAgeDays > ceiling
