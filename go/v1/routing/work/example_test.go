@@ -40,3 +40,23 @@ func ExampleClassifyRisk() {
 	// Live risk takes precedence over archival state.
 	// Output: P0
 }
+
+func ExampleDecidePrimary() {
+	result, err := work.DecidePrimary(work.PrimaryInput{
+		// Known inventory membership, with no HEAD code-audit baseline.
+		Inventory: &work.InventoryInput{Designation: work.DesignationExternal},
+		Events:    []work.RescanEvent{{Source: work.EventCVE}},
+	})
+	if err != nil {
+		fmt.Println(err)
+		return
+	}
+	// The event has no audited target. Bootstrap still selects the first audit.
+	fmt.Println(result.EventsHonored[0].Queued)
+	fmt.Println(result.Decisions[0].Rule, result.Decisions[0].Lane)
+	fmt.Println(result.Decisions[0].RiskTier, result.Decisions[0].Exposure)
+	// Output:
+	// false
+	// rule-1-bootstrap full-audit
+	// P2 private-external
+}

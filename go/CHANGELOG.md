@@ -2,6 +2,22 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.16.0]
+
+### Added
+
+- `work.DecidePrimary`: compose primary event routing, comparison-status guards,
+  the change table, and never-audited bootstrap for one repository's supplied
+  facts. Preserve event precedence, multiple event rows, nonqueued acknowledgments,
+  and original observation statuses without consuming events or dispatching jobs.
+- `work.EventLane` and typed event, inventory, audit, and comparison inputs.
+  Require explicit observation status and distinguish unavailable comparisons
+  from measured zero. Population and event identity resolution remain caller work.
+- Python-derived event-lane and composed-selection fixtures, input validation,
+  examples, and source extraction instructions. Companion lanes, tripwire/refusal
+  pre-routing, fleet/drain ordering, cost/model gates, and runtime integration
+  remain outside this primary selection slice.
+
 ## [0.15.0]
 
 ### Added
