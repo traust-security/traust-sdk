@@ -49,6 +49,10 @@ func main() {
 
 	fmt.Printf("generated %d enum files in %s\n", len(generated), *outDir)
 
+	if err := generateNormalization(*enumsDir, *outDir, *contractsRef); err != nil {
+		log.Fatalf("generating enum normalization metadata: %v", err)
+	}
+
 	if *schemasDir != "" && *typesDir != "" {
 		schemas, err := LoadSchemas(*schemasDir)
 		if err != nil {

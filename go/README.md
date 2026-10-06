@@ -14,6 +14,39 @@ Consumer setup is three handles, with no traust tables or types of your own:
 
 Keep consumer tables for consumer data only and reference traust rows by `binding_id` / `layer_id`. Overview: [../README.md → Purpose](../README.md#purpose).
 
+## Reader normalization review candidate
+
+The unreleased `v1/enums.Normalize` reader interprets generated registry metadata,
+not constants. Placement and affected-contract review remain pending; this does
+not activate ledger reads or writers.
+
+```go
+view, err := enums.Normalize("severity", "high")
+if err != nil {
+    return err
+}
+for i := 0; i < view.Len(); i++ {
+    pair := view.At(i)
+    fmt.Println(pair.Enum, pair.Value)
+}
+```
+
+Import `github.com/traust-security/traust-sdk/go/v1/enums`. Use a registry
+document's `name`, such as `remediation_effort`, not its hyphenated filename.
+Replacements preserve declared order across rename/merge/split cases; retired
+keys work without a current constant. A one-way drop returns the original pair
+and `view.Dropped=true`. Unknown values in a known enum retain their exact
+spelling; an unknown enum returns an error. `At` returns a value, not shared
+mutable registry data, and known-enum calls allocate nothing. Out-of-range
+indices panic like slice indexing.
+
+`make generate` produces `normalization_gen.go` from the same verified published
+contracts pin as the existing assets. That pin currently has no deprecations;
+no legacy effort-to-size relationship is inferred. Neutral shared cases exercise
+replacement metadata in isolated candidate generation, not the published assets.
+No runtime files, sibling checkout, event/identifier rewriting, free-text mapping
+or cross-field policy are introduced.
+
 ## Skills SDK
 
 Import a skill, plug in your provider, call it — typed input in, typed result out:

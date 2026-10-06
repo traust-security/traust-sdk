@@ -2,6 +2,19 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.19.0]
+
+Unreleased registry reader review candidate; no release or ledger activation.
+
+### Added
+
+- Registry-driven `enums.Normalize` reader candidate with private generated
+  replacement metadata, ordered value access, drop flags and retired keys
+  independent of constants. Known-enum calls allocate nothing and expose no
+  mutable registry slices. Neutral shared cases exercise generated behavior.
+  Placement/affected-contract review remains pending; the published contracts
+  pin, existing symbols, ledger activation and historical payloads are unchanged.
+
 ## [0.18.1]
 
 ### Fixed
