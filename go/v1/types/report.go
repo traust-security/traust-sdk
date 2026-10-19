@@ -1,4 +1,4 @@
-// Code generated from traust-contracts a150b2b56cee34857c7bfd12aa5c39fdcf033a8e. DO NOT EDIT.
+// Code generated from traust-contracts 3ed68158121322ce06525de170aa383e057b6a7b. DO NOT EDIT.
 
 package types
 
@@ -7,20 +7,21 @@ import (
 )
 
 type Report struct {
-	AsvsCoverage         []AsvsChapter         `json:"asvs_coverage,omitempty"`
-	DependencyAudit      *DependencyAudit      `json:"dependency_audit,omitempty"`
-	DispositionSummary   *DispositionSummary   `json:"disposition_summary,omitempty"`
-	ExecutiveSummary     ExecutiveSummary      `json:"executive_summary"`
-	Findings             []ReportFinding       `json:"findings"`
-	FindingsSummary      []SeverityCountEntry  `json:"findings_summary"`
-	Footer               *string               `json:"footer,omitempty"`
-	Metadata             ReportMetadata        `json:"metadata"`
-	NegativeResults      []NegativeResult      `json:"negative_results,omitempty"`
-	PeachIsolationReview *PeachIsolationReview `json:"peach_isolation_review,omitempty"`
-	RemediationRoadmap   []RoadmapItem         `json:"remediation_roadmap"`
-	ScannerCorrelation   []ScannerEntry        `json:"scanner_correlation,omitempty"`
-	SeverityCriteria     []SeverityCriterion   `json:"severity_criteria"`
-	Title                string                `json:"title"`
+	AsvsCoverage          []AsvsChapter                 `json:"asvs_coverage,omitempty"`
+	DependencyAudit       *DependencyAudit              `json:"dependency_audit,omitempty"`
+	DispositionSummary    *DispositionSummary           `json:"disposition_summary,omitempty"`
+	ExecutiveSummary      ExecutiveSummary              `json:"executive_summary"`
+	Findings              []ReportFinding               `json:"findings"`
+	FindingsSummary       []SeverityCountEntry          `json:"findings_summary"`
+	Footer                *string                       `json:"footer,omitempty"`
+	Metadata              ReportMetadata                `json:"metadata"`
+	NegativeResults       []NegativeResult              `json:"negative_results,omitempty"`
+	PeachIsolationReview  *PeachIsolationReview         `json:"peach_isolation_review,omitempty"`
+	RemediationRoadmap    []RoadmapItem                 `json:"remediation_roadmap"`
+	ReviewSurfaceCoverage map[string]ReviewSurfaceEntry `json:"review_surface_coverage,omitempty"`
+	ScannerCorrelation    []ScannerEntry                `json:"scanner_correlation,omitempty"`
+	SeverityCriteria      []SeverityCriterion           `json:"severity_criteria"`
+	Title                 string                        `json:"title"`
 }
 
 type AsvsChapter struct {
@@ -215,8 +216,47 @@ type ReportMetadata struct {
 }
 
 type ReportMetadataAdditional struct {
-	ContractsVersion *string `json:"contracts_version,omitempty"`
-	HarnessVersion   *string `json:"harness_version,omitempty"`
+	AssertiveInference *ReportMetadataAdditionalAssertiveInference `json:"assertive_inference,omitempty"`
+	AuditPasses        *int                                        `json:"audit_passes,omitempty"`
+	CompanionLanes     []string                                    `json:"companion_lanes,omitempty"`
+	ContractsVersion   *string                                     `json:"contracts_version,omitempty"`
+	CoverageGaps       []ReportMetadataAdditionalCoverageGapsItem  `json:"coverage_gaps,omitempty"`
+	Degraded           *bool                                       `json:"degraded,omitempty"`
+	DeterministicSteps map[string]string                           `json:"deterministic_steps,omitempty"`
+	HarnessVersion     *string                                     `json:"harness_version,omitempty"`
+	ModelRouting       *ReportMetadataAdditionalModelRouting       `json:"model_routing,omitempty"`
+	PrecisionGates     *ReportMetadataAdditionalPrecisionGates     `json:"precision_gates,omitempty"`
+	SourceAudit        *string                                     `json:"source_audit,omitempty"`
+}
+
+type ReportMetadataAdditionalAssertiveInference struct {
+	Languages []string `json:"languages"`
+	Trigger   string   `json:"trigger"`
+}
+
+type ReportMetadataAdditionalCoverageGapsItem struct {
+	Count  *int   `json:"count,omitempty"`
+	Reason string `json:"reason"`
+	System string `json:"system"`
+	Tool   string `json:"tool"`
+}
+
+type ReportMetadataAdditionalModelRouting struct {
+	Floor       *string `json:"floor,omitempty"`
+	Model       string  `json:"model"`
+	RegistrySha *string `json:"registry_sha,omitempty"`
+	Role        string  `json:"role"`
+}
+
+type ReportMetadataAdditionalPrecisionGates struct {
+	CritHighEvaluated int                                               `json:"crit_high_evaluated"`
+	Fired             []ReportMetadataAdditionalPrecisionGatesFiredItem `json:"fired"`
+}
+
+type ReportMetadataAdditionalPrecisionGatesFiredItem struct {
+	Action    enums.PrecisionGateAction `json:"action"`
+	Candidate string                    `json:"candidate"`
+	Gate      string                    `json:"gate"`
 }
 
 type ReportMetadataLocBreakdown struct {
@@ -224,6 +264,12 @@ type ReportMetadataLocBreakdown struct {
 	Excludes   []string       `json:"excludes,omitempty"`
 	Tool       *string        `json:"tool,omitempty"`
 	Total      int            `json:"total"`
+}
+
+type ReviewSurfaceEntry struct {
+	FindingIds []string                  `json:"finding_ids,omitempty"`
+	Note       *string                   `json:"note,omitempty"`
+	Status     enums.ReviewSurfaceStatus `json:"status"`
 }
 
 type RoadmapItem struct {

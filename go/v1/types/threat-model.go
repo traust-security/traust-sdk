@@ -1,4 +1,4 @@
-// Code generated from traust-contracts a150b2b56cee34857c7bfd12aa5c39fdcf033a8e. DO NOT EDIT.
+// Code generated from traust-contracts 3ed68158121322ce06525de170aa383e057b6a7b. DO NOT EDIT.
 
 package types
 
@@ -37,15 +37,17 @@ type AttackScenario struct {
 }
 
 type DeprioritizedThreat struct {
-	Reason string `json:"reason"`
-	Threat string `json:"threat"`
+	Reason         string                `json:"reason"`
+	ReviewSurfaces []enums.ReviewSurface `json:"review_surfaces,omitempty"`
+	Threat         string                `json:"threat"`
 }
 
 type EntryPoint struct {
-	Description     string `json:"description"`
-	EntryPoint      string `json:"entry_point"`
-	ReachableAssets string `json:"reachable_assets"`
-	TrustBoundary   string `json:"trust_boundary"`
+	Description     string                `json:"description"`
+	EntryPoint      string                `json:"entry_point"`
+	ReachableAssets string                `json:"reachable_assets"`
+	ReviewSurfaces  []enums.ReviewSurface `json:"review_surfaces,omitempty"`
+	TrustBoundary   string                `json:"trust_boundary"`
 }
 
 type HistoryEntry struct {
@@ -143,6 +145,7 @@ type Threat struct {
 	Impact              *enums.ThreatImpact        `json:"impact,omitempty"`
 	IsolationDimensions []enums.IsolationDimension `json:"isolation_dimensions,omitempty"`
 	Likelihood          *enums.ThreatLikelihood    `json:"likelihood,omitempty"`
+	ReviewSurfaces      []enums.ReviewSurface      `json:"review_surfaces,omitempty"`
 	RiskRating          *OwaspRiskRating           `json:"risk_rating,omitempty"`
 	Status              enums.ThreatStatus         `json:"status"`
 	Surface             *string                    `json:"surface,omitempty"`

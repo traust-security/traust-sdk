@@ -336,7 +336,7 @@ func isRowsQuery(name string) bool {
 
 func multiRowGetQuery(name string) bool {
 	switch name {
-	case "artifact_location.get.sql":
+	case "artifact_location.get.sql", "product_scope.get.sql":
 		return true
 	default:
 		return false

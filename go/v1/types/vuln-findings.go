@@ -1,4 +1,4 @@
-// Code generated from traust-contracts a150b2b56cee34857c7bfd12aa5c39fdcf033a8e. DO NOT EDIT.
+// Code generated from traust-contracts 3ed68158121322ce06525de170aa383e057b6a7b. DO NOT EDIT.
 
 package types
 
@@ -7,13 +7,14 @@ import (
 )
 
 type VulnFindings struct {
-	Findings      []VulnFindingsFinding `json:"findings"`
-	FocusAreas    []string              `json:"focus_areas"`
-	KnownFindings []KnownFinding        `json:"known_findings,omitempty"`
-	Metadata      VulnFindingsMetadata  `json:"metadata"`
-	ScannedAt     string                `json:"scanned_at"`
-	Summary       VulnFindingsSummary   `json:"summary"`
-	Target        string                `json:"target"`
+	Findings              []VulnFindingsFinding  `json:"findings"`
+	FocusAreas            []string               `json:"focus_areas"`
+	KnownFindings         []KnownFinding         `json:"known_findings,omitempty"`
+	Metadata              VulnFindingsMetadata   `json:"metadata"`
+	ReviewSurfaceCoverage map[string]interface{} `json:"review_surface_coverage,omitempty"`
+	ScannedAt             string                 `json:"scanned_at"`
+	Summary               VulnFindingsSummary    `json:"summary"`
+	Target                string                 `json:"target"`
 }
 
 type KnownFinding struct {
@@ -40,13 +41,26 @@ type VulnFindingsFinding struct {
 }
 
 type VulnFindingsMetadata struct {
-	Additional       map[string]interface{} `json:"additional,omitempty"`
-	Baseline         interface{}            `json:"baseline"`
-	BaselineFindings int                    `json:"baseline_findings"`
-	HarnessVersion   string                 `json:"harness_version"`
-	Repo             string                 `json:"repo"`
-	RepoSlug         string                 `json:"repo_slug"`
-	ScannedRef       string                 `json:"scanned_ref"`
+	Additional       *VulnFindingsMetadataAdditional `json:"additional,omitempty"`
+	Baseline         interface{}                     `json:"baseline"`
+	BaselineFindings int                             `json:"baseline_findings"`
+	HarnessVersion   string                          `json:"harness_version"`
+	Repo             string                          `json:"repo"`
+	RepoSlug         string                          `json:"repo_slug"`
+	ScannedRef       string                          `json:"scanned_ref"`
+}
+
+type VulnFindingsMetadataAdditional struct {
+	CoverageDiff *VulnFindingsMetadataAdditionalCoverageDiff `json:"coverage_diff,omitempty"`
+}
+
+type VulnFindingsMetadataAdditionalCoverageDiff struct {
+	Anchor              string   `json:"anchor"`
+	BaselineReport      string   `json:"baseline_report"`
+	CallersCovered      []string `json:"callers_covered"`
+	ChangedFilesCovered []string `json:"changed_files_covered"`
+	RefusedOrSkipped    []string `json:"refused_or_skipped"`
+	ResolutionSource    string   `json:"resolution_source"`
 }
 
 type VulnFindingsSummary struct {

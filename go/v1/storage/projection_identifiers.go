@@ -1,4 +1,4 @@
-// Code generated from traust-contracts a150b2b56cee34857c7bfd12aa5c39fdcf033a8e projection metadata. DO NOT EDIT.
+// Code generated from traust-contracts 3ed68158121322ce06525de170aa383e057b6a7b projection metadata. DO NOT EDIT.
 
 package storage
 
@@ -106,6 +106,7 @@ const (
 	projectionFieldResolver                       projectionField = "resolver"
 	projectionFieldResults                        projectionField = "results"
 	projectionFieldRevalidation                   projectionField = "revalidation"
+	projectionFieldReviewSurfaceCoverage          projectionField = "review_surface_coverage"
 	projectionFieldRewrite                        projectionField = "rewrite"
 	projectionFieldRuntimeEvidence                projectionField = "runtime_evidence"
 	projectionFieldScannerCorrelation             projectionField = "scanner_correlation"

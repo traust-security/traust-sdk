@@ -1,4 +1,4 @@
-// Code generated from traust-contracts a150b2b56cee34857c7bfd12aa5c39fdcf033a8e. DO NOT EDIT.
+// Code generated from traust-contracts 3ed68158121322ce06525de170aa383e057b6a7b. DO NOT EDIT.
 
 package storage
 
@@ -1098,6 +1098,10 @@ func (s *sqlStore) projectReport(ctx context.Context, conn *sql.Conn, state writ
 	if err != nil {
 		return projectionError(projectionReport, projectionFieldAsvsCoverage, err)
 	}
+	reviewSurfaceCoverage, err := optionalProjectionJSON(value.ReviewSurfaceCoverage)
+	if err != nil {
+		return projectionError(projectionReport, projectionFieldReviewSurfaceCoverage, err)
+	}
 	scannerCorrelation, err := optionalProjectionJSON(value.ScannerCorrelation)
 	if err != nil {
 		return projectionError(projectionReport, projectionFieldScannerCorrelation, err)
@@ -1111,22 +1115,23 @@ func (s *sqlStore) projectReport(ctx context.Context, conn *sql.Conn, state writ
 		return projectionError(projectionReport, projectionFieldDispositionSummary, err)
 	}
 	if err := s.queries.reportUpsert(ctx, conn, reportUpsertParams{
-		bindingId:            state.bindingID,
-		artifactDigest:       state.digest,
-		title:                value.Title,
-		metadata:             metadata,
-		executiveSummary:     executiveSummary,
-		severityCriteria:     severityCriteria,
-		findings:             findings,
-		findingsSummary:      findingsSummary,
-		remediationRoadmap:   remediationRoadmap,
-		dependencyAudit:      dependencyAudit,
-		negativeResults:      negativeResults,
-		asvsCoverage:         asvsCoverage,
-		scannerCorrelation:   scannerCorrelation,
-		peachIsolationReview: peachIsolationReview,
-		dispositionSummary:   dispositionSummary,
-		footer:               value.Footer,
+		bindingId:             state.bindingID,
+		artifactDigest:        state.digest,
+		title:                 value.Title,
+		metadata:              metadata,
+		executiveSummary:      executiveSummary,
+		severityCriteria:      severityCriteria,
+		findings:              findings,
+		findingsSummary:       findingsSummary,
+		remediationRoadmap:    remediationRoadmap,
+		dependencyAudit:       dependencyAudit,
+		negativeResults:       negativeResults,
+		asvsCoverage:          asvsCoverage,
+		reviewSurfaceCoverage: reviewSurfaceCoverage,
+		scannerCorrelation:    scannerCorrelation,
+		peachIsolationReview:  peachIsolationReview,
+		dispositionSummary:    dispositionSummary,
+		footer:                value.Footer,
 	}); err != nil {
 		return projectionError(projectionReport, projectionFieldRow, err)
 	}
@@ -1382,19 +1387,24 @@ func (s *sqlStore) projectVerification(ctx context.Context, conn *sql.Conn, stat
 	if err != nil {
 		return projectionError(projectionVerification, projectionFieldRecommendations, err)
 	}
+	reviewSurfaceCoverage, err := optionalProjectionJSON(value.ReviewSurfaceCoverage)
+	if err != nil {
+		return projectionError(projectionVerification, projectionFieldReviewSurfaceCoverage, err)
+	}
 	if err := s.queries.verificationUpsert(ctx, conn, verificationUpsertParams{
-		bindingId:        state.bindingID,
-		artifactDigest:   state.digest,
-		title:            value.Title,
-		metadata:         metadata,
-		summary:          summary,
-		verifiedFindings: verifiedFindings,
-		regressions:      regressions,
-		commitTimeline:   commitTimeline,
-		evidence:         evidence,
-		recommendations:  recommendations,
-		notes:            value.Notes,
-		footer:           value.Footer,
+		bindingId:             state.bindingID,
+		artifactDigest:        state.digest,
+		title:                 value.Title,
+		metadata:              metadata,
+		summary:               summary,
+		verifiedFindings:      verifiedFindings,
+		regressions:           regressions,
+		commitTimeline:        commitTimeline,
+		evidence:              evidence,
+		recommendations:       recommendations,
+		reviewSurfaceCoverage: reviewSurfaceCoverage,
+		notes:                 value.Notes,
+		footer:                value.Footer,
 	}); err != nil {
 		return projectionError(projectionVerification, projectionFieldRow, err)
 	}

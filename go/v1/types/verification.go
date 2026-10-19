@@ -1,4 +1,4 @@
-// Code generated from traust-contracts a150b2b56cee34857c7bfd12aa5c39fdcf033a8e. DO NOT EDIT.
+// Code generated from traust-contracts 3ed68158121322ce06525de170aa383e057b6a7b. DO NOT EDIT.
 
 package types
 
@@ -7,16 +7,17 @@ import (
 )
 
 type Verification struct {
-	CommitTimeline   []TimelineEntry      `json:"commit_timeline"`
-	Evidence         []PatchEvidence      `json:"evidence,omitempty"`
-	Footer           *string              `json:"footer,omitempty"`
-	Metadata         VerificationMetadata `json:"metadata"`
-	Notes            *string              `json:"notes,omitempty"`
-	Recommendations  []string             `json:"recommendations,omitempty"`
-	Regressions      []Regression         `json:"regressions"`
-	Summary          VerificationSummary  `json:"summary"`
-	Title            string               `json:"title"`
-	VerifiedFindings []VerifiedFinding    `json:"verified_findings"`
+	CommitTimeline        []TimelineEntry        `json:"commit_timeline"`
+	Evidence              []PatchEvidence        `json:"evidence,omitempty"`
+	Footer                *string                `json:"footer,omitempty"`
+	Metadata              VerificationMetadata   `json:"metadata"`
+	Notes                 *string                `json:"notes,omitempty"`
+	Recommendations       []string               `json:"recommendations,omitempty"`
+	Regressions           []Regression           `json:"regressions"`
+	ReviewSurfaceCoverage map[string]interface{} `json:"review_surface_coverage,omitempty"`
+	Summary               VerificationSummary    `json:"summary"`
+	Title                 string                 `json:"title"`
+	VerifiedFindings      []VerifiedFinding      `json:"verified_findings"`
 }
 
 type CrossRepo struct {

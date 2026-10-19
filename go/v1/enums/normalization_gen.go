@@ -1,4 +1,4 @@
-// Code generated from traust-contracts a150b2b56cee34857c7bfd12aa5c39fdcf033a8e. DO NOT EDIT.
+// Code generated from traust-contracts 3ed68158121322ce06525de170aa383e057b6a7b. DO NOT EDIT.
 
 package enums
 
@@ -88,6 +88,7 @@ var enumNormalizationRegistry = map[string]map[string]Normalization{
 	"pqc_readiness_bucket":                  {},
 	"pqc_remediation_category":              {},
 	"pqc_scoring_ceiling":                   {},
+	"precision_gate_action":                 {},
 	"pull_request_state":                    {},
 	"pull_request_target":                   {},
 	"ref_kind":                              {},
@@ -101,11 +102,14 @@ var enumNormalizationRegistry = map[string]map[string]Normalization{
 	"restatement_target":                    {},
 	"revalidation_method":                   {},
 	"review_item_status":                    {},
+	"review_surface":                        {},
+	"review_surface_status":                 {},
 	"risk_rating_band":                      {},
 	"roadmap_priority":                      {},
 	"scanner_severity":                      {},
 	"scope_binding_mode":                    {},
 	"severity":                              {},
+	"signing_method":                        {},
 	"sla_clock_start":                       {},
 	"source_type":                           {},
 	"tenancy_profile":                       {},
