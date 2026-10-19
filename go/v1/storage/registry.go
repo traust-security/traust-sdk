@@ -232,7 +232,7 @@ func (c *Client) GetProductScopes(ctx context.Context, bindingIDs []string) (map
 		return nil, wrap(OperationRead, PhaseConnect, err)
 	}
 	defer func() { _ = conn.Close() }()
-	rows, err := c.store.queries.productScopeList(ctx, conn, productScopeListParams{bindingIds: ids})
+	rows, err := c.store.queries.productScopeGet(ctx, conn, productScopeGetParams{bindingIds: ids})
 	if err != nil {
 		return nil, wrap(OperationRead, PhaseRead, err)
 	}

@@ -2,6 +2,38 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.23.0]
+
+### Added
+
+- **`QueryCurrentFindingDetail`: every current finding at listing grain.**
+  The open/hardening cuts answer "how much exposure"; a cross-repo findings
+  worklist needs the rows themselves. Returns the `current_finding_detail`
+  view (new in contracts 0.61.0): the spine plus `cvss_score`, the triage
+  verdict and triage-assessed severity of the newest triage for the same
+  scope, subject and run, and the census `exposure_class` per row. Unlike
+  `QueryOpenFindings`/`QueryHardeningFindings` it is deliberately unfiltered
+  on disposition -- callers choose their cut through `ExposureClass`.
+- The spine now carries `cvss_score` (extracted from the report finding's
+  `cvss` object; NULL for the policy family), so views above it no longer
+  re-join the finding tables to reach it.
+
+### Fixed
+
+- **`GetProductScopes` query bindings are generated, not hand-edited.** The
+  `product_scope` read now has a canonical contracts source
+  (`product_scope.get.sql`, both dialects), and the generator treats it as a
+  multi-row keyed read per the `.get.sql` convention. Regenerating from
+  contracts no longer drops `GetProductScopes`, so `make check-drift` passes
+  again.
+
+### Changed
+
+- Generated storage assets are pinned to contracts commit `3ed6815`
+  (feat/current-finding-detail), absorbing contracts 0.57–0.61: review
+  surfaces on reports/verifications/threat models, model pricing tiers,
+  portfolio forge facts and the current_finding_detail view.
+
 ## [0.22.0]
 
 ### Added

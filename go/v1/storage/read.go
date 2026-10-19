@@ -401,6 +401,72 @@ func (c *Client) QueryHardeningFindings(ctx context.Context, scopeIDs []string) 
 		}, scanFindings)
 }
 
+// CurrentFindingDetailRow is one row of the current_finding_detail view: the
+// FindingRow spine plus the axes a cross-repo findings worklist filters and
+// sorts by.
+//
+// Nullable where the underlying artifact may not carry the field: cvss_score
+// is NULL for the policy family, and the triage columns stay NULL until the
+// newest triage of the same scope, subject and run covers the finding.
+// ExposureClass is the census classification carried per row (false_positive,
+// hardening, closed, open) so a consumer filters rather than restates the
+// disposition policy.
+type CurrentFindingDetailRow struct {
+	ScopeID           string
+	SubjectID         *string
+	RunID             *string
+	FindingID         string
+	Title             *string
+	Severity          *string
+	Fingerprint       *string
+	Validity          *string
+	Resolution        *string
+	Assurance         *string
+	Category          *string
+	CWEs              *string
+	EffectiveSeverity *string
+	Family            string
+	Ownership         *string
+	BusinessUnit      *string
+	Tree              *string
+	IsBranchAudit     *int64
+	CVSSScore         *float64
+	TriageVerdict     *string
+	TriageSeverity    *string
+	ExposureClass     string
+}
+
+func scanCurrentFindingDetail(rows *sql.Rows) (result []CurrentFindingDetailRow, err error) {
+	defer func() { err = errors.Join(err, rows.Close()) }()
+	for rows.Next() {
+		var row CurrentFindingDetailRow
+		if err := rows.Scan(
+			&row.ScopeID, &row.SubjectID, &row.RunID, &row.FindingID,
+			&row.Title, &row.Severity, &row.Fingerprint, &row.Validity,
+			&row.Resolution, &row.Assurance, &row.Category, &row.CWEs,
+			&row.EffectiveSeverity, &row.Family, &row.Ownership,
+			&row.BusinessUnit, &row.Tree, &row.IsBranchAudit, &row.CVSSScore,
+			&row.TriageVerdict, &row.TriageSeverity, &row.ExposureClass,
+		); err != nil {
+			return nil, err
+		}
+		result = append(result, row)
+	}
+	return result, rows.Err()
+}
+
+// QueryCurrentFindingDetail returns every current finding at listing grain:
+// the spine plus the triage verdict of the newest triage for the same
+// context and the census exposure class. Unlike QueryOpenFindings and
+// QueryHardeningFindings it is deliberately unfiltered on disposition --
+// callers choose their cut through ExposureClass.
+func (c *Client) QueryCurrentFindingDetail(ctx context.Context, scopeIDs []string) ([]CurrentFindingDetailRow, error) {
+	return scopedRead(ctx, c, scopeIDs,
+		func(ctx context.Context, conn *sql.Conn, scope string) (*sql.Rows, error) {
+			return c.store.queries.currentFindingDetailList(ctx, conn, currentFindingDetailListParams{scopeIds: scope})
+		}, scanCurrentFindingDetail)
+}
+
 // QueryDistinctExposure returns Lens 2: distinct problems over owned HEAD
 // audits, one row per fingerprint rather than one per occurrence.
 func (c *Client) QueryDistinctExposure(ctx context.Context, scopeIDs []string) ([]DistinctExposureRow, error) {
