@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 3ed68158121322ce06525de170aa383e057b6a7b projection metadata. DO NOT EDIT.
+// Code generated from traust-contracts ac517047c6566b019e63b911f6b7522000826b48 projection metadata. DO NOT EDIT.
 
 package storage
 
