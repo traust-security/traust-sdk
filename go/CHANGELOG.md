@@ -2,6 +2,20 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.23.1]
+
+### Fixed
+
+- The type generator resolves refs into another schema definition's properties,
+  array items and map values. Inline objects retain their defining schema's
+  generated names, and ref chains retain their source namespace and existing
+  optional/nullable representation instead of losing nested typed metadata.
+- A new compiled consumer regression exercises adapter-style property refs,
+  typed severity and disposition, nested metadata mutation/round-trip, and
+  invalid-enum rejection by the Artifact parse and encode gates.
+- This generator-only repair leaves the contracts/storage pin and checked-in
+  generated assets unchanged.
+
 ## [0.23.0]
 
 ### Added
