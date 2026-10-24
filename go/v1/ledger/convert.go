@@ -374,11 +374,11 @@ func stringish(v interface{}) string {
 	}
 }
 
-func ptrString(v *string) string {
+func ptrString[T ~string](v *T) string {
 	if v == nil {
 		return ""
 	}
-	return *v
+	return string(*v)
 }
 
 func firstNonEmpty(values ...string) string {

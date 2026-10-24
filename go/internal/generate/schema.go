@@ -29,6 +29,7 @@ type SchemaNode struct {
 	Required             []string
 	Items                *SchemaNode
 	Enum                 []string
+	EnumHasNull          bool
 	Format               string
 	Description          string
 	AdditionalProperties *SchemaNode
@@ -225,7 +226,7 @@ func lookupRef(ref, sourceFile string, schemas map[string]*SchemaFile) (*SchemaN
 	}
 
 	parts := strings.Split(fragment, "/")
-	if len(parts) != 2 {
+	if len(parts) < 2 {
 		return nil, "", fmt.Errorf("unsupported $ref fragment %q in %q", fragment, ref)
 	}
 
@@ -235,10 +236,30 @@ func lookupRef(ref, sourceFile string, schemas map[string]*SchemaFile) (*SchemaN
 		return nil, "", fmt.Errorf("unsupported $ref path %q in %q", parts[0], ref)
 	}
 
-	defName := parts[1]
+	defName := strings.ReplaceAll(strings.ReplaceAll(parts[1], "~1", "/"), "~0", "~")
 	node, ok := sf.Defs[defName]
 	if !ok {
 		return nil, "", fmt.Errorf("definition %q not found in %s", defName, targetFile)
+	}
+	for index := 2; index < len(parts); index++ {
+		switch parts[index] {
+		case "properties":
+			index++
+			if index == len(parts) {
+				return nil, "", fmt.Errorf("missing property name in $ref %q", ref)
+			}
+			name := strings.ReplaceAll(strings.ReplaceAll(parts[index], "~1", "/"), "~0", "~")
+			node = node.Properties[name]
+		case "items":
+			node = node.Items
+		case "additionalProperties":
+			node = node.AdditionalProperties
+		default:
+			return nil, "", fmt.Errorf("unsupported $ref path %q in %q", parts[index], ref)
+		}
+		if node == nil {
+			return nil, "", fmt.Errorf("schema node not found for $ref %q", ref)
+		}
 	}
 
 	return node, targetFile, nil
@@ -254,7 +275,7 @@ func parseSchemaNode(raw json.RawMessage) (*SchemaNode, error) {
 		return nil, err
 	}
 
-	enum, err := parseEnumField(rn.Enum)
+	enum, enumHasNull, err := parseEnumField(rn.Enum)
 	if err != nil {
 		return nil, fmt.Errorf("enum: %w", err)
 	}
@@ -263,6 +284,7 @@ func parseSchemaNode(raw json.RawMessage) (*SchemaNode, error) {
 		Ref:         rn.Ref,
 		Required:    rn.Required,
 		Enum:        enum,
+		EnumHasNull: enumHasNull,
 		Format:      rn.Format,
 		Description: rn.Description,
 		MinItems:    rn.MinItems,
@@ -329,19 +351,22 @@ func parseConstField(raw json.RawMessage) interface{} {
 	return v
 }
 
-func parseEnumField(raw json.RawMessage) ([]string, error) {
+func parseEnumField(raw json.RawMessage) ([]string, bool, error) {
 	if len(raw) == 0 {
-		return nil, nil
+		return nil, false, nil
 	}
 
 	var values []interface{}
 	if err := json.Unmarshal(raw, &values); err != nil {
-		return nil, err
+		return nil, false, err
 	}
 
 	enum := make([]string, 0, len(values))
+	hasNull := false
 	for _, v := range values {
 		switch typed := v.(type) {
+		case nil:
+			hasNull = true
 		case string:
 			enum = append(enum, typed)
 		case float64:
@@ -352,7 +377,7 @@ func parseEnumField(raw json.RawMessage) ([]string, error) {
 			enum = append(enum, fmt.Sprint(v))
 		}
 	}
-	return enum, nil
+	return enum, hasNull, nil
 }
 
 func parseAdditionalProperties(raw json.RawMessage) (*SchemaNode, error) {

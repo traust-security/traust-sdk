@@ -14,9 +14,10 @@ import (
 const lowerSuffix = "Lower"
 
 type enumDef struct {
-	Name        string   `json:"name"`
-	Description string   `json:"description"`
-	Values      []string `json:"values"`
+	Name        string                           `json:"name"`
+	Description string                           `json:"description"`
+	Values      []string                         `json:"values"`
+	Deprecated  map[string]normalizationMetadata `json:"deprecated"`
 }
 
 func generateEnum(srcPath, outDir, contractsRef string) error {
@@ -35,16 +36,33 @@ func generateEnum(srcPath, outDir, contractsRef string) error {
 
 	caseVariants := hasCaseVariants(def.Values)
 	constNames := make([]string, len(def.Values))
-	seen := make(map[string]string, len(def.Values))
+	seen := make(map[string]int, len(def.Values))
 	for i, val := range def.Values {
 		name := typeName + toPascalCase(identSafe(val))
 		if caseVariants && val == strings.ToLower(val) {
 			name += lowerSuffix
 		}
-		if prev, ok := seen[name]; ok {
-			return fmt.Errorf("%s: values %q and %q both map to constant %s", srcPath, prev, val, name)
+		if previous, ok := seen[name]; ok {
+			oldValue := def.Values[previous]
+			canonicalName := name + "Canonical"
+			if def.replaces(oldValue, val) {
+				if _, exists := seen[canonicalName]; exists {
+					return fmt.Errorf("%s: canonical constant %s already exists", srcPath, canonicalName)
+				}
+				seen[canonicalName] = i
+				constNames[i] = canonicalName
+				continue
+			}
+			if !def.replaces(val, oldValue) {
+				return fmt.Errorf("%s: values %q and %q both map to constant %s", srcPath, oldValue, val, name)
+			}
+			if _, exists := seen[canonicalName]; exists {
+				return fmt.Errorf("%s: canonical constant %s already exists", srcPath, canonicalName)
+			}
+			constNames[previous] = canonicalName
+			seen[canonicalName] = previous
 		}
-		seen[name] = val
+		seen[name] = i
 		constNames[i] = name
 	}
 
@@ -73,6 +91,18 @@ func generateEnum(srcPath, outDir, contractsRef string) error {
 	fmt.Fprint(&b, "}\n")
 
 	return formatAndWrite(outFile, []byte(b.String()))
+}
+
+func (def enumDef) replaces(legacy, canonical string) bool {
+	if _, deprecated := def.Deprecated[canonical]; deprecated {
+		return false
+	}
+	for _, target := range def.Deprecated[legacy].ReplacedBy {
+		if target.Enum == def.Name && target.Value == canonical {
+			return true
+		}
+	}
+	return false
 }
 
 func hasCaseVariants(values []string) bool {

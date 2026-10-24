@@ -120,7 +120,6 @@ func TestConvertValidationReport(t *testing.T) {
 
 func TestConvertValidationReport_SoundnessAndGrades(t *testing.T) {
 	flag := "error_signature"
-	e2, e3 := "E2", "E3"
 	impact := "403 Forbidden"
 	report := types.Validation{
 		Metadata: types.ValidationMetadata{Date: "2026-07-09", HarnessVersion: "0.200.0"},
@@ -130,14 +129,20 @@ func TestConvertValidationReport_SoundnessAndGrades(t *testing.T) {
 			// Flagged inconclusive: queued too, though it would otherwise emit nothing.
 			{SourceId: "pkg:src/F-2", Verdict: enums.ValidationVerdictInconclusive, SoundnessFlag: &flag},
 			// E3 confirmation: inference only, queued instead of confirming.
-			{SourceId: "pkg:src/F-3", Verdict: enums.ValidationVerdictConfirmed, EvidenceGrade: &e3},
+			{SourceId: "pkg:src/F-3", Verdict: enums.ValidationVerdictConfirmed},
 			// E2 confirmation: emitted, grade carried so the ledger demotes it.
-			{SourceId: "pkg:src/F-4", Verdict: enums.ValidationVerdictConfirmed, EvidenceGrade: &e2},
+			{SourceId: "pkg:src/F-4", Verdict: enums.ValidationVerdictConfirmed},
 			// Sound refutation: still a false_positive event (countersign-gated by the ledger).
 			{SourceId: "pkg:src/F-5", Verdict: enums.ValidationVerdictRefuted},
 			// A soundness flag never blocks a confirmation.
 			{SourceId: "pkg:src/F-6", Verdict: enums.ValidationVerdictConfirmed, SoundnessFlag: &flag},
 		},
+	}
+	if err := json.Unmarshal([]byte(`"E3"`), &report.ValidatedFindings[2].EvidenceGrade); err != nil {
+		t.Fatal(err)
+	}
+	if err := json.Unmarshal([]byte(`"E2"`), &report.ValidatedFindings[3].EvidenceGrade); err != nil {
+		t.Fatal(err)
 	}
 
 	out := ledger.ConvertValidationReport(report, "validations/v.json", "2026-07-11T12:00:00+00:00", nil)

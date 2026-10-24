@@ -13,25 +13,25 @@ type ImpactAnalysis struct {
 }
 
 type Evidence struct {
-	BinaryLinkedLibrary   *string     `json:"binary_linked_library,omitempty"`
-	BinaryStringScan      *string     `json:"binary_string_scan,omitempty"`
-	BinarySymbolScan      *string     `json:"binary_symbol_scan,omitempty"`
-	EvidenceLevel         *string     `json:"evidence_level,omitempty"`
-	FeaturePatternMatches interface{} `json:"feature_pattern_matches,omitempty"`
-	Govulncheck           *string     `json:"govulncheck,omitempty"`
-	GovulncheckTrace      interface{} `json:"govulncheck_trace,omitempty"`
-	L1DependsOn           interface{} `json:"l1_depends_on,omitempty"`
-	L1VersionInRange      interface{} `json:"l1_version_in_range,omitempty"`
-	L4PackageImported     interface{} `json:"l4_package_imported,omitempty"`
-	L4PackagesFound       interface{} `json:"l4_packages_found,omitempty"`
-	ManifestScan          *string     `json:"manifest_scan,omitempty"`
-	ManifestVersion       interface{} `json:"manifest_version,omitempty"`
-	NeedsManualTrace      interface{} `json:"needs_manual_trace,omitempty"`
-	Notes                 interface{} `json:"notes,omitempty"`
-	SbomScan              *string     `json:"sbom_scan,omitempty"`
-	SbomShippedVersion    interface{} `json:"sbom_shipped_version,omitempty"`
-	SourceImportScan      *string     `json:"source_import_scan,omitempty"`
-	SymbolUsageScan       *string     `json:"symbol_usage_scan,omitempty"`
+	BinaryLinkedLibrary   *enums.ImpactEvidenceBinaryLinkedLibrary `json:"binary_linked_library,omitempty"`
+	BinaryStringScan      *enums.ImpactEvidenceBinaryStringScan    `json:"binary_string_scan,omitempty"`
+	BinarySymbolScan      *enums.ImpactEvidenceBinarySymbolScan    `json:"binary_symbol_scan,omitempty"`
+	EvidenceLevel         *enums.DependencyEvidenceLevel           `json:"evidence_level,omitempty"`
+	FeaturePatternMatches interface{}                              `json:"feature_pattern_matches,omitempty"`
+	Govulncheck           *enums.ImpactEvidenceGovulncheck         `json:"govulncheck,omitempty"`
+	GovulncheckTrace      interface{}                              `json:"govulncheck_trace,omitempty"`
+	L1DependsOn           interface{}                              `json:"l1_depends_on,omitempty"`
+	L1VersionInRange      interface{}                              `json:"l1_version_in_range,omitempty"`
+	L4PackageImported     interface{}                              `json:"l4_package_imported,omitempty"`
+	L4PackagesFound       interface{}                              `json:"l4_packages_found,omitempty"`
+	ManifestScan          *enums.ImpactEvidenceManifestScan        `json:"manifest_scan,omitempty"`
+	ManifestVersion       interface{}                              `json:"manifest_version,omitempty"`
+	NeedsManualTrace      interface{}                              `json:"needs_manual_trace,omitempty"`
+	Notes                 interface{}                              `json:"notes,omitempty"`
+	SbomScan              *enums.ImpactEvidenceSbomScan            `json:"sbom_scan,omitempty"`
+	SbomShippedVersion    interface{}                              `json:"sbom_shipped_version,omitempty"`
+	SourceImportScan      *enums.ImpactEvidenceSourceImportScan    `json:"source_import_scan,omitempty"`
+	SymbolUsageScan       *enums.ImpactEvidenceSymbolUsageScan     `json:"symbol_usage_scan,omitempty"`
 }
 
 type ImpactAnalysisMetadata struct {

@@ -86,11 +86,11 @@ type SeverityValidation struct {
 }
 
 type SeverityValidationDemonstrated struct {
-	AttackVector       *string     `json:"attack_vector,omitempty"`
-	Impacts            interface{} `json:"impacts,omitempty"`
-	PrivilegesRequired *string     `json:"privileges_required,omitempty"`
-	ScopeCrossed       interface{} `json:"scope_crossed,omitempty"`
-	UserInteraction    *string     `json:"user_interaction,omitempty"`
+	AttackVector       *enums.CvssAttackVector       `json:"attack_vector,omitempty"`
+	Impacts            interface{}                   `json:"impacts,omitempty"`
+	PrivilegesRequired *enums.CvssPrivilegesRequired `json:"privileges_required,omitempty"`
+	ScopeCrossed       interface{}                   `json:"scope_crossed,omitempty"`
+	UserInteraction    *enums.CvssUserInteraction    `json:"user_interaction,omitempty"`
 }
 
 type SourceReport struct {
@@ -127,7 +127,7 @@ type ValidatedFinding struct {
 	ClaimedSeverity    *enums.Severity           `json:"claimed_severity,omitempty"`
 	DeviationFromClaim *string                   `json:"deviation_from_claim,omitempty"`
 	Evidence           []EvidenceArtifact        `json:"evidence,omitempty"`
-	EvidenceGrade      *string                   `json:"evidence_grade,omitempty"`
+	EvidenceGrade      *enums.EvidenceGrade      `json:"evidence_grade,omitempty"`
 	GradeRationale     interface{}               `json:"grade_rationale,omitempty"`
 	NotAttemptedReason *string                   `json:"not_attempted_reason,omitempty"`
 	ObservedImpact     *string                   `json:"observed_impact,omitempty"`

@@ -33,23 +33,23 @@ type Disposition struct {
 }
 
 type Event struct {
-	Alias           *EventAlias       `json:"alias,omitempty"`
-	AutoAcceptTier  *bool             `json:"auto_accept_tier,omitempty"`
-	Disposition     Disposition       `json:"disposition"`
-	EventId         string            `json:"event_id"`
-	EvidenceGrade   *string           `json:"evidence_grade,omitempty"`
-	EvidenceRefs    []string          `json:"evidence_refs,omitempty"`
-	Finding         *EventFinding     `json:"finding,omitempty"`
-	FindingRef      string            `json:"finding_ref"`
-	Fingerprint     *string           `json:"fingerprint,omitempty"`
-	FingerprintAlgo *string           `json:"fingerprint_algo,omitempty"`
-	HarnessVersion  *string           `json:"harness_version,omitempty"`
-	OccurredAt      *string           `json:"occurred_at,omitempty"`
-	Rationale       string            `json:"rationale"`
-	RecordedAt      string            `json:"recorded_at"`
-	Restatement     *EventRestatement `json:"restatement,omitempty"`
-	RiskWeight      *EventRiskWeight  `json:"risk_weight,omitempty"`
-	Source          EventSource       `json:"source"`
+	Alias           *EventAlias          `json:"alias,omitempty"`
+	AutoAcceptTier  *bool                `json:"auto_accept_tier,omitempty"`
+	Disposition     Disposition          `json:"disposition"`
+	EventId         string               `json:"event_id"`
+	EvidenceGrade   *enums.EvidenceGrade `json:"evidence_grade,omitempty"`
+	EvidenceRefs    []string             `json:"evidence_refs,omitempty"`
+	Finding         *EventFinding        `json:"finding,omitempty"`
+	FindingRef      string               `json:"finding_ref"`
+	Fingerprint     *string              `json:"fingerprint,omitempty"`
+	FingerprintAlgo *string              `json:"fingerprint_algo,omitempty"`
+	HarnessVersion  *string              `json:"harness_version,omitempty"`
+	OccurredAt      *string              `json:"occurred_at,omitempty"`
+	Rationale       string               `json:"rationale"`
+	RecordedAt      string               `json:"recorded_at"`
+	Restatement     *EventRestatement    `json:"restatement,omitempty"`
+	RiskWeight      *EventRiskWeight     `json:"risk_weight,omitempty"`
+	Source          EventSource          `json:"source"`
 }
 
 type EventAlias struct {

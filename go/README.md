@@ -44,6 +44,11 @@ indices panic like slice indexing.
 contracts pin as the existing assets. That pin currently has no deprecations;
 no legacy effort-to-size relationship is inferred. Neutral shared cases exercise
 replacement metadata in isolated candidate generation, not the published assets.
+The generator also resolves shared property references across schema files,
+including inline object names and chained references, without dropping nested
+metadata. Compiled artifact round-trip tests exercise these references. This
+generator repair does not uplift the SDK's embedded contracts/storage pin;
+adopting new scanner-observation validation remains an explicit pin update.
 No runtime files, sibling checkout, event/identifier rewriting, free-text mapping
 or cross-field policy are introduced.
 
