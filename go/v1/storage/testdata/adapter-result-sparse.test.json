@@ -1,0 +1,15 @@
+{
+  "target": "example/repository",
+  "scanned_at": "2026-10-23T00:00:00Z",
+  "metadata": {"tool": "native-scanner", "scanner_version": "1.0"},
+  "findings": [{
+    "id": "native:rule/observation#1",
+    "title": "x",
+    "severity": "high",
+    "cwes": [],
+    "locations": [{"path": "config/example.env", "lines": "12"}],
+    "description": "",
+    "remediation": ""
+  }],
+  "summary": {"total": 1, "by_severity": {"high": 1}}
+}

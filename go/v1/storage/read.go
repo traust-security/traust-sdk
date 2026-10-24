@@ -576,6 +576,7 @@ type ThreatRow struct {
 	Status              *string
 	Controls            *string
 	Evidence            *string
+	AttackRefs          *string
 	Linddun             *int64
 	Score               *int64
 	IsolationDimensions *string
@@ -584,6 +585,14 @@ type ThreatRow struct {
 	BusinessUnit        *string
 	Tree                *string
 	IsBranchAudit       *int64
+	RiskRating          *string
+	Severity            *string
+	LikelihoodScore     *float64
+	LikelihoodLevel     *string
+	ImpactScore         *float64
+	ImpactLevel         *string
+	ImpactBasis         *string
+	ReviewSurfaces      *string
 }
 
 // ThreatExposureRow aggregates modelled threats. Status is carried
@@ -605,6 +614,7 @@ type ThreatExposureRow struct {
 	Threats      int64
 	Subjects     int64
 	TopScore     *int64
+	Severity     *string
 }
 
 // OperatorPrivilegeRow is the privilege one operator ASKS FOR, parsed from its
@@ -645,9 +655,11 @@ func scanThreats(rows *sql.Rows) (result []ThreatRow, err error) {
 		if err := rows.Scan(
 			&row.ScopeID, &row.ThreatKey, &row.ThreatID, &row.Model, &row.SubjectID,
 			&row.Product, &row.Statement, &row.Surface, &row.Asset, &row.Impact,
-			&row.Likelihood, &row.Status, &row.Controls, &row.Evidence, &row.Linddun,
+			&row.Likelihood, &row.Status, &row.Controls, &row.Evidence, &row.AttackRefs, &row.Linddun,
 			&row.Score, &row.IsolationDimensions, &row.IsolationBoundaries,
 			&row.Ownership, &row.BusinessUnit, &row.Tree, &row.IsBranchAudit,
+			&row.RiskRating, &row.Severity, &row.LikelihoodScore, &row.LikelihoodLevel,
+			&row.ImpactScore, &row.ImpactLevel, &row.ImpactBasis, &row.ReviewSurfaces,
 		); err != nil {
 			return nil, err
 		}
@@ -663,7 +675,7 @@ func scanThreatExposure(rows *sql.Rows) (result []ThreatExposureRow, err error) 
 		if err := rows.Scan(
 			&row.ScopeID, &row.Tree, &row.Ownership, &row.BusinessUnit, &row.Product,
 			&row.Impact, &row.Likelihood, &row.Status, &row.Evidenced, &row.Linddun,
-			&row.Threats, &row.Subjects, &row.TopScore,
+			&row.Threats, &row.Subjects, &row.TopScore, &row.Severity,
 		); err != nil {
 			return nil, err
 		}

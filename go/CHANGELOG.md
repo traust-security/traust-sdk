@@ -2,6 +2,36 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.24.0]
+
+### Fixed
+
+- Adopt repaired main contracts at immutable commit
+  `2e521561f022fe839dd828ddf2185ba3a0a1045f`, regenerating enums, types, embedded
+  validators and storage from `enums/v1`, `schemas/v1` and `storage/v1` together.
+- Native adapter observations retain empty CWEs, descriptions and remediation
+  without fabricating authored finding content. Supplied rich metadata remains
+  typed and schema-validated through Artifact parse/encode and storage save/read.
+- Threat readers now consume the pinned queries' full column order, retaining
+  ATT&CK references, the existing OWASP rating and trailing review surfaces.
+  `ThreatRow` exposes these nullable columns; `ThreatExposureRow` exposes
+  nullable `Severity`. No rating is recalculated or legacy label converted.
+- Preserve supplied threat `review_surfaces` in the write projection as well as
+  the public reader; untagged threats continue to store NULL.
+
+### Changed
+
+- **Go source compatibility:** `AdapterResult.Findings` is now `[]AdapterFinding`,
+  not `[]ReportFinding`. Construct scanner observations with `AdapterFinding`;
+  authored reports continue to use `ReportFinding` and their stricter minima.
+  Referenced locations, CVSS, dependency and disposition metadata keep their
+  report-owned generated types. Artifact and storage operation signatures stay
+  unchanged.
+- Storage revision metadata is generated from the pinned contracts declaration
+  (revision 6), replacing the SDK's hard-coded revision 1. `Init` still refuses
+  mismatched revisions; the SDK does not migrate existing stores automatically.
+  The pin also includes repaired revision-5-to-6 migration SQL.
+
 ## [0.23.1]
 
 ### Fixed
