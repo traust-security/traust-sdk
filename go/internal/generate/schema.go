@@ -225,7 +225,7 @@ func lookupRef(ref, sourceFile string, schemas map[string]*SchemaFile) (*SchemaN
 	}
 
 	parts := strings.Split(fragment, "/")
-	if len(parts) != 2 {
+	if len(parts) < 2 {
 		return nil, "", fmt.Errorf("unsupported $ref fragment %q in %q", fragment, ref)
 	}
 
@@ -235,13 +235,36 @@ func lookupRef(ref, sourceFile string, schemas map[string]*SchemaFile) (*SchemaN
 		return nil, "", fmt.Errorf("unsupported $ref path %q in %q", parts[0], ref)
 	}
 
-	defName := parts[1]
+	defName := decodePointerToken(parts[1])
 	node, ok := sf.Defs[defName]
 	if !ok {
 		return nil, "", fmt.Errorf("definition %q not found in %s", defName, targetFile)
 	}
+	for index := 2; index < len(parts); index++ {
+		switch parts[index] {
+		case "properties":
+			index++
+			if index == len(parts) {
+				return nil, "", fmt.Errorf("missing property name in $ref %q", ref)
+			}
+			node = node.Properties[decodePointerToken(parts[index])]
+		case "items":
+			node = node.Items
+		case "additionalProperties":
+			node = node.AdditionalProperties
+		default:
+			return nil, "", fmt.Errorf("unsupported $ref path %q in %q", parts[index], ref)
+		}
+		if node == nil {
+			return nil, "", fmt.Errorf("schema node not found for $ref %q", ref)
+		}
+	}
 
 	return node, targetFile, nil
+}
+
+func decodePointerToken(token string) string {
+	return strings.ReplaceAll(strings.ReplaceAll(token, "~1", "/"), "~0", "~")
 }
 
 func parseSchemaNode(raw json.RawMessage) (*SchemaNode, error) {

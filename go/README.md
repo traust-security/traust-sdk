@@ -47,6 +47,18 @@ replacement metadata in isolated candidate generation, not the published assets.
 No runtime files, sibling checkout, event/identifier rewriting, free-text mapping
 or cross-field policy are introduced.
 
+## Generated property references
+
+The generator follows adapter-style refs into report definition properties,
+including nested array items and map values. Referenced objects reuse their
+defining schema's generated types; chained refs retain typed enums and existing
+optional/nullable representations. `Artifact` parse and encode gates continue to
+validate supplied metadata against the embedded schemas.
+
+This generator repair does not change the published contracts/storage pin or
+checked-in generated assets. Generating an adapter schema with repaired property
+refs still requires the corresponding contracts source.
+
 ## Skills SDK
 
 Import a skill, plug in your provider, call it — typed input in, typed result out:
