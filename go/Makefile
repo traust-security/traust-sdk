@@ -1,5 +1,5 @@
 CONTRACTS_REPO := https://github.com/traust-security/traust-contracts.git
-CONTRACTS_REF := ac517047c6566b019e63b911f6b7522000826b48
+CONTRACTS_REF := 2e521561f022fe839dd828ddf2185ba3a0a1045f
 CONTRACTS_CACHE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/contracts
 CONTRACTS_SOURCE := $(CONTRACTS_CACHE)/checkout-$(CONTRACTS_REF)
 ENUMS_DIR := $(CONTRACTS_SOURCE)/enums/v1
@@ -38,7 +38,7 @@ test-integration:
 	go test -count=1 -v ./v1/storage/...
 
 check-drift: generate
-	@git diff --exit-code $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/storage/operations.go ./v1/storage/projection_identifiers.go ./v1/storage/schema.go ./v1/storage/queries.go ./v1/storage/storagetest/testdata/ || (echo "ERROR: generated files are out of date; run 'make generate' and commit" && exit 1)
+	@git diff --exit-code $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/storage/operations.go ./v1/storage/projection_identifiers.go ./v1/storage/revision.go ./v1/storage/schema.go ./v1/storage/queries.go ./v1/storage/storagetest/testdata/ || (echo "ERROR: generated files are out of date; run 'make generate' and commit" && exit 1)
 
 fmt:
 	gofmt -w .

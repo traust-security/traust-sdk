@@ -55,9 +55,32 @@ defining schema's generated types; chained refs retain typed enums and existing
 optional/nullable representations. `Artifact` parse and encode gates continue to
 validate supplied metadata against the embedded schemas.
 
-This generator repair does not change the published contracts/storage pin or
-checked-in generated assets. Generating an adapter schema with repaired property
-refs still requires the corresponding contracts source.
+The SDK pins repaired main contracts commit
+`2e521561f022fe839dd828ddf2185ba3a0a1045f`. `make generate` obtains that immutable
+source and regenerates types, embedded validators and storage together from the
+main `schemas/v1` and `storage/v1` layout.
+
+`AdapterResult.Findings` is `[]types.AdapterFinding` rather than
+`[]types.ReportFinding`: native scanner observations can carry `cwes: []`,
+`description: ""` and `remediation: ""` without invented audit content. Supplied
+metadata retains the report-owned nested types and constraints; authored report
+findings still require their nonempty CWE list and full description/remediation.
+Use `ParseAdapterResultArtifact` or `EncodeAdapterResultArtifact`, then
+`SaveAdapterResult`/`GetAdapterResult`; the Artifact, Skill and Storage validation
+gates are unchanged. Storage retains the typed projection and exact evidence
+digest/size; the caller's resolver retains and returns the original payload.
+
+Storage revision metadata is generated from the same pin's Python declaration
+(revision 6), not a separate SDK constant or the highest migration filename.
+`Init` still rejects an incompatible revision; schema migrations remain the
+contracts owner's responsibility. No classifier/core-hub schema layout or
+compatibility aliases are used.
+
+Threat readers consume the same pinned storage query shape: `ThreatRow` includes
+`AttackRefs`, `RiskRating`, `Severity`, `LikelihoodScore`, `LikelihoodLevel`,
+`ImpactScore`, `ImpactLevel`, `ImpactBasis` and `ReviewSurfaces`;
+`ThreatExposureRow` includes nullable `Severity`. These preserve supplied rating
+columns without changing the risk-rating methodology or legacy labels.
 
 ## Skills SDK
 
