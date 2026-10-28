@@ -1,0 +1,9 @@
+# Generated clients for traust-core's REST API. The spec is core's
+# `make api-check` output, checked in at the pinned commit recorded in
+# README.md; regenerate with `make api-generate` and commit the result
+# (CI's check-drift fails if they diverge).
+package: api
+generate:
+  models: true
+  client: true
+output: v1/api/client.gen.go

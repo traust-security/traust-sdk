@@ -12,7 +12,7 @@ ROOT := ..
 GO_CI := python3 $(ROOT)/ci/lang/go/ci.py
 export PATH := $(shell go env GOPATH)/bin:$(PATH)
 
-.PHONY: contracts generate test test-integration check-drift fmt fmt-check vet lint security tools
+.PHONY: contracts generate api-generate test test-integration check-drift fmt fmt-check vet lint security tools
 
 contracts:
 	@set -eu; \
@@ -37,8 +37,13 @@ test:
 test-integration:
 	go test -count=1 -v ./v1/storage/...
 
-check-drift: generate
-	@git diff --exit-code $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/storage/operations.go ./v1/storage/projection_identifiers.go ./v1/storage/schema.go ./v1/storage/queries.go ./v1/storage/storagetest/testdata/ || (echo "ERROR: generated files are out of date; run 'make generate' and commit" && exit 1)
+check-drift: generate api-generate
+	@git diff --exit-code $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/storage/operations.go ./v1/storage/projection_identifiers.go ./v1/storage/schema.go ./v1/storage/queries.go ./v1/storage/storagetest/testdata/ ./v1/api/client.gen.go ./internal/generate/openapi/openapi-3.0.json || (echo "ERROR: generated files are out of date; run 'make generate api-generate' and commit" && exit 1)
+
+api-generate:
+	@set -eu; \
+	python3 internal/generate/openapi/normalize.py internal/generate/openapi/openapi.json internal/generate/openapi/openapi-3.0.json; \
+	go tool oapi-codegen --config internal/generate/openapi/oapi-codegen.yaml internal/generate/openapi/openapi-3.0.json
 
 fmt:
 	gofmt -w .
