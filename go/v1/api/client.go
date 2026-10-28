@@ -47,9 +47,9 @@ type ClientConfig struct {
 	BaseURL string
 	Tokens  TokenSource
 
-	HTTPClient *http.Client    // optional; default http.DefaultClient wrapped with retries
-	Retries    int             // attempts beyond the first; default 2
-	Backoff    time.Duration   // between retries; default 250ms, doubling
+	HTTPClient *http.Client     // optional; default http.DefaultClient wrapped with retries
+	Retries    int              // attempts beyond the first; default 2
+	Backoff    time.Duration    // between retries; default 250ms, doubling
 	Now        func() time.Time // clock for tests; default time.Now
 }
 
@@ -87,10 +87,13 @@ func NewBoundClient(cfg ClientConfig) (*BoundClient, error) {
 	if inner == nil {
 		inner = http.DefaultTransport
 	}
-	httpClient = &http.Client{
-		Transport: &retryTransport{base: inner, retries: cfg.Retries, backoff: cfg.Backoff, now: now},
-		Timeout:   httpClient.Timeout,
-	}
+	// Copy the caller's client and replace only the transport, so
+	// CheckRedirect, Jar and the rest survive; building a fresh client here
+	// used to drop them (a caller's ErrUseLastResponse policy was silently
+	// ignored and redirects followed).
+	wrapped := *httpClient
+	wrapped.Transport = &retryTransport{base: inner, retries: cfg.Retries, backoff: cfg.Backoff, now: now}
+	httpClient = &wrapped
 	editor := func(ctx context.Context, req *http.Request) error {
 		token, err := cfg.Tokens.BearerToken(ctx)
 		if err != nil {

@@ -159,6 +159,56 @@ func TestNewBoundClientValidatesConfig(t *testing.T) {
 	}
 }
 
+// A caller-supplied http.Client keeps its CheckRedirect policy: the bound
+// client replaces only the transport. Regression test for a review finding
+// (girish1430): reconstructing the client from Transport+Timeout alone
+// silently dropped CheckRedirect and Jar, following redirects a caller
+// configured away.
+func TestCallerHTTPClientPolicySurvives(t *testing.T) {
+	dir := t.TempDir()
+	tokenPath := filepath.Join(dir, "token")
+	writeFile(t, tokenPath, "t")
+
+	var targetHits int32
+	mux := http.NewServeMux()
+	mux.HandleFunc("/v1/products", func(w http.ResponseWriter, r *http.Request) {
+		http.Redirect(w, r, "/elsewhere", http.StatusFound)
+	})
+	mux.HandleFunc("/elsewhere", func(w http.ResponseWriter, r *http.Request) {
+		atomic.AddInt32(&targetHits, 1)
+		_ = json.NewEncoder(w).Encode(PageProduct{})
+	})
+	server := httptest.NewServer(mux)
+	defer server.Close()
+
+	caller := &http.Client{CheckRedirect: func(*http.Request, []*http.Request) error {
+		return http.ErrUseLastResponse
+	}}
+	client, err := NewBoundClient(ClientConfig{
+		BaseURL:    server.URL,
+		Tokens:     FileTokenSource{Path: tokenPath},
+		HTTPClient: caller,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	err = client.EachProduct(context.Background(), 10, func(Product) error { return nil })
+	if err == nil {
+		t.Fatal("302 surfaced as success; CheckRedirect was dropped")
+	}
+	var problemErr *ProblemError
+	if !errors.As(err, &problemErr) || problemErr.StatusCode != http.StatusFound {
+		t.Fatalf("got %v, want a problem error carrying 302", err)
+	}
+	if atomic.LoadInt32(&targetHits) != 0 {
+		t.Fatal("redirect target was followed; CheckRedirect was dropped")
+	}
+	// The caller's client itself stays unmodified.
+	if caller.Transport != nil {
+		t.Fatal("caller's transport was mutated")
+	}
+}
+
 func problem(w http.ResponseWriter, status int, detail string) {
 	w.Header().Set("Content-Type", "application/problem+json")
 	w.WriteHeader(status)
