@@ -1,5 +1,5 @@
-// Package ops owns the lifecycle of one already-dispatched native recording run.
-// It does not poll a queue, select work, authorize capabilities or classify reports.
+// Package ops owns order leases and native recording lifecycles.
+// Core selects and authorizes work; consumers supply an Executor.
 package ops
 
 import (
@@ -27,6 +27,7 @@ type Execution struct {
 	Order       api.RunOrder     `json:"order"`
 	TriageInput *api.TriageInput `json:"triage_input,omitempty"`
 	Input       json.RawMessage  `json:"input,omitempty"`
+	Argv        []string         `json:"argv,omitempty"`
 }
 
 type ProducedReport struct {
@@ -118,7 +119,11 @@ func (run RecordingRun) Run(ctx context.Context) (*RecordingResult, error) {
 			return run.finishFailure(ctx, original, order, api.JobResult{}, prepareErr)
 		}
 	}
-	produced, executeErr := run.execute(ctx, original, order, input)
+	execution := Execution{Order: original, TriageInput: input}
+	if run.Request.Triage == nil {
+		execution.Input = run.Request.Input
+	}
+	produced, executeErr := run.execute(ctx, original, order, execution)
 	if executeErr != nil {
 		var lost *LeaseLostError
 		if errors.As(executeErr, &lost) || ctx.Err() != nil {
@@ -223,7 +228,13 @@ func (run RecordingRun) heartbeat(ctx context.Context, original api.RunOrder, cu
 	return order, nil
 }
 
-func (run RecordingRun) execute(ctx context.Context, original api.RunOrder, current *api.RunOrder, input *api.TriageInput) (ProducedReport, error) {
+func (run RecordingRun) execute(ctx context.Context, original api.RunOrder, current *api.RunOrder, execution Execution) (ProducedReport, error) {
+	if err := usableOrder(current); err != nil {
+		return ProducedReport{}, &LeaseLostError{Err: err}
+	}
+	if err := ctx.Err(); err != nil {
+		return ProducedReport{}, &LeaseLostError{Err: err}
+	}
 	executorCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
 	type executionResult struct {
@@ -236,12 +247,9 @@ func (run RecordingRun) execute(ctx context.Context, original api.RunOrder, curr
 	// and lease/provenance origin storage with an executor implementation.
 	id, started, expiresAt := *original.Id, *original.StartedAt, *original.LeaseExpiresAt
 	executionOrder.Id, executionOrder.StartedAt, executionOrder.LeaseExpiresAt = &id, &started, &expiresAt
-	var executorInput json.RawMessage
-	if run.Request.Triage == nil {
-		executorInput = run.Request.Input
-	}
+	execution.Order = executionOrder
 	go func() {
-		produced, err := run.Executor.Execute(executorCtx, Execution{Order: executionOrder, TriageInput: input, Input: executorInput})
+		produced, err := run.Executor.Execute(executorCtx, execution)
 		done <- executionResult{produced: produced, err: err}
 	}()
 	ticker := time.NewTicker(run.HeartbeatInterval)

@@ -10,6 +10,7 @@ Consumer setup uses focused handles, with no traust tables or types of your own:
 |---|---|---|
 | Store and read traust artifacts | [`v1/storage`](#storage-sdk) | `*sql.DB` (+ optional `storage.Resolver` for reads); `Init` bootstraps the contracts DDL in `traust_storage` |
 | Record native machine reports | `v1/api`, `v1/ops` | Core URL, machine credential, native IDs and explicit dispatched order |
+| Run queued fleet commands | `v1/api`, `v1/ops` | Core URL, machine credential, pinned pack, and an `Executor` |
 | Historical ledger reads and raw/human actions | [`v1/ledger`](#ledger-sdk) | ledger URL + token |
 | Run skills | [`v1/skills`](#skills-sdk) | a `skills.Provider` |
 
@@ -52,6 +53,18 @@ generator repair does not uplift the SDK's embedded contracts/storage pin;
 adopting new scanner-observation validation remains an explicit pin update.
 No runtime files, sibling checkout, event/identifier rewriting, free-text mapping
 or cross-field policy are introduced.
+
+## Queued fleet commands
+
+`ops.LoadPack` validates the installed pack against the pinned Contracts
+schema and retains its byte digest. Configure `ops.NewRunner` with a
+`BoundClient`, the pack, an `Executor`, eligible asset names, lease duration
+and poll interval. `RunOnce` claims one order; `Run` keeps claiming until
+cancelled. The runner checks Core's run-manifest pack digest, resolves
+`{run_id}`, maintains the lease, and completes from the executor's native
+`api.JobResult`. The executor runs `Execution.Argv`, returns its outcome, and
+stops all work when its context is cancelled. This path currently accepts only fleet-wide
+commands without model or repository inputs, such as `ledger_audit`.
 
 ## Native report recording
 

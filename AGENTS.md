@@ -8,7 +8,11 @@ One client for everything you ask traust; one runner for the work you do for it.
 
 ```go
 c, err := api.NewBoundClient(api.ClientConfig{BaseURL: coreURL, Tokens: api.FileTokenSource{Path: tokenPath}})
-r, err := ops.NewRunner(c, myExecutor) // your Executor runs the skill; the runner does the rest
+pack, err := ops.LoadPack(packYAML)
+r, err := ops.NewRunner(ops.RunnerConfig{
+    Client: c, Pack: pack, Executor: myExecutor, Assets: []string{"ledger_audit"},
+    LeaseSeconds: 30, PollInterval: time.Second,
+})
 err = r.Run(ctx)
 ```
 
@@ -16,7 +20,8 @@ err = r.Run(ctx)
 |---|---|---|
 | onboard a product and its repositories | `c` | `PlanOnboarding` (dry run) → `Onboard` |
 | browse inventory | `c` | `ListProducts`, `ListRepositories`, `ListRefs`, `ListOwners`, `ListProductsOf` |
-| run skills | `ops.Runner` + your `Executor` | `Claim`/`Start` → `Prepare*` → your run → `Record*` → `Complete` (the runner calls these, you don't) |
+| run queued fleet commands | `ops.Runner` + your `Executor` | `Claim` → your run → `Complete` |
+| record an explicitly dispatched run | `ops.RecordingRun` + your `Executor` | `Start` → `Prepare*` → your run → `Record*` → `Complete` |
 | read what a run produced | `c` | `ListRepositoryAssessments`, `GetAssessment`, `GetArtifact`, `GetArtifactContent` |
 | work findings (a person's token) | `c` | `ReviewQueue`, `GetFinding`, `Decide`, `ListDecisions`, `Restate` |
 | check the ledger | `c` | `ListLayers`, `ListEvents`, `VerifyLayer`, `Checkpoint`; core writes ledger events when records and decisions land, you never append them |
@@ -29,10 +34,10 @@ Method names are core's operation ids. A long or unclear name is fixed in core's
 
 ```mermaid
 sequenceDiagram
-    participant R as SDK runner (v1/ops)
+    participant R as SDK recording run (v1/ops)
     participant API as traust-core REST API
     participant X as consumer Executor
-    R->>API: claim (or start a dispatched order)
+    R->>API: start a dispatched order
     R->>API: prepare → skill input
     R->>X: run(input), heartbeating the lease
     X-->>R: output document

@@ -1,0 +1,6 @@
+pack: smoke
+assets:
+  command_result:
+    run: [python3, -c, "print('completed')", "{run_id}"]
+    trigger: {every: 7d}
+    runner: {labels: [deterministic]}

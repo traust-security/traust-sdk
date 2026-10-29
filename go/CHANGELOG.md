@@ -4,6 +4,10 @@ All notable changes to the Go SDK are documented here.
 
 ## [0.27.0]
 
+### Added
+
+- `ops.Runner` claims and completes pinned fleet-wide pack commands through Core, with lease-loss cancellation and a pluggable executor.
+
 ### Breaking
 
 - Generated method and type names drop the path and method: `OnboardV1OnboardingPostWithResponse` → `OnboardWithResponse`, `ListProductsV1ProductsGetParams` → `ListProductsParams`. Rename call sites by deleting the `V1…Get`/`V1…Post` middle.
