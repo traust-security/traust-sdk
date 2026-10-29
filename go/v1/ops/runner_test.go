@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -47,21 +48,22 @@ func TestLoadPackUsesPinnedSchema(t *testing.T) {
 }
 
 type queuedServer struct {
-	mu              sync.Mutex
-	order           api.RunOrder
-	pack            *Pack
-	empty           bool
-	wrongDigest     bool
-	malformed       bool
-	heartbeatStatus int
-	claimStatus     int
-	manifestStatus  int
-	manifestDelay   time.Duration
-	heartbeatCalls  int
-	heartbeatFailAt int
-	events          []string
-	result          api.JobResult
-	onClaim         func()
+	mu               sync.Mutex
+	order            api.RunOrder
+	pack             *Pack
+	empty            bool
+	wrongDigest      bool
+	malformed        bool
+	heartbeatStatus  int
+	claimStatus      int
+	manifestStatus   int
+	manifestDelay    time.Duration
+	manifestCanceled chan struct{}
+	heartbeatCalls   int
+	heartbeatFailAt  int
+	events           []string
+	result           api.JobResult
+	onClaim          func()
 }
 
 func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Request) {
@@ -92,7 +94,23 @@ func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Reque
 	case strings.HasSuffix(request.URL.Path, "/content"):
 		server.events = append(server.events, "manifest")
 		if server.manifestDelay > 0 {
-			time.Sleep(server.manifestDelay)
+			delay, canceled := server.manifestDelay, server.manifestCanceled
+			server.mu.Unlock()
+			timer := time.NewTimer(delay)
+			select {
+			case <-timer.C:
+			case <-request.Context().Done():
+				timer.Stop()
+				if canceled != nil {
+					select {
+					case canceled <- struct{}{}:
+					default:
+					}
+				}
+				server.mu.Lock()
+				return
+			}
+			server.mu.Lock()
 		}
 		if server.manifestStatus != 0 {
 			w.WriteHeader(server.manifestStatus)
@@ -114,13 +132,18 @@ func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Reque
 	case strings.HasSuffix(request.URL.Path, "/heartbeat"):
 		server.events = append(server.events, "heartbeat")
 		server.heartbeatCalls++
+		var body api.LeaseRequest
+		if err := json.NewDecoder(request.Body).Decode(&body); err != nil || body.LeaseSeconds <= 0 {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
 		if server.heartbeatStatus != 0 && (server.heartbeatFailAt == 0 || server.heartbeatCalls >= server.heartbeatFailAt) {
 			w.Header().Set("Content-Type", "application/problem+json")
 			w.WriteHeader(server.heartbeatStatus)
 			_ = json.NewEncoder(w).Encode(api.Problem{Title: "lease lost", Status: server.heartbeatStatus})
 			return
 		}
-		expires := time.Now().Add(time.Minute)
+		expires := time.Now().Add(time.Duration(body.LeaseSeconds) * time.Second)
 		server.order.LeaseExpiresAt = &expires
 		_ = json.NewEncoder(w).Encode(server.order)
 	case strings.HasSuffix(request.URL.Path, "/complete"):
@@ -176,6 +199,19 @@ func (server *queuedServer) snapshot() ([]string, api.JobResult) {
 	return append([]string(nil), server.events...), server.result
 }
 
+func assertQueuedLifecycle(t *testing.T, events []string, minAfterManifest int) {
+	t.Helper()
+	manifest := slices.Index(events, "manifest")
+	if len(events) < 4+minAfterManifest || events[0] != "claim" || manifest < 2 || len(events)-manifest-2 < minAfterManifest || events[len(events)-1] != "complete" {
+		t.Fatalf("unexpected queued lifecycle: %v", events)
+	}
+	for index, event := range events[1 : len(events)-1] {
+		if index+1 != manifest && event != "heartbeat" {
+			t.Fatalf("unexpected queued lifecycle: %v", events)
+		}
+	}
+}
+
 func TestQueuedRunnerClaimsExecutesAndCompletesLedgerAudit(t *testing.T) {
 	var argv []string
 	runner, server := queuedRunner(t, executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
@@ -190,7 +226,8 @@ func TestQueuedRunnerClaimsExecutesAndCompletesLedgerAudit(t *testing.T) {
 		t.Fatalf("completed=%+v err=%v", completed, err)
 	}
 	events, result := server.snapshot()
-	if strings.Join(events, ",") != "claim,manifest,heartbeat,heartbeat,complete" || result.Outcome != api.OutcomeDegraded {
+	assertQueuedLifecycle(t, events, 2)
+	if result.Outcome != api.OutcomeDegraded {
 		t.Fatalf("events=%v result=%+v", events, result)
 	}
 	if len(argv) != 7 || argv[0] != "python3" || argv[3] != "ledger" || argv[6] != completed.Id.String() {
@@ -243,9 +280,7 @@ func TestQueuedRunnerRefusesPackMismatchBeforeExecution(t *testing.T) {
 		t.Fatalf("order=%+v err=%v", order, err)
 	}
 	events, _ := server.snapshot()
-	if strings.Join(events, ",") != "claim,manifest,heartbeat,complete" {
-		t.Fatalf("events=%v", events)
-	}
+	assertQueuedLifecycle(t, events, 1)
 }
 
 func TestQueuedRunnerRefusesUnknownClaimedAsset(t *testing.T) {
@@ -264,22 +299,46 @@ func TestQueuedRunnerRefusesUnknownClaimedAsset(t *testing.T) {
 	}
 }
 
-func TestQueuedRunnerNeverStartsAfterManifestUsesLease(t *testing.T) {
+func TestQueuedRunnerRenewsLeaseDuringSlowManifestRead(t *testing.T) {
 	runner, server := queuedRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
-		t.Fatal("executor started after the lease expired")
+		return ProducedReport{Result: api.JobResult{Outcome: api.OutcomeSucceeded}}, nil
+	}))
+	runner.config.LeaseSeconds = 1
+	runner.config.HeartbeatInterval = 50 * time.Millisecond
+	runner.config.RequestTimeout = 5 * time.Second
+	expires := time.Now().Add(time.Second)
+	server.order.LeaseExpiresAt = &expires
+	server.manifestDelay = 1100 * time.Millisecond
+	order, err := runner.RunOnce(context.Background())
+	if err != nil || order == nil || order.State != api.RunOrderStateSucceeded {
+		t.Fatalf("order=%+v err=%v", order, err)
+	}
+	events, _ := server.snapshot()
+	assertQueuedLifecycle(t, events, 3)
+}
+
+func TestQueuedRunnerCancelsManifestReadOnLeaseLoss(t *testing.T) {
+	runner, server := queuedRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+		t.Fatal("executor started after lease loss")
 		return ProducedReport{}, nil
 	}))
-	expires := time.Now().Add(200 * time.Millisecond)
-	server.order.LeaseExpiresAt = &expires
-	server.manifestDelay = 300 * time.Millisecond
+	server.manifestDelay = 5 * time.Second
+	server.manifestCanceled = make(chan struct{}, 1)
+	server.heartbeatStatus = http.StatusConflict
+	server.heartbeatFailAt = 2
 	order, err := runner.RunOnce(context.Background())
 	var lost *LeaseLostError
 	if order == nil || !errors.As(err, &lost) {
 		t.Fatalf("order=%+v err=%v", order, err)
 	}
+	select {
+	case <-server.manifestCanceled:
+	case <-time.After(time.Second):
+		t.Fatal("manifest read was not canceled after lease loss")
+	}
 	events, _ := server.snapshot()
-	if strings.Join(events, ",") != "claim,manifest" {
-		t.Fatalf("work continued after lease expiry: %v", events)
+	if strings.Contains(strings.Join(events, ","), "complete") {
+		t.Fatalf("completed after lease loss: %v", events)
 	}
 }
 
@@ -343,13 +402,16 @@ func TestQueuedRunnerRejectsInvalidConfiguration(t *testing.T) {
 
 func TestQueuedRunnerStopsOnLostLease(t *testing.T) {
 	stopped := make(chan struct{})
-	runner, server := queuedRunner(t, executorFunc(func(ctx context.Context, _ Execution) (ProducedReport, error) {
+	var server *queuedServer
+	runner, mock := queuedRunner(t, executorFunc(func(ctx context.Context, _ Execution) (ProducedReport, error) {
+		server.mu.Lock()
+		server.heartbeatStatus = http.StatusConflict
+		server.mu.Unlock()
 		<-ctx.Done()
 		close(stopped)
 		return ProducedReport{}, ctx.Err()
 	}))
-	server.heartbeatStatus = http.StatusConflict
-	server.heartbeatFailAt = 2
+	server = mock
 	order, err := runner.RunOnce(context.Background())
 	var lost *LeaseLostError
 	if order == nil || !errors.As(err, &lost) {
@@ -362,6 +424,25 @@ func TestQueuedRunnerStopsOnLostLease(t *testing.T) {
 	}
 	events, _ := server.snapshot()
 	if strings.Contains(strings.Join(events, ","), "complete") {
+		t.Fatalf("completed after lease loss: %v", events)
+	}
+}
+
+func TestQueuedRunnerRetainsOrderOnPreExecutionHeartbeatFailure(t *testing.T) {
+	runner, server := queuedRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+		t.Fatal("executor started without a live lease")
+		return ProducedReport{}, nil
+	}))
+	runner.config.HeartbeatInterval = 10 * time.Second
+	server.heartbeatStatus = http.StatusConflict
+	server.heartbeatFailAt = 2
+	order, err := runner.RunOnce(context.Background())
+	var lost *LeaseLostError
+	if order == nil || !errors.As(err, &lost) || order.Id == nil {
+		t.Fatalf("order=%+v err=%v", order, err)
+	}
+	events, _ := server.snapshot()
+	if slices.Contains(events, "complete") {
 		t.Fatalf("completed after lease loss: %v", events)
 	}
 }
@@ -390,6 +471,7 @@ func TestQueuedRunnerStopsOnCoreReadFailure(t *testing.T) {
 	}{
 		{"claim", func(server *queuedServer) { server.claimStatus = http.StatusServiceUnavailable }, false},
 		{"manifest", func(server *queuedServer) { server.manifestStatus = http.StatusServiceUnavailable }, true},
+		{"manifest without body", func(server *queuedServer) { server.manifestStatus = http.StatusNoContent }, true},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			runner, server := queuedRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
@@ -397,15 +479,22 @@ func TestQueuedRunnerStopsOnCoreReadFailure(t *testing.T) {
 				return ProducedReport{}, nil
 			}))
 			tc.change(server)
-			if _, err := runner.RunOnce(context.Background()); err == nil {
+			_, err := runner.RunOnce(context.Background())
+			if err == nil {
 				t.Fatal("Core failure was ignored")
 			}
+			if server.manifestStatus == http.StatusServiceUnavailable {
+				var problem *api.ProblemError
+				if !errors.As(err, &problem) || problem.StatusCode != http.StatusServiceUnavailable {
+					t.Fatalf("manifest failure was not typed: %v", err)
+				}
+			}
 			events, _ := server.snapshot()
-			if len(events) == 0 || events[0] != "claim" || tc.manifestRead != (len(events) > 1) {
+			if len(events) == 0 || events[0] != "claim" || tc.manifestRead != slices.Contains(events, "manifest") || slices.Contains(events, "complete") {
 				t.Fatalf("unexpected calls after Core failure: %v", events)
 			}
 			for _, event := range events[1:] {
-				if event != "manifest" {
+				if (tc.manifestRead && event != "manifest" && event != "heartbeat") || (!tc.manifestRead && event != "claim") {
 					t.Fatalf("runner continued after Core failure: %v", events)
 				}
 			}
@@ -431,7 +520,8 @@ func TestQueuedRunnerCompletesFailedAfterInvalidExecution(t *testing.T) {
 				t.Fatalf("order=%+v err=%v", order, err)
 			}
 			events, result := server.snapshot()
-			if strings.Join(events, ",") != "claim,manifest,heartbeat,heartbeat,complete" || result.Reason == nil || *result.Reason != "runner-crashed" {
+			assertQueuedLifecycle(t, events, 2)
+			if result.Reason == nil || *result.Reason != "runner-crashed" {
 				t.Fatalf("events=%v result=%+v", events, result)
 			}
 		})

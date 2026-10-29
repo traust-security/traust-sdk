@@ -131,21 +131,6 @@ func (r *Runner) RunOnce(ctx context.Context) (*api.RunOrder, error) {
 	if order.ArtifactId == nil || order.RepositoryId != nil {
 		return r.finish(ctx, order, api.JobResult{Outcome: api.OutcomeRefused, Reason: stringPtr("bad_request")})
 	}
-	match, err := r.matchesPack(ctx, *order.ArtifactId)
-	if err != nil {
-		return order, fmt.Errorf("ops: verify pack for order %s: %w", *order.Id, err)
-	}
-	if !match {
-		return r.finish(ctx, order, api.JobResult{Outcome: api.OutcomeRefused, Reason: stringPtr("pack version mismatch")})
-	}
-	argv := make([]string, 0, len(asset.Run))
-	for _, token := range asset.Run {
-		if match := commandParameter.FindStringSubmatch(token); match != nil {
-			argv = append(argv, order.Id.String())
-		} else {
-			argv = append(argv, token)
-		}
-	}
 	run := RecordingRun{
 		Client: r.config.Client, Executor: r.config.Executor,
 		Start:             api.StartRecordingRequest{LeaseSeconds: r.config.LeaseSeconds},
@@ -155,20 +140,42 @@ func (r *Runner) RunOnce(ctx context.Context) (*api.RunOrder, error) {
 	if err != nil {
 		return order, err
 	}
+	match, err := superviseLease(ctx, run, *order, owned, func(workCtx context.Context) (bool, error) {
+		return r.matchesPack(workCtx, *order.ArtifactId)
+	})
+	if err != nil {
+		return owned, fmt.Errorf("ops: verify pack for order %s: %w", *order.Id, err)
+	}
+	if !match {
+		return r.finish(ctx, owned, api.JobResult{Outcome: api.OutcomeRefused, Reason: stringPtr("pack version mismatch")})
+	}
+	argv := make([]string, 0, len(asset.Run))
+	for _, token := range asset.Run {
+		if match := commandParameter.FindStringSubmatch(token); match != nil {
+			argv = append(argv, order.Id.String())
+		} else {
+			argv = append(argv, token)
+		}
+	}
+	updated, err := run.heartbeat(ctx, *order, owned)
+	if err != nil {
+		return owned, err
+	}
+	owned = updated
 	produced, err := run.execute(ctx, *order, owned, Execution{Order: *order, Argv: argv})
 	if err != nil {
 		var lost *LeaseLostError
 		if errors.As(err, &lost) || ctx.Err() != nil {
-			return order, err
+			return owned, err
 		}
-		finished, finishErr := r.finish(ctx, order, api.JobResult{Outcome: api.OutcomeFailed, Reason: stringPtr("runner-crashed")})
+		finished, finishErr := r.finish(ctx, owned, api.JobResult{Outcome: api.OutcomeFailed, Reason: stringPtr("runner-crashed")})
 		return finished, errors.Join(err, finishErr)
 	}
 	if err := validateJobResult(produced.Result); err != nil {
-		finished, finishErr := r.finish(ctx, order, api.JobResult{Outcome: api.OutcomeFailed, Reason: stringPtr("runner-crashed")})
+		finished, finishErr := r.finish(ctx, owned, api.JobResult{Outcome: api.OutcomeFailed, Reason: stringPtr("runner-crashed")})
 		return finished, errors.Join(err, finishErr)
 	}
-	return r.finish(ctx, order, produced.Result)
+	return r.finish(ctx, owned, produced.Result)
 }
 
 func (r *Runner) matchesPack(ctx context.Context, artifactID uuid.UUID) (bool, error) {
@@ -178,9 +185,14 @@ func (r *Runner) matchesPack(ctx context.Context, artifactID uuid.UUID) (bool, e
 	if err != nil {
 		return false, err
 	}
+	if response.HTTPResponse == nil {
+		return false, errors.New("Core returned a run manifest without an HTTP response")
+	}
 	if response.StatusCode() != http.StatusOK {
-		_, err := nativeResponse[api.Artifact](response.StatusCode(), response.Body, nil)
-		return false, err
+		if err := api.CheckResponse(response.StatusCode(), response.Body, response.HTTPResponse.Header.Get("Content-Type")); err != nil {
+			return false, err
+		}
+		return false, fmt.Errorf("Core returned HTTP %d without a run manifest", response.StatusCode())
 	}
 	var manifest struct {
 		Artifact string `json:"artifact"`

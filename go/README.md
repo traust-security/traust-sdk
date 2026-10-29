@@ -65,6 +65,8 @@ cancelled. The runner checks Core's run-manifest pack digest, resolves
 `api.JobResult`. The executor runs `Execution.Argv`, returns its outcome, and
 stops all work when its context is cancelled. This path currently accepts only fleet-wide
 commands without model or repository inputs, such as `ledger_audit`.
+The queued fleet-command runner sends only `ProducedReport.Result` to Core;
+`RecordingRun` uses `ProducedReport.Payload` for native record doors.
 
 ## Native report recording
 

@@ -4,6 +4,10 @@ All notable changes to the Go SDK are documented here.
 
 ## [0.27.0]
 
+### Fixed
+
+- Keep queued-order leases alive during slow manifest reads and stop the read when the lease is lost.
+
 ### Added
 
 - `ops.Runner` claims and completes pinned fleet-wide pack commands through Core, with lease-loss cancellation and a pluggable executor.

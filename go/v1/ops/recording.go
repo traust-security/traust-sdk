@@ -17,7 +17,6 @@ import (
 
 // Executor performs the dispatched work. On context cancellation it MUST stop
 // actual work (including subprocess descendants), wait for it to stop, and return.
-// Payload is the original produced report, never a report reconstructed from DTOs.
 type Executor interface {
 	Execute(context.Context, Execution) (ProducedReport, error)
 }
@@ -30,6 +29,8 @@ type Execution struct {
 	Argv        []string         `json:"argv,omitempty"`
 }
 
+// ProducedReport carries an outcome and optional native report bytes.
+// RecordingRun sends Payload to record doors; queued runs submit only Result.
 type ProducedReport struct {
 	Payload []byte
 	Result  api.JobResult
@@ -229,37 +230,43 @@ func (run RecordingRun) heartbeat(ctx context.Context, original api.RunOrder, cu
 }
 
 func (run RecordingRun) execute(ctx context.Context, original api.RunOrder, current *api.RunOrder, execution Execution) (ProducedReport, error) {
+	return superviseLease(ctx, run, original, current, func(workCtx context.Context) (ProducedReport, error) {
+		executionOrder := original
+		// Native generated models use pointers; the executor must not mutate lease identity.
+		id, started, expiresAt := *original.Id, *original.StartedAt, *original.LeaseExpiresAt
+		executionOrder.Id, executionOrder.StartedAt, executionOrder.LeaseExpiresAt = &id, &started, &expiresAt
+		execution.Order = executionOrder
+		return run.Executor.Execute(workCtx, execution)
+	})
+}
+
+func superviseLease[T any](ctx context.Context, run RecordingRun, original api.RunOrder, current *api.RunOrder, work func(context.Context) (T, error)) (T, error) {
+	var zero T
 	if err := usableOrder(current); err != nil {
-		return ProducedReport{}, &LeaseLostError{Err: err}
+		return zero, &LeaseLostError{Err: err}
 	}
 	if err := ctx.Err(); err != nil {
-		return ProducedReport{}, &LeaseLostError{Err: err}
+		return zero, &LeaseLostError{Err: err}
 	}
-	executorCtx, cancel := context.WithCancel(ctx)
+	workCtx, cancel := context.WithCancel(ctx)
 	defer cancel()
-	type executionResult struct {
-		produced ProducedReport
-		err      error
+	type workResult struct {
+		value T
+		err   error
 	}
-	done := make(chan executionResult, 1)
-	executionOrder := original
-	// Native generated models use pointers. Do not share the SDK's authority
-	// and lease/provenance origin storage with an executor implementation.
-	id, started, expiresAt := *original.Id, *original.StartedAt, *original.LeaseExpiresAt
-	executionOrder.Id, executionOrder.StartedAt, executionOrder.LeaseExpiresAt = &id, &started, &expiresAt
-	execution.Order = executionOrder
+	done := make(chan workResult, 1)
 	go func() {
-		produced, err := run.Executor.Execute(executorCtx, execution)
-		done <- executionResult{produced: produced, err: err}
+		value, err := work(workCtx)
+		done <- workResult{value: value, err: err}
 	}()
 	ticker := time.NewTicker(run.HeartbeatInterval)
 	defer ticker.Stop()
 	expires := time.NewTimer(time.Until(*current.LeaseExpiresAt))
 	defer expires.Stop()
-	stop := func(cause error) (ProducedReport, error) {
+	stop := func(cause error) (T, error) {
 		cancel()
-		<-done // Executor contract: actual work has stopped before it returns.
-		return ProducedReport{}, cause
+		<-done // Work, including executor descendants, has stopped before return.
+		return zero, cause
 	}
 	for {
 		select {
@@ -276,9 +283,9 @@ func (run RecordingRun) execute(ctx context.Context, original api.RunOrder, curr
 			expires.Reset(time.Until(*current.LeaseExpiresAt))
 		case result := <-done:
 			if ctx.Err() != nil || !current.LeaseExpiresAt.After(time.Now()) {
-				return ProducedReport{}, &LeaseLostError{Err: errors.New("execution ended without a live lease")}
+				return zero, &LeaseLostError{Err: errors.New("work ended without a live lease")}
 			}
-			return result.produced, result.err
+			return result.value, result.err
 		}
 	}
 }
