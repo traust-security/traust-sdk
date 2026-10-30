@@ -72,7 +72,7 @@ GitHub Actions (`.github/workflows/ci.yml`) on every PR, in the merge queue and 
 | `e2e` | `make e2e`: the generated client against `traust-server` built from core at `CORE_REF` |
 | `guardrails` | `make guardrails`: the AGENTS.md rules a machine can check, plus commit subjects |
 
-`core-head.yml` runs nightly against core's `development` tip; red means bump `CORE_REF`. `auto-merge.yml` and `review-after-merge.yml` follow traust-core's merge-by-risk flow; paths in `CODEOWNERS` wait for a code owner.
+`core-head.yml` runs nightly against core's `development` tip; red means bump `CORE_REF`. `review-after-merge.yml` follows traust-core's merge-by-risk flow; paths in `CODEOWNERS` wait for a code owner.
 
 ## Running tests
 
