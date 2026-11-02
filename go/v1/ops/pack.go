@@ -12,7 +12,6 @@ import (
 	"strings"
 	"sync"
 
-	"github.com/google/uuid"
 	"github.com/santhosh-tekuri/jsonschema/v6"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 	"gopkg.in/yaml.v3"
@@ -44,14 +43,33 @@ type Pack struct {
 }
 
 type packAsset struct {
-	Run        []string                   `json:"run"`
-	Params     map[string]json.RawMessage `json:"params"`
-	Partitions string                     `json:"partitions"`
-	Model      json.RawMessage            `json:"model"`
+	Run []string `json:"run"`
+	// Model is the asset's model role, what {role} fills; nil when the asset declares none.
+	Model *struct {
+		Role string `json:"role"`
+	} `json:"model"`
 }
 
-// command is an asset's pinned argv. "{run_id}" is the one parameter a fleet-wide command takes.
+// command is an asset's pinned argv. A whole argument may name a parameter the order supplies.
 type command []string
+
+// The parameters a command can name, each a whole argument: the order's id and routing rule,
+// the claiming worker, the asset's model role and its repository's URL.
+const (
+	paramRunID   = "{run_id}"
+	paramWorker  = "{worker}"
+	paramRole    = "{role}"
+	paramRule    = "{rule}"
+	paramRepoURL = "{repo_url}"
+)
+
+func isParam(arg string) bool {
+	switch arg {
+	case paramRunID, paramWorker, paramRole, paramRule, paramRepoURL:
+		return true
+	}
+	return false
+}
 
 // LoadPack validates a pack against the schema core loads packs with.
 func LoadPack(raw []byte) (*Pack, error) {
@@ -95,31 +113,49 @@ func (p *Pack) Pin() traust.ConfigDigest { return traust.ConfigDigest{Name: p.re
 // Assets are the assets the pack declares, sorted.
 func (p *Pack) Assets() []string { return slices.Sorted(maps.Keys(p.assets)) }
 
-// command returns the asset's argv if a fleet-wide runner can run it: no partitions, model or
-// params, and "{run_id}" as a whole argument is its only placeholder.
+// role is the asset's model role, what {role} fills; empty when the asset declares none.
+func (p *Pack) role(name string) string {
+	if asset, ok := p.assets[name]; ok && asset.Model != nil {
+		return asset.Model.Role
+	}
+	return ""
+}
+
+// command is the asset's argv when a runner can fill every parameter it names: each parameter
+// a whole argument, and an argument naming {role} backed by the asset's model role.
 func (p *Pack) command(name string) (command, error) {
 	asset, ok := p.assets[name]
-	switch {
-	case !ok || len(asset.Run) == 0:
+	if !ok || len(asset.Run) == 0 {
 		return nil, fmt.Errorf("ops: pack %s has no command for asset %q", p.name, name)
-	case asset.Partitions != "" || len(asset.Model) != 0 || len(asset.Params) != 0:
-		return nil, fmt.Errorf("ops: asset %q needs inputs a fleet-wide runner does not resolve", name)
 	}
 	for _, arg := range asset.Run {
-		if arg != "{run_id}" && strings.ContainsAny(arg, "{}") {
+		if !isParam(arg) && strings.ContainsAny(arg, "{}") {
 			return nil, fmt.Errorf("ops: asset %q has an unresolvable argument %q", name, arg)
 		}
+	}
+	if slices.Contains(asset.Run, paramRole) && asset.Model == nil {
+		return nil, fmt.Errorf("ops: asset %q names %s without a model role", name, paramRole)
 	}
 	return asset.Run, nil
 }
 
-func (c command) resolve(runID uuid.UUID) []string {
+// names reports whether the command names the parameter.
+func (c command) names(parameter string) bool { return slices.Contains(c, parameter) }
+
+// fill replaces each whole "{param}" argument with its value; a parameter the order cannot
+// supply is an error, never a partial substitution.
+func (c command) fill(values map[string]string) ([]string, error) {
 	argv := make([]string, len(c))
 	for i, arg := range c {
-		if arg == "{run_id}" {
-			arg = runID.String()
+		if !isParam(arg) {
+			argv[i] = arg
+			continue
 		}
-		argv[i] = arg
+		value, ok := values[arg]
+		if !ok {
+			return nil, &unresolvedParam{fmt.Errorf("%s: no value for this order", arg)}
+		}
+		argv[i] = value
 	}
-	return argv
+	return argv, nil
 }

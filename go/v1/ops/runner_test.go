@@ -51,6 +51,7 @@ type queuedServer struct {
 	mu               sync.Mutex
 	order            traust.RunOrder
 	pack             *Pack
+	asset            string
 	empty            bool
 	wrongDigest      bool
 	manifest         *traust.OrderManifest
@@ -58,6 +59,8 @@ type queuedServer struct {
 	heartbeatStatus  int
 	claimStatus      int
 	manifestStatus   int
+	repository       *traust.Repository
+	repositoryStatus int
 	manifestDelay    time.Duration
 	manifestCanceled chan struct{}
 	heartbeatCalls   int
@@ -83,7 +86,7 @@ func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Reque
 			return
 		}
 		var body traust.ClaimRequest
-		if err := json.NewDecoder(request.Body).Decode(&body); err != nil || body.Assets == nil || len(*body.Assets) != 1 || (*body.Assets)[0] != "ledger_audit" {
+		if err := json.NewDecoder(request.Body).Decode(&body); err != nil || body.Assets == nil || len(*body.Assets) != 1 || (*body.Assets)[0] != server.asset {
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
@@ -131,6 +134,19 @@ func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Reque
 			digest = strings.Repeat("0", 64)
 		}
 		_ = json.NewEncoder(w).Encode(traust.OrderManifest{Config: &[]traust.ConfigDigest{{Name: "pack:security", Digest: digest}}})
+	case strings.HasPrefix(request.URL.Path, "/v1/repositories/"):
+		server.events = append(server.events, "repository")
+		if server.repositoryStatus != 0 {
+			w.WriteHeader(server.repositoryStatus)
+			_ = json.NewEncoder(w).Encode(traust.Problem{Title: "repository unavailable", Status: server.repositoryStatus})
+			return
+		}
+		if server.repository == nil {
+			w.WriteHeader(http.StatusNotFound)
+			_ = json.NewEncoder(w).Encode(traust.Problem{Title: "no such repository", Status: http.StatusNotFound})
+			return
+		}
+		_ = json.NewEncoder(w).Encode(*server.repository)
 	case strings.HasSuffix(request.URL.Path, "/heartbeat"):
 		server.events = append(server.events, "heartbeat")
 		server.heartbeatCalls++
@@ -171,10 +187,43 @@ func queuedRunner(t *testing.T, executor Executor) (*Runner, *queuedServer) {
 	}
 	id, artifactID := uuid.New(), uuid.New()
 	started, expires := time.Now(), time.Now().Add(time.Minute)
-	server := &queuedServer{pack: pack, order: traust.RunOrder{
+	server := &queuedServer{pack: pack, asset: "ledger_audit", order: traust.RunOrder{
 		Id: &id, ArtifactId: &artifactID, Asset: "ledger_audit", State: traust.RunOrderStateLeased,
 		StartedAt: &started, LeaseExpiresAt: &expires, RequestedBy: "human:operator",
 	}}
+	return serveRunner(t, executor, server, nil)
+}
+
+const vocabularyPack = `pack: security
+assets:
+  agentic_scan:
+    run: [session, --run, "{run_id}", --worker, "{worker}", --role, "{role}", --rule, "{rule}", --repo, "{repo_url}"]
+    model: {role: threat-model}
+    trigger: {every: 7d}
+`
+
+// vocabularyRunner claims a repository-bound, routed order of an asset that names every
+// parameter, held by worker runner-1, against a repository on github.com.
+func vocabularyRunner(t *testing.T, executor Executor) (*Runner, *queuedServer) {
+	t.Helper()
+	pack, err := LoadPack([]byte(vocabularyPack))
+	if err != nil {
+		t.Fatal(err)
+	}
+	id, artifactID, repositoryID := uuid.New(), uuid.New(), uuid.New()
+	started, expires := time.Now(), time.Now().Add(time.Minute)
+	worker, rule := "runner-1", "rule-3+threat-model-pr"
+	server := &queuedServer{pack: pack, asset: "agentic_scan", order: traust.RunOrder{
+		Id: &id, ArtifactId: &artifactID, Asset: "agentic_scan", State: traust.RunOrderStateLeased,
+		StartedAt: &started, LeaseExpiresAt: &expires, RequestedBy: "human:operator",
+		LeaseHolder: &worker, RepositoryId: &repositoryID, Rule: &rule,
+	}, repository: &traust.Repository{Id: &repositoryID, Url: "https://github.com/example/app"}}
+	return serveRunner(t, executor, server, []string{"github.com"})
+}
+
+// serveRunner runs a client against server's fake core and a runner for its pack.
+func serveRunner(t *testing.T, executor Executor, server *queuedServer, forgeHosts []string) (*Runner, *queuedServer) {
+	t.Helper()
 	httpServer := httptest.NewServer(server)
 	t.Cleanup(httpServer.Close)
 	tokenFile := filepath.Join(t.TempDir(), "token")
@@ -186,7 +235,8 @@ func queuedRunner(t *testing.T, executor Executor) (*Runner, *queuedServer) {
 		t.Fatal(err)
 	}
 	runner, err := NewRunner(RunnerConfig{
-		Client: client, Pack: pack, Executor: executor, Assets: []string{"ledger_audit"},
+		Client: client, Pack: server.pack, Executor: executor, Assets: []string{server.asset},
+		ForgeHosts:   forgeHosts,
 		LeaseSeconds: 30, HeartbeatInterval: 5 * time.Millisecond, RequestTimeout: time.Second, PollInterval: time.Millisecond,
 	})
 	if err != nil {
@@ -208,7 +258,7 @@ func assertQueuedLifecycle(t *testing.T, events []string, minAfterManifest int) 
 		t.Fatalf("unexpected queued lifecycle: %v", events)
 	}
 	for index, event := range events[1 : len(events)-1] {
-		if index+1 != manifest && event != "heartbeat" {
+		if index+1 != manifest && event != "heartbeat" && event != "repository" {
 			t.Fatalf("unexpected queued lifecycle: %v", events)
 		}
 	}
@@ -344,16 +394,145 @@ func TestQueuedRunnerCancelsManifestReadOnLeaseLoss(t *testing.T) {
 	}
 }
 
-func TestQueuedRunnerRefusesRepositoryBoundFleetOrder(t *testing.T) {
+func TestQueuedRunnerRefusesARepositoryBoundOrderWithoutForgeHosts(t *testing.T) {
 	runner, server := queuedRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
-		t.Fatal("executor ran a repository-bound fleet order")
+		t.Fatal("executor ran a repository-bound order without an allowlist to check it against")
 		return ProducedReport{}, nil
 	}))
 	repositoryID := uuid.New()
 	server.order.RepositoryId = &repositoryID
+	server.repository = &traust.Repository{Id: &repositoryID, Url: "https://github.com/example/app"}
 	order, err := runner.RunOnce(context.Background())
 	if err != nil || order == nil || order.State != traust.RunOrderStateRefused {
 		t.Fatalf("order=%+v err=%v", order, err)
+	}
+	if _, result := server.snapshot(); result.Reason == nil || *result.Reason != traust.RunOrderReasonBadRequest {
+		t.Fatalf("result=%+v", result)
+	}
+}
+
+func TestQueuedRunnerRunsARepositoryBoundOrderWhoseRepositoryIsAllowlisted(t *testing.T) {
+	var argv []string
+	runner, server := queuedRunner(t, executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
+		argv = append([]string(nil), execution.Argv...)
+		return ProducedReport{Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
+	}))
+	runner.config.ForgeHosts = []string{"github.com"}
+	repositoryID := uuid.New()
+	server.order.RepositoryId = &repositoryID
+	server.repository = &traust.Repository{Id: &repositoryID, Url: "https://github.com/example/app.git"}
+	order, err := runner.RunOnce(context.Background())
+	if err != nil || order == nil || order.State != traust.RunOrderStateSucceeded {
+		t.Fatalf("order=%+v err=%v", order, err)
+	}
+	if len(argv) != 7 || argv[6] != order.Id.String() {
+		t.Fatalf("resolved argv: %v", argv)
+	}
+}
+
+func TestVocabularyRunnerResolvesEveryParameterFromItsSource(t *testing.T) {
+	var argv []string
+	runner, server := vocabularyRunner(t, executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
+		argv = append([]string(nil), execution.Argv...)
+		return ProducedReport{Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
+	}))
+	order, err := runner.RunOnce(context.Background())
+	if err != nil || order == nil || order.State != traust.RunOrderStateSucceeded {
+		t.Fatalf("order=%+v err=%v", order, err)
+	}
+	want := []string{
+		"session", "--run", order.Id.String(), "--worker", "runner-1", "--role", "threat-model",
+		"--rule", "rule-3+threat-model-pr", "--repo", "https://github.com/example/app",
+	}
+	if !slices.Equal(argv, want) {
+		t.Fatalf("resolved argv %v, want %v", argv, want)
+	}
+	events, _ := server.snapshot()
+	assertQueuedLifecycle(t, events, 2)
+}
+
+func TestVocabularyRunnerRefusesAnOrderMissingAParameter(t *testing.T) {
+	for _, tc := range []struct {
+		name   string
+		change func(*queuedServer)
+	}{
+		{"no repository", func(server *queuedServer) { server.order.RepositoryId = nil }},
+		{"no rule", func(server *queuedServer) { server.order.Rule = nil }},
+		{"no lease holder", func(server *queuedServer) { server.order.LeaseHolder = nil }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			runner, server := vocabularyRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+				t.Fatal("executor ran an order with an unresolved parameter")
+				return ProducedReport{}, nil
+			}))
+			tc.change(server)
+			order, err := runner.RunOnce(context.Background())
+			if err != nil || order == nil || order.State != traust.RunOrderStateRefused {
+				t.Fatalf("order=%+v err=%v", order, err)
+			}
+			if _, result := server.snapshot(); result.Reason == nil || *result.Reason != traust.RunOrderReasonBadRequest {
+				t.Fatalf("result=%+v", result)
+			}
+		})
+	}
+}
+
+func TestVocabularyRunnerRefusesARepositoryURLCoreWouldNotParse(t *testing.T) {
+	for _, tc := range []struct {
+		name string
+		url  string
+	}{
+		{"not https", "http://github.com/example/app"},
+		{"host off the allowlist", "https://gitlab.com/example/app"},
+		{"credentials", "https://secret@github.com/example/app"},
+		{"port", "https://github.com:443/example/app"},
+		{"one path segment", "https://github.com/app"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			runner, server := vocabularyRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+				t.Fatal("executor ran an order with an unresolvable repository")
+				return ProducedReport{}, nil
+			}))
+			server.repository.Url = tc.url
+			order, err := runner.RunOnce(context.Background())
+			if err != nil || order == nil || order.State != traust.RunOrderStateRefused {
+				t.Fatalf("order=%+v err=%v", order, err)
+			}
+			if _, result := server.snapshot(); result.Reason == nil || *result.Reason != traust.RunOrderReasonBadRequest {
+				t.Fatalf("result=%+v", result)
+			}
+		})
+	}
+}
+
+func TestVocabularyRunnerRefusesAnOrderForARepositoryCoreDoesNotKnow(t *testing.T) {
+	runner, server := vocabularyRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+		t.Fatal("executor ran an order for a missing repository")
+		return ProducedReport{}, nil
+	}))
+	server.repository = nil
+	order, err := runner.RunOnce(context.Background())
+	if err != nil || order == nil || order.State != traust.RunOrderStateRefused {
+		t.Fatalf("order=%+v err=%v", order, err)
+	}
+	if _, result := server.snapshot(); result.Reason == nil || *result.Reason != traust.RunOrderReasonBadRequest {
+		t.Fatalf("result=%+v", result)
+	}
+}
+
+func TestVocabularyRunnerStopsOnAFailedRepositoryRead(t *testing.T) {
+	runner, server := vocabularyRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+		t.Fatal("executor ran after the repository read failed")
+		return ProducedReport{}, nil
+	}))
+	server.repositoryStatus = http.StatusServiceUnavailable
+	order, err := runner.RunOnce(context.Background())
+	if err == nil || order == nil {
+		t.Fatalf("order=%+v err=%v", order, err)
+	}
+	events, _ := server.snapshot()
+	if slices.Contains(events, "complete") {
+		t.Fatalf("completed after a failed repository read: %v", events)
 	}
 }
 
@@ -369,6 +548,88 @@ func TestQueuedRunnerRejectsEmbeddedCommandParameter(t *testing.T) {
 	config.Pack = pack
 	if _, err := NewRunner(config); err == nil {
 		t.Fatal("embedded command parameter accepted")
+	}
+}
+
+func TestQueuedRunnerRejectsARoleParameterWithoutAModelRole(t *testing.T) {
+	runner, _ := queuedRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+		return ProducedReport{}, nil
+	}))
+	pack, err := LoadPack([]byte(strings.Replace(ledgerPack, "{run_id}", "{role}", 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	config := runner.config
+	config.Pack = pack
+	if _, err := NewRunner(config); err == nil {
+		t.Fatal("a command naming {role} without a model role accepted")
+	}
+}
+
+func TestQueuedRunnerRequiresForgeHostsForARepoURLCommand(t *testing.T) {
+	runner, _ := queuedRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+		return ProducedReport{}, nil
+	}))
+	pack, err := LoadPack([]byte(strings.Replace(ledgerPack, "{run_id}", "{repo_url}", 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	config := runner.config
+	config.Pack = pack
+	if _, err := NewRunner(config); err == nil {
+		t.Fatal("a command naming {repo_url} without forge hosts accepted")
+	}
+	config.ForgeHosts = []string{"github.com"}
+	if _, err := NewRunner(config); err != nil {
+		t.Fatalf("a command naming {repo_url} with forge hosts rejected: %v", err)
+	}
+}
+
+func TestHTTPSRepoURLMirrorsCoresValidation(t *testing.T) {
+	allowed := []string{"GitHub.com"}
+	for _, tc := range []struct {
+		name string
+		raw  string
+		want string
+	}{
+		{"https", "https://github.com/example/app", "https://github.com/example/app"},
+		{"uppercase host", "https://GitHub.COM/example/app", "https://github.com/example/app"},
+		{"git suffix", "https://github.com/example/app.git", "https://github.com/example/app"},
+		{"trailing slash", "https://github.com/example/app/", "https://github.com/example/app"},
+		{"deep path", "https://github.com/group/example/app", "https://github.com/group/example/app"},
+		{"http", "http://github.com/example/app", ""},
+		{"no scheme", "github.com/example/app", ""},
+		{"credentials", "https://user:pw@github.com/example/app", ""},
+		{"empty userinfo", "https://@github.com/example/app", ""},
+		{"port", "https://github.com:443/example/app", ""},
+		{"query", "https://github.com/example/app?x=1", ""},
+		{"fragment", "https://github.com/example/app#f", ""},
+		{"no path", "https://github.com", ""},
+		{"one path segment", "https://github.com/app", ""},
+		{"dot segment", "https://github.com/../app", ""},
+		{"parent segment", "https://github.com/../app", ""},
+		{"dash-led segment", "https://github.com/-app/x", ""},
+		{"space in segment", "https://github.com/ex ample/x", ""},
+		{"percent escape", "https://github.com/ex%20ample/x", ""},
+		{"non-ascii", "https://github.com/example/äpp", ""},
+		{"padded", " https://github.com/example/app", ""},
+		{"dash-led", "-https://github.com/example/app", ""},
+		{"empty host", "https:///example/app", ""},
+		{"ipv6 host", "https://[::1]/example/app", ""},
+		{"host off the allowlist", "https://gitlab.com/example/app", ""},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			got, err := httpsRepoURL(tc.raw, allowed)
+			if tc.want == "" {
+				if err == nil {
+					t.Fatalf("accepted %q as %q", tc.raw, got)
+				}
+				return
+			}
+			if err != nil || got != tc.want {
+				t.Fatalf("got %q err=%v, want %q", got, err, tc.want)
+			}
+		})
 	}
 }
 

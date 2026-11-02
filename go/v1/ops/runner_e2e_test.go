@@ -61,3 +61,64 @@ func TestE2ERunnerRunsASubmittedPackCommand(t *testing.T) {
 		t.Fatalf("drained queue returned order=%+v err=%v", idle, err)
 	}
 }
+
+// A repository-bound, routed order of an asset with a model role fills every parameter: the
+// order's id and rule, the claiming worker, the pack's role, and the repository's URL read
+// through core and checked against the runner's forge hosts.
+func TestE2ERunnerResolvesEveryCommandParameter(t *testing.T) {
+	raw, err := os.ReadFile("testdata/vocabulary-command.yaml")
+	if err != nil {
+		t.Fatal(err)
+	}
+	pack, err := LoadPack(raw)
+	if err != nil {
+		t.Fatal(err)
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+
+	person := e2eClient(t, "TRAUST_E2E_TOKEN_FILE")
+	label := "Smoke"
+	repository := "https://github.com/octocat/Hello-World"
+	onboarded, err := person.Onboard(ctx, traust.OnboardingRequest{
+		Product: "smoke-vocabulary", Label: &label,
+		Repositories: &[]traust.RepositorySpec{{Url: repository}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	repositoryID := (*onboarded.RepositoryIds)[0]
+	rule := "rule-e2e"
+	want, err := person.Submit(ctx, traust.SubmitRequest{
+		Order:  traust.OrderRequest{Asset: "command_params", Priority: 1, RepositoryId: &repositoryID, Rule: &rule},
+		Config: &[]traust.ConfigDigest{pack.Pin()},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	var argv []string
+	runner, err := NewRunner(RunnerConfig{
+		Client: e2eClient(t, "TRAUST_E2E_RUNNER_TOKEN_FILE"), Pack: pack,
+		Executor: executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
+			argv = append([]string(nil), execution.Argv...)
+			return ProducedReport{Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
+		}),
+		Assets: []string{"command_params"}, ForgeHosts: []string{"github.com"},
+		LeaseSeconds: 30, PollInterval: time.Second,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	order, err := runner.RunOnce(ctx)
+	if err != nil || order == nil || *order.Id != *want.Id || order.State != traust.RunOrderStateSucceeded {
+		t.Fatalf("order=%+v err=%v", order, err)
+	}
+	if len(argv) != 8 || argv[0] != "python3" || argv[3] != want.Id.String() || argv[4] == "" ||
+		argv[5] != "smoke-role" || argv[6] != rule || argv[7] != repository {
+		t.Fatalf("resolved argv: %v", argv)
+	}
+	if idle, err := runner.RunOnce(ctx); err != nil || idle != nil {
+		t.Fatalf("drained queue returned order=%+v err=%v", idle, err)
+	}
+}

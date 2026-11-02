@@ -44,6 +44,13 @@ type LeaseLostError struct{ Err error }
 func (e *LeaseLostError) Error() string { return "ops: order lease lost: " + e.Err.Error() }
 func (e *LeaseLostError) Unwrap() error { return e.Err }
 
+// unresolvedParam means the order cannot supply a parameter its command names, or names a
+// repository whose URL core would not parse: the order is refused, never run.
+type unresolvedParam struct{ err error }
+
+func (e *unresolvedParam) Error() string { return "ops: unresolved parameter: " + e.err.Error() }
+func (e *unresolvedParam) Unwrap() error { return e.err }
+
 func lost(err error) bool {
 	var lease *LeaseLostError
 	return errors.As(err, &lease)
