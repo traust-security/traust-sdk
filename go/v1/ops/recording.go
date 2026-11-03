@@ -172,8 +172,10 @@ func ptr[T any](value T) *T { return &value }
 // sessionOutputInvalid is contracts' run-order-reason "session-output-invalid": the session's
 // output failed the record gate's schema validation or lint. Core's reason vocabulary loads at
 // runtime from contracts, so core takes the write today; this generated client predates the
-// constant (client.gen.go carries 11 of the 12 contract values). TODO(contracts#109):
-// write-rejected is the gate-refusal spelling; stamp it once the generated client carries it.
+// constant (client.gen.go carries 11 of the 12 contract values). contracts#109 merged the
+// write-rejected definition (the gate-refusal spelling, distinct from this runner-caught
+// validation spelling), but the switch needs core's own contracts pin to roll past 38f01a1
+// first — then CORE_REF, the regenerated client, and the stamp change together.
 const sessionOutputInvalid = traust.RunOrderReason("session-output-invalid")
 
 // payloadRejected reports whether a record-gate status means the payload itself is
