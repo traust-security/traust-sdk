@@ -91,6 +91,15 @@ func (run RecordingRun) Run(ctx context.Context) (*RecordingResult, error) {
 	if err != nil {
 		var refusal *traust.ProblemError
 		if errors.As(err, &refusal) && refusal.StatusCode >= 400 && refusal.StatusCode < 500 {
+			// The record gate refused the payload: a terminally rejected
+			// artifact (never retried, never mangled), and the reason makes
+			// it attributable from the order row alone — the pod is gone by
+			// the time anyone looks. bad_request is the payload-was-bad
+			// spelling; write-rejected joins when the contracts enum
+			// carries it.
+			if produced.Result.Reason == nil {
+				produced.Result.Reason = ptr(traust.RunOrderReasonBadRequest)
+			}
 			return run.fail(ctx, l, produced.Result, err)
 		}
 		// A transport or server error may follow a committed write: keep the order for
@@ -156,3 +165,5 @@ func (run RecordingRun) fail(ctx context.Context, l *lease, result traust.JobRes
 	completed, err := l.complete(ctx, result)
 	return &RecordingResult{Order: l.latest(completed), Result: result}, errors.Join(cause, err)
 }
+
+func ptr[T any](value T) *T { return &value }

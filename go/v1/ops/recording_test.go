@@ -266,8 +266,12 @@ func TestDeterministicRefusalCanCompleteFailedAfterOwnershipCheck(t *testing.T) 
 		t.Fatal("native deterministic refusal was not preserved")
 	}
 	heartbeats, records, completions := server.counts()
-	if heartbeats != 2 || records != 1 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed || server.completed.Reason != nil {
+	if heartbeats != 2 || records != 1 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed {
 		t.Fatal("refusal did not recheck ownership and complete using native outcome")
+	}
+	// The refused payload is attributable from the order row alone.
+	if server.completed.Reason == nil || *server.completed.Reason != traust.RunOrderReasonBadRequest {
+		t.Fatalf("record refusal did not stamp a reason: %+v", server.completed.Reason)
 	}
 }
 
