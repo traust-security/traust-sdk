@@ -74,12 +74,23 @@ api-generate: core
 mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context import Config, Context; print(Context(Config.from_file(Path('$$home/config.yaml'))).local_issuer.mint('$(1)', machine=$(2)).token.get_secret_value())") > "$$home/$(3)"
 
 # The generated client and the runner against traust-server built from core at CORE_REF.
+# The suite never leaves localhost: the vocabulary test onboards one repository, and
+# onboarding reads its visibility at the forge, so the e2eforge mock stands in for the
+# forge. Core reaches a gitlab-kind host at https://{host}/api/v4 — scheme and port are
+# fixed — so e2eforge is an HTTPS_PROXY CONNECT proxy answering with its own TLS (an
+# ephemeral self-signed certificate, trusted through SSL_CERT_FILE), and the e2e config
+# maps the mock's host to the gitlab kind in forge_hosts.
 e2e: core
 	@set -eu; \
 	home="$$(mktemp -d)"; port=18080; \
-	printf 'home: %s\nidentity:\n  trust_local: true\n' "$$home" > "$$home/config.yaml"; \
-	(cd "$(CORE_SOURCE)" && exec uv run --quiet traust-server --config "$$home/config.yaml" --port $$port) > "$$home/server.log" 2>&1 & pid=$$!; \
-	trap 'kill $$pid 2>/dev/null || true; rm -rf "$$home"' EXIT; \
+	printf 'home: %s\nidentity:\n  trust_local: true\nforge_hosts:\n  e2e-forge.test: gitlab\n' "$$home" > "$$home/config.yaml"; \
+	(cd "$(CORE_SOURCE)" && exec uv run --quiet python -c "import traust_core.v1.rest.server"); \
+	go build -o "$$home/e2eforge" ./internal/e2eforge; \
+	"$$home/e2eforge" -ca "$$home/forge-ca.pem" > "$$home/forge-port" & forge_pid=$$!; \
+	for _ in $$(seq 100); do [ -s "$$home/forge-port" ] && break; sleep 0.1; done; \
+	forge_port=$$(cat "$$home/forge-port"); \
+	(cd "$(CORE_SOURCE)" && exec env SSL_CERT_FILE="$$home/forge-ca.pem" HTTPS_PROXY="http://127.0.0.1:$$forge_port" https_proxy="http://127.0.0.1:$$forge_port" uv run --quiet traust-server --config "$$home/config.yaml" --port $$port) > "$$home/server.log" 2>&1 & pid=$$!; \
+	trap 'kill $$pid $$forge_pid 2>/dev/null || true; rm -rf "$$home"' EXIT; \
 	for _ in $$(seq 60); do curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz && break; sleep 1; done; \
 	curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz || { cat "$$home/server.log"; exit 1; }; \
 	$(call mint,e2e@example.com,False,person); \

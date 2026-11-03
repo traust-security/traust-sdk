@@ -79,7 +79,10 @@ func TestE2ERunnerResolvesEveryCommandParameter(t *testing.T) {
 
 	person := e2eClient(t, "TRAUST_E2E_TOKEN_FILE")
 	label := "Smoke"
-	repository := "https://github.com/octocat/Hello-World"
+	// The harness's e2eforge mock (go/internal/e2eforge, wired in go/Makefile's e2e target)
+	// answers for this repository: core reads its visibility there at onboarding, and the
+	// runner checks the host against the allowlist below — no live forge involved.
+	repository := "https://e2e-forge.test/e2e/fixture"
 	onboarded, err := person.Onboard(ctx, traust.OnboardingRequest{
 		Product: "smoke-vocabulary", Label: &label,
 		Repositories: &[]traust.RepositorySpec{{Url: repository}},
@@ -104,7 +107,7 @@ func TestE2ERunnerResolvesEveryCommandParameter(t *testing.T) {
 			argv = append([]string(nil), execution.Argv...)
 			return ProducedReport{Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
 		}),
-		Assets: []string{"command_params"}, ForgeHosts: []string{"github.com"},
+		Assets: []string{"command_params"}, ForgeHosts: []string{"e2e-forge.test"},
 		LeaseSeconds: 30, PollInterval: time.Second,
 	})
 	if err != nil {
