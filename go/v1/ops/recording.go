@@ -177,8 +177,9 @@ func ptr[T any](value T) *T { return &value }
 const sessionOutputInvalid = traust.RunOrderReason("session-output-invalid")
 
 // payloadRejected reports whether a record-gate status means the payload itself is
-// unacceptable — core maps its validation errors to 422, a malformed body is a 400 — rather
+// unacceptable — core maps every payload refusal to 422 (both ValidationError and FastAPI's
+// RequestValidationError, problems.py STATUS), so no shape core produces answers 400 — rather
 // than an access or rate refusal that says nothing about the output.
 func payloadRejected(status int) bool {
-	return status == http.StatusBadRequest || status == http.StatusUnprocessableEntity
+	return status == http.StatusUnprocessableEntity
 }
