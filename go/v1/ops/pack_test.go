@@ -8,7 +8,7 @@ import (
 	"github.com/google/uuid"
 )
 
-func TestPackCommandRunsOnlyFleetWideAssets(t *testing.T) {
+func TestPackCommandRunsOnlyVocabularyArguments(t *testing.T) {
 	asset := func(lines ...string) string {
 		return "pack: p\nassets:\n  a:\n    " + strings.Join(lines, "\n    ") + "\n"
 	}
@@ -18,10 +18,22 @@ func TestPackCommandRunsOnlyFleetWideAssets(t *testing.T) {
 		ok   bool
 	}{
 		{"run_id as a whole argument", asset(`run: [tool, "{run_id}"]`), true},
+		{"worker as a whole argument", asset(`run: [tool, "{worker}"]`), true},
+		{"rule as a whole argument", asset(`run: [tool, "{rule}"]`), true},
+		{"repo_url as a whole argument", asset(`run: [tool, "{repo_url}"]`), true},
+		{"role with a model role", asset(`run: [tool, "{role}"]`, "model: {role: audit}"), true},
+		{"role without a model role", asset(`run: [tool, "{role}"]`), false},
+		{"model role without {role}", asset("run: [tool]", "model: {role: audit}"), true},
 		{"no placeholder", asset("run: [tool, --all]"), true},
-		{"repository partitions", asset("run: [tool]", "partitions: dynamic:repo"), false},
+		{"repository partitions", asset("run: [tool]", "partitions: dynamic:repo"), true},
+		{"typed params", asset(`run: [tool, "{repo_url}"]`, "params: {repo_url: HttpsRepoUrl}"), true},
+		{"mismatched param type", asset(`run: [tool, "{repo_url}"]`, "params: {repo_url: LocalRepoUrl}"), false},
+		{"declared type without the parameter", asset("run: [tool]", "params: {repo_url: HttpsRepoUrl}"), true},
+		{"forward-declared param", asset("run: [tool]", "params: {tokens: int}"), true},
 		{"other placeholder", asset(`run: [tool, "{repo}"]`), false},
 		{"embedded placeholder", asset(`run: [tool, "run-{run_id}"]`), false},
+		{"placeholder prefix", asset(`run: [tool, "{x}y"]`), false},
+		{"placeholder suffix", asset(`run: [tool, "a{b}"]`), false},
 		{"stray brace", asset(`run: [tool, "{"]`), false},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
@@ -43,11 +55,18 @@ func TestPackCommandRunsOnlyFleetWideAssets(t *testing.T) {
 	}
 }
 
-func TestCommandResolvesRunID(t *testing.T) {
+func TestCommandFillsTheParametersTheOrderSupplies(t *testing.T) {
 	id := uuid.New()
-	got := command{"tool", "{run_id}", "--flag"}.resolve(id)
-	if !slices.Equal(got, []string{"tool", id.String(), "--flag"}) {
-		t.Fatalf("resolved %v", got)
+	values := map[string]string{
+		paramRunID: id.String(), paramWorker: "runner-1", paramRole: "audit",
+		paramRule: "rule-1", paramRepoURL: "https://github.com/example/app",
+	}
+	got, err := command{"tool", paramRunID, paramWorker, paramRole, paramRule, paramRepoURL, "--flag"}.fill(values)
+	if err != nil || !slices.Equal(got, []string{"tool", id.String(), "runner-1", "audit", "rule-1", "https://github.com/example/app", "--flag"}) {
+		t.Fatalf("resolved argv=%v err=%v", got, err)
+	}
+	if _, err := (command{"tool", paramRule}).fill(map[string]string{paramRunID: id.String()}); err == nil {
+		t.Fatal("a parameter the order cannot supply was filled")
 	}
 }
 

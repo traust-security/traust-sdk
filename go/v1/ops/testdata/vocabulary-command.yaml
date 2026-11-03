@@ -1,0 +1,7 @@
+pack: smoke
+assets:
+  command_params:
+    run: [python3, -c, "import json, sys; json.dump(dict(outcome='succeeded'), sys.stdout)", "{run_id}", "{worker}", "{role}", "{rule}", "{repo_url}"]
+    model: {role: smoke-role}
+    trigger: {every: 7d}
+    runner: {labels: [deterministic]}
