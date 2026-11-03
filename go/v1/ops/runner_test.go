@@ -137,6 +137,9 @@ func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Reque
 	case strings.HasPrefix(request.URL.Path, "/v1/repositories/"):
 		server.events = append(server.events, "repository")
 		if server.repositoryStatus != 0 {
+			// Core answers every refusal with problem+json (RFC 9457), never FastAPI's
+			// validation-error shape the generated client also knows for 422.
+			w.Header().Set("Content-Type", "application/problem+json")
 			w.WriteHeader(server.repositoryStatus)
 			_ = json.NewEncoder(w).Encode(traust.Problem{Title: "repository unavailable", Status: server.repositoryStatus})
 			return
@@ -505,18 +508,34 @@ func TestVocabularyRunnerRefusesARepositoryURLCoreWouldNotParse(t *testing.T) {
 	}
 }
 
-func TestVocabularyRunnerRefusesAnOrderForARepositoryCoreDoesNotKnow(t *testing.T) {
-	runner, server := vocabularyRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
-		t.Fatal("executor ran an order for a missing repository")
-		return ProducedReport{}, nil
-	}))
-	server.repository = nil
-	order, err := runner.RunOnce(context.Background())
-	if err != nil || order == nil || order.State != traust.RunOrderStateRefused {
-		t.Fatalf("order=%+v err=%v", order, err)
-	}
-	if _, result := server.snapshot(); result.Reason == nil || *result.Reason != traust.RunOrderReasonBadRequest {
-		t.Fatalf("result=%+v", result)
+func TestVocabularyRunnerRefusesAnOrderWhoseRepositoryCoreWillNotHandOver(t *testing.T) {
+	// The definitive 4xx family core answers on a repository read. A 422 is absent: the
+	// generated parser decodes any JSON 422 as FastAPI's validation-error shape, which
+	// core's problem+json answers are not — and a typed UUID path cannot fail validation,
+	// so core never sends one here.
+	for _, tc := range []struct {
+		name   string
+		change func(*queuedServer)
+	}{
+		{"missing", func(server *queuedServer) { server.repository = nil }},
+		{"gone", func(server *queuedServer) { server.repositoryStatus = http.StatusGone }},
+		{"unauthorized", func(server *queuedServer) { server.repositoryStatus = http.StatusUnauthorized }},
+		{"forbidden", func(server *queuedServer) { server.repositoryStatus = http.StatusForbidden }},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			runner, server := vocabularyRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+				t.Fatal("executor ran for a repository the runner cannot resolve")
+				return ProducedReport{}, nil
+			}))
+			tc.change(server)
+			order, err := runner.RunOnce(context.Background())
+			if err != nil || order == nil || order.State != traust.RunOrderStateRefused {
+				t.Fatalf("order=%+v err=%v", order, err)
+			}
+			if _, result := server.snapshot(); result.Reason == nil || *result.Reason != traust.RunOrderReasonNotFound {
+				t.Fatalf("result=%+v", result)
+			}
+		})
 	}
 }
 
@@ -585,6 +604,27 @@ func TestQueuedRunnerRequiresForgeHostsForARepoURLCommand(t *testing.T) {
 	}
 }
 
+func TestQueuedRunnerRequiresForgeHostsForAPartitionedAsset(t *testing.T) {
+	runner, _ := queuedRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+		return ProducedReport{}, nil
+	}))
+	// A partitioned asset whose command does not name {repo_url}: its orders are still
+	// repository-bound, so resolve checks each one's repository against the forge hosts.
+	pack, err := LoadPack([]byte(strings.Replace(ledgerPack, "trigger: {every: 7d}", "trigger: {every: 7d}\n    partitions: dynamic:repo", 1)))
+	if err != nil {
+		t.Fatal(err)
+	}
+	config := runner.config
+	config.Pack = pack
+	if _, err := NewRunner(config); err == nil {
+		t.Fatal("a partitioned asset without forge hosts accepted")
+	}
+	config.ForgeHosts = []string{"github.com"}
+	if _, err := NewRunner(config); err != nil {
+		t.Fatalf("a partitioned asset with forge hosts rejected: %v", err)
+	}
+}
+
 func TestHTTPSRepoURLMirrorsCoresValidation(t *testing.T) {
 	allowed := []string{"GitHub.com"}
 	for _, tc := range []struct {
@@ -595,12 +635,16 @@ func TestHTTPSRepoURLMirrorsCoresValidation(t *testing.T) {
 		{"https", "https://github.com/example/app", "https://github.com/example/app"},
 		{"uppercase host", "https://GitHub.COM/example/app", "https://github.com/example/app"},
 		{"git suffix", "https://github.com/example/app.git", "https://github.com/example/app"},
+		{"empty userinfo", "https://@github.com/example/app", "https://github.com/example/app"},
+		{"colon-only userinfo", "https://:@github.com/example/app", "https://github.com/example/app"},
+		{"zero port", "https://github.com:0/example/app", "https://github.com/example/app"},
 		{"trailing slash", "https://github.com/example/app/", "https://github.com/example/app"},
 		{"deep path", "https://github.com/group/example/app", "https://github.com/group/example/app"},
 		{"http", "http://github.com/example/app", ""},
 		{"no scheme", "github.com/example/app", ""},
 		{"credentials", "https://user:pw@github.com/example/app", ""},
-		{"empty userinfo", "https://@github.com/example/app", ""},
+		{"bare username", "https://user@github.com/example/app", ""},
+		{"bare password", "https://:pw@github.com/example/app", ""},
 		{"port", "https://github.com:443/example/app", ""},
 		{"query", "https://github.com/example/app?x=1", ""},
 		{"fragment", "https://github.com/example/app#f", ""},

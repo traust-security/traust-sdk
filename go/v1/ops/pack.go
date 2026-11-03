@@ -48,6 +48,13 @@ type packAsset struct {
 	Model *struct {
 		Role string `json:"role"`
 	} `json:"model"`
+	// Partitions is "dynamic:repo" when the asset's orders are one per repository; empty
+	// when the asset runs fleet-wide.
+	Partitions string `json:"partitions"`
+	// Params declares the typed params the order carries for this asset's command, name to
+	// value type (e.g. repo_url: HttpsRepoUrl); command checks what the runner fills against
+	// the declaration.
+	Params map[string]string `json:"params"`
 }
 
 // command is an asset's pinned argv. A whole argument may name a parameter the order supplies.
@@ -62,6 +69,13 @@ const (
 	paramRule    = "{rule}"
 	paramRepoURL = "{repo_url}"
 )
+
+// paramName is a parameter's name in a pack's params declaration (no braces).
+func paramName(param string) string { return strings.Trim(param, "{}") }
+
+// httpsRepoURLType is the value type the runner fills {repo_url} with: core's HttpsRepoUrl,
+// the order's repository read through core and checked against the runner's forge hosts.
+const httpsRepoURLType = "HttpsRepoUrl"
 
 func isParam(arg string) bool {
 	switch arg {
@@ -121,8 +135,16 @@ func (p *Pack) role(name string) string {
 	return ""
 }
 
+// partitioned reports whether the asset's orders are one per repository (partitions:
+// dynamic:repo): every such order is repository-bound, whatever its command names.
+func (p *Pack) partitioned(name string) bool {
+	asset, ok := p.assets[name]
+	return ok && asset.Partitions == "dynamic:repo"
+}
+
 // command is the asset's argv when a runner can fill every parameter it names: each parameter
-// a whole argument, and an argument naming {role} backed by the asset's model role.
+// a whole argument, an argument naming {role} backed by the asset's model role, and a declared
+// param type agreeing with the value this runner fills.
 func (p *Pack) command(name string) (command, error) {
 	asset, ok := p.assets[name]
 	if !ok || len(asset.Run) == 0 {
@@ -135,6 +157,14 @@ func (p *Pack) command(name string) (command, error) {
 	}
 	if slices.Contains(asset.Run, paramRole) && asset.Model == nil {
 		return nil, fmt.Errorf("ops: asset %q names %s without a model role", name, paramRole)
+	}
+	// A declared type must agree with the value this runner fills: {repo_url} is core's
+	// HttpsRepoUrl, the order's repository read through core and checked against the runner's
+	// forge hosts. The other parameters have no declared-type vocabulary yet; a declaration
+	// for a parameter the command does not name is the pack's forward contract, not this
+	// runner's to check.
+	if declared := asset.Params[paramName(paramRepoURL)]; slices.Contains(asset.Run, paramRepoURL) && declared != "" && declared != httpsRepoURLType {
+		return nil, fmt.Errorf("ops: asset %q declares %s as %s; the runner fills %s", name, paramRepoURL, declared, httpsRepoURLType)
 	}
 	return asset.Run, nil
 }
@@ -153,7 +183,7 @@ func (c command) fill(values map[string]string) ([]string, error) {
 		}
 		value, ok := values[arg]
 		if !ok {
-			return nil, &unresolvedParam{fmt.Errorf("%s: no value for this order", arg)}
+			return nil, &unresolvedParam{reason: traust.RunOrderReasonBadRequest, err: fmt.Errorf("%s: no value for this order", arg)}
 		}
 		argv[i] = value
 	}

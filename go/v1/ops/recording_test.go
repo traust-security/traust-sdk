@@ -269,9 +269,32 @@ func TestDeterministicRefusalCanCompleteFailedAfterOwnershipCheck(t *testing.T) 
 	if heartbeats != 2 || records != 1 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed {
 		t.Fatal("refusal did not recheck ownership and complete using native outcome")
 	}
-	// The refused payload is attributable from the order row alone.
-	if server.completed.Reason == nil || *server.completed.Reason != traust.RunOrderReasonBadRequest {
+	// The refused payload is attributable from the order row alone: the gate's validation
+	// refusal is the session-output-invalid spelling, not an access failure's.
+	if server.completed.Reason == nil || *server.completed.Reason != sessionOutputInvalid {
 		t.Fatalf("record refusal did not stamp a reason: %+v", server.completed.Reason)
+	}
+}
+
+func TestAccessRefusalCompletesFailedWithoutAnInventedReason(t *testing.T) {
+	for _, status := range []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusTooManyRequests} {
+		run, server := newLifecycleRun(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+			return ProducedReport{Payload: []byte("original report"), Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
+		}))
+		server.recordStatus = status
+		_, err := run.Run(context.Background())
+		var problem *traust.ProblemError
+		if !errors.As(err, &problem) || problem.StatusCode != status {
+			t.Fatalf("status %d: refusal was not preserved: %v", status, err)
+		}
+		_, records, completions := server.counts()
+		if records != 1 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed {
+			t.Fatalf("status %d: records=%d completions=%d completed=%+v", status, records, completions, server.completed)
+		}
+		// An access or rate refusal says nothing about the output: no classifier is invented.
+		if server.completed.Reason != nil {
+			t.Fatalf("status %d stamped an invented reason: %+v", status, server.completed.Reason)
+		}
 	}
 }
 

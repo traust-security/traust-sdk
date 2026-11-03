@@ -45,8 +45,13 @@ func (e *LeaseLostError) Error() string { return "ops: order lease lost: " + e.E
 func (e *LeaseLostError) Unwrap() error { return e.Err }
 
 // unresolvedParam means the order cannot supply a parameter its command names, or names a
-// repository whose URL core would not parse: the order is refused, never run.
-type unresolvedParam struct{ err error }
+// repository this runner cannot resolve through core: the order is refused, never run. The
+// reason is the refusal's classifier — bad_request for an order that lacks a value or whose
+// repository URL core would not parse, not_found for a repository core will not hand over.
+type unresolvedParam struct {
+	reason traust.RunOrderReason
+	err    error
+}
 
 func (e *unresolvedParam) Error() string { return "ops: unresolved parameter: " + e.err.Error() }
 func (e *unresolvedParam) Unwrap() error { return e.err }

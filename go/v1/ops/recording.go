@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"net/http"
 	"time"
 	"unicode/utf8"
 
@@ -91,14 +92,14 @@ func (run RecordingRun) Run(ctx context.Context) (*RecordingResult, error) {
 	if err != nil {
 		var refusal *traust.ProblemError
 		if errors.As(err, &refusal) && refusal.StatusCode >= 400 && refusal.StatusCode < 500 {
-			// The record gate refused the payload: a terminally rejected
-			// artifact (never retried, never mangled), and the reason makes
-			// it attributable from the order row alone — the pod is gone by
-			// the time anyone looks. bad_request is the payload-was-bad
-			// spelling; write-rejected joins when the contracts enum
-			// carries it.
-			if produced.Result.Reason == nil {
-				produced.Result.Reason = ptr(traust.RunOrderReasonBadRequest)
+			// The gate answered definitively: a terminally rejected artifact (never
+			// retried, never mangled), completed failed while the lease is still held.
+			// Only a payload refusal carries a reason — the order row alone says what
+			// happened, the pod being gone by the time anyone looks; an access or rate
+			// refusal (401/403/429) says nothing about the output, so no classifier is
+			// invented for it.
+			if produced.Result.Reason == nil && payloadRejected(refusal.StatusCode) {
+				produced.Result.Reason = ptr(sessionOutputInvalid)
 			}
 			return run.fail(ctx, l, produced.Result, err)
 		}
@@ -167,3 +168,17 @@ func (run RecordingRun) fail(ctx context.Context, l *lease, result traust.JobRes
 }
 
 func ptr[T any](value T) *T { return &value }
+
+// sessionOutputInvalid is contracts' run-order-reason "session-output-invalid": the session's
+// output failed the record gate's schema validation or lint. Core's reason vocabulary loads at
+// runtime from contracts, so core takes the write today; this generated client predates the
+// constant (client.gen.go carries 11 of the 12 contract values). TODO(contracts#109):
+// write-rejected is the gate-refusal spelling; stamp it once the generated client carries it.
+const sessionOutputInvalid = traust.RunOrderReason("session-output-invalid")
+
+// payloadRejected reports whether a record-gate status means the payload itself is
+// unacceptable — core maps its validation errors to 422, a malformed body is a 400 — rather
+// than an access or rate refusal that says nothing about the output.
+func payloadRejected(status int) bool {
+	return status == http.StatusBadRequest || status == http.StatusUnprocessableEntity
+}
