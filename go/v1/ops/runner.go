@@ -3,6 +3,7 @@ package ops
 import (
 	"cmp"
 	"context"
+	"encoding/json"
 	"errors"
 	"fmt"
 	"net/url"
@@ -168,11 +169,20 @@ func (r *Runner) pinned(ctx context.Context, l *lease) (bool, error) {
 	if err != nil {
 		return false, fmt.Errorf("ops: order %s manifest: %w", l.id(), err)
 	}
-	if manifest.Config == nil {
-		return false, nil
+	var planned []traust.ConfigDigest
+	// Core's OpenAPI types the run manifest as a free-form object (its serializer drops
+	// empty sessions), so the config digests decode here rather than in the client.
+	if raw, ok := (*manifest)["config"]; ok && raw != nil {
+		encoded, err := json.Marshal(raw)
+		if err != nil {
+			return false, fmt.Errorf("ops: order %s manifest: %w", l.id(), err)
+		}
+		if err := json.Unmarshal(encoded, &planned); err != nil {
+			return false, fmt.Errorf("ops: order %s manifest: %w", l.id(), err)
+		}
 	}
 	var digests []string
-	for _, config := range *manifest.Config {
+	for _, config := range planned {
 		if config.Name == r.config.Pack.ref() {
 			digests = append(digests, config.Digest)
 		}

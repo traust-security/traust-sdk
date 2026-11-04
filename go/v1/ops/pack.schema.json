@@ -2,7 +2,7 @@
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.com/traust-contracts/config/v1/pack.schema.json",
   "title": "Workload pack asset graph",
-  "description": "A pack's assets.yaml: what continuous ops keeps fresh. traust-engine reads deps, partitions, trigger, priority, freshness and admission to plan and admit orders; runners read run, params, runner, model, writes, riders and outcomes to execute an order from their pinned copy of the pack (the order carries only the asset name and typed params). Strict: an unknown key is an error for both readers.",
+  "description": "A pack's assets.yaml: what continuous ops keeps fresh. traust-engine reads deps, partitions, trigger, priority, freshness and admission to plan and admit orders; runners read run, params, runner, model, writes, riders and outcomes to execute an order from their pinned copy of the pack (the order carries only the asset name and typed params); preflight reads enabled and requires to refuse before any work when a requirement is unmet. Strict: an unknown key is an error for all readers.",
   "type": "object",
   "required": [
     "pack",
@@ -215,6 +215,95 @@
             "$ref": "#/$defs/name"
           },
           "uniqueItems": true
+        },
+        "enabled": {
+          "const": false,
+          "description": "The only way to keep an asset in the pack without its requirements: preflight skips a disabled asset instead of checking what it needs. Absent means enabled."
+        },
+        "requires": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": false,
+          "description": "What preflight (traust doctor, engine start, platform doors) checks before any order of this asset runs; every unmet item fails with its fix. Absent means no requirements.",
+          "properties": {
+            "tools": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "External tool names, spelled as in traust-core's shipped external-tools.yaml; the version floor comes from that pin, never repeated here."
+            },
+            "config": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "home",
+                  "database",
+                  "artifacts",
+                  "process",
+                  "http",
+                  "logging",
+                  "rating",
+                  "review",
+                  "ledger",
+                  "identity",
+                  "recording",
+                  "allowed_repo_hosts",
+                  "forge_hosts",
+                  "forge_tokens",
+                  "budgets",
+                  "remediation",
+                  "campaign",
+                  "feeds",
+                  "execution",
+                  "locations",
+                  "overrides",
+                  "model-registry"
+                ]
+              },
+              "description": "traust.yaml top-level keys (traust.schema.json), plus model-registry for model-registry.yaml. Keys with a convention default when unset: home, database, artifacts, process, http, logging, rating, ledger, identity, forge_hosts, forge_tokens, feeds, execution, locations, overrides; the rest must be set."
+            },
+            "facts": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "enum": [
+                  "adr-registry",
+                  "benchmark-target",
+                  "org-parameters",
+                  "product-definitions-map",
+                  "sla-policy"
+                ]
+              },
+              "description": "Adopter facts recorded in traust-core, by their artifact names; preflight checks each record exists."
+            },
+            "feeds": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "minLength": 1
+              },
+              "description": "Feed source ids from traust-core's shipped feeds.yaml registry; preflight checks the source is enabled and reachable by tier."
+            },
+            "secrets": {
+              "type": "array",
+              "minItems": 1,
+              "uniqueItems": true,
+              "items": {
+                "type": "string",
+                "pattern": "^[A-Za-z_][A-Za-z0-9_]*$"
+              },
+              "description": "Environment variable names, as traust.yaml's *_env keys name them; preflight checks each resolves to a value."
+            }
+          }
         }
       }
     }

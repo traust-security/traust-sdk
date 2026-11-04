@@ -133,7 +133,7 @@ func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Reque
 		if server.wrongDigest {
 			digest = strings.Repeat("0", 64)
 		}
-		_ = json.NewEncoder(w).Encode(traust.OrderManifest{Config: &[]traust.ConfigDigest{{Name: "pack:security", Digest: digest}}})
+		_ = json.NewEncoder(w).Encode(traust.OrderManifest{"config": []traust.ConfigDigest{{Name: "pack:security", Digest: digest}}})
 	case strings.HasPrefix(request.URL.Path, "/v1/repositories/"):
 		server.events = append(server.events, "repository")
 		if server.repositoryStatus != 0 {
@@ -841,7 +841,7 @@ func TestQueuedRunnerRefusesAnOrderNotPinnedToExactlyItsPack(t *testing.T) {
 		for _, digest := range digests {
 			config = append(config, traust.ConfigDigest{Name: "pack:security", Digest: digest})
 		}
-		return &traust.OrderManifest{Config: &config}
+		return &traust.OrderManifest{"config": config}
 	}
 	for _, tc := range []struct {
 		name     string

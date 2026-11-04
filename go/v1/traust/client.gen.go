@@ -41,6 +41,7 @@ const (
 	AssessmentKindImpact           AssessmentKind = "impact"
 	AssessmentKindIsolationReview  AssessmentKind = "isolation-review"
 	AssessmentKindIsolationReview1 AssessmentKind = "isolation_review"
+	AssessmentKindManifestSbom     AssessmentKind = "manifest_sbom"
 	AssessmentKindPqcReadiness     AssessmentKind = "pqc-readiness"
 	AssessmentKindPqcReadiness1    AssessmentKind = "pqc_readiness"
 	AssessmentKindPrivProfile      AssessmentKind = "priv-profile"
@@ -331,17 +332,18 @@ const (
 
 // Defines values for RunOrderReason.
 const (
-	RunOrderReasonAssetNotInPack      RunOrderReason = "asset-not-in-pack"
-	RunOrderReasonBadRequest          RunOrderReason = "bad_request"
-	RunOrderReasonBudgetExhausted     RunOrderReason = "budget-exhausted"
-	RunOrderReasonBudgetOver          RunOrderReason = "budget-over"
-	RunOrderReasonDiffTooLarge        RunOrderReason = "diff-too-large"
-	RunOrderReasonLedgerUnconfigured  RunOrderReason = "ledger_unconfigured"
-	RunOrderReasonNotFound            RunOrderReason = "not_found"
-	RunOrderReasonRunnerCrashed       RunOrderReason = "runner-crashed"
-	RunOrderReasonSnapshotUnavailable RunOrderReason = "snapshot_unavailable"
-	RunOrderReasonSourceUnavailable   RunOrderReason = "source_unavailable"
-	RunOrderReasonUpstreamStale       RunOrderReason = "upstream-stale"
+	RunOrderReasonAssetNotInPack       RunOrderReason = "asset-not-in-pack"
+	RunOrderReasonBadRequest           RunOrderReason = "bad_request"
+	RunOrderReasonBudgetExhausted      RunOrderReason = "budget-exhausted"
+	RunOrderReasonBudgetOver           RunOrderReason = "budget-over"
+	RunOrderReasonDiffTooLarge         RunOrderReason = "diff-too-large"
+	RunOrderReasonLedgerUnconfigured   RunOrderReason = "ledger_unconfigured"
+	RunOrderReasonNotFound             RunOrderReason = "not_found"
+	RunOrderReasonRunnerCrashed        RunOrderReason = "runner-crashed"
+	RunOrderReasonSessionOutputInvalid RunOrderReason = "session-output-invalid"
+	RunOrderReasonSnapshotUnavailable  RunOrderReason = "snapshot_unavailable"
+	RunOrderReasonSourceUnavailable    RunOrderReason = "source_unavailable"
+	RunOrderReasonUpstreamStale        RunOrderReason = "upstream-stale"
 )
 
 // Defines values for RunOrderState.
@@ -463,6 +465,7 @@ const (
 	FindingsRollup   ViewName = "findings-rollup"
 	FindingsTrend    ViewName = "findings-trend"
 	Freshness        ViewName = "freshness"
+	InsecurePatterns ViewName = "insecure-patterns"
 	Loc              ViewName = "loc"
 	Oscal            ViewName = "oscal"
 	Pqc              ViewName = "pqc"
@@ -503,6 +506,29 @@ type AdvisoryPackage struct {
 	UpdatedAt  *time.Time          `json:"updated_at"`
 }
 
+// AdvisoryRecord An advisory as its source states it; ranges live here and in the impact artifact,
+// never in columns. `advisory_id` is set once the record is stored.
+type AdvisoryRecord struct {
+	AdvisoryId          *openapi_types.UUID `json:"advisory_id"`
+	Affected            *[]AffectedPackage  `json:"affected,omitempty"`
+	Aliases             *[]string           `json:"aliases,omitempty"`
+	CvssVectors         *[]string           `json:"cvss_vectors,omitempty"`
+	DeclaredSeverity    *string             `json:"declared_severity"`
+	Details             *string             `json:"details,omitempty"`
+	FixReferences       *[]string           `json:"fix_references,omitempty"`
+	FixedCommits        *[]string           `json:"fixed_commits,omitempty"`
+	Identifier          string              `json:"identifier"`
+	Malicious           *bool               `json:"malicious,omitempty"`
+	PackageSources      *[]string           `json:"package_sources,omitempty"`
+	PublishedAt         *time.Time          `json:"published_at"`
+	References          *[]string           `json:"references,omitempty"`
+	Source              string              `json:"source"`
+	Summary             *string             `json:"summary,omitempty"`
+	UnmodeledEcosystems *[]string           `json:"unmodeled_ecosystems,omitempty"`
+	Upstream            *[]string           `json:"upstream,omitempty"`
+	Withdrawn           *bool               `json:"withdrawn,omitempty"`
+}
+
 // AffectedDependency A commit or image whose SBOM reaches one of an advisory's packages. `vulnerable`: the
 // advisory names the package itself, else it leads to one (an internal library, a base image).
 // No `repository_ref_id`: an image with no declared provenance.
@@ -511,6 +537,23 @@ type AffectedDependency struct {
 	ImageId         *openapi_types.UUID `json:"image_id"`
 	RepositoryRefId *openapi_types.UUID `json:"repository_ref_id"`
 	Vulnerable      bool                `json:"vulnerable"`
+}
+
+// AffectedPackage What an advisory says about one package: its affected spans and listed versions.
+type AffectedPackage struct {
+	Ecosystem Ecosystem       `json:"ecosystem"`
+	Imports   *[]string       `json:"imports,omitempty"`
+	Name      string          `json:"name"`
+	Spans     *[]AffectedSpan `json:"spans,omitempty"`
+	Symbols   *[]string       `json:"symbols,omitempty"`
+	Versions  *[]string       `json:"versions,omitempty"`
+}
+
+// AffectedSpan One affected span of an advisory; introduced "0" means every earlier version.
+type AffectedSpan struct {
+	Fixed        *string `json:"fixed"`
+	Introduced   string  `json:"introduced"`
+	LastAffected *string `json:"last_affected"`
 }
 
 // Artifact A document an assessment produced (or imported); bytes live at uri.
@@ -591,8 +634,9 @@ type Checkpoint struct {
 
 // ClaimRequest defines model for ClaimRequest.
 type ClaimRequest struct {
-	Assets       *[]string `json:"assets"`
-	LeaseSeconds int       `json:"lease_seconds"`
+	Assets       *[]string           `json:"assets"`
+	LeaseSeconds int                 `json:"lease_seconds"`
+	OrderId      *openapi_types.UUID `json:"order_id"`
 }
 
 // CodeHash defines model for CodeHash.
@@ -1057,18 +1101,8 @@ type OnboardingResult struct {
 	RepositoryIds *[]openapi_types.UUID `json:"repository_ids,omitempty"`
 }
 
-// OrderApproval Who let a human-gated order run, and when (the run manifest's `approval`).
-type OrderApproval struct {
-	ApprovedAt time.Time `json:"approved_at"`
-	Approver   string    `json:"approver"`
-}
-
-// OrderManifest What an order's run manifest says about the config it was planned with and its approval.
-type OrderManifest struct {
-	// Approval Who let a human-gated order run, and when (the run manifest's `approval`).
-	Approval *OrderApproval  `json:"approval,omitempty"`
-	Config   *[]ConfigDigest `json:"config,omitempty"`
-}
+// OrderManifest defines model for OrderManifest.
+type OrderManifest map[string]interface{}
 
 // OrderRequest What admission puts on the queue: one asset for one partition, routed or not.
 type OrderRequest struct {
@@ -1307,6 +1341,13 @@ type RemediationItem struct {
 
 	// Validation One recorded validation run's outcome for one finding, as `record` stored it.
 	Validation *ValidationAttempt `json:"validation,omitempty"`
+}
+
+// RemediationRecordBody defines model for RemediationRecordBody.
+type RemediationRecordBody struct {
+	Payload    string             `json:"payload"`
+	Provenance Provenance         `json:"provenance"`
+	RunOrderId openapi_types.UUID `json:"run_order_id"`
 }
 
 // RemediationStatus defines model for RemediationStatus.
@@ -1714,6 +1755,11 @@ type WorkItem struct {
 	WorkItemId openapi_types.UUID `json:"work_item_id"`
 }
 
+// FindAdvisoryParams defines parameters for FindAdvisory.
+type FindAdvisoryParams struct {
+	Identifier string `form:"identifier" json:"identifier"`
+}
+
 // ListAssessmentsParams defines parameters for ListAssessments.
 type ListAssessmentsParams struct {
 	RepositoryRefId openapi_types.UUID `form:"repository_ref_id" json:"repository_ref_id"`
@@ -1910,6 +1956,9 @@ type CompleteJSONRequestBody = CompleteRequest
 
 // HeartbeatJSONRequestBody defines body for Heartbeat for application/json ContentType.
 type HeartbeatJSONRequestBody = LeaseRequest
+
+// RecordRemediationJSONRequestBody defines body for RecordRemediation for application/json ContentType.
+type RecordRemediationJSONRequestBody = RemediationRecordBody
 
 // SetOwnersJSONRequestBody defines body for SetOwners for application/json ContentType.
 type SetOwnersJSONRequestBody = Owners
@@ -2744,6 +2793,9 @@ func WithRequestEditorFn(fn RequestEditorFn) ClientOption {
 
 // The interface specification for the client above.
 type ClientInterface interface {
+	// FindAdvisory request
+	FindAdvisory(ctx context.Context, params *FindAdvisoryParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetAdvisory request
 	GetAdvisory(ctx context.Context, advisoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -2904,6 +2956,11 @@ type ClientInterface interface {
 	// Dependencies request
 	Dependencies(ctx context.Context, repositoryRefId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// RecordRemediationWithBody request with any body
+	RecordRemediationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RecordRemediation(ctx context.Context, body RecordRemediationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListRepositories request
 	ListRepositories(ctx context.Context, params *ListRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -2980,6 +3037,18 @@ type ClientInterface interface {
 
 	// PrepareVerification request
 	PrepareVerification(ctx context.Context, workItemId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+}
+
+func (c *RawClient) FindAdvisory(ctx context.Context, params *FindAdvisoryParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewFindAdvisoryRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
 }
 
 func (c *RawClient) GetAdvisory(ctx context.Context, advisoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
@@ -3666,6 +3735,30 @@ func (c *RawClient) Dependencies(ctx context.Context, repositoryRefId openapi_ty
 	return c.Client.Do(req)
 }
 
+func (c *RawClient) RecordRemediationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRecordRemediationRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) RecordRemediation(ctx context.Context, body RecordRemediationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRecordRemediationRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *RawClient) ListRepositories(ctx context.Context, params *ListRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListRepositoriesRequest(c.Server, params)
 	if err != nil {
@@ -3988,6 +4081,51 @@ func (c *RawClient) PrepareVerification(ctx context.Context, workItemId openapi_
 		return nil, err
 	}
 	return c.Client.Do(req)
+}
+
+// NewFindAdvisoryRequest generates requests for FindAdvisory
+func NewFindAdvisoryRequest(server string, params *FindAdvisoryParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/advisories")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "identifier", runtime.ParamLocationQuery, params.Identifier); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
 }
 
 // NewGetAdvisoryRequest generates requests for GetAdvisory
@@ -6354,6 +6492,46 @@ func NewDependenciesRequest(server string, repositoryRefId openapi_types.UUID) (
 	return req, nil
 }
 
+// NewRecordRemediationRequest calls the generic RecordRemediation builder with application/json body
+func NewRecordRemediationRequest(server string, body RecordRemediationJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRecordRemediationRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRecordRemediationRequestWithBody generates requests for RecordRemediation with any type of body
+func NewRecordRemediationRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/remediation-records")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListRepositoriesRequest generates requests for ListRepositories
 func NewListRepositoriesRequest(server string, params *ListRepositoriesParams) (*http.Request, error) {
 	var err error
@@ -7748,6 +7926,9 @@ func WithBaseURL(baseURL string) ClientOption {
 
 // ClientWithResponsesInterface is the interface specification for the client with responses above.
 type ClientWithResponsesInterface interface {
+	// FindAdvisoryWithResponse request
+	FindAdvisoryWithResponse(ctx context.Context, params *FindAdvisoryParams, reqEditors ...RequestEditorFn) (*FindAdvisoryResponse, error)
+
 	// GetAdvisoryWithResponse request
 	GetAdvisoryWithResponse(ctx context.Context, advisoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetAdvisoryResponse, error)
 
@@ -7908,6 +8089,11 @@ type ClientWithResponsesInterface interface {
 	// DependenciesWithResponse request
 	DependenciesWithResponse(ctx context.Context, repositoryRefId openapi_types.UUID, reqEditors ...RequestEditorFn) (*DependenciesResponse, error)
 
+	// RecordRemediationWithBodyWithResponse request with any body
+	RecordRemediationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordRemediationResponse, error)
+
+	RecordRemediationWithResponse(ctx context.Context, body RecordRemediationJSONRequestBody, reqEditors ...RequestEditorFn) (*RecordRemediationResponse, error)
+
 	// ListRepositoriesWithResponse request
 	ListRepositoriesWithResponse(ctx context.Context, params *ListRepositoriesParams, reqEditors ...RequestEditorFn) (*ListRepositoriesResponse, error)
 
@@ -7984,6 +8170,31 @@ type ClientWithResponsesInterface interface {
 
 	// PrepareVerificationWithResponse request
 	PrepareVerificationWithResponse(ctx context.Context, workItemId openapi_types.UUID, reqEditors ...RequestEditorFn) (*PrepareVerificationResponse, error)
+}
+
+type FindAdvisoryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *AdvisoryRecord
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r FindAdvisoryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r FindAdvisoryResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
 }
 
 type GetAdvisoryResponse struct {
@@ -9063,6 +9274,7 @@ type ListProductRefsResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *[]RepositoryRef
 	JSON401      *Problem
+	JSON404      *Problem
 	JSON422      *HTTPValidationError
 }
 
@@ -9126,6 +9338,33 @@ func (r DependenciesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r DependenciesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RecordRemediationResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkItem
+	JSON401      *Problem
+	JSON403      *Problem
+	JSON404      *Problem
+	JSON409      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r RecordRemediationResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RecordRemediationResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -9358,6 +9597,7 @@ type ListOwnersResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *[]Team
 	JSON401      *Problem
+	JSON404      *Problem
 	JSON422      *HTTPValidationError
 }
 
@@ -9407,6 +9647,7 @@ type ListProductsOfResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *[]Product
 	JSON401      *Problem
+	JSON404      *Problem
 	JSON422      *HTTPValidationError
 }
 
@@ -9698,6 +9939,15 @@ func (r PrepareVerificationResponse) StatusCode() int {
 		return r.HTTPResponse.StatusCode
 	}
 	return 0
+}
+
+// FindAdvisoryWithResponse request returning *FindAdvisoryResponse
+func (c *ClientWithResponses) FindAdvisoryWithResponse(ctx context.Context, params *FindAdvisoryParams, reqEditors ...RequestEditorFn) (*FindAdvisoryResponse, error) {
+	rsp, err := c.FindAdvisory(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseFindAdvisoryResponse(rsp)
 }
 
 // GetAdvisoryWithResponse request returning *GetAdvisoryResponse
@@ -10202,6 +10452,23 @@ func (c *ClientWithResponses) DependenciesWithResponse(ctx context.Context, repo
 	return ParseDependenciesResponse(rsp)
 }
 
+// RecordRemediationWithBodyWithResponse request with arbitrary body returning *RecordRemediationResponse
+func (c *ClientWithResponses) RecordRemediationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordRemediationResponse, error) {
+	rsp, err := c.RecordRemediationWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRecordRemediationResponse(rsp)
+}
+
+func (c *ClientWithResponses) RecordRemediationWithResponse(ctx context.Context, body RecordRemediationJSONRequestBody, reqEditors ...RequestEditorFn) (*RecordRemediationResponse, error) {
+	rsp, err := c.RecordRemediation(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRecordRemediationResponse(rsp)
+}
+
 // ListRepositoriesWithResponse request returning *ListRepositoriesResponse
 func (c *ClientWithResponses) ListRepositoriesWithResponse(ctx context.Context, params *ListRepositoriesParams, reqEditors ...RequestEditorFn) (*ListRepositoriesResponse, error) {
 	rsp, err := c.ListRepositories(ctx, params, reqEditors...)
@@ -10439,6 +10706,53 @@ func (c *ClientWithResponses) PrepareVerificationWithResponse(ctx context.Contex
 		return nil, err
 	}
 	return ParsePrepareVerificationResponse(rsp)
+}
+
+// ParseFindAdvisoryResponse parses an HTTP response from a FindAdvisoryWithResponse call
+func ParseFindAdvisoryResponse(rsp *http.Response) (*FindAdvisoryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &FindAdvisoryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest AdvisoryRecord
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
 }
 
 // ParseGetAdvisoryResponse parses an HTTP response from a GetAdvisoryWithResponse call
@@ -12462,6 +12776,13 @@ func ParseListProductRefsResponse(rsp *http.Response) (*ListProductRefsResponse,
 		}
 		response.JSON401 = &dest
 
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []RepositoryRef
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -12569,6 +12890,67 @@ func ParseDependenciesResponse(rsp *http.Response) (*DependenciesResponse, error
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRecordRemediationResponse parses an HTTP response from a RecordRemediationWithResponse call
+func ParseRecordRemediationResponse(rsp *http.Response) (*RecordRemediationResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RecordRemediationResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkItem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 
@@ -12991,6 +13373,13 @@ func ParseListOwnersResponse(rsp *http.Response) (*ListOwnersResponse, error) {
 		}
 		response.JSON401 = &dest
 
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []Team
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -13077,6 +13466,13 @@ func ParseListProductsOfResponse(rsp *http.Response) (*ListProductsOfResponse, e
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest []Product

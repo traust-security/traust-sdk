@@ -133,6 +133,15 @@ func (c *Client) FeedStatuses(ctx context.Context) ([]FeedStatus, error) {
 	return *found, nil
 }
 
+// FindAdvisory is GET /v1/advisories: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) FindAdvisory(ctx context.Context, params *FindAdvisoryParams) (*AdvisoryRecord, error) {
+	response, err := c.FindAdvisoryWithResponse(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
 // FindPackage is GET /v1/packages: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FindPackage(ctx context.Context, params *FindPackageParams) (*Package, error) {
 	response, err := c.FindPackageWithResponse(ctx, params)
@@ -779,6 +788,15 @@ func (c *Client) ReadFeedAll(ctx context.Context, params *ReadFeedParams) iter.S
 // RecordAssessment is POST /v1/assessment-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordAssessment(ctx context.Context, body RecordAssessmentJSONRequestBody) (*AssessmentRecordResult, error) {
 	response, err := c.RecordAssessmentWithResponse(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
+// RecordRemediation is POST /v1/remediation-records: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) RecordRemediation(ctx context.Context, body RecordRemediationJSONRequestBody) (*WorkItem, error) {
+	response, err := c.RecordRemediationWithResponse(ctx, body)
 	if err != nil {
 		return nil, err
 	}

@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+	openapi_types "github.com/oapi-codegen/runtime/types"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 )
 
@@ -33,6 +34,7 @@ type lifecycleServer struct {
 	changeOrigin    bool
 	events          []string
 	completed       traust.JobResult
+	remediationBody traust.RemediationRecordBody
 }
 
 func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Request) {
@@ -60,7 +62,7 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 			server.order.StartedAt = &changed
 		}
 		json.NewEncoder(w).Encode(server.order)
-	case request.URL.Path == "/v1/assessment-records":
+	case request.URL.Path == "/v1/assessment-records" || request.URL.Path == "/v1/remediation-records":
 		server.events = append(server.events, "record")
 		if server.disconnect {
 			connection, _, err := w.(http.Hijacker).Hijack()
@@ -73,6 +75,17 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 			w.Header().Set("Content-Type", "application/problem+json")
 			w.WriteHeader(server.recordStatus)
 			json.NewEncoder(w).Encode(traust.Problem{Title: "record refused", Status: server.recordStatus})
+			return
+		}
+		if request.URL.Path == "/v1/remediation-records" {
+			_ = json.NewDecoder(request.Body).Decode(&server.remediationBody)
+			json.NewEncoder(w).Encode(traust.WorkItem{
+				WorkItemId:      uuid.MustParse("cbb60c79-1c48-4938-b71e-e19d0b9b9ca7"),
+				RepositoryRefId: uuid.MustParse("dfc7fdca-cba2-4a54-a9d3-4b57041bbb5f"),
+				FindingIds:      []openapi_types.UUID{uuid.MustParse("06415613-84a6-4a90-8e39-a7a5d8d5fcef")},
+				Status:          traust.RemediationStatus("checks_passed"),
+				OpenedAt:        time.Date(2026, 10, 28, 1, 2, 3, 0, time.UTC),
+			})
 			return
 		}
 		json.NewEncoder(w).Encode(traust.AssessmentRecordResult{
@@ -96,6 +109,14 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 }
 
 func newLifecycleRun(t *testing.T, executor Executor) (RecordingRun, *lifecycleServer) {
+	return newRecordingRun(t, executor, RecordingRequest{Assessment: &traust.AssessmentRecordRequest{
+		Provenance: traust.Provenance{Source: traust.SourceTypeVulnScanReport}, AssessorVersion: "test-assessor",
+	}})
+}
+
+func newRecordingRun(
+	t *testing.T, executor Executor, request RecordingRequest,
+) (RecordingRun, *lifecycleServer) {
 	t.Helper()
 	id := uuid.MustParse("dfc7fdca-cba2-4a54-a9d3-4b57041bbb5f")
 	started := time.Date(2026, 10, 28, 1, 2, 3, 123456789, time.UTC)
@@ -115,9 +136,7 @@ func newLifecycleRun(t *testing.T, executor Executor) (RecordingRun, *lifecycleS
 	}
 	return RecordingRun{
 		Client: client, Start: traust.StartRecordingRequest{LeaseSeconds: 30, Order: traust.OrderRequest{Asset: "explicit-asset"}},
-		Request: RecordingRequest{Assessment: &traust.AssessmentRecordRequest{
-			Provenance: traust.Provenance{Source: traust.SourceTypeVulnScanReport}, AssessorVersion: "test-assessor",
-		}},
+		Request:  request,
 		Executor: executor, HeartbeatInterval: 10 * time.Millisecond, RequestTimeout: time.Second,
 	}, server
 }
@@ -308,5 +327,38 @@ func TestUnknownExecutorOutcomeCompletesFailedWithoutRecording(t *testing.T) {
 	_, records, completions := server.counts()
 	if records != 0 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed {
 		t.Fatalf("records=%d completions=%d completed=%+v", records, completions, server.completed)
+	}
+}
+
+// The remediation template posts the executor's report through core's remediation record door,
+// stamped with the held order's identity, and carries the recorded work item back.
+func TestRemediationTemplateRecordsThroughTheRemediationDoor(t *testing.T) {
+	run, server := newRecordingRun(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+		return ProducedReport{Payload: []byte("remediation report"), Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
+	}), RecordingRequest{Remediation: &traust.RemediationRecordBody{
+		Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport},
+	}})
+	result, err := run.Run(context.Background())
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, records, completions := server.counts()
+	if records != 1 || completions != 1 || result.Receipt.Remediation == nil {
+		t.Fatal("the remediation template did not record and complete exactly once")
+	}
+	if result.Receipt.Remediation.WorkItemId != uuid.MustParse("cbb60c79-1c48-4938-b71e-e19d0b9b9ca7") || result.Receipt.Remediation.Status != traust.RemediationStatus("checks_passed") {
+		t.Fatalf("the recorded work item was not carried back: %+v", result.Receipt.Remediation)
+	}
+	server.mu.Lock()
+	defer server.mu.Unlock()
+	body := server.remediationBody
+	if server.order.Id == nil || server.order.StartedAt == nil || body.RunOrderId != *server.order.Id || body.Provenance.RunId != *server.order.Id {
+		t.Fatal("the record was not stamped with the server's order identity")
+	}
+	if !body.Provenance.OccurredAt.Equal(*server.order.StartedAt) || body.Payload != "remediation report" {
+		t.Fatal("the record was not stamped with the server's start time and the executor's bytes")
+	}
+	if body.Provenance.Source != traust.SourceTypeTriageReport {
+		t.Fatal("the record lost its explicit provenance source")
 	}
 }

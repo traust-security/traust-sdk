@@ -22,6 +22,7 @@ type RecordingRequest struct {
 	Triage       *traust.TriageRecordBody        `json:"triage,omitempty"`
 	Validation   *traust.RecordValidation        `json:"validation,omitempty"`
 	Verification *traust.VerificationRecordBody  `json:"verification,omitempty"`
+	Remediation  *traust.RemediationRecordBody   `json:"remediation,omitempty"`
 	AssessmentID uuid.UUID                       `json:"assessment_id,omitempty"`
 	Input        json.RawMessage                 `json:"input,omitempty"`
 }
@@ -32,6 +33,7 @@ type RecordingReceipt struct {
 	Triage       *traust.TriageRecordResult     `json:"triage,omitempty"`
 	Validation   *traust.ValidationRecordResult `json:"validation,omitempty"`
 	Verification *traust.Verification           `json:"verification,omitempty"`
+	Remediation  *traust.WorkItem               `json:"remediation,omitempty"`
 }
 
 type RecordingResult struct {
@@ -120,7 +122,10 @@ func (run RecordingRun) validate() error {
 		return errors.New("ops: recording run needs a positive lease and a heartbeat shorter than it")
 	}
 	templates := 0
-	for _, set := range []bool{run.Request.Assessment != nil, run.Request.Triage != nil, run.Request.Validation != nil, run.Request.Verification != nil} {
+	for _, set := range []bool{
+		run.Request.Assessment != nil, run.Request.Triage != nil, run.Request.Validation != nil,
+		run.Request.Verification != nil, run.Request.Remediation != nil,
+	} {
 		if set {
 			templates++
 		}
