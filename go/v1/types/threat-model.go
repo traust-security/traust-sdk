@@ -1,4 +1,4 @@
-// Code generated from traust-contracts ac517047c6566b019e63b911f6b7522000826b48. DO NOT EDIT.
+// Code generated from traust-contracts bf4eb27b9eff357587fe1369db3b43e4a9534eba. DO NOT EDIT.
 
 package types
 
@@ -45,6 +45,7 @@ type DeprioritizedThreat struct {
 type EntryPoint struct {
 	Description     string                `json:"description"`
 	EntryPoint      string                `json:"entry_point"`
+	Kind            *enums.EntryPointKind `json:"kind,omitempty"`
 	ReachableAssets string                `json:"reachable_assets"`
 	ReviewSurfaces  []enums.ReviewSurface `json:"review_surfaces,omitempty"`
 	TrustBoundary   string                `json:"trust_boundary"`
@@ -59,7 +60,7 @@ type HistoryEntry struct {
 type Mitigation struct {
 	BlockedExternal *bool                       `json:"blocked_external,omitempty"`
 	ClosesClass     enums.MitigationClosesClass `json:"closes_class"`
-	Effort          enums.MitigationEffort      `json:"effort"`
+	Effort          *enums.MitigationEffort     `json:"effort"`
 	Mitigation      string                      `json:"mitigation"`
 	ThreatIds       []string                    `json:"threat_ids"`
 }
@@ -138,6 +139,7 @@ type TenantBoundary struct {
 type Threat struct {
 	Actor               []enums.ThreatActor        `json:"actor"`
 	Asset               *string                    `json:"asset,omitempty"`
+	AtlasRefs           []string                   `json:"atlas_refs,omitempty"`
 	AttackRefs          []string                   `json:"attack_refs,omitempty"`
 	Controls            *string                    `json:"controls,omitempty"`
 	Evidence            []string                   `json:"evidence,omitempty"`
@@ -145,6 +147,7 @@ type Threat struct {
 	Impact              *enums.ThreatImpact        `json:"impact,omitempty"`
 	IsolationDimensions []enums.IsolationDimension `json:"isolation_dimensions,omitempty"`
 	Likelihood          *enums.ThreatLikelihood    `json:"likelihood,omitempty"`
+	OwaspLlmReferences  []enums.OwaspLlmCategory   `json:"owasp_llm_references,omitempty"`
 	ReviewSurfaces      []enums.ReviewSurface      `json:"review_surfaces,omitempty"`
 	RiskRating          *OwaspRiskRating           `json:"risk_rating,omitempty"`
 	Status              enums.ThreatStatus         `json:"status"`

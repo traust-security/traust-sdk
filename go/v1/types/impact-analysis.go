@@ -1,4 +1,4 @@
-// Code generated from traust-contracts ac517047c6566b019e63b911f6b7522000826b48. DO NOT EDIT.
+// Code generated from traust-contracts bf4eb27b9eff357587fe1369db3b43e4a9534eba. DO NOT EDIT.
 
 package types
 
@@ -35,27 +35,39 @@ type Evidence struct {
 }
 
 type ImpactAnalysisMetadata struct {
-	AdvisorySources       []string                      `json:"advisory_sources,omitempty"`
-	Cve                   string                        `json:"cve"`
-	Ecosystem             *enums.Ecosystem              `json:"ecosystem,omitempty"`
-	FeatureDescription    interface{}                   `json:"feature_description,omitempty"`
-	FixedVersion          interface{}                   `json:"fixed_version,omitempty"`
-	GeneratedAt           string                        `json:"generated_at"`
-	HarnessVersion        string                        `json:"harness_version"`
-	Module                string                        `json:"module"`
-	Options               ImpactAnalysisMetadataOptions `json:"options"`
-	PortfolioGraphDb      interface{}                   `json:"portfolio_graph_db,omitempty"`
-	PortfolioGraphVersion interface{}                   `json:"portfolio_graph_version,omitempty"`
-	TiersExecuted         []enums.ImpactTier            `json:"tiers_executed"`
-	VulnerablePackages    []string                      `json:"vulnerable_packages,omitempty"`
-	VulnerableRange       string                        `json:"vulnerable_range"`
-	VulnerableSymbols     []string                      `json:"vulnerable_symbols,omitempty"`
+	AdvisorySources       []string                                `json:"advisory_sources,omitempty"`
+	Cve                   string                                  `json:"cve"`
+	Ecosystem             *enums.Ecosystem                        `json:"ecosystem,omitempty"`
+	FeatureDescription    interface{}                             `json:"feature_description,omitempty"`
+	FixedVersion          interface{}                             `json:"fixed_version,omitempty"`
+	GeneratedAt           string                                  `json:"generated_at"`
+	HarnessVersion        string                                  `json:"harness_version"`
+	Module                string                                  `json:"module"`
+	Options               ImpactAnalysisMetadataOptions           `json:"options"`
+	PortfolioGraphDb      interface{}                             `json:"portfolio_graph_db,omitempty"`
+	PortfolioGraphVersion interface{}                             `json:"portfolio_graph_version,omitempty"`
+	PreparationScope      *ImpactAnalysisMetadataPreparationScope `json:"preparation_scope,omitempty"`
+	TiersExecuted         []enums.ImpactTier                      `json:"tiers_executed"`
+	VulnerablePackages    []string                                `json:"vulnerable_packages,omitempty"`
+	VulnerableRange       string                                  `json:"vulnerable_range"`
+	VulnerableSymbols     []string                                `json:"vulnerable_symbols,omitempty"`
 }
 
 type ImpactAnalysisMetadataOptions struct {
 	BinaryScan  *bool `json:"binary_scan,omitempty"`
 	Govulncheck *bool `json:"govulncheck,omitempty"`
 	Sweep       *bool `json:"sweep,omitempty"`
+}
+
+type ImpactAnalysisMetadataPreparationScope struct {
+	Digest  string                                              `json:"digest"`
+	Members []ImpactAnalysisMetadataPreparationScopeMembersItem `json:"members"`
+}
+
+type ImpactAnalysisMetadataPreparationScopeMembersItem struct {
+	Ecosystem enums.Ecosystem `json:"ecosystem"`
+	Module    string          `json:"module"`
+	Version   interface{}     `json:"version"`
 }
 
 type ImpactAnalysisSummary struct {

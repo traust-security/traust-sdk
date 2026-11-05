@@ -1,4 +1,4 @@
-// Code generated from traust-contracts ac517047c6566b019e63b911f6b7522000826b48. DO NOT EDIT.
+// Code generated from traust-contracts bf4eb27b9eff357587fe1369db3b43e4a9534eba. DO NOT EDIT.
 
 package types
 
@@ -68,7 +68,9 @@ type DispositionSummaryByValidity struct {
 	Corrected     int  `json:"corrected"`
 	FalsePositive int  `json:"false_positive"`
 	Hardening     *int `json:"hardening,omitempty"`
+	NotAffected   *int `json:"not_affected,omitempty"`
 	NotVerified   int  `json:"not_verified"`
+	TruePositive  *int `json:"true_positive,omitempty"`
 }
 
 type DispositionSummarySeverityOverridesItem struct {
@@ -101,12 +103,6 @@ type ExecutiveSummarySeverityCounts struct {
 	Medium        int `json:"medium"`
 }
 
-type Location struct {
-	Description *string `json:"description,omitempty"`
-	Lines       *string `json:"lines,omitempty"`
-	Path        string  `json:"path"`
-}
-
 type NegativeResult struct {
 	Area   string  `json:"area"`
 	Files  *string `json:"files,omitempty"`
@@ -133,6 +129,7 @@ type ReportDisposition struct {
 	Assurance              *enums.DispositionAssurance        `json:"assurance,omitempty"`
 	Conflict               *bool                              `json:"conflict,omitempty"`
 	Events                 []string                           `json:"events"`
+	EvidenceGrade          *enums.EvidenceGrade               `json:"evidence_grade,omitempty"`
 	FpOverridden           *bool                              `json:"fp_overridden,omitempty"`
 	FpReassertionBlocked   *bool                              `json:"fp_reassertion_blocked,omitempty"`
 	LastUpdated            string                             `json:"last_updated"`
@@ -167,8 +164,10 @@ type ReportFinding struct {
 	Id                  string                     `json:"id"`
 	IsolationBoundary   *string                    `json:"isolation_boundary,omitempty"`
 	IsolationDimensions []enums.IsolationDimension `json:"isolation_dimensions,omitempty"`
-	Locations           []Location                 `json:"locations"`
+	Kind                *enums.FindingKind         `json:"kind,omitempty"`
+	Locations           []ReportLocation           `json:"locations"`
 	Origin              *enums.FindingOrigin       `json:"origin,omitempty"`
+	OwaspLlmReferences  []enums.OwaspLlmCategory   `json:"owasp_llm_references,omitempty"`
 	Passes              []int                      `json:"passes,omitempty"`
 	PeachReferences     []string                   `json:"peach_references,omitempty"`
 	PqcClassification   *enums.PqcClassification   `json:"pqc_classification,omitempty"`
@@ -196,6 +195,12 @@ type ReportFindingDependency struct {
 	Module           string                         `json:"module"`
 	Purl             *string                        `json:"purl,omitempty"`
 	VulnerableRange  *string                        `json:"vulnerable_range,omitempty"`
+}
+
+type ReportLocation struct {
+	Description *string `json:"description,omitempty"`
+	Lines       *string `json:"lines,omitempty"`
+	Path        string  `json:"path"`
 }
 
 type ReportMetadata struct {
@@ -273,11 +278,11 @@ type ReviewSurfaceEntry struct {
 }
 
 type RoadmapItem struct {
-	Action          string   `json:"action"`
-	Addresses       []string `json:"addresses"`
-	BlockedExternal *bool    `json:"blocked_external,omitempty"`
-	Effort          *string  `json:"effort,omitempty"`
-	Priority        string   `json:"priority"`
+	Action          string      `json:"action"`
+	Addresses       []string    `json:"addresses"`
+	BlockedExternal *bool       `json:"blocked_external,omitempty"`
+	Effort          interface{} `json:"effort,omitempty"`
+	Priority        string      `json:"priority"`
 }
 
 type ScannerEntry struct {

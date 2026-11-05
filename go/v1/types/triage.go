@@ -1,4 +1,4 @@
-// Code generated from traust-contracts ac517047c6566b019e63b911f6b7522000826b48. DO NOT EDIT.
+// Code generated from traust-contracts bf4eb27b9eff357587fe1369db3b43e4a9534eba. DO NOT EDIT.
 
 package types
 
@@ -43,6 +43,7 @@ type TriageFinding struct {
 	FingerprintAlgo   *string                    `json:"fingerprint_algo,omitempty"`
 	FirstLinks        []string                   `json:"first_links,omitempty"`
 	Id                string                     `json:"id"`
+	Kind              *enums.FindingKind         `json:"kind,omitempty"`
 	Line              interface{}                `json:"line,omitempty"`
 	MissingFields     []string                   `json:"missing_fields,omitempty"`
 	OrigId            interface{}                `json:"orig_id,omitempty"`

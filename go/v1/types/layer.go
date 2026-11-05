@@ -1,4 +1,4 @@
-// Code generated from traust-contracts ac517047c6566b019e63b911f6b7522000826b48. DO NOT EDIT.
+// Code generated from traust-contracts bf4eb27b9eff357587fe1369db3b43e4a9534eba. DO NOT EDIT.
 
 package types
 
@@ -155,14 +155,14 @@ type LayerMetadataFindingAliasesEntry struct {
 }
 
 type ReviewItem struct {
-	Author               string                        `json:"author"`
-	QueueReason          *enums.LayerReviewQueueReason `json:"queue_reason,omitempty"`
-	QueuedAt             string                        `json:"queued_at"`
-	Quote                string                        `json:"quote"`
-	ResolutionNote       *string                       `json:"resolution_note,omitempty"`
-	SourceRef            string                        `json:"source_ref"`
-	Status               enums.ReviewItemStatus        `json:"status"`
-	SubmittedBy          *Actor                        `json:"submitted_by,omitempty"`
-	SuggestedDisposition *Disposition                  `json:"suggested_disposition,omitempty"`
-	SuggestedFindingRef  *string                       `json:"suggested_finding_ref,omitempty"`
+	Author               string                 `json:"author"`
+	QueueReason          *enums.ReviewReason    `json:"queue_reason,omitempty"`
+	QueuedAt             string                 `json:"queued_at"`
+	Quote                string                 `json:"quote"`
+	ResolutionNote       *string                `json:"resolution_note,omitempty"`
+	SourceRef            string                 `json:"source_ref"`
+	Status               enums.ReviewItemStatus `json:"status"`
+	SubmittedBy          *Actor                 `json:"submitted_by,omitempty"`
+	SuggestedDisposition *Disposition           `json:"suggested_disposition,omitempty"`
+	SuggestedFindingRef  *string                `json:"suggested_finding_ref,omitempty"`
 }
