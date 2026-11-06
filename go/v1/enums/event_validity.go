@@ -1,8 +1,8 @@
-// Code generated from traust-contracts ac517047c6566b019e63b911f6b7522000826b48. DO NOT EDIT.
+// Code generated from traust-contracts bf4eb27b9eff357587fe1369db3b43e4a9534eba. DO NOT EDIT.
 
 package enums
 
-// EventValidity — Finding validity for disposition events. 4-value set (not_verified is the audit-stage default and is never set by an event). 'hardening' = defense-in-depth gap with no concrete exploit path.
+// EventValidity — Validity on historical layer events, including canonical confirmed, false_positive and not_affected. Finding kind and restatement operations are separate concepts.
 type EventValidity string
 
 const (
@@ -10,6 +10,7 @@ const (
 	EventValidityFalsePositive EventValidity = "false_positive"
 	EventValidityCorrected     EventValidity = "corrected"
 	EventValidityHardening     EventValidity = "hardening"
+	EventValidityNotAffected   EventValidity = "not_affected"
 )
 
 // EventValidityValues returns all valid EventValidity values.
@@ -19,5 +20,6 @@ func EventValidityValues() []EventValidity {
 		EventValidityFalsePositive,
 		EventValidityCorrected,
 		EventValidityHardening,
+		EventValidityNotAffected,
 	}
 }

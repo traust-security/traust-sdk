@@ -1,4 +1,4 @@
-// Code generated from traust-contracts ac517047c6566b019e63b911f6b7522000826b48. DO NOT EDIT.
+// Code generated from traust-contracts bf4eb27b9eff357587fe1369db3b43e4a9534eba. DO NOT EDIT.
 
 package types
 
@@ -121,7 +121,7 @@ type SourceFinding struct {
 	AuditReportPath      *string                             `json:"audit_report_path,omitempty"`
 	Cwes                 []string                            `json:"cwes"`
 	FindingRef           string                              `json:"finding_ref"`
-	Locations            []Location                          `json:"locations"`
+	Locations            []ReportLocation                    `json:"locations"`
 	Severity             enums.Severity                      `json:"severity"`
 	Title                string                              `json:"title"`
 	TriageConfidence     *float64                            `json:"triage_confidence,omitempty"`

@@ -1,12 +1,12 @@
 CONTRACTS_REPO := https://github.com/traust-security/traust-contracts.git
-CONTRACTS_REF := ac517047c6566b019e63b911f6b7522000826b48
+CONTRACTS_REF := bf4eb27b9eff357587fe1369db3b43e4a9534eba
 CONTRACTS_CACHE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/contracts
 CONTRACTS_SOURCE := $(CONTRACTS_CACHE)/checkout-$(CONTRACTS_REF)
 ENUMS_DIR := $(CONTRACTS_SOURCE)/enums/v1
-SCHEMAS_DIR := $(CONTRACTS_SOURCE)/schemas/v1
-STORAGE_DIR := $(CONTRACTS_SOURCE)/storage/v1
-FIXTURES_DIR := $(CONTRACTS_SOURCE)/tests/fixtures/storage
-STORAGE_SAMPLES := $(CONTRACTS_SOURCE)/tests/storage_samples.py
+SCHEMAS_DIR := $(CONTRACTS_SOURCE)/artifacts_schema/v1
+# storage/ is frozen at the pre-db/v1 layout: the storage generator reads queries/ dirs the
+# db/v1 restructure dropped. Regenerating it is the G6 layout adaptation (plan 28), and plan 05
+# retires the package; until then v1/storage/ is hand-maintained and checked by drift.
 CORE_REPO := https://github.com/traust-security/traust-core.git
 CORE_REF := 908bfbd613b3317d16ed7bce2e8259fdb35fd786
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
@@ -34,7 +34,7 @@ contracts:
 	git -C "$(CONTRACTS_SOURCE)" clean -ffdqx
 
 generate: contracts
-	go run ./internal/generate -enums "$(ENUMS_DIR)" -out "$(OUT_DIR)" -schemas "$(SCHEMAS_DIR)" -types ./v1/types -validate ./v1/validate/schemas_gen.go -storage "$(STORAGE_DIR)" -storage-out ./v1/storage -storage-fixtures "$(FIXTURES_DIR)" -storage-samples "$(STORAGE_SAMPLES)" -contracts-ref "$(CONTRACTS_REF)"
+	go run ./internal/generate -enums "$(ENUMS_DIR)" -out "$(OUT_DIR)" -schemas "$(SCHEMAS_DIR)" -types ./v1/types -validate ./v1/validate/schemas_gen.go -contracts-ref "$(CONTRACTS_REF)"
 
 test:
 	go test ./...
@@ -43,7 +43,7 @@ test-integration:
 	go test -count=1 -v ./v1/storage/...
 
 check-drift: generate api-generate
-	@git diff --exit-code $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/storage/operations.go ./v1/storage/projection_identifiers.go ./v1/storage/schema.go ./v1/storage/queries.go ./v1/storage/storagetest/testdata/ ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/ops/pack.schema.json || (echo "ERROR: generated files are out of date; run 'make generate api-generate' and commit" && exit 1)
+	@git diff --exit-code $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/ops/pack.schema.json || (echo "ERROR: generated files are out of date; run 'make generate api-generate' and commit" && exit 1)
 
 core:
 	@set -eu; \
