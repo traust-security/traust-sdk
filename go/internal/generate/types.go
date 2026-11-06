@@ -15,13 +15,15 @@ type structDef struct {
 }
 
 type typeRegistry struct {
+	published *publishedShapes
 	owner     map[string]string // structName -> schema filename
 	defNames  map[string]string // filename#$defs/key -> structName
 	inlineKey map[string]string // filename#inline#parent#field -> structName
 }
 
-func newTypeRegistry() *typeRegistry {
+func newTypeRegistry(published *publishedShapes) *typeRegistry {
 	return &typeRegistry{
+		published: published,
 		owner:     make(map[string]string),
 		defNames:  make(map[string]string),
 		inlineKey: make(map[string]string),
@@ -29,6 +31,12 @@ func newTypeRegistry() *typeRegistry {
 }
 
 func (r *typeRegistry) build(schemas map[string]*SchemaFile) {
+	// a published name stays with its schema; a newer schema claiming it takes a prefixed name
+	for name, filename := range r.published.owner {
+		if _, declared := schemas[filename]; declared {
+			r.owner[name] = filename
+		}
+	}
 	for _, filename := range sortedSchemaFilenames(schemas) {
 		sf := schemas[filename]
 		topLevel := schemaStructName(filename)
@@ -154,16 +162,32 @@ func GenerateTypes(schemas map[string]*SchemaFile, enumMappings []EnumMapping, e
 		return fmt.Errorf("creating output directory %s: %w", outDir, err)
 	}
 
-	registry := newTypeRegistry()
+	published, err := readPublished(outDir)
+	if err != nil {
+		return fmt.Errorf("reading published types in %s: %w", outDir, err)
+	}
+	registry := newTypeRegistry(published)
 	registry.build(schemas)
 
 	filenames := sortedSchemaFilenames(schemas)
+	files := make([]*fileGen, 0, len(filenames))
 	for _, filename := range filenames {
-		sf := schemas[filename]
-		fg := newFileGen(sf, enumMappings, enumsPkg, contractsVersion, registry)
+		fg := newFileGen(schemas[filename], enumMappings, enumsPkg, contractsVersion, registry)
 		if err := fg.collectStructs(); err != nil {
 			return fmt.Errorf("%s: %w", filename, err)
 		}
+		// render every struct first: an alias compares a new struct with another file's
+		for name, def := range fg.structs {
+			fields, err := fg.renderFields(def)
+			if err != nil {
+				return fmt.Errorf("%s: %w", filename, err)
+			}
+			published.current[name] = normalizedBody(fields)
+		}
+		files = append(files, fg)
+	}
+	for _, fg := range files {
+		filename := fg.sf.Filename
 		content, err := fg.emit()
 		if err != nil {
 			return fmt.Errorf("%s: %w", filename, err)
@@ -377,7 +401,7 @@ func (fg *fileGen) emit() (string, error) {
 	fmt.Fprintf(&b, "// Code generated from traust-contracts %s. DO NOT EDIT.\n\n", fg.version)
 	fmt.Fprint(&b, "package types\n\n")
 
-	if fg.usesEnums {
+	if strings.Contains(body.String(), "enums.") {
 		fmt.Fprint(&b, "import (\n")
 		fmt.Fprintf(&b, "\t%q\n", fg.enumsPkg)
 		fmt.Fprint(&b, ")\n\n")
@@ -388,23 +412,38 @@ func (fg *fileGen) emit() (string, error) {
 }
 
 func (fg *fileGen) emitStruct(b *strings.Builder, def *structDef) error {
+	if alias := fg.registry.published.aliasFor(def.name, fg.sf.Filename); alias != "" {
+		fmt.Fprintf(b, "type %s = %s\n\n", def.name, alias)
+		return nil
+	}
+	fields, err := fg.renderFields(def)
+	if err != nil {
+		return err
+	}
+	fmt.Fprintf(b, "type %s struct {\n%s}\n\n", def.name, fields)
+	return nil
+}
+
+func (fg *fileGen) renderFields(def *structDef) (string, error) {
 	requiredSet := stringSet(def.node.Required)
 	propNames := sortedStringKeysMapKeys(def.node.Properties)
 
-	fmt.Fprintf(b, "type %s struct {\n", def.name)
+	var fields strings.Builder
 	for _, propName := range propNames {
 		propNode := def.node.Properties[propName]
 		required := isRequired(requiredSet, propName)
 		goType, err := fg.goType(propNode, required, def.name, propName)
 		if err != nil {
-			return fmt.Errorf("property %q on %s: %w", propName, def.name, err)
+			return "", fmt.Errorf("property %q on %s: %w", propName, def.name, err)
 		}
 		fieldName := toPascalCase(propName)
+		if propNode != nil && propNode.Nullable && fg.registry.published.keepsInterface(def.name, fieldName) {
+			goType = "interface{}"
+		}
 		tag := jsonTag(propName, required)
-		fmt.Fprintf(b, "\t%s %s `%s`\n", fieldName, goType, tag)
+		fmt.Fprintf(&fields, "\t%s %s `%s`\n", fieldName, goType, tag)
 	}
-	fmt.Fprint(b, "}\n\n")
-	return nil
+	return fields.String(), nil
 }
 
 func jsonTag(name string, required bool) string {
@@ -439,14 +478,14 @@ func (fg *fileGen) goType(node *SchemaNode, required bool, parentStruct, fieldNa
 		if err != nil {
 			return "", err
 		}
-		return wrapOptional(base, required && !nullableEnum(resolved)), nil
+		return wrapOptional(base, required && !nullableEnum(resolved) && !node.Nullable), nil
 	}
 
 	base, err := fg.goTypeBase(node, parentStruct, fieldName)
 	if err != nil {
 		return "", err
 	}
-	return wrapOptional(base, required && !nullableEnum(node)), nil
+	return wrapOptional(base, required && !nullableEnum(node) && !node.Nullable), nil
 }
 
 func (fg *fileGen) goTypeForResolved(node *SchemaNode, ref, parentStruct, fieldName string) (string, error) {

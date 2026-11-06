@@ -55,6 +55,29 @@ func TestGenerateEnumRejectsConstantCollision(t *testing.T) {
 	}
 }
 
+func TestGenerateEnumKeepsTheFirstCasesPublishedNames(t *testing.T) {
+	dir := t.TempDir()
+	src := writeEnumDef(t, dir, `{"name": "priority", "values": ["p0", "p1", "P0", "P1"]}`)
+	if err := generateEnum(src, dir, "test-ref"); err != nil {
+		t.Fatalf("generateEnum: %v", err)
+	}
+	out, err := os.ReadFile(filepath.Join(dir, "priority.go"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	// lowercase came first: its constants keep their names and values, uppercase is added
+	for _, want := range []string{
+		`PriorityP0      Priority = "p0"`,
+		`PriorityP1      Priority = "p1"`,
+		`PriorityP0Upper Priority = "P0"`,
+		`PriorityP1Upper Priority = "P1"`,
+	} {
+		if !strings.Contains(strings.Join(strings.Fields(string(out)), " "), strings.Join(strings.Fields(want), " ")) {
+			t.Fatalf("missing %q:\n%s", want, out)
+		}
+	}
+}
+
 func TestGenerateEnumSuffixesLowercaseCaseVariants(t *testing.T) {
 	dir := t.TempDir()
 	src := writeEnumDef(t, dir, `{"name": "effort", "values": ["S", "M", "s", "m", "xl"]}`)

@@ -35,6 +35,7 @@ type SchemaNode struct {
 	AdditionalProperties *SchemaNode
 	MinItems             *int
 	Const                interface{}
+	Nullable             bool // the schema also admits null: an absent Go value, never interface{}
 }
 
 type rawSchemaFile struct {
@@ -59,6 +60,8 @@ type rawSchemaNode struct {
 	AdditionalProperties json.RawMessage            `json:"additionalProperties"`
 	MinItems             *int                       `json:"minItems"`
 	Const                json.RawMessage            `json:"const"`
+	OneOf                []json.RawMessage          `json:"oneOf"`
+	AnyOf                []json.RawMessage          `json:"anyOf"`
 }
 
 // LoadSchemas loads all .schema.json files from dir into a filename-keyed map.
@@ -318,7 +321,74 @@ func parseSchemaNode(raw json.RawMessage) (*SchemaNode, error) {
 	}
 	node.AdditionalProperties = ap
 
+	// Only structured sections: a nullable scalar stays interface{}, as already published.
+	if union, ok := node.Type.([]string); ok {
+		if other, nullable := withoutNull(union); nullable && structured(other, node) {
+			node.Type, node.Nullable = other, true
+		}
+	}
+	branches := rn.OneOf
+	if len(branches) == 0 {
+		branches = rn.AnyOf
+	}
+	if concrete, ok := nullableBranch(branches); ok && node.Type == nil && node.Ref == "" {
+		value, err := parseSchemaNode(concrete)
+		if err != nil {
+			return nil, fmt.Errorf("nullable branch: %w", err)
+		}
+		if kind, _ := value.Type.(string); value.Ref != "" || structured(kind, value) {
+			description := node.Description
+			*node = *value
+			if description != "" {
+				node.Description = description
+			}
+			node.Nullable = true
+		}
+	}
 	return node, nil
+}
+
+// structured is an object with properties, or an array of $ref'd or object items.
+func structured(kind string, node *SchemaNode) bool {
+	switch kind {
+	case "object":
+		return len(node.Properties) > 0
+	case "array":
+		return node.Items != nil && (node.Items.Ref != "" || len(node.Items.Properties) > 0)
+	}
+	return false
+}
+
+// withoutNull is the one type a two-member union names besides "null".
+func withoutNull(union []string) (string, bool) {
+	if len(union) != 2 {
+		return "", false
+	}
+	switch "null" {
+	case union[0]:
+		return union[1], true
+	case union[1]:
+		return union[0], true
+	}
+	return "", false
+}
+
+// nullableBranch is the non-null branch of a two-branch oneOf/anyOf whose other branch is null.
+func nullableBranch(branches []json.RawMessage) (json.RawMessage, bool) {
+	if len(branches) != 2 {
+		return nil, false
+	}
+	for i, branch := range branches {
+		var only struct {
+			Type string `json:"type"`
+		}
+		var keys map[string]json.RawMessage
+		if json.Unmarshal(branch, &keys) == nil && len(keys) == 1 &&
+			json.Unmarshal(branch, &only) == nil && only.Type == "null" {
+			return branches[1-i], true
+		}
+	}
+	return nil, false
 }
 
 func parseTypeField(raw json.RawMessage) interface{} {

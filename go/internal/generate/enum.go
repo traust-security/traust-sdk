@@ -9,9 +9,13 @@ import (
 	"unicode"
 )
 
-// lowerSuffix names the lowercase spellings in an enum that also carries
-// historical uppercase ones (e.g. "S" and "s"), keeping existing names stable.
-const lowerSuffix = "Lower"
+// In an enum carrying both spellings of a value (e.g. "S" and "s"), the spellings
+// in the first value's case keep the plain names already published; the others
+// take one of these suffixes.
+const (
+	lowerSuffix = "Lower"
+	upperSuffix = "Upper"
+)
 
 type enumDef struct {
 	Name        string                           `json:"name"`
@@ -35,12 +39,17 @@ func generateEnum(srcPath, outDir, contractsRef string) error {
 	outFile := filepath.Join(outDir, toSnakeCase(def.Name)+".go")
 
 	caseVariants := hasCaseVariants(def.Values)
+	firstLower := len(def.Values) > 0 && isLower(def.Values[0])
 	constNames := make([]string, len(def.Values))
 	seen := make(map[string]int, len(def.Values))
 	for i, val := range def.Values {
 		name := typeName + toPascalCase(identSafe(val))
-		if caseVariants && val == strings.ToLower(val) {
-			name += lowerSuffix
+		if caseVariants && isLower(val) != firstLower {
+			if firstLower {
+				name += upperSuffix
+			} else {
+				name += lowerSuffix
+			}
 		}
 		if previous, ok := seen[name]; ok {
 			oldValue := def.Values[previous]
@@ -104,6 +113,8 @@ func (def enumDef) replaces(legacy, canonical string) bool {
 	}
 	return false
 }
+
+func isLower(value string) bool { return value == strings.ToLower(value) }
 
 func hasCaseVariants(values []string) bool {
 	spellings := make(map[string]string, len(values))
