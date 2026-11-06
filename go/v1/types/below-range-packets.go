@@ -53,7 +53,7 @@ type Commit struct {
 type CoverageGap struct {
 	Case      interface{}               `json:"case,omitempty"`
 	Detail    interface{}               `json:"detail,omitempty"`
-	Ecosystem interface{}               `json:"ecosystem,omitempty"`
+	Ecosystem *enums.Ecosystem          `json:"ecosystem,omitempty"`
 	Package   interface{}               `json:"package,omitempty"`
 	Reason    enums.BelowRangeGapReason `json:"reason"`
 	Tried     []FixAttempt              `json:"tried,omitempty"`
@@ -120,11 +120,11 @@ type HunkPresence struct {
 }
 
 type InstalledSource struct {
-	DeclaredBy interface{} `json:"declared_by,omitempty"`
-	Files      int         `json:"files"`
-	Root       string      `json:"root"`
-	Sha256     string      `json:"sha256"`
-	Url        string      `json:"url"`
+	DeclaredBy *DeclaredSource `json:"declared_by,omitempty"`
+	Files      int             `json:"files"`
+	Root       string          `json:"root"`
+	Sha256     string          `json:"sha256"`
+	Url        string          `json:"url"`
 }
 
 type Packet struct {

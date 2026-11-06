@@ -39,7 +39,7 @@ type Regression struct {
 	FingerprintAlgo   *string                  `json:"fingerprint_algo,omitempty"`
 	Id                string                   `json:"id"`
 	IntroducedBy      string                   `json:"introduced_by"`
-	Locations         []ReportLocation         `json:"locations"`
+	Locations         []Location               `json:"locations"`
 	PqcClassification *enums.PqcClassification `json:"pqc_classification,omitempty"`
 	Remediation       string                   `json:"remediation"`
 	RemediationEffort *enums.RemediationEffort `json:"remediation_effort,omitempty"`

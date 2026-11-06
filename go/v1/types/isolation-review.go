@@ -7,7 +7,7 @@ import (
 )
 
 type IsolationReview struct {
-	Gaps       []IsolationReviewGap    `json:"gaps"`
+	Gaps       []Gap                   `json:"gaps"`
 	Interfaces []Interface             `json:"interfaces"`
 	Metadata   IsolationReviewMetadata `json:"metadata"`
 	Notes      *string                 `json:"notes,omitempty"`
@@ -19,6 +19,13 @@ type Dimension struct {
 	Evidence  []string                   `json:"evidence,omitempty"`
 	Rationale *string                    `json:"rationale,omitempty"`
 	Result    enums.IsolationCheckResult `json:"result"`
+}
+
+type Gap struct {
+	Description string         `json:"description"`
+	InterfaceId string         `json:"interface_id"`
+	Remediation string         `json:"remediation"`
+	Severity    enums.Severity `json:"severity"`
 }
 
 type Interface struct {
@@ -38,13 +45,6 @@ type InterfaceDimensions struct {
 	Encryption     Dimension `json:"encryption"`
 	Hygiene        Dimension `json:"hygiene"`
 	Privilege      Dimension `json:"privilege"`
-}
-
-type IsolationReviewGap struct {
-	Description string         `json:"description"`
-	InterfaceId string         `json:"interface_id"`
-	Remediation string         `json:"remediation"`
-	Severity    enums.Severity `json:"severity"`
 }
 
 type IsolationReviewMetadata struct {

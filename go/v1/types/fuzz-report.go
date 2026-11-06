@@ -9,9 +9,9 @@ import (
 type FuzzReport struct {
 	Artifact interface{}          `json:"artifact"`
 	Batch    *string              `json:"batch,omitempty"`
-	Coverage interface{}          `json:"coverage"`
+	Coverage *Coverage            `json:"coverage"`
 	Crashers []Crasher            `json:"crashers"`
-	Gaps     []Gap                `json:"gaps"`
+	Gaps     []FuzzReportGap      `json:"gaps"`
 	Patterns []PatternObservation `json:"patterns,omitempty"`
 	Target   Target               `json:"target"`
 }
@@ -25,18 +25,18 @@ type Coverage struct {
 }
 
 type Crasher struct {
-	Analysis         *CrasherAnalysis   `json:"analysis,omitempty"`
-	Cvss             *ReportFindingCvss `json:"cvss,omitempty"`
-	Cwes             []string           `json:"cwes"`
-	FindingId        *string            `json:"finding_id,omitempty"`
-	Harness          string             `json:"harness"`
-	Id               string             `json:"id"`
-	Location         *ReportLocation    `json:"location,omitempty"`
-	Reproducer       Reproducer         `json:"reproducer"`
-	Sanitizer        interface{}        `json:"sanitizer"`
-	SeverityProposal enums.Severity     `json:"severity_proposal"`
-	Signature        Signature          `json:"signature"`
-	Title            string             `json:"title"`
+	Analysis         *CrasherAnalysis     `json:"analysis,omitempty"`
+	Cvss             *ReportFindingCvss   `json:"cvss,omitempty"`
+	Cwes             []string             `json:"cwes"`
+	FindingId        *string              `json:"finding_id,omitempty"`
+	Harness          string               `json:"harness"`
+	Id               string               `json:"id"`
+	Location         *Location            `json:"location,omitempty"`
+	Reproducer       Reproducer           `json:"reproducer"`
+	Sanitizer        *enums.FuzzSanitizer `json:"sanitizer"`
+	SeverityProposal enums.Severity       `json:"severity_proposal"`
+	Signature        Signature            `json:"signature"`
+	Title            string               `json:"title"`
 }
 
 type CrasherAnalysis struct {
@@ -47,7 +47,7 @@ type CrasherAnalysis struct {
 	Priority                  *string  `json:"priority,omitempty"`
 }
 
-type Gap struct {
+type FuzzReportGap struct {
 	Harness *string             `json:"harness,omitempty"`
 	Note    *string             `json:"note,omitempty"`
 	Reason  enums.FuzzGapReason `json:"reason"`

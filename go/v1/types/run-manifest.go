@@ -22,9 +22,9 @@ type RunManifestApproval struct {
 }
 
 type RunManifestBudget struct {
-	BudgetUsd   interface{}              `json:"budget_usd,omitempty"`
+	BudgetUsd   *string                  `json:"budget_usd,omitempty"`
 	Enforcement *enums.BudgetEnforcement `json:"enforcement,omitempty"`
-	EstimateUsd interface{}              `json:"estimate_usd"`
+	EstimateUsd *string                  `json:"estimate_usd"`
 	Lane        string                   `json:"lane"`
 	SpentUsd    string                   `json:"spent_usd"`
 	Status      enums.BudgetStatus       `json:"status"`
@@ -61,5 +61,5 @@ type SessionInputsItem struct {
 type SessionOutput struct {
 	ArtifactId interface{} `json:"artifact_id"`
 	Path       interface{} `json:"path"`
-	Sha256     interface{} `json:"sha256"`
+	Sha256     *string     `json:"sha256"`
 }

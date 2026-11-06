@@ -93,6 +93,11 @@ type SeverityValidationDemonstrated struct {
 	UserInteraction    *enums.CvssUserInteraction    `json:"user_interaction,omitempty"`
 }
 
+type SeverityValidationProposal struct {
+	Rationale string         `json:"rationale"`
+	Severity  enums.Severity `json:"severity"`
+}
+
 type SourceReport struct {
 	Kind   enums.ValidationSourceReportKind `json:"kind"`
 	Path   string                           `json:"path"`
@@ -140,6 +145,12 @@ type ValidatedFinding struct {
 	Technique          enums.ValidationTechnique `json:"technique"`
 	Title              *string                   `json:"title,omitempty"`
 	Verdict            enums.ValidationVerdict   `json:"verdict"`
+}
+
+type ValidatedFindingChainContext struct {
+	ChainId       string              `json:"chain_id"`
+	ChainSeverity enums.ChainSeverity `json:"chain_severity"`
+	Role          string              `json:"role"`
 }
 
 type ValidationMetadata struct {

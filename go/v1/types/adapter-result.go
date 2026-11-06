@@ -2,10 +2,6 @@
 
 package types
 
-import (
-	"github.com/traust-security/traust-sdk/go/v1/enums"
-)
-
 type AdapterResult struct {
 	Findings   []AdapterFinding `json:"findings"`
 	FocusAreas []string         `json:"focus_areas,omitempty"`
@@ -15,38 +11,7 @@ type AdapterResult struct {
 	Target     string           `json:"target"`
 }
 
-type AdapterFinding struct {
-	AsvsReferences      []string                   `json:"asvs_references,omitempty"`
-	AttackPattern       *string                    `json:"attack_pattern,omitempty"`
-	BlockedExternal     *bool                      `json:"blocked_external,omitempty"`
-	Capec               []string                   `json:"capec,omitempty"`
-	Category            *string                    `json:"category,omitempty"`
-	Cvss                *ReportFindingCvss         `json:"cvss,omitempty"`
-	Cwes                []string                   `json:"cwes"`
-	Dependency          *ReportFindingDependency   `json:"dependency,omitempty"`
-	Description         string                     `json:"description"`
-	Disposition         *ReportDisposition         `json:"disposition,omitempty"`
-	EffectiveSeverity   *enums.Severity            `json:"effective_severity,omitempty"`
-	Evidence            []EvidenceBlock            `json:"evidence,omitempty"`
-	Fingerprint         *string                    `json:"fingerprint,omitempty"`
-	FingerprintAlgo     *string                    `json:"fingerprint_algo,omitempty"`
-	Id                  string                     `json:"id"`
-	IsolationBoundary   *string                    `json:"isolation_boundary,omitempty"`
-	IsolationDimensions []enums.IsolationDimension `json:"isolation_dimensions,omitempty"`
-	Kind                *enums.FindingKind         `json:"kind,omitempty"`
-	Locations           []ReportLocation           `json:"locations"`
-	Origin              *enums.FindingOrigin       `json:"origin,omitempty"`
-	OwaspLlmReferences  []enums.OwaspLlmCategory   `json:"owasp_llm_references,omitempty"`
-	Passes              []int                      `json:"passes,omitempty"`
-	PeachReferences     []string                   `json:"peach_references,omitempty"`
-	PqcClassification   *enums.PqcClassification   `json:"pqc_classification,omitempty"`
-	Remediation         string                     `json:"remediation"`
-	RemediationEffort   *enums.RemediationEffort   `json:"remediation_effort,omitempty"`
-	Severity            enums.Severity             `json:"severity"`
-	SourceFindings      []string                   `json:"source_findings,omitempty"`
-	Title               string                     `json:"title"`
-	ValidationStatus    *enums.Validity            `json:"validation_status,omitempty"`
-}
+type AdapterFinding = ReportFinding
 
 type Metadata struct {
 	ScannerVersion *string `json:"scanner_version,omitempty"`

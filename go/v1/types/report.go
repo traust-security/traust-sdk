@@ -103,6 +103,12 @@ type ExecutiveSummarySeverityCounts struct {
 	Medium        int `json:"medium"`
 }
 
+type Location struct {
+	Description *string `json:"description,omitempty"`
+	Lines       *string `json:"lines,omitempty"`
+	Path        string  `json:"path"`
+}
+
 type NegativeResult struct {
 	Area   string  `json:"area"`
 	Files  *string `json:"files,omitempty"`
@@ -165,7 +171,7 @@ type ReportFinding struct {
 	IsolationBoundary   *string                    `json:"isolation_boundary,omitempty"`
 	IsolationDimensions []enums.IsolationDimension `json:"isolation_dimensions,omitempty"`
 	Kind                *enums.FindingKind         `json:"kind,omitempty"`
-	Locations           []ReportLocation           `json:"locations"`
+	Locations           []Location                 `json:"locations"`
 	Origin              *enums.FindingOrigin       `json:"origin,omitempty"`
 	OwaspLlmReferences  []enums.OwaspLlmCategory   `json:"owasp_llm_references,omitempty"`
 	Passes              []int                      `json:"passes,omitempty"`
@@ -195,12 +201,6 @@ type ReportFindingDependency struct {
 	Module           string                         `json:"module"`
 	Purl             *string                        `json:"purl,omitempty"`
 	VulnerableRange  *string                        `json:"vulnerable_range,omitempty"`
-}
-
-type ReportLocation struct {
-	Description *string `json:"description,omitempty"`
-	Lines       *string `json:"lines,omitempty"`
-	Path        string  `json:"path"`
 }
 
 type ReportMetadata struct {

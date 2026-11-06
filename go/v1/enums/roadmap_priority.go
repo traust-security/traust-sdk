@@ -6,30 +6,30 @@ package enums
 type RoadmapPriority string
 
 const (
-	RoadmapPriorityP0Lower RoadmapPriority = "p0"
-	RoadmapPriorityP1Lower RoadmapPriority = "p1"
-	RoadmapPriorityP2Lower RoadmapPriority = "p2"
-	RoadmapPriorityP3Lower RoadmapPriority = "p3"
-	RoadmapPriorityP4Lower RoadmapPriority = "p4"
-	RoadmapPriorityP0      RoadmapPriority = "P0"
-	RoadmapPriorityP1      RoadmapPriority = "P1"
-	RoadmapPriorityP2      RoadmapPriority = "P2"
-	RoadmapPriorityP3      RoadmapPriority = "P3"
-	RoadmapPriorityP4      RoadmapPriority = "P4"
+	RoadmapPriorityP0      RoadmapPriority = "p0"
+	RoadmapPriorityP1      RoadmapPriority = "p1"
+	RoadmapPriorityP2      RoadmapPriority = "p2"
+	RoadmapPriorityP3      RoadmapPriority = "p3"
+	RoadmapPriorityP4      RoadmapPriority = "p4"
+	RoadmapPriorityP0Upper RoadmapPriority = "P0"
+	RoadmapPriorityP1Upper RoadmapPriority = "P1"
+	RoadmapPriorityP2Upper RoadmapPriority = "P2"
+	RoadmapPriorityP3Upper RoadmapPriority = "P3"
+	RoadmapPriorityP4Upper RoadmapPriority = "P4"
 )
 
 // RoadmapPriorityValues returns all valid RoadmapPriority values.
 func RoadmapPriorityValues() []RoadmapPriority {
 	return []RoadmapPriority{
-		RoadmapPriorityP0Lower,
-		RoadmapPriorityP1Lower,
-		RoadmapPriorityP2Lower,
-		RoadmapPriorityP3Lower,
-		RoadmapPriorityP4Lower,
 		RoadmapPriorityP0,
 		RoadmapPriorityP1,
 		RoadmapPriorityP2,
 		RoadmapPriorityP3,
 		RoadmapPriorityP4,
+		RoadmapPriorityP0Upper,
+		RoadmapPriorityP1Upper,
+		RoadmapPriorityP2Upper,
+		RoadmapPriorityP3Upper,
+		RoadmapPriorityP4Upper,
 	}
 }

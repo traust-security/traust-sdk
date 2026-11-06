@@ -2,12 +2,38 @@
 
 package types
 
+import (
+	"github.com/traust-security/traust-sdk/go/v1/enums"
+)
+
 type CodeFacts struct {
-	Artifact   interface{} `json:"artifact"`
-	Interfaces interface{} `json:"interfaces,omitempty"`
-	Languages  interface{} `json:"languages"`
-	Packages   interface{} `json:"packages,omitempty"`
-	Symbols    interface{} `json:"symbols"`
+	Artifact   interface{}               `json:"artifact"`
+	Interfaces []CodeFactsInterfacesItem `json:"interfaces,omitempty"`
+	Languages  []Language                `json:"languages"`
+	Packages   *CodeFactsPackages        `json:"packages,omitempty"`
+	Symbols    []Symbol                  `json:"symbols"`
+}
+
+type CodeFactsInterfacesItem struct {
+	ApiGroup  string              `json:"api_group"`
+	Kind      interface{}         `json:"kind,omitempty"`
+	Location  CodeFactsLocation   `json:"location"`
+	Name      interface{}         `json:"name,omitempty"`
+	Resources []string            `json:"resources"`
+	Role      enums.InterfaceRole `json:"role"`
+	Verbs     []string            `json:"verbs"`
+}
+
+type CodeFactsLocation struct {
+	Hashes []CodeFactsLocationHashesItem `json:"hashes,omitempty"`
+	Line   interface{}                   `json:"line,omitempty"`
+	Path   string                        `json:"path"`
+	Symbol interface{}                   `json:"symbol,omitempty"`
+}
+
+type CodeFactsLocationHashesItem struct {
+	Algorithm string `json:"algorithm"`
+	Digest    string `json:"digest"`
 }
 
 type CodeFactsPackages struct {
@@ -18,11 +44,11 @@ type CodeFactsPackages struct {
 }
 
 type CodeFactsPackagesExportsItem struct {
-	Kind     interface{} `json:"kind,omitempty"`
-	Language string      `json:"language"`
-	Location Location    `json:"location"`
-	Name     string      `json:"name"`
-	Package  string      `json:"package"`
+	Kind     interface{}       `json:"kind,omitempty"`
+	Language string            `json:"language"`
+	Location CodeFactsLocation `json:"location"`
+	Name     string            `json:"name"`
+	Package  string            `json:"package"`
 }
 
 type CodeFactsPackagesGapsItem struct {
@@ -35,15 +61,15 @@ type CodeFactsPackagesGapsItem struct {
 }
 
 type CodeFactsPackagesImportsItem struct {
-	Language string   `json:"language"`
-	Location Location `json:"location"`
-	Package  string   `json:"package"`
+	Language string            `json:"language"`
+	Location CodeFactsLocation `json:"location"`
+	Package  string            `json:"package"`
 }
 
 type CodeFactsPackagesModulesItem struct {
-	Ecosystem string   `json:"ecosystem"`
-	Location  Location `json:"location"`
-	Name      string   `json:"name"`
+	Ecosystem string            `json:"ecosystem"`
+	Location  CodeFactsLocation `json:"location"`
+	Name      string            `json:"name"`
 }
 
 type Language struct {
@@ -52,18 +78,6 @@ type Language struct {
 	Comments interface{} `json:"comments"`
 	Files    interface{} `json:"files"`
 	Name     string      `json:"name"`
-}
-
-type Location struct {
-	Hashes []LocationHashesItem `json:"hashes,omitempty"`
-	Line   interface{}          `json:"line,omitempty"`
-	Path   string               `json:"path"`
-	Symbol interface{}          `json:"symbol,omitempty"`
-}
-
-type LocationHashesItem struct {
-	Algorithm string `json:"algorithm"`
-	Digest    string `json:"digest"`
 }
 
 type Symbol struct {

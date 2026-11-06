@@ -121,7 +121,7 @@ type SourceFinding struct {
 	AuditReportPath      *string                             `json:"audit_report_path,omitempty"`
 	Cwes                 []string                            `json:"cwes"`
 	FindingRef           string                              `json:"finding_ref"`
-	Locations            []ReportLocation                    `json:"locations"`
+	Locations            []Location                          `json:"locations"`
 	Severity             enums.Severity                      `json:"severity"`
 	Title                string                              `json:"title"`
 	TriageConfidence     *float64                            `json:"triage_confidence,omitempty"`
