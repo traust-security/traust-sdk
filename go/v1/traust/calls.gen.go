@@ -72,6 +72,15 @@ func (c *Client) Complete(ctx context.Context, orderId openapi_types.UUID, body 
 	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
+// CreateRemediation is POST /v1/remediations: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) CreateRemediation(ctx context.Context, body CreateRemediationJSONRequestBody) (*Remediation, error) {
+	response, err := c.CreateRemediationWithResponse(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
 // Decide is POST /v1/findings/{findingId}/decisions: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Decide(ctx context.Context, findingId openapi_types.UUID, body DecideJSONRequestBody) (*Decision, error) {
 	response, err := c.DecideWithResponse(ctx, findingId, body)
@@ -105,6 +114,15 @@ func (c *Client) Dependents(ctx context.Context, packageId openapi_types.UUID, p
 		return nil, err
 	}
 	return *found, nil
+}
+
+// ExportAdvisoryImpacts is GET /v1/advisories/{advisoryId}/impact-report: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) ExportAdvisoryImpacts(ctx context.Context, advisoryId openapi_types.UUID) (*ImpactExport, error) {
+	response, err := c.ExportAdvisoryImpactsWithResponse(ctx, advisoryId)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
 // ExposureTimeline is GET /v1/exposure/timeline: the decoded body, or a *ProblemError when core refuses.
@@ -278,6 +296,15 @@ func (c *Client) GetProduct(ctx context.Context, productId openapi_types.UUID) (
 // GetRef is GET /v1/refs/{repositoryRefId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetRef(ctx context.Context, repositoryRefId openapi_types.UUID) (*RepositoryRef, error) {
 	response, err := c.GetRefWithResponse(ctx, repositoryRefId)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
+// GetRemediation is GET /v1/remediations/{remediationId}: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) GetRemediation(ctx context.Context, remediationId openapi_types.UUID) (*RemediationDetail, error) {
+	response, err := c.GetRemediationWithResponse(ctx, remediationId)
 	if err != nil {
 		return nil, err
 	}
@@ -571,6 +598,32 @@ func (c *Client) ListRefs(ctx context.Context, repositoryId openapi_types.UUID, 
 	return *found, nil
 }
 
+// ListRemediations is GET /v1/remediations: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) ListRemediations(ctx context.Context, params *ListRemediationsParams) (*PageRemediation, error) {
+	response, err := c.ListRemediationsWithResponse(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
+// ListRemediationsAll iterates every item of ListRemediations, following the cursor page by page; it stops at
+// the first error.
+func (c *Client) ListRemediationsAll(ctx context.Context, params *ListRemediationsParams) iter.Seq2[Remediation, error] {
+	var page ListRemediationsParams
+	if params != nil {
+		page = *params
+	}
+	return pages(func(cursor *string) ([]Remediation, *string, error) {
+		page.Cursor = cursor
+		found, err := c.ListRemediations(ctx, &page)
+		if err != nil {
+			return nil, nil, err
+		}
+		return found.Items, found.Next, nil
+	})
+}
+
 // ListRepositories is GET /v1/repositories: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRepositories(ctx context.Context, params *ListRepositoriesParams) (*PageRepository, error) {
 	response, err := c.ListRepositoriesWithResponse(ctx, params)
@@ -730,6 +783,19 @@ func (c *Client) PlanOnboarding(ctx context.Context, body PlanOnboardingJSONRequ
 		return nil, err
 	}
 	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
+// PrepareAdvisoryImpacts is GET /v1/advisories/{advisoryId}/impact-inputs: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) PrepareAdvisoryImpacts(ctx context.Context, advisoryId openapi_types.UUID, params *PrepareAdvisoryImpactsParams) ([]ImpactInput, error) {
+	response, err := c.PrepareAdvisoryImpactsWithResponse(ctx, advisoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil || found == nil {
+		return nil, err
+	}
+	return *found, nil
 }
 
 // PrepareRemediation is GET /v1/work-items/{workItemId}/remediation-input: the decoded body, or a *ProblemError when core refuses.
