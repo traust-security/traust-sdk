@@ -80,6 +80,7 @@ mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context
 # fixed — so e2eforge is an HTTPS_PROXY CONNECT proxy answering with its own TLS (an
 # ephemeral self-signed certificate, trusted through SSL_CERT_FILE), and the e2e config
 # maps the mock's host to the gitlab kind in forge_hosts.
+# One package at a time: both share the server, and ops onboards what v1/traust expects empty.
 e2e: core
 	@set -eu; \
 	home="$$(mktemp -d)"; port=18080; \
@@ -96,7 +97,7 @@ e2e: core
 	$(call mint,e2e@example.com,False,person); \
 	$(call mint,e2e-runner,True,runner); \
 	TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner" \
-	  go test -count=1 -tags e2e -run E2E -v ./v1/traust/ ./v1/ops/
+	  go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/ ./v1/ops/
 
 fmt:
 	gofmt -w .
