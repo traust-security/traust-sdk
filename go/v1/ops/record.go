@@ -48,6 +48,13 @@ func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte) (Recor
 		}
 		receipt.Verification, err = run.Client.RecordVerification(ctx, body)
 		return receipt, err
+	case request.Remediation != nil:
+		body := *request.Remediation
+		if err := l.stamp(&body.RunOrderId, &body.Provenance, &body.Payload, payload); err != nil {
+			return receipt, err
+		}
+		receipt.Remediation, err = run.Client.RecordRemediation(ctx, body)
+		return receipt, err
 	}
 	return receipt, errors.New("ops: recording run has no request template")
 }
@@ -79,6 +86,8 @@ func (request RecordingRequest) template() (string, traust.Provenance) {
 		return request.Validation.Payload, request.Validation.Provenance
 	case request.Verification != nil:
 		return request.Verification.Payload, request.Verification.Provenance
+	case request.Remediation != nil:
+		return request.Remediation.Payload, request.Remediation.Provenance
 	}
 	return "", traust.Provenance{}
 }
