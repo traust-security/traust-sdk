@@ -73,7 +73,7 @@ func (c *Client) Complete(ctx context.Context, orderId openapi_types.UUID, body 
 }
 
 // CreateRemediation is POST /v1/remediations: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) CreateRemediation(ctx context.Context, body CreateRemediationJSONRequestBody) (*Remediation, error) {
+func (c *Client) CreateRemediation(ctx context.Context, body CreateRemediationJSONRequestBody) (*ScheduledEffort, error) {
 	response, err := c.CreateRemediationWithResponse(ctx, body)
 	if err != nil {
 		return nil, err
@@ -302,9 +302,9 @@ func (c *Client) GetRef(ctx context.Context, repositoryRefId openapi_types.UUID)
 	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
-// GetRemediation is GET /v1/remediations/{remediationId}: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) GetRemediation(ctx context.Context, remediationId openapi_types.UUID) (*RemediationDetail, error) {
-	response, err := c.GetRemediationWithResponse(ctx, remediationId)
+// GetRemediation is GET /v1/remediations/{workItemId}: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) GetRemediation(ctx context.Context, workItemId openapi_types.UUID) (*ScheduledEffort, error) {
+	response, err := c.GetRemediationWithResponse(ctx, workItemId)
 	if err != nil {
 		return nil, err
 	}
@@ -599,7 +599,7 @@ func (c *Client) ListRefs(ctx context.Context, repositoryId openapi_types.UUID, 
 }
 
 // ListRemediations is GET /v1/remediations: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) ListRemediations(ctx context.Context, params *ListRemediationsParams) (*PageRemediation, error) {
+func (c *Client) ListRemediations(ctx context.Context, params *ListRemediationsParams) (*PageScheduledEffort, error) {
 	response, err := c.ListRemediationsWithResponse(ctx, params)
 	if err != nil {
 		return nil, err
@@ -609,12 +609,12 @@ func (c *Client) ListRemediations(ctx context.Context, params *ListRemediationsP
 
 // ListRemediationsAll iterates every item of ListRemediations, following the cursor page by page; it stops at
 // the first error.
-func (c *Client) ListRemediationsAll(ctx context.Context, params *ListRemediationsParams) iter.Seq2[Remediation, error] {
+func (c *Client) ListRemediationsAll(ctx context.Context, params *ListRemediationsParams) iter.Seq2[ScheduledEffort, error] {
 	var page ListRemediationsParams
 	if params != nil {
 		page = *params
 	}
-	return pages(func(cursor *string) ([]Remediation, *string, error) {
+	return pages(func(cursor *string) ([]ScheduledEffort, *string, error) {
 		page.Cursor = cursor
 		found, err := c.ListRemediations(ctx, &page)
 		if err != nil {
@@ -779,6 +779,15 @@ func (c *Client) PackagesAffected(ctx context.Context, advisoryId openapi_types.
 // PlanOnboarding is POST /v1/onboarding/plan: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PlanOnboarding(ctx context.Context, body PlanOnboardingJSONRequestBody) (*OnboardingPlan, error) {
 	response, err := c.PlanOnboardingWithResponse(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
+// Preflight is POST /v1/preflight: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) Preflight(ctx context.Context, body PreflightJSONRequestBody) (*PreflightResult, error) {
+	response, err := c.PreflightWithResponse(ctx, body)
 	if err != nil {
 		return nil, err
 	}

@@ -10,6 +10,8 @@ import (
 	"path/filepath"
 	"sync/atomic"
 	"testing"
+
+	"github.com/google/uuid"
 )
 
 func products(client *Client, limit int) ([]Product, error) {
@@ -160,6 +162,88 @@ func TestRetryAbsorbsTransientFailures(t *testing.T) {
 	count := len(found)
 	if count != 1 || atomic.LoadInt32(&calls) != 2 {
 		t.Fatalf("items=%d calls=%d, want 1 item over 2 calls", count, calls)
+	}
+}
+
+// The scheduling door's refusal is a problem+json document: the typed deny
+// code and its issues ride ProblemError so a caller can branch on them
+// without parsing the detail string.
+func TestPreflightSurfacesTheDenyProblem(t *testing.T) {
+	dir := t.TempDir()
+	tokenPath := filepath.Join(dir, "token")
+	writeFile(t, tokenPath, "t")
+
+	var method, path string
+	code := RoleDenied
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		method, path = r.Method, r.URL.Path
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(Problem{
+			Type:      "about:blank",
+			Title:     "Forbidden",
+			Status:    http.StatusForbidden,
+			Detail:    "the stage may not run on this subject now",
+			Code:      &code,
+			Issues:    &[]DenyIssue{{Code: RoleDenied, Detail: "the lane's role may not run this stage"}},
+			RequestId: "req-test",
+		})
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Config{BaseURL: server.URL, Tokens: FileTokenSource{Path: tokenPath}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.Preflight(context.Background(), PreflightRequest{Asset: "repository"})
+	var problemErr *ProblemError
+	if !errors.As(err, &problemErr) {
+		t.Fatalf("got %v (%T), want *ProblemError", err, err)
+	}
+	if method != http.MethodPost || path != "/v1/preflight" {
+		t.Fatalf("request %s %s, want POST /v1/preflight", method, path)
+	}
+	if problemErr.StatusCode != http.StatusForbidden {
+		t.Fatalf("status %d, want 403", problemErr.StatusCode)
+	}
+	if problemErr.Problem.Code == nil || *problemErr.Problem.Code != RoleDenied {
+		t.Fatalf("code %v, want %q", problemErr.Problem.Code, RoleDenied)
+	}
+	if problemErr.Problem.Issues == nil || len(*problemErr.Problem.Issues) != 1 || (*problemErr.Problem.Issues)[0].Code != RoleDenied {
+		t.Fatalf("issues %+v, want one %q issue", problemErr.Problem.Issues, RoleDenied)
+	}
+}
+
+// The re-keyed read names the work item in the path, and an effort core
+// refuses (here: none for that work item) reads as *ProblemError, never a
+// zero-value effort.
+func TestGetRemediationNamesTheWorkItemAndRefusesAbsence(t *testing.T) {
+	dir := t.TempDir()
+	tokenPath := filepath.Join(dir, "token")
+	writeFile(t, tokenPath, "t")
+
+	var path string
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		path = r.URL.Path
+		problem(w, http.StatusNotFound, "no remediation effort names this work item")
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Config{BaseURL: server.URL, Tokens: FileTokenSource{Path: tokenPath}})
+	if err != nil {
+		t.Fatal(err)
+	}
+	id := uuid.New()
+	_, err = client.GetRemediation(context.Background(), id)
+	var problemErr *ProblemError
+	if !errors.As(err, &problemErr) {
+		t.Fatalf("got %v (%T), want *ProblemError", err, err)
+	}
+	if path != "/v1/remediations/"+id.String() {
+		t.Fatalf("requested %s, want /v1/remediations/%s", path, id)
+	}
+	if problemErr.StatusCode != http.StatusNotFound {
+		t.Fatalf("status %d, want 404", problemErr.StatusCode)
 	}
 }
 

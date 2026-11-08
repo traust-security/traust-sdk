@@ -88,6 +88,17 @@ const (
 	DecisionReasonUnresolved                 DecisionReason = "unresolved"
 )
 
+// Defines values for DenyCode.
+const (
+	BudgetExhausted     DenyCode = "budget_exhausted"
+	ConfigStale         DenyCode = "config_stale"
+	CountersignRequired DenyCode = "countersign_required"
+	OrderingViolated    DenyCode = "ordering_violated"
+	ReviewRequired      DenyCode = "review_required"
+	RoleDenied          DenyCode = "role_denied"
+	SubjectUnknown      DenyCode = "subject_unknown"
+)
+
 // Defines values for DependencyEvidenceLevel.
 const (
 	Binary      DependencyEvidenceLevel = "binary"
@@ -845,6 +856,15 @@ type DecisionBody struct {
 // DecisionReason defines model for DecisionReason.
 type DecisionReason string
 
+// DenyCode defines model for DenyCode.
+type DenyCode string
+
+// DenyIssue One typed reason a policy gate refused an action (problem+json `issues[]`).
+type DenyIssue struct {
+	Code   DenyCode `json:"code"`
+	Detail string   `json:"detail"`
+}
+
 // Dependency defines model for Dependency.
 type Dependency struct {
 	CreatedAt *time.Time          `json:"created_at"`
@@ -1340,6 +1360,8 @@ type OrderManifest map[string]interface{}
 type OrderRequest struct {
 	Asset        string              `json:"asset"`
 	EventSource  *string             `json:"event_source"`
+	ForkBranch   *string             `json:"fork_branch"`
+	ForkUrl      *string             `json:"fork_url"`
 	Lane         *string             `json:"lane"`
 	Priority     int                 `json:"priority"`
 	RepositoryId *openapi_types.UUID `json:"repository_id"`
@@ -1403,12 +1425,6 @@ type PageProduct struct {
 	Next  *string   `json:"next"`
 }
 
-// PageRemediation defines model for Page_Remediation_.
-type PageRemediation struct {
-	Items []Remediation `json:"items"`
-	Next  *string       `json:"next"`
-}
-
 // PageRepository defines model for Page_Repository_.
 type PageRepository struct {
 	Items []Repository `json:"items"`
@@ -1425,6 +1441,12 @@ type PageReviewCase struct {
 type PageRunOrder struct {
 	Items []RunOrder `json:"items"`
 	Next  *string    `json:"next"`
+}
+
+// PageScheduledEffort defines model for Page_ScheduledEffort_.
+type PageScheduledEffort struct {
+	Items []ScheduledEffort `json:"items"`
+	Next  *string           `json:"next"`
 }
 
 // PageValidationAttempt defines model for Page_ValidationAttempt_.
@@ -1482,6 +1504,23 @@ type PrecedentReason struct {
 // PrecedentStrength What a precedent may save: a person's verdict earns fewer votes; a machine's annotates.
 type PrecedentStrength string
 
+// PreflightRequest May this stage run on this subject now, under the config generation the caller holds.
+type PreflightRequest struct {
+	Asset            string             `json:"asset"`
+	ConfigGeneration *string            `json:"config_generation"`
+	Lane             *string            `json:"lane"`
+	RepositoryId     openapi_types.UUID `json:"repository_id"`
+}
+
+// PreflightResult defines model for PreflightResult.
+type PreflightResult struct {
+	Allowed          bool               `json:"allowed"`
+	Asset            string             `json:"asset"`
+	ConfigGeneration *string            `json:"config_generation"`
+	Lane             *string            `json:"lane"`
+	RepositoryId     openapi_types.UUID `json:"repository_id"`
+}
+
 // Principal defines model for Principal.
 type Principal struct {
 	Display    string          `json:"display"`
@@ -1493,12 +1532,14 @@ type Principal struct {
 
 // Problem The error body every route returns (RFC 9457 problem details).
 type Problem struct {
-	Detail    string `json:"detail"`
-	Instance  string `json:"instance"`
-	RequestId string `json:"request_id"`
-	Status    int    `json:"status"`
-	Title     string `json:"title"`
-	Type      string `json:"type"`
+	Code      *DenyCode    `json:"code,omitempty"`
+	Detail    string       `json:"detail"`
+	Instance  string       `json:"instance"`
+	Issues    *[]DenyIssue `json:"issues,omitempty"`
+	RequestId string       `json:"request_id"`
+	Status    int          `json:"status"`
+	Title     string       `json:"title"`
+	Type      string       `json:"type"`
 }
 
 // Product defines model for Product.
@@ -1549,42 +1590,6 @@ type Release struct {
 	ProductId openapi_types.UUID  `json:"product_id"`
 	UpdatedAt *time.Time          `json:"updated_at"`
 	Version   string              `json:"version"`
-}
-
-// Remediation The current state of one remediation effort: where the fix lives (the fork and its
-// branch) and where the effort stands. Decisions stay the source of truth; the services
-// that write them keep this row in the same transaction.
-type Remediation struct {
-	AssessmentId *openapi_types.UUID `json:"assessment_id"`
-	CreatedAt    *time.Time          `json:"created_at"`
-	ForkBranch   string              `json:"fork_branch"`
-	ForkUrl      string              `json:"fork_url"`
-	Id           *openapi_types.UUID `json:"id"`
-	Status       RemediationStatus   `json:"status"`
-	UpdatedAt    *time.Time          `json:"updated_at"`
-}
-
-// RemediationDetail A scheduled remediation with its findings and the work item it opened.
-type RemediationDetail struct {
-	// Assessment One remediation attempt: a `remediation` assessment of the commit the findings were found
-	// on, its status from its decisions, and its report once recorded.
-	Assessment *WorkItem            `json:"assessment,omitempty"`
-	Findings   []RemediationFinding `json:"findings"`
-
-	// Remediation The current state of one remediation effort: where the fix lives (the fork and its
-	// branch) and where the effort stands. Decisions stay the source of truth; the services
-	// that write them keep this row in the same transaction.
-	Remediation Remediation `json:"remediation"`
-}
-
-// RemediationFinding One finding a remediation resolves, on the repository it belongs to.
-type RemediationFinding struct {
-	CreatedAt     *time.Time          `json:"created_at"`
-	FindingId     openapi_types.UUID  `json:"finding_id"`
-	Id            *openapi_types.UUID `json:"id"`
-	RemediationId openapi_types.UUID  `json:"remediation_id"`
-	RepositoryId  openapi_types.UUID  `json:"repository_id"`
-	UpdatedAt     *time.Time          `json:"updated_at"`
 }
 
 // RemediationFindingRequest A finding to schedule, named with the repository it belongs to.
@@ -1749,6 +1754,8 @@ type RunOrder struct {
 	CreatedAt      *time.Time          `json:"created_at"`
 	EventSource    *string             `json:"event_source"`
 	FinishedAt     *time.Time          `json:"finished_at"`
+	ForkBranch     *string             `json:"fork_branch"`
+	ForkUrl        *string             `json:"fork_url"`
 	Id             *openapi_types.UUID `json:"id"`
 	Lane           *string             `json:"lane"`
 	LeaseExpiresAt *time.Time          `json:"lease_expires_at"`
@@ -1773,6 +1780,27 @@ type RunOrderState string
 
 // ScannerSeverity defines model for ScannerSeverity.
 type ScannerSeverity string
+
+// ScheduledEffort One scheduled remediation effort: the work item (the effort itself — its findings, its
+// report once recorded) and the fork facts of the order that runs it, with the effort's
+// effective status — the work item's, or past it a verification's verdict on its fix. The
+// handle is `work_item.work_item_id`.
+//
+// `repository_id` names the repository the effort's findings belong to (the order's, which
+// the work-item pairing keeps equal to the work item's commit): consumers that did not ask
+// by repository — the engine's feed-driven trigger, the console's unfiltered lists — read
+// it here instead of resolving the work item's ref.
+type ScheduledEffort struct {
+	ForkBranch   string              `json:"fork_branch"`
+	ForkUrl      string              `json:"fork_url"`
+	OrderId      *openapi_types.UUID `json:"order_id"`
+	RepositoryId openapi_types.UUID  `json:"repository_id"`
+	Status       RemediationStatus   `json:"status"`
+
+	// WorkItem One remediation attempt: a `remediation` assessment of the commit the findings were found
+	// on, its status from its decisions, and its report once recorded.
+	WorkItem WorkItem `json:"work_item"`
+}
 
 // Severity defines model for Severity.
 type Severity string
@@ -2293,6 +2321,9 @@ type CompleteJSONRequestBody = CompleteRequest
 
 // HeartbeatJSONRequestBody defines body for Heartbeat for application/json ContentType.
 type HeartbeatJSONRequestBody = LeaseRequest
+
+// PreflightJSONRequestBody defines body for Preflight for application/json ContentType.
+type PreflightJSONRequestBody = PreflightRequest
 
 // RecordRemediationJSONRequestBody defines body for RecordRemediation for application/json ContentType.
 type RecordRemediationJSONRequestBody = RemediationRecordBody
@@ -3287,6 +3318,11 @@ type ClientInterface interface {
 	// Dependents request
 	Dependents(ctx context.Context, packageId openapi_types.UUID, params *DependentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// PreflightWithBody request with any body
+	PreflightWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	Preflight(ctx context.Context, body PreflightJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListProducts request
 	ListProducts(ctx context.Context, params *ListProductsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3316,7 +3352,7 @@ type ClientInterface interface {
 	CreateRemediation(ctx context.Context, body CreateRemediationJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetRemediation request
-	GetRemediation(ctx context.Context, remediationId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+	GetRemediation(ctx context.Context, workItemId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListRepositories request
 	ListRepositories(ctx context.Context, params *ListRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4056,6 +4092,30 @@ func (c *RawClient) Dependents(ctx context.Context, packageId openapi_types.UUID
 	return c.Client.Do(req)
 }
 
+func (c *RawClient) PreflightWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPreflightRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) Preflight(ctx context.Context, body PreflightJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewPreflightRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *RawClient) ListProducts(ctx context.Context, params *ListProductsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListProductsRequest(c.Server, params)
 	if err != nil {
@@ -4176,8 +4236,8 @@ func (c *RawClient) CreateRemediation(ctx context.Context, body CreateRemediatio
 	return c.Client.Do(req)
 }
 
-func (c *RawClient) GetRemediation(ctx context.Context, remediationId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetRemediationRequest(c.Server, remediationId)
+func (c *RawClient) GetRemediation(ctx context.Context, workItemId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetRemediationRequest(c.Server, workItemId)
 	if err != nil {
 		return nil, err
 	}
@@ -6870,6 +6930,46 @@ func NewDependentsRequest(server string, packageId openapi_types.UUID, params *D
 	return req, nil
 }
 
+// NewPreflightRequest calls the generic Preflight builder with application/json body
+func NewPreflightRequest(server string, body PreflightJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewPreflightRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewPreflightRequestWithBody generates requests for Preflight with any type of body
+func NewPreflightRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/preflight")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListProductsRequest generates requests for ListProducts
 func NewListProductsRequest(server string, params *ListProductsParams) (*http.Request, error) {
 	var err error
@@ -7265,12 +7365,12 @@ func NewCreateRemediationRequestWithBody(server string, contentType string, body
 }
 
 // NewGetRemediationRequest generates requests for GetRemediation
-func NewGetRemediationRequest(server string, remediationId openapi_types.UUID) (*http.Request, error) {
+func NewGetRemediationRequest(server string, workItemId openapi_types.UUID) (*http.Request, error) {
 	var err error
 
 	var pathParam0 string
 
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "remediation_id", runtime.ParamLocationPath, remediationId)
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "work_item_id", runtime.ParamLocationPath, workItemId)
 	if err != nil {
 		return nil, err
 	}
@@ -8846,6 +8946,11 @@ type ClientWithResponsesInterface interface {
 	// DependentsWithResponse request
 	DependentsWithResponse(ctx context.Context, packageId openapi_types.UUID, params *DependentsParams, reqEditors ...RequestEditorFn) (*DependentsResponse, error)
 
+	// PreflightWithBodyWithResponse request with any body
+	PreflightWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PreflightResponse, error)
+
+	PreflightWithResponse(ctx context.Context, body PreflightJSONRequestBody, reqEditors ...RequestEditorFn) (*PreflightResponse, error)
+
 	// ListProductsWithResponse request
 	ListProductsWithResponse(ctx context.Context, params *ListProductsParams, reqEditors ...RequestEditorFn) (*ListProductsResponse, error)
 
@@ -8875,7 +8980,7 @@ type ClientWithResponsesInterface interface {
 	CreateRemediationWithResponse(ctx context.Context, body CreateRemediationJSONRequestBody, reqEditors ...RequestEditorFn) (*CreateRemediationResponse, error)
 
 	// GetRemediationWithResponse request
-	GetRemediationWithResponse(ctx context.Context, remediationId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetRemediationResponse, error)
+	GetRemediationWithResponse(ctx context.Context, workItemId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetRemediationResponse, error)
 
 	// ListRepositoriesWithResponse request
 	ListRepositoriesWithResponse(ctx context.Context, params *ListRepositoriesParams, reqEditors ...RequestEditorFn) (*ListRepositoriesResponse, error)
@@ -10053,6 +10158,31 @@ func (r DependentsResponse) StatusCode() int {
 	return 0
 }
 
+type PreflightResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PreflightResult
+	JSON401      *Problem
+	JSON403      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r PreflightResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r PreflightResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListProductsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -10207,7 +10337,7 @@ func (r RecordRemediationResponse) StatusCode() int {
 type ListRemediationsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *PageRemediation
+	JSON200      *PageScheduledEffort
 	JSON401      *Problem
 	JSON422      *Problem
 }
@@ -10231,7 +10361,7 @@ func (r ListRemediationsResponse) StatusCode() int {
 type CreateRemediationResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Remediation
+	JSON200      *ScheduledEffort
 	JSON401      *Problem
 	JSON403      *Problem
 	JSON404      *Problem
@@ -10258,7 +10388,7 @@ func (r CreateRemediationResponse) StatusCode() int {
 type GetRemediationResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *RemediationDetail
+	JSON200      *ScheduledEffort
 	JSON401      *Problem
 	JSON404      *Problem
 	JSON422      *HTTPValidationError
@@ -11334,6 +11464,23 @@ func (c *ClientWithResponses) DependentsWithResponse(ctx context.Context, packag
 	return ParseDependentsResponse(rsp)
 }
 
+// PreflightWithBodyWithResponse request with arbitrary body returning *PreflightResponse
+func (c *ClientWithResponses) PreflightWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*PreflightResponse, error) {
+	rsp, err := c.PreflightWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePreflightResponse(rsp)
+}
+
+func (c *ClientWithResponses) PreflightWithResponse(ctx context.Context, body PreflightJSONRequestBody, reqEditors ...RequestEditorFn) (*PreflightResponse, error) {
+	rsp, err := c.Preflight(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParsePreflightResponse(rsp)
+}
+
 // ListProductsWithResponse request returning *ListProductsResponse
 func (c *ClientWithResponses) ListProductsWithResponse(ctx context.Context, params *ListProductsParams, reqEditors ...RequestEditorFn) (*ListProductsResponse, error) {
 	rsp, err := c.ListProducts(ctx, params, reqEditors...)
@@ -11423,8 +11570,8 @@ func (c *ClientWithResponses) CreateRemediationWithResponse(ctx context.Context,
 }
 
 // GetRemediationWithResponse request returning *GetRemediationResponse
-func (c *ClientWithResponses) GetRemediationWithResponse(ctx context.Context, remediationId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetRemediationResponse, error) {
-	rsp, err := c.GetRemediation(ctx, remediationId, reqEditors...)
+func (c *ClientWithResponses) GetRemediationWithResponse(ctx context.Context, workItemId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetRemediationResponse, error) {
+	rsp, err := c.GetRemediation(ctx, workItemId, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
@@ -13724,6 +13871,53 @@ func ParseDependentsResponse(rsp *http.Response) (*DependentsResponse, error) {
 	return response, nil
 }
 
+// ParsePreflightResponse parses an HTTP response from a PreflightWithResponse call
+func ParsePreflightResponse(rsp *http.Response) (*PreflightResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &PreflightResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PreflightResult
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListProductsResponse parses an HTTP response from a ListProductsWithResponse call
 func ParseListProductsResponse(rsp *http.Response) (*ListProductsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -14042,7 +14236,7 @@ func ParseListRemediationsResponse(rsp *http.Response) (*ListRemediationsRespons
 		response.JSON422 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest PageRemediation
+		var dest PageScheduledEffort
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14103,7 +14297,7 @@ func ParseCreateRemediationResponse(rsp *http.Response) (*CreateRemediationRespo
 		response.JSON422 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Remediation
+		var dest ScheduledEffort
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -14143,7 +14337,7 @@ func ParseGetRemediationResponse(rsp *http.Response) (*GetRemediationResponse, e
 		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest RemediationDetail
+		var dest ScheduledEffort
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

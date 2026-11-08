@@ -2,6 +2,17 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.28.0]
+
+### Breaking
+
+- Regenerated at core's remediation fold (core#391): the REST responses key off `work_item_id`. `GetRemediation` takes the work-item id (`GET /v1/remediations/{work_item_id}`) and returns `ScheduledEffort`; the projection types `Remediation`, `RemediationDetail`, `RemediationFinding`, and `PageRemediation` are gone — the work-item handle and `ScheduledEffort`/`RemediationInput` replace them.
+
+### Added
+
+- `Preflight` (`POST /v1/preflight`): core's scheduling-door refusal surfaces as `*ProblemError` carrying the typed `Problem.Code` (`DenyCode`) and `Problem.Issues`.
+- Client tests pin both: a 403 problem+json on `Preflight` and a 404 on `GetRemediation`'s work-item path (the e2e suite skips the scheduling door).
+
 ## [0.27.0]
 
 ### Fixed
