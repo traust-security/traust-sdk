@@ -914,6 +914,15 @@ func (c *Client) RegisterRef(ctx context.Context, repositoryId openapi_types.UUI
 	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
+// ResolveRole is GET /v1/registry/resolve: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) ResolveRole(ctx context.Context, params *ResolveRoleParams) (*RoleRouting, error) {
+	response, err := c.ResolveRoleWithResponse(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
 // Restate is POST /v1/decisions/{decisionId}/restatement: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Restate(ctx context.Context, decisionId openapi_types.UUID, body RestateJSONRequestBody) (*Decision, error) {
 	response, err := c.RestateWithResponse(ctx, decisionId, body)

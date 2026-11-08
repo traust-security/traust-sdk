@@ -2,6 +2,13 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.29.0]
+
+### Added
+
+- `ResolveRole` (`GET /v1/registry/resolve`): core#386's provider-connection registry — the resolved role routing for a model.
+- Regenerated at contracts 105cca4f (benchmark-scorecards #124 and inventory-export #127 views: their enums, types, and schemas) and core 0301f6e6 (the registry, with its review fixes).
+
 ## [0.28.0]
 
 ### Breaking
