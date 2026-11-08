@@ -63,6 +63,31 @@ const (
 	AssessmentKindVulnScan1        AssessmentKind = "vuln_scan"
 )
 
+// Defines values for ComplianceFramework.
+const (
+	FedrampHigh     ComplianceFramework = "fedramp-high"
+	FedrampModerate ComplianceFramework = "fedramp-moderate"
+	GdprTechnical   ComplianceFramework = "gdpr-technical"
+	Nist80053Rev5   ComplianceFramework = "nist-800-53-rev5"
+	PciDssV4        ComplianceFramework = "pci-dss-v4"
+	Soc2Tsc         ComplianceFramework = "soc2-tsc"
+)
+
+// Defines values for ConnectionType.
+const (
+	Anthropic           ConnectionType = "anthropic"
+	AnthropicCompatible ConnectionType = "anthropic-compatible"
+	Gemini              ConnectionType = "gemini"
+	Openai              ConnectionType = "openai"
+	OpenaiCompatible    ConnectionType = "openai-compatible"
+)
+
+// Defines values for CredentialSource.
+const (
+	Env    CredentialSource = "env"
+	Secret CredentialSource = "secret"
+)
+
 // Defines values for DecisionReason.
 const (
 	DecisionReasonAbandoned                  DecisionReason = "abandoned"
@@ -207,6 +232,12 @@ const (
 	Internal ForkVisibility = "internal"
 	Private  ForkVisibility = "private"
 	Public   ForkVisibility = "public"
+)
+
+// Defines values for Harness.
+const (
+	Claude Harness = "claude"
+	Omp    Harness = "omp"
 )
 
 // Defines values for HashUnavailable.
@@ -562,35 +593,37 @@ const (
 
 // Defines values for ViewName.
 const (
-	AttackCoverage    ViewName = "attack-coverage"
-	Census            ViewName = "census"
-	Compliance        ViewName = "compliance"
-	ContainerFindings ViewName = "container-findings"
-	Coverage          ViewName = "coverage"
-	CriticalMisses    ViewName = "critical-misses"
-	DependencyReach   ViewName = "dependency-reach"
-	ExecutiveSummary  ViewName = "executive-summary"
-	Exposure          ViewName = "exposure"
-	FindingsRollup    ViewName = "findings-rollup"
-	FindingsTrend     ViewName = "findings-trend"
-	Freshness         ViewName = "freshness"
-	InsecurePatterns  ViewName = "insecure-patterns"
-	Loc               ViewName = "loc"
-	Oscal             ViewName = "oscal"
-	Pqc               ViewName = "pqc"
-	PqcPortfolio      ViewName = "pqc-portfolio"
-	PqcVendors        ViewName = "pqc-vendors"
-	Privileges        ViewName = "privileges"
-	Program           ViewName = "program"
-	RemediationIndex  ViewName = "remediation-index"
-	ReviewCard        ViewName = "review-card"
-	Sarif             ViewName = "sarif"
-	Scoreboard        ViewName = "scoreboard"
-	Sla               ViewName = "sla"
-	Spend             ViewName = "spend"
-	ThreatRegister    ViewName = "threat-register"
-	Triage            ViewName = "triage"
-	ValidationFuzz    ViewName = "validation-fuzz"
+	AttackCoverage      ViewName = "attack-coverage"
+	Census              ViewName = "census"
+	Compliance          ViewName = "compliance"
+	CompliancePrecision ViewName = "compliance-precision"
+	ContainerFindings   ViewName = "container-findings"
+	Coverage            ViewName = "coverage"
+	CriticalMisses      ViewName = "critical-misses"
+	DependencyReach     ViewName = "dependency-reach"
+	ExecutiveSummary    ViewName = "executive-summary"
+	Exposure            ViewName = "exposure"
+	FindingsRollup      ViewName = "findings-rollup"
+	FindingsTrend       ViewName = "findings-trend"
+	Freshness           ViewName = "freshness"
+	InsecurePatterns    ViewName = "insecure-patterns"
+	Loc                 ViewName = "loc"
+	Oscal               ViewName = "oscal"
+	Pqc                 ViewName = "pqc"
+	PqcPortfolio        ViewName = "pqc-portfolio"
+	PqcVendors          ViewName = "pqc-vendors"
+	PqcWorklist         ViewName = "pqc-worklist"
+	Privileges          ViewName = "privileges"
+	Program             ViewName = "program"
+	RemediationIndex    ViewName = "remediation-index"
+	ReviewCard          ViewName = "review-card"
+	Sarif               ViewName = "sarif"
+	Scoreboard          ViewName = "scoreboard"
+	Sla                 ViewName = "sla"
+	Spend               ViewName = "spend"
+	ThreatRegister      ViewName = "threat-register"
+	Triage              ViewName = "triage"
+	ValidationFuzz      ViewName = "validation-fuzz"
 )
 
 // ActorKind defines model for ActorKind.
@@ -759,12 +792,53 @@ type CompleteRequest struct {
 	Result JobResult `json:"result"`
 }
 
+// ComplianceFramework defines model for ComplianceFramework.
+type ComplianceFramework string
+
 // ConfigDigest A config document in force when an order was planned; `pack:<name>` is the pack version.
 type ConfigDigest struct {
 	ArtifactId *openapi_types.UUID `json:"artifact_id"`
 	Digest     string              `json:"digest"`
 	Name       string              `json:"name"`
 }
+
+// ConnectionConfig A provider's routing: the wire it speaks, its endpoint override, the harness fronting
+// it and where its credential lives. `supported` is False while the SCI worker cannot serve
+// the type (gemini's Google API is not wired yet).
+type ConnectionConfig struct {
+	BaseUrl *string `json:"base_url"`
+
+	// Credential A connection's credential reference: the environment (`env`), or the Kubernetes Secret
+	// named `name` and the credential's `key` within it (`secret`).
+	Credential CredentialConfig `json:"credential"`
+
+	// Harness The harness a gateway connection fronts its wire with.
+	Harness   *Harness `json:"harness,omitempty"`
+	Supported *bool    `json:"supported,omitempty"`
+
+	// Type The wire a provider speaks and the credential format it takes. The type names the wire,
+	// not the model family: a gateway serving both wires appears as two providers.
+	Type ConnectionType `json:"type"`
+}
+
+// ConnectionType The wire a provider speaks and the credential format it takes. The type names the wire,
+// not the model family: a gateway serving both wires appears as two providers.
+type ConnectionType string
+
+// CredentialConfig A connection's credential reference: the environment (`env`), or the Kubernetes Secret
+// named `name` and the credential's `key` within it (`secret`).
+type CredentialConfig struct {
+	Key  *string `json:"key"`
+	Name *string `json:"name"`
+
+	// Source Where a provider's credential lives: the worker's existing environment, or a Kubernetes
+	// Secret referenced onto its Job.
+	Source CredentialSource `json:"source"`
+}
+
+// CredentialSource Where a provider's credential lives: the worker's existing environment, or a Kubernetes
+// Secret referenced onto its Job.
+type CredentialSource string
 
 // Decision A judgement on a finding; corrections are new decisions (restates_id).
 type Decision struct {
@@ -1097,6 +1171,9 @@ type Gap struct {
 type HTTPValidationError struct {
 	Detail *[]ValidationError `json:"detail,omitempty"`
 }
+
+// Harness The harness a gateway connection fronts its wire with.
+type Harness string
 
 // HashUnavailable defines model for HashUnavailable.
 type HashUnavailable string
@@ -1747,6 +1824,17 @@ type ReviewReason string
 // Role defines model for Role.
 type Role string
 
+// RoleRouting A role's resolved execution routing: the model, the provider section listing it and
+// that provider's connection — the default when the section declares none.
+type RoleRouting struct {
+	// Connection A provider's routing: the wire it speaks, its endpoint override, the harness fronting
+	// it and where its credential lives. `supported` is False while the SCI worker cannot serve
+	// the type (gemini's Google API is not wired yet).
+	Connection ConnectionConfig `json:"connection"`
+	Model      string           `json:"model"`
+	Provider   string           `json:"provider"`
+}
+
 // RunOrder 4a · one unit of work; queued, leased by a worker, finished with an outcome.
 type RunOrder struct {
 	ArtifactId     *openapi_types.UUID `json:"artifact_id"`
@@ -2165,15 +2253,19 @@ type ListImpactsParams struct {
 
 // GetInsightParams defines parameters for GetInsight.
 type GetInsightParams struct {
-	ProductId    *[]openapi_types.UUID `form:"product_id,omitempty" json:"product_id,omitempty"`
-	TeamId       *[]openapi_types.UUID `form:"team_id,omitempty" json:"team_id,omitempty"`
-	AsOf         *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
-	Bucket       *TimeBucket           `form:"bucket,omitempty" json:"bucket,omitempty"`
-	ArtifactId   *openapi_types.UUID   `form:"artifact_id,omitempty" json:"artifact_id,omitempty"`
-	RepositoryId *openapi_types.UUID   `form:"repository_id,omitempty" json:"repository_id,omitempty"`
-	Category     *[]string             `form:"category,omitempty" json:"category,omitempty"`
-	WindowStart  *time.Time            `form:"window_start,omitempty" json:"window_start,omitempty"`
-	WindowEnd    *time.Time            `form:"window_end,omitempty" json:"window_end,omitempty"`
+	ProductId       *[]openapi_types.UUID `form:"product_id,omitempty" json:"product_id,omitempty"`
+	TeamId          *[]openapi_types.UUID `form:"team_id,omitempty" json:"team_id,omitempty"`
+	AsOf            *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
+	Bucket          *TimeBucket           `form:"bucket,omitempty" json:"bucket,omitempty"`
+	ArtifactId      *openapi_types.UUID   `form:"artifact_id,omitempty" json:"artifact_id,omitempty"`
+	RepositoryId    *openapi_types.UUID   `form:"repository_id,omitempty" json:"repository_id,omitempty"`
+	Category        *[]string             `form:"category,omitempty" json:"category,omitempty"`
+	WindowStart     *time.Time            `form:"window_start,omitempty" json:"window_start,omitempty"`
+	WindowEnd       *time.Time            `form:"window_end,omitempty" json:"window_end,omitempty"`
+	RepositoryRefId *[]openapi_types.UUID `form:"repository_ref_id,omitempty" json:"repository_ref_id,omitempty"`
+	Chokepoint      *[]string             `form:"chokepoint,omitempty" json:"chokepoint,omitempty"`
+	Framework       *ComplianceFramework  `form:"framework,omitempty" json:"framework,omitempty"`
+	PrecisionGate   *float32              `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
 }
 
 // ListEventsParams defines parameters for ListEvents.
@@ -2207,6 +2299,12 @@ type DependentsParams struct {
 type ListProductsParams struct {
 	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
+// ResolveRoleParams defines parameters for ResolveRole.
+type ResolveRoleParams struct {
+	Role string  `form:"role" json:"role"`
+	Tier *string `form:"tier,omitempty" json:"tier,omitempty"`
 }
 
 // ListRemediationsParams defines parameters for ListRemediations.
@@ -3338,6 +3436,9 @@ type ClientInterface interface {
 	// Dependencies request
 	Dependencies(ctx context.Context, repositoryRefId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ResolveRole request
+	ResolveRole(ctx context.Context, params *ResolveRoleParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// RecordRemediationWithBody request with any body
 	RecordRemediationWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4166,6 +4267,18 @@ func (c *RawClient) GetRef(ctx context.Context, repositoryRefId openapi_types.UU
 
 func (c *RawClient) Dependencies(ctx context.Context, repositoryRefId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewDependenciesRequest(c.Server, repositoryRefId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) ResolveRole(ctx context.Context, params *ResolveRoleParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResolveRoleRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6141,6 +6254,70 @@ func NewGetInsightRequest(server string, name ViewName, params *GetInsightParams
 
 		}
 
+		if params.RepositoryRefId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ref_id", runtime.ParamLocationQuery, *params.RepositoryRefId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Chokepoint != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "chokepoint", runtime.ParamLocationQuery, *params.Chokepoint); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Framework != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "framework", runtime.ParamLocationQuery, *params.Framework); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PrecisionGate != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "precision_gate", runtime.ParamLocationQuery, *params.PrecisionGate); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
 		queryURL.RawQuery = queryValues.Encode()
 	}
 
@@ -7161,6 +7338,67 @@ func NewDependenciesRequest(server string, repositoryRefId openapi_types.UUID) (
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewResolveRoleRequest generates requests for ResolveRole
+func NewResolveRoleRequest(server string, params *ResolveRoleParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/registry/resolve")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "role", runtime.ParamLocationQuery, params.Role); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		if params.Tier != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "tier", runtime.ParamLocationQuery, *params.Tier); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -8966,6 +9204,9 @@ type ClientWithResponsesInterface interface {
 	// DependenciesWithResponse request
 	DependenciesWithResponse(ctx context.Context, repositoryRefId openapi_types.UUID, reqEditors ...RequestEditorFn) (*DependenciesResponse, error)
 
+	// ResolveRoleWithResponse request
+	ResolveRoleWithResponse(ctx context.Context, params *ResolveRoleParams, reqEditors ...RequestEditorFn) (*ResolveRoleResponse, error)
+
 	// RecordRemediationWithBodyWithResponse request with any body
 	RecordRemediationWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordRemediationResponse, error)
 
@@ -10307,6 +10548,31 @@ func (r DependenciesResponse) StatusCode() int {
 	return 0
 }
 
+type ResolveRoleResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RoleRouting
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r ResolveRoleResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResolveRoleResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type RecordRemediationResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -11524,6 +11790,15 @@ func (c *ClientWithResponses) DependenciesWithResponse(ctx context.Context, repo
 		return nil, err
 	}
 	return ParseDependenciesResponse(rsp)
+}
+
+// ResolveRoleWithResponse request returning *ResolveRoleResponse
+func (c *ClientWithResponses) ResolveRoleWithResponse(ctx context.Context, params *ResolveRoleParams, reqEditors ...RequestEditorFn) (*ResolveRoleResponse, error) {
+	rsp, err := c.ResolveRole(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResolveRoleResponse(rsp)
 }
 
 // RecordRemediationWithBodyWithResponse request with arbitrary body returning *RecordRemediationResponse
@@ -14140,6 +14415,53 @@ func ParseDependenciesResponse(rsp *http.Response) (*DependenciesResponse, error
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseResolveRoleResponse parses an HTTP response from a ResolveRoleWithResponse call
+func ParseResolveRoleResponse(rsp *http.Response) (*ResolveRoleResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResolveRoleResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RoleRouting
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
 
 	}
 
