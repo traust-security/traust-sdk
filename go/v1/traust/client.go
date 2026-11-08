@@ -141,11 +141,7 @@ func (e *ProblemError) Error() string {
 		}
 		return fmt.Sprintf("traust-core: %d %s: %s%s", e.StatusCode, e.Problem.Title, detail, request)
 	}
-	body := e.Body
-	if len(body) > 200 {
-		body = body[:200]
-	}
-	return fmt.Sprintf("traust-core: %d: %s", e.StatusCode, body)
+	return fmt.Sprintf("traust-core: HTTP %d", e.StatusCode)
 }
 
 // CheckResponse returns nil for a 2xx response, otherwise its *ProblemError: the RFC 7807
@@ -162,6 +158,19 @@ func CheckResponse(statusCode int, body []byte, contentType string) error {
 		}
 	}
 	return out
+}
+
+func checkRefusal(response *http.Response) error {
+	if response.StatusCode >= 200 && response.StatusCode < 300 {
+		return nil
+	}
+	defer func() { _ = response.Body.Close() }()
+	body, err := io.ReadAll(response.Body)
+	refusal := CheckResponse(response.StatusCode, body, response.Header.Get("Content-Type"))
+	if err != nil {
+		return errors.Join(refusal, fmt.Errorf("traust-core: reading refusal body: %w", err))
+	}
+	return refusal
 }
 
 // Decode returns a generated response's decoded body, or its *ProblemError when core refused.

@@ -102,7 +102,7 @@ func (c *drainedConn) Read(p []byte) (int, error) {
 }
 
 // forgeHandler answers the GitLab REST reads core's CommandSourceProvider makes for
-// onboarding: one project's info.
+// onboarding: one project's info and default branch head.
 func forgeHandler() http.Handler {
 	mux := http.NewServeMux()
 	mux.HandleFunc("/api/v4/projects/", func(w http.ResponseWriter, r *http.Request) {
@@ -110,9 +110,16 @@ func forgeHandler() http.Handler {
 		// Only the one fixture project exists; anything else is a mock gap.
 		raw := strings.TrimPrefix(r.URL.EscapedPath(), "/api/v4/projects/")
 		project, err := url.PathUnescape(raw)
-		if err != nil || project != "e2e/fixture" {
+		if err != nil || (project != "e2e/fixture" && project != "e2e/fixture/repository/branches/main") {
 			w.WriteHeader(http.StatusNotFound)
 			fmt.Fprintf(w, "e2eforge: unknown project %s\n", raw)
+			return
+		}
+		if project == "e2e/fixture/repository/branches/main" {
+			w.Header().Set("Content-Type", "application/json")
+			json.NewEncoder(w).Encode(map[string]any{
+				"commit": map[string]string{"id": strings.Repeat("a", 40)},
+			})
 			return
 		}
 		// The GitLab project fields CommandSourceProvider.info() reads: last_activity_at,

@@ -17,7 +17,14 @@ var (
 
 // AdvisoriesFor is GET /v1/findings/{findingId}/advisories: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) AdvisoriesFor(ctx context.Context, findingId openapi_types.UUID) ([]Advisory, error) {
-	response, err := c.AdvisoriesForWithResponse(ctx, findingId)
+	raw, err := c.ClientInterface.AdvisoriesFor(ctx, findingId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseAdvisoriesForResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -30,7 +37,14 @@ func (c *Client) AdvisoriesFor(ctx context.Context, findingId openapi_types.UUID
 
 // Affected is GET /v1/advisories/{advisoryId}/affected: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([]AffectedDependency, error) {
-	response, err := c.AffectedWithResponse(ctx, advisoryId)
+	raw, err := c.ClientInterface.Affected(ctx, advisoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseAffectedResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -43,7 +57,14 @@ func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([
 
 // Checkpoint is POST /v1/repositories/{repositoryId}/ledger/checkpoint: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Checkpoint(ctx context.Context, repositoryId openapi_types.UUID) (*Checkpoint, error) {
-	response, err := c.CheckpointWithResponse(ctx, repositoryId)
+	raw, err := c.ClientInterface.Checkpoint(ctx, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseCheckpointResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -53,7 +74,14 @@ func (c *Client) Checkpoint(ctx context.Context, repositoryId openapi_types.UUID
 // Claim is POST /v1/orders/claim: the decoded body, or a *ProblemError when core refuses.
 // It returns nil, nil when core answers 204 No Content.
 func (c *Client) Claim(ctx context.Context, body ClaimJSONRequestBody) (*RunOrder, error) {
-	response, err := c.ClaimWithResponse(ctx, body)
+	raw, err := c.ClientInterface.Claim(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseClaimResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -65,7 +93,14 @@ func (c *Client) Claim(ctx context.Context, body ClaimJSONRequestBody) (*RunOrde
 
 // Complete is POST /v1/orders/{orderId}/complete: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Complete(ctx context.Context, orderId openapi_types.UUID, body CompleteJSONRequestBody) (*RunOrder, error) {
-	response, err := c.CompleteWithResponse(ctx, orderId, body)
+	raw, err := c.ClientInterface.Complete(ctx, orderId, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseCompleteResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -74,7 +109,14 @@ func (c *Client) Complete(ctx context.Context, orderId openapi_types.UUID, body 
 
 // CreateRemediation is POST /v1/remediations: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) CreateRemediation(ctx context.Context, body CreateRemediationJSONRequestBody) (*ScheduledEffort, error) {
-	response, err := c.CreateRemediationWithResponse(ctx, body)
+	raw, err := c.ClientInterface.CreateRemediation(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseCreateRemediationResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -83,7 +125,14 @@ func (c *Client) CreateRemediation(ctx context.Context, body CreateRemediationJS
 
 // Decide is POST /v1/findings/{findingId}/decisions: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Decide(ctx context.Context, findingId openapi_types.UUID, body DecideJSONRequestBody) (*Decision, error) {
-	response, err := c.DecideWithResponse(ctx, findingId, body)
+	raw, err := c.ClientInterface.Decide(ctx, findingId, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseDecideResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -92,7 +141,14 @@ func (c *Client) Decide(ctx context.Context, findingId openapi_types.UUID, body 
 
 // Dependencies is GET /v1/refs/{repositoryRefId}/dependencies: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Dependencies(ctx context.Context, repositoryRefId openapi_types.UUID) ([]RefDependency, error) {
-	response, err := c.DependenciesWithResponse(ctx, repositoryRefId)
+	raw, err := c.ClientInterface.Dependencies(ctx, repositoryRefId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseDependenciesResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -105,7 +161,14 @@ func (c *Client) Dependencies(ctx context.Context, repositoryRefId openapi_types
 
 // Dependents is GET /v1/packages/{packageId}/dependents: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Dependents(ctx context.Context, packageId openapi_types.UUID, params *DependentsParams) ([]openapi_types.UUID, error) {
-	response, err := c.DependentsWithResponse(ctx, packageId, params)
+	raw, err := c.ClientInterface.Dependents(ctx, packageId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseDependentsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -118,7 +181,14 @@ func (c *Client) Dependents(ctx context.Context, packageId openapi_types.UUID, p
 
 // ExportAdvisoryImpacts is GET /v1/advisories/{advisoryId}/impact-report: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ExportAdvisoryImpacts(ctx context.Context, advisoryId openapi_types.UUID) (*ImpactExport, error) {
-	response, err := c.ExportAdvisoryImpactsWithResponse(ctx, advisoryId)
+	raw, err := c.ClientInterface.ExportAdvisoryImpacts(ctx, advisoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseExportAdvisoryImpactsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -127,7 +197,14 @@ func (c *Client) ExportAdvisoryImpacts(ctx context.Context, advisoryId openapi_t
 
 // ExposureTimeline is GET /v1/exposure/timeline: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ExposureTimeline(ctx context.Context, params *ExposureTimelineParams) ([]ExposureSeriesPoint, error) {
-	response, err := c.ExposureTimelineWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ExposureTimeline(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseExposureTimelineResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -140,7 +217,14 @@ func (c *Client) ExposureTimeline(ctx context.Context, params *ExposureTimelineP
 
 // FeedStatuses is GET /v1/feeds: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FeedStatuses(ctx context.Context) ([]FeedStatus, error) {
-	response, err := c.FeedStatusesWithResponse(ctx)
+	raw, err := c.ClientInterface.FeedStatuses(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseFeedStatusesResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -153,7 +237,14 @@ func (c *Client) FeedStatuses(ctx context.Context) ([]FeedStatus, error) {
 
 // FindAdvisory is GET /v1/advisories: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FindAdvisory(ctx context.Context, params *FindAdvisoryParams) (*AdvisoryRecord, error) {
-	response, err := c.FindAdvisoryWithResponse(ctx, params)
+	raw, err := c.ClientInterface.FindAdvisory(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseFindAdvisoryResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -162,7 +253,14 @@ func (c *Client) FindAdvisory(ctx context.Context, params *FindAdvisoryParams) (
 
 // FindPackage is GET /v1/packages: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FindPackage(ctx context.Context, params *FindPackageParams) (*Package, error) {
-	response, err := c.FindPackageWithResponse(ctx, params)
+	raw, err := c.ClientInterface.FindPackage(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseFindPackageResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -171,7 +269,14 @@ func (c *Client) FindPackage(ctx context.Context, params *FindPackageParams) (*P
 
 // FindingTimeline is GET /v1/repositories/{repositoryId}/findings/timeline: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FindingTimeline(ctx context.Context, repositoryId openapi_types.UUID, params *FindingTimelineParams) ([]FindingSeriesPoint, error) {
-	response, err := c.FindingTimelineWithResponse(ctx, repositoryId, params)
+	raw, err := c.ClientInterface.FindingTimeline(ctx, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseFindingTimelineResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -184,7 +289,14 @@ func (c *Client) FindingTimeline(ctx context.Context, repositoryId openapi_types
 
 // GetAdvisory is GET /v1/advisories/{advisoryId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetAdvisory(ctx context.Context, advisoryId openapi_types.UUID) (*Advisory, error) {
-	response, err := c.GetAdvisoryWithResponse(ctx, advisoryId)
+	raw, err := c.ClientInterface.GetAdvisory(ctx, advisoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetAdvisoryResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -193,7 +305,14 @@ func (c *Client) GetAdvisory(ctx context.Context, advisoryId openapi_types.UUID)
 
 // GetArtifact is GET /v1/artifacts/{artifactId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetArtifact(ctx context.Context, artifactId openapi_types.UUID) (*Artifact, error) {
-	response, err := c.GetArtifactWithResponse(ctx, artifactId)
+	raw, err := c.ClientInterface.GetArtifact(ctx, artifactId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetArtifactResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -202,11 +321,15 @@ func (c *Client) GetArtifact(ctx context.Context, artifactId openapi_types.UUID)
 
 // GetArtifactContent is GET /v1/artifacts/{artifactId}/content: the exact stored bytes, or a *ProblemError.
 func (c *Client) GetArtifactContent(ctx context.Context, artifactId openapi_types.UUID) ([]byte, error) {
-	response, err := c.GetArtifactContentWithResponse(ctx, artifactId)
+	raw, err := c.ClientInterface.GetArtifactContent(ctx, artifactId)
 	if err != nil {
 		return nil, err
 	}
-	if err := CheckResponse(response.StatusCode(), response.Body, response.HTTPResponse.Header.Get("Content-Type")); err != nil {
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetArtifactContentResponse(raw)
+	if err != nil {
 		return nil, err
 	}
 	return response.Body, nil
@@ -214,7 +337,14 @@ func (c *Client) GetArtifactContent(ctx context.Context, artifactId openapi_type
 
 // GetAssessment is GET /v1/assessments/{assessmentId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetAssessment(ctx context.Context, assessmentId openapi_types.UUID) (*Assessment, error) {
-	response, err := c.GetAssessmentWithResponse(ctx, assessmentId)
+	raw, err := c.ClientInterface.GetAssessment(ctx, assessmentId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetAssessmentResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -223,7 +353,14 @@ func (c *Client) GetAssessment(ctx context.Context, assessmentId openapi_types.U
 
 // GetAssessmentIntake is GET /v1/assessments/{assessmentId}/intake: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetAssessmentIntake(ctx context.Context, assessmentId openapi_types.UUID) (*AssessmentIntakeBindings, error) {
-	response, err := c.GetAssessmentIntakeWithResponse(ctx, assessmentId)
+	raw, err := c.ClientInterface.GetAssessmentIntake(ctx, assessmentId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetAssessmentIntakeResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -232,7 +369,14 @@ func (c *Client) GetAssessmentIntake(ctx context.Context, assessmentId openapi_t
 
 // GetDecision is GET /v1/decisions/{decisionId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetDecision(ctx context.Context, decisionId openapi_types.UUID) (*Decision, error) {
-	response, err := c.GetDecisionWithResponse(ctx, decisionId)
+	raw, err := c.ClientInterface.GetDecision(ctx, decisionId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetDecisionResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -241,7 +385,14 @@ func (c *Client) GetDecision(ctx context.Context, decisionId openapi_types.UUID)
 
 // GetFinding is GET /v1/findings/{findingId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetFinding(ctx context.Context, findingId openapi_types.UUID) (*FindingView, error) {
-	response, err := c.GetFindingWithResponse(ctx, findingId)
+	raw, err := c.ClientInterface.GetFinding(ctx, findingId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetFindingResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -250,7 +401,14 @@ func (c *Client) GetFinding(ctx context.Context, findingId openapi_types.UUID) (
 
 // GetInsight is GET /v1/insights/{name}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetInsight(ctx context.Context, name ViewName, params *GetInsightParams) (*ViewModel, error) {
-	response, err := c.GetInsightWithResponse(ctx, name, params)
+	raw, err := c.ClientInterface.GetInsight(ctx, name, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetInsightResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -259,7 +417,14 @@ func (c *Client) GetInsight(ctx context.Context, name ViewName, params *GetInsig
 
 // GetLayer is GET /v1/ledger/layers/{layerId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetLayer(ctx context.Context, layerId openapi_types.UUID) (*Layer, error) {
-	response, err := c.GetLayerWithResponse(ctx, layerId)
+	raw, err := c.ClientInterface.GetLayer(ctx, layerId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetLayerResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -268,7 +433,14 @@ func (c *Client) GetLayer(ctx context.Context, layerId openapi_types.UUID) (*Lay
 
 // GetOrder is GET /v1/orders/{orderId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetOrder(ctx context.Context, orderId openapi_types.UUID) (*RunOrder, error) {
-	response, err := c.GetOrderWithResponse(ctx, orderId)
+	raw, err := c.ClientInterface.GetOrder(ctx, orderId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetOrderResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -277,7 +449,14 @@ func (c *Client) GetOrder(ctx context.Context, orderId openapi_types.UUID) (*Run
 
 // GetOrderManifest is GET /v1/orders/{orderId}/manifest: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetOrderManifest(ctx context.Context, orderId openapi_types.UUID) (*OrderManifest, error) {
-	response, err := c.GetOrderManifestWithResponse(ctx, orderId)
+	raw, err := c.ClientInterface.GetOrderManifest(ctx, orderId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetOrderManifestResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -286,7 +465,14 @@ func (c *Client) GetOrderManifest(ctx context.Context, orderId openapi_types.UUI
 
 // GetProduct is GET /v1/products/{productId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetProduct(ctx context.Context, productId openapi_types.UUID) (*Product, error) {
-	response, err := c.GetProductWithResponse(ctx, productId)
+	raw, err := c.ClientInterface.GetProduct(ctx, productId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetProductResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -295,7 +481,14 @@ func (c *Client) GetProduct(ctx context.Context, productId openapi_types.UUID) (
 
 // GetRef is GET /v1/refs/{repositoryRefId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetRef(ctx context.Context, repositoryRefId openapi_types.UUID) (*RepositoryRef, error) {
-	response, err := c.GetRefWithResponse(ctx, repositoryRefId)
+	raw, err := c.ClientInterface.GetRef(ctx, repositoryRefId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetRefResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -304,7 +497,14 @@ func (c *Client) GetRef(ctx context.Context, repositoryRefId openapi_types.UUID)
 
 // GetRemediation is GET /v1/remediations/{workItemId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetRemediation(ctx context.Context, workItemId openapi_types.UUID) (*ScheduledEffort, error) {
-	response, err := c.GetRemediationWithResponse(ctx, workItemId)
+	raw, err := c.ClientInterface.GetRemediation(ctx, workItemId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetRemediationResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -313,7 +513,14 @@ func (c *Client) GetRemediation(ctx context.Context, workItemId openapi_types.UU
 
 // GetRepository is GET /v1/repositories/{repositoryId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetRepository(ctx context.Context, repositoryId openapi_types.UUID) (*Repository, error) {
-	response, err := c.GetRepositoryWithResponse(ctx, repositoryId)
+	raw, err := c.ClientInterface.GetRepository(ctx, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetRepositoryResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -322,7 +529,14 @@ func (c *Client) GetRepository(ctx context.Context, repositoryId openapi_types.U
 
 // Healthz is GET /v1/healthz: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Healthz(ctx context.Context) (*Health, error) {
-	response, err := c.HealthzWithResponse(ctx)
+	raw, err := c.ClientInterface.Healthz(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseHealthzResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -331,7 +545,14 @@ func (c *Client) Healthz(ctx context.Context) (*Health, error) {
 
 // Heartbeat is POST /v1/orders/{orderId}/heartbeat: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Heartbeat(ctx context.Context, orderId openapi_types.UUID, body HeartbeatJSONRequestBody) (*RunOrder, error) {
-	response, err := c.HeartbeatWithResponse(ctx, orderId, body)
+	raw, err := c.ClientInterface.Heartbeat(ctx, orderId, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseHeartbeatResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -340,7 +561,14 @@ func (c *Client) Heartbeat(ctx context.Context, orderId openapi_types.UUID, body
 
 // ListAssessments is GET /v1/assessments: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListAssessments(ctx context.Context, params *ListAssessmentsParams) (*PageAssessment, error) {
-	response, err := c.ListAssessmentsWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ListAssessments(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListAssessmentsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -366,7 +594,14 @@ func (c *Client) ListAssessmentsAll(ctx context.Context, params *ListAssessments
 
 // ListDecisions is GET /v1/findings/{findingId}/decisions: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListDecisions(ctx context.Context, findingId openapi_types.UUID) ([]Decision, error) {
-	response, err := c.ListDecisionsWithResponse(ctx, findingId)
+	raw, err := c.ClientInterface.ListDecisions(ctx, findingId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListDecisionsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -379,7 +614,14 @@ func (c *Client) ListDecisions(ctx context.Context, findingId openapi_types.UUID
 
 // ListEvents is GET /v1/ledger/layers/{layerId}/events: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListEvents(ctx context.Context, layerId openapi_types.UUID, params *ListEventsParams) (*PageEvent, error) {
-	response, err := c.ListEventsWithResponse(ctx, layerId, params)
+	raw, err := c.ClientInterface.ListEvents(ctx, layerId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListEventsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -405,7 +647,14 @@ func (c *Client) ListEventsAll(ctx context.Context, layerId openapi_types.UUID, 
 
 // ListFindings is GET /v1/repositories/{repositoryId}/findings: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListFindings(ctx context.Context, repositoryId openapi_types.UUID, params *ListFindingsParams) (*PageFindingView, error) {
-	response, err := c.ListFindingsWithResponse(ctx, repositoryId, params)
+	raw, err := c.ClientInterface.ListFindings(ctx, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListFindingsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -431,7 +680,14 @@ func (c *Client) ListFindingsAll(ctx context.Context, repositoryId openapi_types
 
 // ListImpacts is GET /v1/impacts: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListImpacts(ctx context.Context, params *ListImpactsParams) (*PageImpactAnalysis, error) {
-	response, err := c.ListImpactsWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ListImpacts(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListImpactsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -457,7 +713,14 @@ func (c *Client) ListImpactsAll(ctx context.Context, params *ListImpactsParams) 
 
 // ListLayers is GET /v1/repositories/{repositoryId}/ledger/layers: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListLayers(ctx context.Context, repositoryId openapi_types.UUID) ([]Layer, error) {
-	response, err := c.ListLayersWithResponse(ctx, repositoryId)
+	raw, err := c.ClientInterface.ListLayers(ctx, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListLayersResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -470,7 +733,14 @@ func (c *Client) ListLayers(ctx context.Context, repositoryId openapi_types.UUID
 
 // ListOrderAssessments is GET /v1/orders/{orderId}/assessments: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListOrderAssessments(ctx context.Context, orderId openapi_types.UUID) ([]Assessment, error) {
-	response, err := c.ListOrderAssessmentsWithResponse(ctx, orderId)
+	raw, err := c.ClientInterface.ListOrderAssessments(ctx, orderId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListOrderAssessmentsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -483,7 +753,14 @@ func (c *Client) ListOrderAssessments(ctx context.Context, orderId openapi_types
 
 // ListOrders is GET /v1/orders: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListOrders(ctx context.Context, params *ListOrdersParams) (*PageRunOrder, error) {
-	response, err := c.ListOrdersWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ListOrders(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListOrdersResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -509,7 +786,14 @@ func (c *Client) ListOrdersAll(ctx context.Context, params *ListOrdersParams) it
 
 // ListOwnedRepositories is GET /v1/teams/{teamId}/repositories: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListOwnedRepositories(ctx context.Context, teamId openapi_types.UUID, params *ListOwnedRepositoriesParams) ([]openapi_types.UUID, error) {
-	response, err := c.ListOwnedRepositoriesWithResponse(ctx, teamId, params)
+	raw, err := c.ClientInterface.ListOwnedRepositories(ctx, teamId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListOwnedRepositoriesResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -522,7 +806,14 @@ func (c *Client) ListOwnedRepositories(ctx context.Context, teamId openapi_types
 
 // ListOwners is GET /v1/repositories/{repositoryId}/owners: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListOwners(ctx context.Context, repositoryId openapi_types.UUID) ([]Team, error) {
-	response, err := c.ListOwnersWithResponse(ctx, repositoryId)
+	raw, err := c.ClientInterface.ListOwners(ctx, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListOwnersResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -535,7 +826,14 @@ func (c *Client) ListOwners(ctx context.Context, repositoryId openapi_types.UUID
 
 // ListProductRefs is GET /v1/products/{productId}/refs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListProductRefs(ctx context.Context, productId openapi_types.UUID) ([]RepositoryRef, error) {
-	response, err := c.ListProductRefsWithResponse(ctx, productId)
+	raw, err := c.ClientInterface.ListProductRefs(ctx, productId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListProductRefsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -548,7 +846,14 @@ func (c *Client) ListProductRefs(ctx context.Context, productId openapi_types.UU
 
 // ListProducts is GET /v1/products: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListProducts(ctx context.Context, params *ListProductsParams) (*PageProduct, error) {
-	response, err := c.ListProductsWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ListProducts(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListProductsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -574,7 +879,14 @@ func (c *Client) ListProductsAll(ctx context.Context, params *ListProductsParams
 
 // ListProductsOf is GET /v1/repositories/{repositoryId}/products: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListProductsOf(ctx context.Context, repositoryId openapi_types.UUID) ([]Product, error) {
-	response, err := c.ListProductsOfWithResponse(ctx, repositoryId)
+	raw, err := c.ClientInterface.ListProductsOf(ctx, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListProductsOfResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -587,7 +899,14 @@ func (c *Client) ListProductsOf(ctx context.Context, repositoryId openapi_types.
 
 // ListRefs is GET /v1/repositories/{repositoryId}/refs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRefs(ctx context.Context, repositoryId openapi_types.UUID, params *ListRefsParams) ([]RepositoryRef, error) {
-	response, err := c.ListRefsWithResponse(ctx, repositoryId, params)
+	raw, err := c.ClientInterface.ListRefs(ctx, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListRefsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -600,7 +919,14 @@ func (c *Client) ListRefs(ctx context.Context, repositoryId openapi_types.UUID, 
 
 // ListRemediations is GET /v1/remediations: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRemediations(ctx context.Context, params *ListRemediationsParams) (*PageScheduledEffort, error) {
-	response, err := c.ListRemediationsWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ListRemediations(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListRemediationsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -626,7 +952,14 @@ func (c *Client) ListRemediationsAll(ctx context.Context, params *ListRemediatio
 
 // ListRepositories is GET /v1/repositories: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRepositories(ctx context.Context, params *ListRepositoriesParams) (*PageRepository, error) {
-	response, err := c.ListRepositoriesWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ListRepositories(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListRepositoriesResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -652,7 +985,14 @@ func (c *Client) ListRepositoriesAll(ctx context.Context, params *ListRepositori
 
 // ListRepositoryAssessments is GET /v1/repositories/{repositoryId}/assessments: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRepositoryAssessments(ctx context.Context, repositoryId openapi_types.UUID, params *ListRepositoryAssessmentsParams) ([]Assessment, error) {
-	response, err := c.ListRepositoryAssessmentsWithResponse(ctx, repositoryId, params)
+	raw, err := c.ClientInterface.ListRepositoryAssessments(ctx, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListRepositoryAssessmentsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -665,7 +1005,14 @@ func (c *Client) ListRepositoryAssessments(ctx context.Context, repositoryId ope
 
 // ListRepositoryDecisions is GET /v1/repositories/{repositoryId}/decisions: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRepositoryDecisions(ctx context.Context, repositoryId openapi_types.UUID) ([]Decision, error) {
-	response, err := c.ListRepositoryDecisionsWithResponse(ctx, repositoryId)
+	raw, err := c.ClientInterface.ListRepositoryDecisions(ctx, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListRepositoryDecisionsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -678,7 +1025,14 @@ func (c *Client) ListRepositoryDecisions(ctx context.Context, repositoryId opena
 
 // ListValidationAttempts is GET /v1/validation-attempts: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListValidationAttempts(ctx context.Context, params *ListValidationAttemptsParams) (*PageValidationAttempt, error) {
-	response, err := c.ListValidationAttemptsWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ListValidationAttempts(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListValidationAttemptsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -704,7 +1058,14 @@ func (c *Client) ListValidationAttemptsAll(ctx context.Context, params *ListVali
 
 // ListVerifications is GET /v1/repositories/{repositoryId}/verifications: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListVerifications(ctx context.Context, repositoryId openapi_types.UUID, params *ListVerificationsParams) (*PageVerification, error) {
-	response, err := c.ListVerificationsWithResponse(ctx, repositoryId, params)
+	raw, err := c.ClientInterface.ListVerifications(ctx, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListVerificationsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -730,7 +1091,14 @@ func (c *Client) ListVerificationsAll(ctx context.Context, repositoryId openapi_
 
 // ListWorkItems is GET /v1/repositories/{repositoryId}/work-items: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListWorkItems(ctx context.Context, repositoryId openapi_types.UUID, params *ListWorkItemsParams) (*PageWorkItem, error) {
-	response, err := c.ListWorkItemsWithResponse(ctx, repositoryId, params)
+	raw, err := c.ClientInterface.ListWorkItems(ctx, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListWorkItemsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -756,7 +1124,14 @@ func (c *Client) ListWorkItemsAll(ctx context.Context, repositoryId openapi_type
 
 // Onboard is POST /v1/onboarding: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Onboard(ctx context.Context, body OnboardJSONRequestBody) (*OnboardingResult, error) {
-	response, err := c.OnboardWithResponse(ctx, body)
+	raw, err := c.ClientInterface.Onboard(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseOnboardResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -765,7 +1140,14 @@ func (c *Client) Onboard(ctx context.Context, body OnboardJSONRequestBody) (*Onb
 
 // PackagesAffected is GET /v1/advisories/{advisoryId}/packages: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PackagesAffected(ctx context.Context, advisoryId openapi_types.UUID) ([]AdvisoryPackage, error) {
-	response, err := c.PackagesAffectedWithResponse(ctx, advisoryId)
+	raw, err := c.ClientInterface.PackagesAffected(ctx, advisoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParsePackagesAffectedResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -778,7 +1160,14 @@ func (c *Client) PackagesAffected(ctx context.Context, advisoryId openapi_types.
 
 // PlanOnboarding is POST /v1/onboarding/plan: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PlanOnboarding(ctx context.Context, body PlanOnboardingJSONRequestBody) (*OnboardingPlan, error) {
-	response, err := c.PlanOnboardingWithResponse(ctx, body)
+	raw, err := c.ClientInterface.PlanOnboarding(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParsePlanOnboardingResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -787,7 +1176,14 @@ func (c *Client) PlanOnboarding(ctx context.Context, body PlanOnboardingJSONRequ
 
 // Preflight is POST /v1/preflight: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Preflight(ctx context.Context, body PreflightJSONRequestBody) (*PreflightResult, error) {
-	response, err := c.PreflightWithResponse(ctx, body)
+	raw, err := c.ClientInterface.Preflight(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParsePreflightResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -796,7 +1192,14 @@ func (c *Client) Preflight(ctx context.Context, body PreflightJSONRequestBody) (
 
 // PrepareAdvisoryImpacts is GET /v1/advisories/{advisoryId}/impact-inputs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareAdvisoryImpacts(ctx context.Context, advisoryId openapi_types.UUID, params *PrepareAdvisoryImpactsParams) ([]ImpactInput, error) {
-	response, err := c.PrepareAdvisoryImpactsWithResponse(ctx, advisoryId, params)
+	raw, err := c.ClientInterface.PrepareAdvisoryImpacts(ctx, advisoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParsePrepareAdvisoryImpactsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -809,7 +1212,14 @@ func (c *Client) PrepareAdvisoryImpacts(ctx context.Context, advisoryId openapi_
 
 // PrepareRemediation is GET /v1/work-items/{workItemId}/remediation-input: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareRemediation(ctx context.Context, workItemId openapi_types.UUID) (*RemediationInput, error) {
-	response, err := c.PrepareRemediationWithResponse(ctx, workItemId)
+	raw, err := c.ClientInterface.PrepareRemediation(ctx, workItemId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParsePrepareRemediationResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -818,7 +1228,14 @@ func (c *Client) PrepareRemediation(ctx context.Context, workItemId openapi_type
 
 // PrepareTriage is GET /v1/assessments/{assessmentId}/triage-input: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareTriage(ctx context.Context, assessmentId openapi_types.UUID) (*TriageInput, error) {
-	response, err := c.PrepareTriageWithResponse(ctx, assessmentId)
+	raw, err := c.ClientInterface.PrepareTriage(ctx, assessmentId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParsePrepareTriageResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -827,7 +1244,14 @@ func (c *Client) PrepareTriage(ctx context.Context, assessmentId openapi_types.U
 
 // PrepareVerification is GET /v1/work-items/{workItemId}/verification-input: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareVerification(ctx context.Context, workItemId openapi_types.UUID) (*VerificationInput, error) {
-	response, err := c.PrepareVerificationWithResponse(ctx, workItemId)
+	raw, err := c.ClientInterface.PrepareVerification(ctx, workItemId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParsePrepareVerificationResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -836,7 +1260,14 @@ func (c *Client) PrepareVerification(ctx context.Context, workItemId openapi_typ
 
 // ReadFeed is GET /v1/feed: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ReadFeed(ctx context.Context, params *ReadFeedParams) (*PageFeedEvent, error) {
-	response, err := c.ReadFeedWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ReadFeed(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseReadFeedResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -862,7 +1293,14 @@ func (c *Client) ReadFeedAll(ctx context.Context, params *ReadFeedParams) iter.S
 
 // RecordAssessment is POST /v1/assessment-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordAssessment(ctx context.Context, body RecordAssessmentJSONRequestBody) (*AssessmentRecordResult, error) {
-	response, err := c.RecordAssessmentWithResponse(ctx, body)
+	raw, err := c.ClientInterface.RecordAssessment(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseRecordAssessmentResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -871,7 +1309,14 @@ func (c *Client) RecordAssessment(ctx context.Context, body RecordAssessmentJSON
 
 // RecordRemediation is POST /v1/remediation-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordRemediation(ctx context.Context, body RecordRemediationJSONRequestBody) (*WorkItem, error) {
-	response, err := c.RecordRemediationWithResponse(ctx, body)
+	raw, err := c.ClientInterface.RecordRemediation(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseRecordRemediationResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -880,7 +1325,14 @@ func (c *Client) RecordRemediation(ctx context.Context, body RecordRemediationJS
 
 // RecordTriage is POST /v1/assessments/{assessmentId}/triage-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordTriage(ctx context.Context, assessmentId openapi_types.UUID, body RecordTriageJSONRequestBody) (*TriageRecordResult, error) {
-	response, err := c.RecordTriageWithResponse(ctx, assessmentId, body)
+	raw, err := c.ClientInterface.RecordTriage(ctx, assessmentId, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseRecordTriageResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -889,7 +1341,14 @@ func (c *Client) RecordTriage(ctx context.Context, assessmentId openapi_types.UU
 
 // RecordValidation is POST /v1/validation-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordValidation(ctx context.Context, body RecordValidationJSONRequestBody) (*ValidationRecordResult, error) {
-	response, err := c.RecordValidationWithResponse(ctx, body)
+	raw, err := c.ClientInterface.RecordValidation(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseRecordValidationResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -898,7 +1357,14 @@ func (c *Client) RecordValidation(ctx context.Context, body RecordValidationJSON
 
 // RecordVerification is POST /v1/verification-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordVerification(ctx context.Context, body RecordVerificationJSONRequestBody) (*Verification, error) {
-	response, err := c.RecordVerificationWithResponse(ctx, body)
+	raw, err := c.ClientInterface.RecordVerification(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseRecordVerificationResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -907,7 +1373,14 @@ func (c *Client) RecordVerification(ctx context.Context, body RecordVerification
 
 // RegisterRef is POST /v1/repositories/{repositoryId}/refs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RegisterRef(ctx context.Context, repositoryId openapi_types.UUID, body RegisterRefJSONRequestBody) (*RepositoryRef, error) {
-	response, err := c.RegisterRefWithResponse(ctx, repositoryId, body)
+	raw, err := c.ClientInterface.RegisterRef(ctx, repositoryId, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseRegisterRefResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -916,7 +1389,14 @@ func (c *Client) RegisterRef(ctx context.Context, repositoryId openapi_types.UUI
 
 // ResolveRole is GET /v1/registry/resolve: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ResolveRole(ctx context.Context, params *ResolveRoleParams) (*RoleRouting, error) {
-	response, err := c.ResolveRoleWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ResolveRole(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseResolveRoleResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -925,7 +1405,14 @@ func (c *Client) ResolveRole(ctx context.Context, params *ResolveRoleParams) (*R
 
 // Restate is POST /v1/decisions/{decisionId}/restatement: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Restate(ctx context.Context, decisionId openapi_types.UUID, body RestateJSONRequestBody) (*Decision, error) {
-	response, err := c.RestateWithResponse(ctx, decisionId, body)
+	raw, err := c.ClientInterface.Restate(ctx, decisionId, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseRestateResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -934,7 +1421,14 @@ func (c *Client) Restate(ctx context.Context, decisionId openapi_types.UUID, bod
 
 // ReviewQueue is GET /v1/findings/review-queue: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ReviewQueue(ctx context.Context, params *ReviewQueueParams) (*PageReviewCase, error) {
-	response, err := c.ReviewQueueWithResponse(ctx, params)
+	raw, err := c.ClientInterface.ReviewQueue(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseReviewQueueResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -960,7 +1454,14 @@ func (c *Client) ReviewQueueAll(ctx context.Context, params *ReviewQueueParams) 
 
 // SetOwners is PUT /v1/repositories/{repositoryId}/owners: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) SetOwners(ctx context.Context, repositoryId openapi_types.UUID, body SetOwnersJSONRequestBody) (*SyncReport, error) {
-	response, err := c.SetOwnersWithResponse(ctx, repositoryId, body)
+	raw, err := c.ClientInterface.SetOwners(ctx, repositoryId, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseSetOwnersResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -969,7 +1470,14 @@ func (c *Client) SetOwners(ctx context.Context, repositoryId openapi_types.UUID,
 
 // Start is POST /v1/orders/start: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Start(ctx context.Context, body StartJSONRequestBody) (*RunOrder, error) {
-	response, err := c.StartWithResponse(ctx, body)
+	raw, err := c.ClientInterface.Start(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseStartResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -978,7 +1486,14 @@ func (c *Client) Start(ctx context.Context, body StartJSONRequestBody) (*RunOrde
 
 // Submit is POST /v1/orders: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Submit(ctx context.Context, body SubmitJSONRequestBody) (*RunOrder, error) {
-	response, err := c.SubmitWithResponse(ctx, body)
+	raw, err := c.ClientInterface.Submit(ctx, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseSubmitResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -987,7 +1502,14 @@ func (c *Client) Submit(ctx context.Context, body SubmitJSONRequestBody) (*RunOr
 
 // SummarizeExposure is GET /v1/exposure/summary: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) SummarizeExposure(ctx context.Context, params *SummarizeExposureParams) ([]ExposureRollup, error) {
-	response, err := c.SummarizeExposureWithResponse(ctx, params)
+	raw, err := c.ClientInterface.SummarizeExposure(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseSummarizeExposureResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -1000,7 +1522,14 @@ func (c *Client) SummarizeExposure(ctx context.Context, params *SummarizeExposur
 
 // SummarizeFindings is GET /v1/repositories/{repositoryId}/findings/summary: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) SummarizeFindings(ctx context.Context, repositoryId openapi_types.UUID, params *SummarizeFindingsParams) ([]FindingRollup, error) {
-	response, err := c.SummarizeFindingsWithResponse(ctx, repositoryId, params)
+	raw, err := c.ClientInterface.SummarizeFindings(ctx, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseSummarizeFindingsResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -1013,7 +1542,14 @@ func (c *Client) SummarizeFindings(ctx context.Context, repositoryId openapi_typ
 
 // VerifyLayer is GET /v1/ledger/layers/{layerId}/verification: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) VerifyLayer(ctx context.Context, layerId openapi_types.UUID) (*VerifyResult, error) {
-	response, err := c.VerifyLayerWithResponse(ctx, layerId)
+	raw, err := c.ClientInterface.VerifyLayer(ctx, layerId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseVerifyLayerResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -1022,7 +1558,14 @@ func (c *Client) VerifyLayer(ctx context.Context, layerId openapi_types.UUID) (*
 
 // Whoami is GET /v1/whoami: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Whoami(ctx context.Context) (*Principal, error) {
-	response, err := c.WhoamiWithResponse(ctx)
+	raw, err := c.ClientInterface.Whoami(ctx)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseWhoamiResponse(raw)
 	if err != nil {
 		return nil, err
 	}

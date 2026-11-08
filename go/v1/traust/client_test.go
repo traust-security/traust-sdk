@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -244,6 +245,89 @@ func TestGetRemediationNamesTheWorkItemAndRefusesAbsence(t *testing.T) {
 	}
 	if problemErr.StatusCode != http.StatusNotFound {
 		t.Fatalf("status %d, want 404", problemErr.StatusCode)
+	}
+}
+
+func TestPrepareVerificationPreservesTypedRefusals(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		contentType string
+		body        string
+		problem     bool
+	}{
+		{
+			name:        "core problem instead of validation errors",
+			contentType: "application/problem+json",
+			body:        `{"type":"about:blank","title":"Unprocessable Entity","status":422,"detail":"verification requires a closed work item","request_id":"req-verification"}`,
+			problem:     true,
+		},
+		{
+			name:        "malformed problem document",
+			contentType: "application/problem+json",
+			body:        `{"title":"Unprocessable Entity","detail":`,
+		},
+		{
+			name:        "non-JSON refusal",
+			contentType: "text/plain",
+			body:        "verification refused\n",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", tc.contentType)
+				w.WriteHeader(http.StatusUnprocessableEntity)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer server.Close()
+
+			client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := client.PrepareVerification(context.Background(), uuid.New())
+			var refusal *ProblemError
+			if !errors.As(err, &refusal) || got != nil {
+				t.Fatalf("got=%v err=%v (%T), want nil and *ProblemError", got, err, err)
+			}
+			if refusal.StatusCode != http.StatusUnprocessableEntity || refusal.Body != tc.body {
+				t.Fatalf("status=%d body=%q, want 422 and %q", refusal.StatusCode, refusal.Body, tc.body)
+			}
+			if !tc.problem {
+				if refusal.Problem != nil {
+					t.Fatalf("problem=%+v, want no decoded problem", refusal.Problem)
+				}
+				return
+			}
+			document := refusal.Problem
+			if document == nil || document.Type != "about:blank" || document.Title != "Unprocessable Entity" ||
+				document.Status != http.StatusUnprocessableEntity || document.Detail != "verification requires a closed work item" ||
+				document.RequestId != "req-verification" {
+				t.Fatalf("problem=%+v, want the original core refusal document", document)
+			}
+		})
+	}
+}
+
+func TestMalformedRefusalCannotLeakBodyOrForgeLogLines(t *testing.T) {
+	const body = "{invalid\nsensitive-refusal-marker\r\nFORGED EVENT\x1b[31m"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_, _ = w.Write([]byte(body))
+	}))
+	defer server.Close()
+	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.PrepareVerification(context.Background(), uuid.New())
+	var refusal *ProblemError
+	if !errors.As(err, &refusal) || refusal.StatusCode != http.StatusUnprocessableEntity || refusal.Body != body {
+		t.Fatalf("original refusal is unavailable for explicit inspection: %v", err)
+	}
+	formatted := err.Error()
+	if strings.Contains(formatted, "sensitive-refusal-marker") || strings.Contains(formatted, "FORGED EVENT") || strings.ContainsAny(formatted, "\r\n\x1b") {
+		t.Fatalf("formatted refusal leaked untrusted response text: %q", formatted)
 	}
 }
 
