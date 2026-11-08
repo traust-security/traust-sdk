@@ -141,11 +141,7 @@ func (e *ProblemError) Error() string {
 		}
 		return fmt.Sprintf("traust-core: %d %s: %s%s", e.StatusCode, e.Problem.Title, detail, request)
 	}
-	body := e.Body
-	if len(body) > 200 {
-		body = body[:200]
-	}
-	return fmt.Sprintf("traust-core: %d: %s", e.StatusCode, body)
+	return fmt.Sprintf("traust-core: HTTP %d", e.StatusCode)
 }
 
 // CheckResponse returns nil for a 2xx response, otherwise its *ProblemError: the RFC 7807

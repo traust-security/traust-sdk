@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"strings"
 	"sync/atomic"
 	"testing"
 
@@ -304,6 +305,29 @@ func TestPrepareVerificationPreservesTypedRefusals(t *testing.T) {
 				t.Fatalf("problem=%+v, want the original core refusal document", document)
 			}
 		})
+	}
+}
+
+func TestMalformedRefusalCannotLeakBodyOrForgeLogLines(t *testing.T) {
+	const body = "{invalid\nsensitive-refusal-marker\r\nFORGED EVENT\x1b[31m"
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusUnprocessableEntity)
+		_, _ = w.Write([]byte(body))
+	}))
+	defer server.Close()
+	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	_, err = client.PrepareVerification(context.Background(), uuid.New())
+	var refusal *ProblemError
+	if !errors.As(err, &refusal) || refusal.StatusCode != http.StatusUnprocessableEntity || refusal.Body != body {
+		t.Fatalf("original refusal is unavailable for explicit inspection: %v", err)
+	}
+	formatted := err.Error()
+	if strings.Contains(formatted, "sensitive-refusal-marker") || strings.Contains(formatted, "FORGED EVENT") || strings.ContainsAny(formatted, "\r\n\x1b") {
+		t.Fatalf("formatted refusal leaked untrusted response text: %q", formatted)
 	}
 }
 
