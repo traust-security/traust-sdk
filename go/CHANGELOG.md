@@ -2,6 +2,12 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.29.1]
+
+### Fixed
+
+- Typed calls preserve refused HTTP statuses, problem documents and raw bodies before endpoint-specific response decoding, including `PrepareVerification`'s 422 refusals and malformed or non-JSON errors.
+
 ## [0.29.0]
 
 ### Added

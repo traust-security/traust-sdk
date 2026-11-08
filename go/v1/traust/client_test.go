@@ -247,6 +247,66 @@ func TestGetRemediationNamesTheWorkItemAndRefusesAbsence(t *testing.T) {
 	}
 }
 
+func TestPrepareVerificationPreservesTypedRefusals(t *testing.T) {
+	for _, tc := range []struct {
+		name        string
+		contentType string
+		body        string
+		problem     bool
+	}{
+		{
+			name:        "core problem instead of validation errors",
+			contentType: "application/problem+json",
+			body:        `{"type":"about:blank","title":"Unprocessable Entity","status":422,"detail":"verification requires a closed work item","request_id":"req-verification"}`,
+			problem:     true,
+		},
+		{
+			name:        "malformed problem document",
+			contentType: "application/problem+json",
+			body:        `{"title":"Unprocessable Entity","detail":`,
+		},
+		{
+			name:        "non-JSON refusal",
+			contentType: "text/plain",
+			body:        "verification refused\n",
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				w.Header().Set("Content-Type", tc.contentType)
+				w.WriteHeader(http.StatusUnprocessableEntity)
+				_, _ = w.Write([]byte(tc.body))
+			}))
+			defer server.Close()
+
+			client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
+			if err != nil {
+				t.Fatal(err)
+			}
+			got, err := client.PrepareVerification(context.Background(), uuid.New())
+			var refusal *ProblemError
+			if !errors.As(err, &refusal) || got != nil {
+				t.Fatalf("got=%v err=%v (%T), want nil and *ProblemError", got, err, err)
+			}
+			if refusal.StatusCode != http.StatusUnprocessableEntity || refusal.Body != tc.body {
+				t.Fatalf("status=%d body=%q, want 422 and %q", refusal.StatusCode, refusal.Body, tc.body)
+			}
+			if !tc.problem {
+				if refusal.Problem != nil {
+					t.Fatalf("problem=%+v, want no decoded problem", refusal.Problem)
+				}
+				return
+			}
+			document := refusal.Problem
+			if document == nil || document.Type != "about:blank" || document.Title != "Unprocessable Entity" ||
+				document.Status != http.StatusUnprocessableEntity || document.Detail != "verification requires a closed work item" ||
+				document.RequestId != "req-verification" {
+				t.Fatalf("problem=%+v, want the original core refusal document", document)
+			}
+		})
+	}
+}
+
 func TestNewClientValidatesConfig(t *testing.T) {
 	if _, err := NewClient(Config{Tokens: FileTokenSource{Path: "x"}}); err == nil {
 		t.Fatal("empty BaseURL accepted")

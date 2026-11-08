@@ -84,7 +84,14 @@ var (
 // {{.Name}} is {{.Method}} {{.Path}}{{if .Result}}: the decoded body, or a *ProblemError when core refuses{{else}}: the exact stored bytes, or a *ProblemError{{end}}.{{if .Empty}}
 // It returns nil, nil when core answers 204 No Content.{{end}}
 func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
-	response, err := c.{{.Name}}WithResponse({{.Args}})
+	raw, err := c.ClientInterface.{{.Name}}({{.Args}})
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := Parse{{.Name}}Response(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -102,9 +109,6 @@ func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 {{- else if .Result}}
 	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 {{- else}}
-	if err := CheckResponse(response.StatusCode(), response.Body, response.HTTPResponse.Header.Get("Content-Type")); err != nil {
-		return nil, err
-	}
 	return response.Body, nil
 {{- end}}
 }

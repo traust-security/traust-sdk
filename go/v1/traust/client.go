@@ -164,6 +164,19 @@ func CheckResponse(statusCode int, body []byte, contentType string) error {
 	return out
 }
 
+func checkRefusal(response *http.Response) error {
+	if response.StatusCode >= 200 && response.StatusCode < 300 {
+		return nil
+	}
+	defer func() { _ = response.Body.Close() }()
+	body, err := io.ReadAll(response.Body)
+	refusal := CheckResponse(response.StatusCode, body, response.Header.Get("Content-Type"))
+	if err != nil {
+		return errors.Join(refusal, fmt.Errorf("traust-core: reading refusal body: %w", err))
+	}
+	return refusal
+}
+
 // Decode returns a generated response's decoded body, or its *ProblemError when core refused.
 // The generated calls use it.
 func Decode[T any](response *http.Response, body []byte, value *T) (*T, error) {
