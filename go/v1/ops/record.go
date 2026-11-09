@@ -68,10 +68,12 @@ func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte, prepar
 // the documented spelling is refused with 422 "finding_ref is not a finding id from prepare"
 // (found live on the dev cluster's first full record). The SDK owns the record seam, so it
 // owns the reconciliation, and it binds to what prepare served: the id after the last '#'
-// is rewritten only when it names one of the prepared work item's findings. Every other byte
-// rides through untouched (json.RawMessage surgery, not a re-encoding), and a report whose
-// refs reconcile to nothing — no source_findings, a non-string ref, a tail that names no
-// prepared finding — is returned exactly as the executor produced it: core, not the SDK,
+// is rewritten only when it names one of the prepared work item's findings. Every value
+// rides through as raw JSON (RawMessage surgery — only the rewritten refs re-encode), the
+// document itself re-marshals with sorted keys and normalized whitespace, exactly the
+// encoding the deleted executor-side hook produced; a report whose refs reconcile to
+// nothing — no source_findings, a non-string ref, a tail that names no prepared finding —
+// is returned exactly as the executor produced it, bytes untouched: core, not the SDK,
 // validates the report, and its door's refusal classifies the output.
 func reconcileFindingRefs(report []byte, prepared []uuid.UUID) []byte {
 	if len(prepared) == 0 {

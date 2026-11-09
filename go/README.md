@@ -144,8 +144,9 @@ findings: contracts document `source_findings[].finding_ref` as the source repor
 reference (`<report>#<finding-id>`), while Core's record door validates the bare finding id its
 prepare served — the spelling disagreement answered 422 on the dev cluster's first full record.
 The SDK's record seam rewrites the id after the last `#` only when it names one of the prepared
-work item's findings; every other byte of the report rides through untouched, and a ref that
-reconciles to nothing is posted exactly as the executor produced it for Core's door to refuse.
+work item's findings; every value rides through as raw JSON (the document re-marshals, the same
+encoding the deleted executor-side hook produced), and a ref that reconciles to nothing is
+posted exactly as the executor produced it for Core's door to refuse.
 
 Return `*ops.PreparationRefusedError` with a generated `traust.RunOrderReason` when the consumer
 has definitively found no usable input, such as no source assessment. The SDK completes that

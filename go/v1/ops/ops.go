@@ -56,7 +56,8 @@ type Execution struct {
 // ProducedReport is the executor's outcome and its original output, byte for byte.
 // Recording runs send Payload to their record door without rewriting it, except the
 // remediation template's reconciliation of qualified source_finding refs to the bare
-// finding ids core's door validates.
+// finding ids core's door validates (values preserved as raw JSON; the document
+// re-marshals, as the deleted executor-side hook's encoding did).
 type ProducedReport struct {
 	Payload []byte
 	Result  traust.JobResult

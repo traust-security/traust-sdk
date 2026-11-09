@@ -45,8 +45,8 @@ type RecordingResult struct {
 
 // RecordingRun starts one explicitly dispatched order, holds its lease while the executor runs,
 // records the executor's report — the remediation template's source_finding refs reconciled to
-// the door's bare finding ids, every other byte original — and completes the order. No POST is
-// retried.
+// the door's bare finding ids (values raw, the document re-marshaled), every other template's
+// bytes original — and completes the order. No POST is retried.
 type RecordingRun struct {
 	Client            *traust.Client
 	Start             traust.StartRecordingRequest
