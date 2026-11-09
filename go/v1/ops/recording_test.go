@@ -62,6 +62,14 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 			server.order.StartedAt = &changed
 		}
 		json.NewEncoder(w).Encode(server.order)
+	case strings.HasSuffix(request.URL.Path, "/remediation-input"):
+		server.events = append(server.events, "prepare")
+		json.NewEncoder(w).Encode(traust.RemediationInput{
+			FixBranch: "server-fix-branch",
+			WorkItem: traust.WorkItem{WorkItemId: *server.order.WorkItemId, FindingIds: []uuid.UUID{
+				uuid.MustParse("1e4a4a1c-636b-4f73-9ca1-3b62e639f30b"),
+			}},
+		})
 	case request.URL.Path == "/v1/assessment-records" || request.URL.Path == "/v1/remediation-records":
 		server.events = append(server.events, "record")
 		if server.disconnect {
@@ -251,8 +259,9 @@ func TestExecutorFailureCompletesFailedOnlyWhileStillOwned(t *testing.T) {
 		t.Fatal("executor failure was hidden")
 	}
 	_, records, completions := server.counts()
-	if records != 0 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed || server.completed.Reason != nil {
-		t.Fatal("executor failure did not use native failed outcome without an invented reason classifier")
+	if records != 0 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed ||
+		server.completed.Reason == nil || *server.completed.Reason != traust.RunOrderReasonRunnerCrashed {
+		t.Fatal("executor failure did not preserve the runner-crashed classifier")
 	}
 }
 
@@ -290,29 +299,30 @@ func TestDeterministicRefusalCanCompleteFailedAfterOwnershipCheck(t *testing.T) 
 	}
 	// The refused payload is attributable from the order row alone: the gate's validation
 	// refusal is the session-output-invalid spelling, not an access failure's.
-	if server.completed.Reason == nil || *server.completed.Reason != sessionOutputInvalid {
+	if server.completed.Reason == nil || *server.completed.Reason != traust.RunOrderReasonSessionOutputInvalid {
 		t.Fatalf("record refusal did not stamp a reason: %+v", server.completed.Reason)
 	}
 }
 
-func TestAccessRefusalCompletesFailedWithoutAnInventedReason(t *testing.T) {
+func TestAccessAndRateFailuresPreserveRecordingOrderWithoutCompletion(t *testing.T) {
 	for _, status := range []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusTooManyRequests} {
 		run, server := newLifecycleRun(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
 			return ProducedReport{Payload: []byte("original report"), Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
 		}))
 		server.recordStatus = status
-		_, err := run.Run(context.Background())
+		result, err := run.Run(context.Background())
 		var problem *traust.ProblemError
 		if !errors.As(err, &problem) || problem.StatusCode != status {
 			t.Fatalf("status %d: refusal was not preserved: %v", status, err)
 		}
 		_, records, completions := server.counts()
-		if records != 1 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed {
+		if records != 1 || completions != 0 || result == nil || result.Order.State != traust.RunOrderStateLeased ||
+			result.Order.Id == nil || result.Order.StartedAt == nil {
 			t.Fatalf("status %d: records=%d completions=%d completed=%+v", status, records, completions, server.completed)
 		}
 		// An access or rate refusal says nothing about the output: no classifier is invented.
-		if server.completed.Reason != nil {
-			t.Fatalf("status %d stamped an invented reason: %+v", status, server.completed.Reason)
+		if result.Result.Reason != nil {
+			t.Fatalf("status %d returned an invented reason: %+v", status, result.Result.Reason)
 		}
 	}
 }
@@ -325,7 +335,8 @@ func TestUnknownExecutorOutcomeCompletesFailedWithoutRecording(t *testing.T) {
 		t.Fatal("an unknown outcome was accepted")
 	}
 	_, records, completions := server.counts()
-	if records != 0 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed {
+	if records != 0 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed ||
+		server.completed.Reason == nil || *server.completed.Reason != traust.RunOrderReasonRunnerCrashed {
 		t.Fatalf("records=%d completions=%d completed=%+v", records, completions, server.completed)
 	}
 }
@@ -333,11 +344,17 @@ func TestUnknownExecutorOutcomeCompletesFailedWithoutRecording(t *testing.T) {
 // The remediation template posts the executor's report through core's remediation record door,
 // stamped with the held order's identity, and carries the recorded work item back.
 func TestRemediationTemplateRecordsThroughTheRemediationDoor(t *testing.T) {
-	run, server := newRecordingRun(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+	run, server := newRecordingRun(t, executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
+		var input traust.RemediationInput
+		if err := json.Unmarshal(execution.Input, &input); err != nil || input.FixBranch != "server-fix-branch" {
+			return ProducedReport{}, errors.New("missing core-prepared remediation input")
+		}
 		return ProducedReport{Payload: []byte("remediation report"), Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
 	}), RecordingRequest{Remediation: &traust.RemediationRecordBody{
 		Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport},
 	}})
+	workItemID := uuid.MustParse("cbb60c79-1c48-4938-b71e-e19d0b9b9ca7")
+	server.order.WorkItemId = &workItemID
 	result, err := run.Run(context.Background())
 	if err != nil {
 		t.Fatal(err)

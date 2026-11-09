@@ -4,6 +4,7 @@ package ops
 
 import (
 	"context"
+	"log/slog"
 	"os"
 	"testing"
 	"time"
@@ -48,6 +49,7 @@ func TestE2ERunnerRunsASubmittedPackCommand(t *testing.T) {
 
 	runner, err := NewRunner(RunnerConfig{
 		Client: e2eClient(t, "TRAUST_E2E_RUNNER_TOKEN_FILE"), Pack: pack, Executor: ProcessExecutor{},
+		Logger: slog.New(slog.NewTextHandler(os.Stderr, nil)),
 		Assets: []string{"command_result"}, LeaseSeconds: 30, PollInterval: time.Second,
 	})
 	if err != nil {
@@ -103,6 +105,7 @@ func TestE2ERunnerResolvesEveryCommandParameter(t *testing.T) {
 	var argv []string
 	runner, err := NewRunner(RunnerConfig{
 		Client: e2eClient(t, "TRAUST_E2E_RUNNER_TOKEN_FILE"), Pack: pack,
+		Logger: slog.New(slog.NewTextHandler(os.Stderr, nil)),
 		Executor: executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
 			argv = append([]string(nil), execution.Argv...)
 			return ProducedReport{Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil

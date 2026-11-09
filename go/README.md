@@ -78,15 +78,15 @@ if errors.As(err, &problem) && problem.StatusCode == http.StatusNotFound { … }
 ## Run work
 
 A runner claims the orders its pack can run, runs each asset's command, and completes it. You
-supply the pack and an executor; the SDK holds the lease, stops the work if the lease is lost,
-and never runs an order planned with a different pack.
+supply the pack, an executor and a required `*slog.Logger`; the SDK holds the lease, stops the work
+if the lease is lost, and never runs an order planned with a different pack.
 
 ```go
 import "github.com/traust-security/traust-sdk/go/v1/ops"
 
 pack, err := ops.LoadPack(packYAML)   // validated against core's pack schema
 runner, err := ops.NewRunner(ops.RunnerConfig{
-    Client: client, Pack: pack, Executor: ops.ProcessExecutor{},
+    Client: client, Pack: pack, Executor: ops.ProcessExecutor{}, Logger: logger,
     Assets: pack.Assets(), LeaseSeconds: 300, PollInterval: 10 * time.Second,
 })
 err = runner.Run(ctx)
@@ -99,9 +99,77 @@ err = runner.Run(ctx)
 - **Asking for a run** (a person's token) pins the order to the pack:
   `client.Submit(ctx, traust.SubmitRequest{Order: …, Config: &[]traust.ConfigDigest{pack.Pin()}})`.
 - **`ops.RecordingRun`** runs one explicitly dispatched order and records the executor's report
-  through core's record door (triage, validation, verification, assessments). Give it one request
-  template with an empty payload; it binds the server's order id and start time as provenance,
-  and never retries a record POST: an ambiguous failure keeps the order for reconciliation.
+  through core's record door (triage, remediation, validation, verification, assessments). Give it
+  one request template with an empty payload; it binds the server's order id and start time as
+  provenance and shares the queued runner's preparation, recording and completion lifecycle.
+
+### Record queued reports
+
+Declare recording assets in `RunnerConfig.Recordings`, a
+`map[string]ops.RecordingPreparer`. Assets absent from the map retain plain command execution.
+The SDK calls `PrepareRecording(context.Context, traust.RunOrder) (ops.RecordingRequest, error)`
+under the claimed lease, with the server's order and a bounded request context:
+
+```go
+runner, err := ops.NewRunner(ops.RunnerConfig{
+    Client: client, Pack: pack, Executor: executor, Logger: logger,
+    Assets: pack.Assets(), LeaseSeconds: 300, PollInterval: 10 * time.Second,
+    Recordings: map[string]ops.RecordingPreparer{recordedAsset: preparer},
+})
+```
+
+Your preparer chooses exactly one generated request template, its provenance source and explicit
+bindings. Leave its payload empty. For triage, choose `RecordingRequest.AssessmentID`; the SDK
+calls `PrepareTriage` for that assessment and passes the result as `Execution.TriageInput`.
+For remediation or verification, the SDK calls `PrepareRemediation` or `PrepareVerification`
+using only the order's `WorkItemId`, then passes the generated input as JSON in `Execution.Input`.
+A missing work-item binding refuses the order before execution. For other templates,
+`RecordingRequest.Input` passes through as `Execution.Input`. Every executor still receives the
+pinned argv and server order.
+
+Verification also needs `VerificationInput.WorkItem.FixCommit`, `FixBranch` and
+`Subject.RepositoryId`. Before execution the SDK reuses an exact registered branch ref or calls
+`RegisterRef` once with only that Core-prepared immutable commit and branch (`traust.Branch`).
+The subject/work-item repository-ref IDs describe the baseline, not a substitute fix ref.
+Missing authoritative fix context and a successful registered-ref reply that mismatches it refuse
+the order. Remediation input must match the held work item and, when bound, its repository before
+execution. Order-specific lookup or registration 4xx responses complete failed while held,
+preserving the typed HTTP error. Authentication/access/rate failures (401/403/429), transport
+failures, 5xx and malformed registration receipts leave the order for reconciliation without
+execution or recording. A worker report naming a different commit is left unchanged for Core to
+reject, never used to register another ref.
+
+Remediation reports reconcile their source_finding refs through the prepared work item's
+findings: contracts document `source_findings[].finding_ref` as the source report's stable
+reference (`<report>#<finding-id>`), while Core's record door validates the bare finding id its
+prepare served — the spelling disagreement answered 422 on the dev cluster's first full record.
+The SDK's record seam rewrites the id after the last `#` only when it names one of the prepared
+work item's findings; every value rides through as raw JSON (the document re-marshals, the same
+encoding the deleted executor-side hook produced), and a ref that reconciles to nothing is
+posted exactly as the executor produced it for Core's door to refuse.
+
+Return `*ops.PreparationRefusedError` with a generated `traust.RunOrderReason` when the consumer
+has definitively found no usable input, such as no source assessment. The SDK completes that
+order refused without executing or recording. `RunOnce` returns that typed refusal, including
+its consumer cause, even after completion. Order-specific preparation/read 4xx errors complete
+failed, not refused; 401/403/429 stop the host without completing or claiming another order.
+Transport failures, server problems and malformed responses also stop without completing.
+Classification never uses problem text. Nil preparers and declarations outside `Assets` fail
+construction; an empty, multiple or invalid template never reaches the executor.
+
+The SDK renews during template selection, domain preparation, execution and recording. A
+cancelled or lost lease cancels and waits for the active operation, then makes no further writes.
+Executors return their original UTF-8 report bytes as `ProducedReport.Payload` and their measured
+`JobResult`; the SDK never rewrites references, registers a report-selected ref or invents usage.
+It sends eligible report payloads unchanged through the selected generated record request,
+then completes with the executor's result. Refused work and failures with no payload complete
+without recording. `Run` logs completed-order failures and refusals through the injected logger
+and continues claiming; `RunOnce` preserves typed errors for one-shot callers. Logs include safe
+order/status/reason and cause-type fields, never error text, HTTP problem text or response bodies.
+`PreparationRefusedError.Err` remains available to one-shot callers, who own its sanitization.
+No POST is retried. An order-specific record 4xx completes failed while held; 401/403/429 stop
+without completing. A transport failure, 5xx or malformed success receipt leaves the order
+identity available for reconciliation and does not complete.
 
 ## Test your code
 

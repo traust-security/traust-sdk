@@ -441,3 +441,43 @@ func TestDecode(t *testing.T) {
 		})
 	}
 }
+
+func TestWithResponseDecodesCoreProblemMediaAndValidationErrors(t *testing.T) {
+	for _, contentType := range []string{"application/problem+json", "application/problem+json; charset=utf-8", "application/json"} {
+		t.Run(contentType, func(t *testing.T) {
+			code := RoleDenied
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				status := http.StatusUnauthorized
+				if strings.HasSuffix(r.URL.Path, "/verification-input") {
+					status = http.StatusUnprocessableEntity
+				}
+				w.Header().Set("Content-Type", contentType)
+				w.WriteHeader(status)
+				_ = json.NewEncoder(w).Encode(Problem{
+					Type: "about:blank", Title: http.StatusText(status), Status: status,
+					Detail: "typed refusal", RequestId: "req-with-response", Code: &code,
+					Issues: &[]DenyIssue{{Code: code, Detail: "typed issue"}},
+				})
+			}))
+			defer server.Close()
+			client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
+			if err != nil {
+				t.Fatal(err)
+			}
+			repository, err := client.GetRepositoryWithResponse(context.Background(), uuid.New())
+			if err != nil || repository == nil || repository.StatusCode() != http.StatusUnauthorized || repository.JSON401 == nil {
+				t.Fatalf("problem media did not populate typed 401: response=%+v err=%v", repository, err)
+			}
+			verification, err := client.PrepareVerificationWithResponse(context.Background(), uuid.New())
+			if err != nil || verification == nil || verification.StatusCode() != http.StatusUnprocessableEntity || verification.JSON422 == nil {
+				t.Fatalf("problem media did not populate typed 422: response=%+v err=%v", verification, err)
+			}
+			for _, problem := range []*Problem{repository.JSON401, verification.JSON422} {
+				if problem.Detail != "typed refusal" || problem.RequestId != "req-with-response" ||
+					problem.Code == nil || *problem.Code != code || problem.Issues == nil || len(*problem.Issues) != 1 {
+					t.Fatalf("typed problem was decoded as an empty or validation-error body: %+v", problem)
+				}
+			}
+		})
+	}
+}

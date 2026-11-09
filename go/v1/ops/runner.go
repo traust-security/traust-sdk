@@ -6,7 +6,11 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
+	"maps"
+	"net/http"
 	"net/url"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -22,6 +26,9 @@ type RunnerConfig struct {
 	Pack     *Pack
 	Executor Executor
 	Assets   []string
+	Logger   *slog.Logger
+	// Recordings declares assets whose reports must be recorded before completion.
+	Recordings map[string]RecordingPreparer
 	// ForgeHosts are the repository hosts a repository-bound order may name: the keys of
 	// core's forge_hosts, copied deliberately. This is a defense-in-depth allowlist, not a
 	// mirror of core's config: the runner checks every repository-bound order against its
@@ -47,6 +54,9 @@ type Runner struct {
 func NewRunner(cfg RunnerConfig) (*Runner, error) {
 	if cfg.Client == nil || cfg.Pack == nil || cfg.Executor == nil {
 		return nil, errors.New("ops: runner needs a Client, a Pack and an Executor")
+	}
+	if cfg.Logger == nil {
+		return nil, errors.New("ops: runner needs a Logger")
 	}
 	if len(cfg.Assets) == 0 || cfg.LeaseSeconds <= 0 || cfg.LeaseSeconds > maxLeaseSeconds {
 		return nil, fmt.Errorf("ops: runner needs assets and a lease of 1..%d seconds", maxLeaseSeconds)
@@ -74,6 +84,21 @@ func NewRunner(cfg RunnerConfig) (*Runner, error) {
 			return nil, fmt.Errorf("ops: asset %q runs per repository: RunnerConfig.ForgeHosts is required", name)
 		}
 	}
+	for asset, preparer := range cfg.Recordings {
+		value := reflect.ValueOf(preparer)
+		if value.IsValid() {
+			switch value.Kind() {
+			case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+				if value.IsNil() {
+					return nil, fmt.Errorf("ops: recording asset %q needs a non-nil preparer", asset)
+				}
+			}
+		}
+		if preparer == nil || !slices.Contains(cfg.Assets, asset) {
+			return nil, fmt.Errorf("ops: recording asset %q needs a preparer and must be in Assets", asset)
+		}
+	}
+	cfg.Recordings = maps.Clone(cfg.Recordings)
 	cfg.Assets = slices.Clone(cfg.Assets)
 	cfg.ForgeHosts = slices.Clone(cfg.ForgeHosts)
 	return &Runner{config: cfg}, nil
@@ -84,7 +109,12 @@ func (r *Runner) Run(ctx context.Context) error {
 	for {
 		order, err := r.RunOnce(ctx)
 		if err != nil {
-			return err
+			if order == nil || !closed(order.State) {
+				return err
+			}
+			r.logCompleted(ctx, order, err)
+		} else if order != nil && (order.State == traust.RunOrderStateFailed || order.State == traust.RunOrderStateRefused) {
+			r.logCompleted(ctx, order, nil)
 		}
 		if order != nil {
 			continue
@@ -119,7 +149,7 @@ func (r *Runner) RunOnce(ctx context.Context) (*traust.RunOrder, error) {
 	}
 	pinned, err := supervise(ctx, l, func(read context.Context) (bool, error) { return r.pinned(read, l) })
 	if err != nil {
-		return l.snapshot(), err
+		return r.readFailed(ctx, l, err)
 	}
 	if !pinned {
 		return r.finish(ctx, l, refused(traust.RunOrderReasonBadRequest))
@@ -130,10 +160,22 @@ func (r *Runner) RunOnce(ctx context.Context) (*traust.RunOrder, error) {
 		return r.finish(ctx, l, refused(unresolved.reason))
 	}
 	if err != nil {
-		return l.snapshot(), err
+		return r.readFailed(ctx, l, err)
 	}
 	if err := l.renew(ctx); err != nil {
 		return l.snapshot(), err
+	}
+	if preparer, recording := r.config.Recordings[order.Asset]; recording {
+		request, err := superviseRequest(ctx, l, func(work context.Context) (RecordingRequest, error) {
+			return preparer.PrepareRecording(work, l.order())
+		})
+		run := RecordingRun{Client: r.config.Client, Request: request, Executor: r.config.Executor}
+		if err != nil {
+			result, prepareErr := run.preparationFailed(ctx, l, err)
+			return queuedRecordingResult(result, prepareErr)
+		}
+		result, recordingErr := run.runHeld(ctx, l, Execution{Argv: argv})
+		return queuedRecordingResult(result, recordingErr)
 	}
 	produced, err := l.run(ctx, r.config.Executor, Execution{Argv: argv})
 	if lost(err) || ctx.Err() != nil {
@@ -147,6 +189,67 @@ func (r *Runner) RunOnce(ctx context.Context) (*traust.RunOrder, error) {
 		return finished, errors.Join(err, finishErr)
 	}
 	return r.finish(ctx, l, produced.Result)
+}
+
+func queuedRecordingResult(result *RecordingResult, err error) (*traust.RunOrder, error) {
+	if result == nil {
+		return nil, err
+	}
+	return &result.Order, err
+}
+
+func closed(state traust.RunOrderState) bool {
+	switch state {
+	case traust.RunOrderStateSucceeded, traust.RunOrderStateDegraded, traust.RunOrderStateFailed, traust.RunOrderStateRefused:
+		return true
+	}
+	return false
+}
+
+func (r *Runner) logCompleted(ctx context.Context, order *traust.RunOrder, err error) {
+	attrs := []any{"order_id", order.Id, "asset", order.Asset, "state", order.State}
+	if err != nil {
+		attrs = append(attrs, "error_type", fmt.Sprintf("%T", err))
+	}
+	if order.Reason != nil {
+		attrs = append(attrs, "reason", *order.Reason)
+	}
+	if problem := causeProblem(err); problem != nil {
+		attrs = append(attrs, "http_status", problem.StatusCode)
+	}
+	var refusal *PreparationRefusedError
+	if errors.As(err, &refusal) {
+		attrs = append(attrs, "preparation_reason", refusal.Reason)
+		if refusal.Err != nil {
+			attrs = append(attrs, "preparation_cause_type", fmt.Sprintf("%T", refusal.Err))
+		}
+	}
+	// A refused order (bad request, pack mismatch) is a routine terminal state the runner
+	// closes on its own; a failed one needs a human. Warn for the routine, error for the rest.
+	if order.State == traust.RunOrderStateRefused {
+		r.config.Logger.WarnContext(ctx, "ops: order refused", attrs...)
+		return
+	}
+	r.config.Logger.ErrorContext(ctx, "ops: order completed with an error", attrs...)
+}
+
+func (r *Runner) readFailed(ctx context.Context, l *lease, cause error) (*traust.RunOrder, error) {
+	if lost(cause) || ctx.Err() != nil || !definitive(causeProblem(cause)) {
+		return l.snapshot(), cause
+	}
+	order, err := r.finish(ctx, l, traust.JobResult{Outcome: traust.OutcomeFailed, Reason: reason(readFailedReason(cause))})
+	return order, errors.Join(cause, err)
+}
+
+// readFailedReason keeps a definitively failed read attributable in the order row: a 404
+// names the read's own diagnosis (not_found, a resource core no longer serves), and anything
+// else stays runner-crashed — the read failed without core naming a reason.
+func readFailedReason(cause error) traust.RunOrderReason {
+	problem := causeProblem(cause)
+	if problem != nil && problem.StatusCode == http.StatusNotFound {
+		return traust.RunOrderReasonNotFound
+	}
+	return traust.RunOrderReasonRunnerCrashed
 }
 
 func (r *Runner) claim(ctx context.Context) (*traust.RunOrder, error) {
@@ -229,15 +332,6 @@ func (r *Runner) repositoryURL(ctx context.Context, id uuid.UUID) (string, error
 	defer cancel()
 	repository, err := r.config.Client.GetRepository(ctx, id)
 	if err != nil {
-		var problem *traust.ProblemError
-		if errors.As(err, &problem) && problem.StatusCode >= 400 && problem.StatusCode < 500 {
-			// A definitive answer — the repository is missing or gone, or this runner
-			// may not read it — never resolves for this order, so the order is refused:
-			// completing it stops the runner from re-claiming it after each lease expiry
-			// and starving every other asset it serves. A 5xx stays ambiguous: stop
-			// without completing, never a partial run.
-			return "", &unresolvedParam{reason: traust.RunOrderReasonNotFound, err: fmt.Errorf("repository %s: %w", id, err)}
-		}
 		return "", fmt.Errorf("ops: order repository %s: %w", id, err)
 	}
 	normalized, err := httpsRepoURL(repository.Url, r.config.ForgeHosts)

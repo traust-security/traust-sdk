@@ -5,7 +5,9 @@ kin-openapi (behind oapi-codegen v2) reads the 3.0 shapes. Two 3.1-isms
 appear in core's document: exclusiveMinimum/exclusiveMaximum as numbers
 instead of the 3.0 boolean flag, and pydantic's Optional as
 anyOf: [schema, {type: "null"}] instead of 3.0's nullable: true. This
-rewrites those forms and namespaces the enums in NAMESPACED. Wire values and validation constraints are unchanged.
+rewrites those forms, namespaces the enums in NAMESPACED, and gives Core's error
+responses one JSON Problem schema so generated parsers accept problem+json.
+Wire values and validation constraints are unchanged.
 
 Usage: normalize.py <openapi.json> <openapi-3.0.json>
 """
@@ -51,6 +53,18 @@ def normalize(node: object) -> None:
             normalize(item)
 
 
+def normalize_problems(spec: dict) -> None:
+    """Use one JSON schema so oapi-codegen accepts problem+json, including charset parameters."""
+    problem = {"schema": {"$ref": "#/components/schemas/Problem"}}
+    for path in spec.get("paths", {}).values():
+        for operation in path.values():
+            if not isinstance(operation, dict):
+                continue
+            for status, response in operation.get("responses", {}).items():
+                if str(status).isdigit() and 400 <= int(status) < 600:
+                    response["content"] = {"application/json": problem}
+
+
 # Enums whose constants carry their type name, so a value shared with another enum never renames
 # existing constants (SourceType beside SourceChannel; RunOrderReason's not_found, bad_request).
 NAMESPACED = ("SourceType", "RunOrderReason")
@@ -67,6 +81,7 @@ def main(argv: list[str]) -> int:
     with open(argv[1], encoding="utf-8") as handle:
         spec = json.load(handle)
     normalize(spec)
+    normalize_problems(spec)
     for name in NAMESPACED:
         schema = spec["components"]["schemas"].get(name)
         if schema is not None:

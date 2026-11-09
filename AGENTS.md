@@ -12,7 +12,7 @@ repo, err := c.GetRepository(ctx, id)                         // every operation
 for f, err := range c.ListFindingsAll(ctx, repoID, nil) { … }  // every paged listing: an iterator
 pack, err := ops.LoadPack(packYAML)
 r, err := ops.NewRunner(ops.RunnerConfig{
-    Client: c, Pack: pack, Executor: ops.ProcessExecutor{}, Assets: pack.Assets(),
+    Client: c, Pack: pack, Executor: ops.ProcessExecutor{}, Assets: pack.Assets(), Logger: logger,
     LeaseSeconds: 300, PollInterval: 10 * time.Second,
 })
 err = r.Run(ctx)
