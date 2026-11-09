@@ -30,7 +30,7 @@ type RecordingPreparer interface {
 }
 
 // PreparationRefusedError means a preparer definitively cannot run this order.
-// Err is a consumer diagnostic logged by Runner.Run unless it contains an HTTP problem; keep it secret-free.
+// Err remains available to callers; Runner logs only its type, never its text.
 type PreparationRefusedError struct {
 	Reason traust.RunOrderReason
 	Err    error

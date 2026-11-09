@@ -131,19 +131,22 @@ Verification also needs `VerificationInput.WorkItem.FixCommit`, `FixBranch` and
 `Subject.RepositoryId`. Before execution the SDK reuses an exact registered branch ref or calls
 `RegisterRef` once with only that Core-prepared immutable commit and branch (`traust.Branch`).
 The subject/work-item repository-ref IDs describe the baseline, not a substitute fix ref.
-Missing authoritative fix context refuses the order. Definitive lookup or registration 4xx
-responses complete failed while held, preserving the typed HTTP error; transport failures, 5xx
-and ambiguous registration receipts leave the order for reconciliation without execution or
-recording. A worker report naming a different commit is left unchanged for Core to reject,
-never used to register another ref.
+Missing authoritative fix context and a successful registered-ref reply that mismatches it refuse
+the order. Remediation input must match the held work item and, when bound, its repository before
+execution. Order-specific lookup or registration 4xx responses complete failed while held,
+preserving the typed HTTP error. Authentication/access/rate failures (401/403/429), transport
+failures, 5xx and malformed registration receipts leave the order for reconciliation without
+execution or recording. A worker report naming a different commit is left unchanged for Core to
+reject, never used to register another ref.
 
 Return `*ops.PreparationRefusedError` with a generated `traust.RunOrderReason` when the consumer
 has definitively found no usable input, such as no source assessment. The SDK completes that
 order refused without executing or recording. `RunOnce` returns that typed refusal, including
-its consumer cause, even after completion. Other definitive preparation/read 4xx errors complete
-failed, not refused; transport failures, server problems and malformed responses stop without
-completing. Classification never uses problem text. Nil preparers and declarations outside
-`Assets` fail construction; an empty, multiple or invalid template never reaches the executor.
+its consumer cause, even after completion. Order-specific preparation/read 4xx errors complete
+failed, not refused; 401/403/429 stop the host without completing or claiming another order.
+Transport failures, server problems and malformed responses also stop without completing.
+Classification never uses problem text. Nil preparers and declarations outside `Assets` fail
+construction; an empty, multiple or invalid template never reaches the executor.
 
 The SDK renews during template selection, domain preparation, execution and recording. A
 cancelled or lost lease cancels and waits for the active operation, then makes no further writes.
@@ -153,11 +156,11 @@ It sends eligible report payloads unchanged through the selected generated recor
 then completes with the executor's result. Refused work and failures with no payload complete
 without recording. `Run` logs completed-order failures and refusals through the injected logger
 and continues claiming; `RunOnce` preserves typed errors for one-shot callers. Logs include safe
-order/status/reason fields, never HTTP problem text or response bodies. A consumer's
-`PreparationRefusedError.Err` may be logged when it is not an HTTP problem: keep that diagnostic
-free of secrets. No POST is retried. A definitive record 4xx completes failed while held; a
-transport failure, 5xx or malformed success receipt leaves the order identity available for
-reconciliation and does not complete.
+order/status/reason and cause-type fields, never error text, HTTP problem text or response bodies.
+`PreparationRefusedError.Err` remains available to one-shot callers, who own its sanitization.
+No POST is retried. An order-specific record 4xx completes failed while held; 401/403/429 stop
+without completing. A transport failure, 5xx or malformed success receipt leaves the order
+identity available for reconciliation and does not complete.
 
 ## Test your code
 

@@ -219,8 +219,8 @@ func (r *Runner) logCompleted(ctx context.Context, order *traust.RunOrder, err e
 	var refusal *PreparationRefusedError
 	if errors.As(err, &refusal) {
 		attrs = append(attrs, "preparation_reason", refusal.Reason)
-		if refusal.Err != nil && causeProblem(refusal.Err) == nil {
-			attrs = append(attrs, "preparation_cause", refusal.Err.Error())
+		if refusal.Err != nil {
+			attrs = append(attrs, "preparation_cause_type", fmt.Sprintf("%T", refusal.Err))
 		}
 	}
 	r.config.Logger.ErrorContext(ctx, "ops: order completed with an error or refusal", attrs...)

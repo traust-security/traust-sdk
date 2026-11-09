@@ -113,19 +113,13 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 		}
 		refusal := causeProblem(err)
 		if definitive(refusal) {
-			// The gate answered definitively: a terminally rejected artifact (never
-			// retried, never mangled), completed failed while the lease is still held.
-			// Only a payload refusal carries a reason — the order row alone says what
-			// happened, the pod being gone by the time anyone looks; an access or rate
-			// refusal (401/403/429) says nothing about the output, so no classifier is
-			// invented for it.
+			// Only a payload rejection classifies the output; order-specific errors close failed.
 			if produced.Result.Reason == nil && payloadRejected(refusal.StatusCode) {
 				produced.Result.Reason = ptr(traust.RunOrderReasonSessionOutputInvalid)
 			}
 			return run.fail(ctx, l, produced.Result, err)
 		}
-		// A transport or server error may follow a committed write: keep the order for
-		// reconciliation and never complete it.
+		// Host access/rate failures stop the runner; ambiguous writes remain for reconciliation.
 		return &RecordingResult{Order: *l.snapshot(), Receipt: receipt, Result: produced.Result}, err
 	}
 	completed, err := l.complete(ctx, produced.Result)
@@ -198,6 +192,11 @@ func (run RecordingRun) prepare(ctx context.Context, l *lease, execution Executi
 			if err != nil {
 				return execution, fmt.Errorf("ops: prepare remediation: %w", err)
 			}
+			if input == nil || input.WorkItem.WorkItemId != *l.origin.WorkItemId ||
+				(l.origin.RepositoryId != nil && input.Subject.RepositoryId != *l.origin.RepositoryId) {
+				return execution, &PreparationRefusedError{Reason: traust.RunOrderReasonBadRequest,
+					Err: errors.New("ops: remediation input does not match the bound work item and repository")}
+			}
 			execution.Input, err = json.Marshal(input)
 			if err != nil {
 				return execution, fmt.Errorf("ops: encode remediation input: %w", err)
@@ -251,13 +250,17 @@ func (run RecordingRun) verificationRef(ctx context.Context, l *lease, input *tr
 		return fmt.Errorf("ops: register verification fix ref: %w", err)
 	}
 	if !matches(registered) {
-		return errors.New("ops: registered verification ref does not match the prepared fix context")
+		return &PreparationRefusedError{Reason: traust.RunOrderReasonBadRequest,
+			Err: errors.New("ops: registered verification ref does not match the prepared fix context")}
 	}
 	return nil
 }
 
 func (run RecordingRun) preparationFailed(ctx context.Context, l *lease, cause error) (*RecordingResult, error) {
 	if lost(cause) || ctx.Err() != nil {
+		return &RecordingResult{Order: *l.snapshot()}, cause
+	}
+	if problem := causeProblem(cause); problem != nil && !definitive(problem) {
 		return &RecordingResult{Order: *l.snapshot()}, cause
 	}
 	var refusal *PreparationRefusedError
@@ -290,7 +293,14 @@ func causeProblem(err error) *traust.ProblemError {
 }
 
 func definitive(problem *traust.ProblemError) bool {
-	return problem != nil && problem.StatusCode >= 400 && problem.StatusCode < 500
+	if problem == nil {
+		return false
+	}
+	switch problem.StatusCode {
+	case http.StatusUnauthorized, http.StatusForbidden, http.StatusTooManyRequests:
+		return false
+	}
+	return problem.StatusCode >= 400 && problem.StatusCode < 500
 }
 
 func ptr[T any](value T) *T { return &value }

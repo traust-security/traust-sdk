@@ -49,6 +49,8 @@ type queuedRecordingServer struct {
 	repositoryID           uuid.UUID
 	fixRefID               uuid.UUID
 	verificationInput      *traust.VerificationInput
+	remediationInput       *traust.RemediationInput
+	registrationReply      *traust.RepositoryRef
 	refs                   []traust.RepositoryRef
 	lookupStatus           int
 	registerStatus         int
@@ -134,9 +136,7 @@ func (server *queuedRecordingServer) ServeHTTP(w http.ResponseWriter, request *h
 		case path == "/v1/assessments/"+server.assessmentID.String()+"/triage-input":
 			_ = json.NewEncoder(w).Encode(traust.TriageInput{Assessor: "core-assessor"})
 		case path == "/v1/work-items/"+workItem.String()+"/remediation-input":
-			_ = json.NewEncoder(w).Encode(traust.RemediationInput{
-				FixBranch: "core-fix-branch", WorkItem: traust.WorkItem{WorkItemId: workItem},
-			})
+			_ = json.NewEncoder(w).Encode(server.remediationInput)
 		case path == "/v1/work-items/"+workItem.String()+"/verification-input":
 			_ = json.NewEncoder(w).Encode(server.verificationInput)
 		default:
@@ -189,6 +189,9 @@ func (server *queuedRecordingServer) ServeHTTP(w http.ResponseWriter, request *h
 				return
 			}
 			ref := server.preparedFixRef()
+			if server.registrationReply != nil {
+				ref = *server.registrationReply
+			}
 			if server.mismatchedRegistration {
 				ref.Sha = strings.Repeat("d", 40)
 			}
@@ -259,6 +262,10 @@ func newQueuedRecordingRunner(t *testing.T, executor Executor, preparer Recordin
 	server.verificationInput = &traust.VerificationInput{
 		Subject:  traust.SubjectRef{RepositoryId: server.repositoryID, RepositoryRefId: baselineID, Sha: strings.Repeat("b", 40)},
 		WorkItem: traust.WorkItem{WorkItemId: workItemID, RepositoryRefId: baselineID, FixCommit: &commit, FixBranch: &branch},
+	}
+	server.remediationInput = &traust.RemediationInput{
+		Subject: server.verificationInput.Subject, FixBranch: "core-fix-branch",
+		WorkItem: traust.WorkItem{WorkItemId: workItemID},
 	}
 	httpServer := httptest.NewServer(server)
 	t.Cleanup(httpServer.Close)
@@ -582,7 +589,7 @@ func TestQueuedPreparationProblemsNeverMasqueradeAsDomainRefusals(t *testing.T) 
 			var problem *traust.ProblemError
 			var refusal *PreparationRefusedError
 			events, completed := recordingEvents(server)
-			wantClosed := status < 500
+			wantClosed := status == 400 || status == 404 || status == 409 || status == 422
 			if order == nil || !errors.As(err, &problem) || problem.StatusCode != status || errors.As(err, &refusal) ||
 				executed || slices.Contains(events, "record") || slices.Contains(events, "complete") != wantClosed {
 				t.Fatalf("order=%+v err=%v executed=%v events=%v", order, err, executed, events)
@@ -630,8 +637,8 @@ func TestQueuedRecordingPostsOnceAndSeparatesDefinitiveFromAmbiguousFailures(t *
 		complete   bool
 	}{
 		{"payload refusal", 422, false, false, true},
-		{"access refusal", 403, false, false, true},
-		{"rate refusal", 429, false, false, true},
+		{"access refusal", 403, false, false, false},
+		{"rate refusal", 429, false, false, false},
 		{"server error", 500, false, false, false},
 		{"transport lost after post", 0, true, false, false},
 		{"malformed success receipt", 0, false, true, false},
@@ -1052,11 +1059,17 @@ func TestQueuedVerificationRefFailuresNeverExecuteRecordOrRetryRegistration(t *t
 			server.disconnectRegister, server.mismatchedRegistration = tc.disconnect, tc.mismatch
 			order, err := runner.RunOnce(context.Background())
 			events, completed := recordingEvents(server)
-			wantClosed := (tc.lookup >= 400 && tc.lookup < 500) || (tc.register >= 400 && tc.register < 500)
+			wantClosed := tc.register == 422 || tc.mismatch
 			if err == nil || order == nil || order.Id == nil || executed || slices.Contains(events, "record") || slices.Contains(events, "complete") != wantClosed {
 				t.Fatalf("ref failure advanced lifecycle incorrectly: order=%+v err=%v executed=%v events=%v", order, err, executed, events)
 			}
-			if wantClosed && (order.State != traust.RunOrderStateFailed || completed.Outcome != traust.OutcomeFailed || completed.Reason != nil) {
+			if tc.mismatch {
+				var refusal *PreparationRefusedError
+				if !errors.As(err, &refusal) || order.State != traust.RunOrderStateRefused ||
+					completed.Outcome != traust.OutcomeRefused || completed.Reason == nil || *completed.Reason != traust.RunOrderReasonBadRequest {
+					t.Fatalf("successful mismatched ref receipt was left ambiguous: order=%+v err=%v result=%+v", order, err, completed)
+				}
+			} else if wantClosed && (order.State != traust.RunOrderStateFailed || completed.Outcome != traust.OutcomeFailed || completed.Reason != nil) {
 				t.Fatalf("definitive ref error became a domain refusal or remained leased: order=%+v result=%+v", order, completed)
 			}
 			posts := 0
@@ -1250,7 +1263,7 @@ func TestDispatchedPreparationFailuresCloseOnlyDefinitiveErrors(t *testing.T) {
 			if tc.register != 0 {
 				status = tc.register
 			}
-			wantClosed := status >= 400 && status < 500
+			wantClosed := status == http.StatusUnprocessableEntity
 			var refusal *PreparationRefusedError
 			if result == nil || err == nil || executed || errors.As(err, &refusal) || slices.Contains(events, "record") ||
 				slices.Contains(events, "complete") != wantClosed {
@@ -1284,7 +1297,8 @@ func TestDispatchedPreparationFailuresCloseOnlyDefinitiveErrors(t *testing.T) {
 func TestRunnerContinuesToSecondOrderAfterClosedRecordingFailuresAndRefusals(t *testing.T) {
 	for _, failure := range []string{
 		"invalid template", "consumer refusal", "HTTP-backed consumer refusal", "preparation 4xx",
-		"fix ref 4xx", "record 4xx", "executor crash", "invalid outcome", "reportless failure", "execution refusal",
+		"fix ref 4xx", "mismatched ref receipt", "mismatched remediation input", "record 4xx",
+		"executor crash", "invalid outcome", "reportless failure", "execution refusal",
 	} {
 		t.Run(failure, func(t *testing.T) {
 			ctx, cancel := context.WithCancel(context.Background())
@@ -1312,19 +1326,23 @@ func TestRunnerContinuesToSecondOrderAfterClosedRecordingFailuresAndRefusals(t *
 						return RecordingRequest{}, nil
 					case "consumer refusal":
 						return RecordingRequest{}, &PreparationRefusedError{
-							Reason: traust.RunOrderReasonSourceUnavailable, Err: errors.New("source assessment absent"),
+							Reason: traust.RunOrderReasonSourceUnavailable, Err: errors.New("secret-consumer-message"),
 						}
 					case "HTTP-backed consumer refusal":
 						return RecordingRequest{}, &PreparationRefusedError{
 							Reason: traust.RunOrderReasonSourceUnavailable,
-							Err: &traust.ProblemError{StatusCode: http.StatusForbidden, Body: "secret-response-body",
+							Err: &traust.ProblemError{StatusCode: http.StatusUnprocessableEntity, Body: "secret-response-body",
 								Problem: &traust.Problem{Title: "secret-response-body", Detail: "secret-response-body"}},
 						}
 					case "preparation 4xx":
 						return RecordingRequest{AssessmentID: server.assessmentID,
 							Triage: &traust.TriageRecordBody{Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport}}}, nil
-					case "fix ref 4xx":
+					case "fix ref 4xx", "mismatched ref receipt":
 						return verificationRecordingTemplate(), nil
+					case "mismatched remediation input":
+						return RecordingRequest{Remediation: &traust.RemediationRecordBody{
+							Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport},
+						}}, nil
 					}
 				}
 				return assessmentRecordingTemplate(), nil
@@ -1333,9 +1351,15 @@ func TestRunnerContinuesToSecondOrderAfterClosedRecordingFailuresAndRefusals(t *
 			server.problemDetail = "secret-response-body"
 			switch failure {
 			case "preparation 4xx":
-				server.prepareStatus = http.StatusForbidden
+				server.prepareStatus = http.StatusUnprocessableEntity
 			case "fix ref 4xx":
 				server.registerStatus = http.StatusUnprocessableEntity
+			case "mismatched ref receipt":
+				ref := server.preparedFixRef()
+				ref.Kind = nil
+				server.registrationReply = &ref
+			case "mismatched remediation input":
+				server.remediationInput.WorkItem.WorkItemId = uuid.New()
 			case "record 4xx":
 				server.recordStatus = http.StatusUnprocessableEntity
 			}
@@ -1366,21 +1390,21 @@ func TestRunnerContinuesToSecondOrderAfterClosedRecordingFailuresAndRefusals(t *
 				t.Fatalf("runner stopped before the second order completed: err=%v attempts=%d ids=%v results=%+v", err, attempt.Load(), completedIDs, completed)
 			}
 			var entry struct {
-				State            traust.RunOrderState `json:"state"`
-				HTTPStatus       int                  `json:"http_status"`
-				PreparationCause string               `json:"preparation_cause"`
+				State                traust.RunOrderState `json:"state"`
+				HTTPStatus           int                  `json:"http_status"`
+				PreparationCauseType string               `json:"preparation_cause_type"`
 			}
 			if err := json.Unmarshal(bytes.TrimSpace(logs.Bytes()), &entry); err != nil {
 				t.Fatalf("expected one completed-order diagnostic: %q: %v", logs.String(), err)
 			}
 			if (entry.State != traust.RunOrderStateFailed && entry.State != traust.RunOrderStateRefused) ||
-				strings.Contains(logs.String(), "secret-response-body") {
+				strings.Contains(logs.String(), "secret-response-body") || strings.Contains(logs.String(), "secret-consumer-message") {
 				t.Fatalf("missing safe terminal diagnostic or leaked HTTP content: %s", logs.String())
 			}
-			if failure == "consumer refusal" && entry.PreparationCause != "source assessment absent" {
-				t.Fatalf("consumer refusal cause was not observable: %s", logs.String())
+			if failure == "consumer refusal" && entry.PreparationCauseType != "*errors.errorString" {
+				t.Fatalf("consumer refusal cause type was not observable: %s", logs.String())
 			}
-			if (failure == "preparation 4xx" || failure == "HTTP-backed consumer refusal") && entry.HTTPStatus != http.StatusForbidden {
+			if (failure == "preparation 4xx" || failure == "HTTP-backed consumer refusal") && entry.HTTPStatus != http.StatusUnprocessableEntity {
 				t.Fatalf("safe HTTP status was not observable: %s", logs.String())
 			}
 			if failure == "record 4xx" && (completed[0].Reason == nil || *completed[0].Reason != traust.RunOrderReasonSessionOutputInvalid) {
@@ -1443,14 +1467,205 @@ func TestConsumerPreparationHTTPFailuresCloseOnlyDefinitiveErrors(t *testing.T) 
 			events, result := recordingEvents(server)
 			var refusal *PreparationRefusedError
 			if order == nil || !errors.Is(err, cause) || errors.As(err, &refusal) || executed ||
-				slices.Contains(events, "record") || slices.Contains(events, "complete") != (status < 500) {
+				slices.Contains(events, "record") || slices.Contains(events, "complete") != (status == http.StatusUnprocessableEntity) {
 				t.Fatalf("consumer HTTP error was lost or reclassified: order=%+v err=%v events=%v", order, err, events)
 			}
-			if status < 500 && (order.State != traust.RunOrderStateFailed || result.Outcome != traust.OutcomeFailed || result.Reason != nil) {
+			if status == http.StatusUnprocessableEntity && (order.State != traust.RunOrderStateFailed || result.Outcome != traust.OutcomeFailed || result.Reason != nil) {
 				t.Fatalf("definitive consumer HTTP error did not close failed: order=%+v result=%+v", order, result)
 			}
-			if status >= 500 && order.State != traust.RunOrderStateLeased {
+			if status != http.StatusUnprocessableEntity && order.State != traust.RunOrderStateLeased {
 				t.Fatalf("ambiguous consumer read did not preserve held identity: %+v", order)
+			}
+		})
+	}
+}
+
+func TestRunnerHostAuthenticationAndRateFailuresDoNotClaimSecondOrder(t *testing.T) {
+	for _, status := range []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusTooManyRequests} {
+		for _, stage := range []string{"manifest", "repository", "consumer", "consumer refusal", "input", "lookup", "registration", "record"} {
+			t.Run(http.StatusText(status)+"/"+stage, func(t *testing.T) {
+				ctx, cancel := context.WithTimeout(context.Background(), 2*time.Second)
+				defer cancel()
+				var attempt atomic.Int32
+				var server *queuedRecordingServer
+				privateCause := &traust.ProblemError{StatusCode: status, Body: "secret-host-diagnostic"}
+				runner, core := newQueuedRecordingRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+					return ProducedReport{Payload: []byte("original report"), Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
+				}), recordingPreparerFunc(func(context.Context, traust.RunOrder) (RecordingRequest, error) {
+					if attempt.Load() != 1 {
+						return assessmentRecordingTemplate(), nil
+					}
+					switch stage {
+					case "consumer":
+						return RecordingRequest{}, errors.Join(errors.New("consumer read failed"), privateCause)
+					case "consumer refusal":
+						return RecordingRequest{}, &PreparationRefusedError{
+							Reason: traust.RunOrderReasonSourceUnavailable, Err: privateCause,
+						}
+					case "input":
+						return RecordingRequest{AssessmentID: server.assessmentID,
+							Triage: &traust.TriageRecordBody{Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport}}}, nil
+					case "lookup", "registration":
+						return verificationRecordingTemplate(), nil
+					}
+					return assessmentRecordingTemplate(), nil
+				}))
+				server = core
+				server.problemDetail = "secret-host-diagnostic"
+				switch stage {
+				case "manifest":
+					server.queue.manifestStatus = status
+				case "repository":
+					server.queue.order.RepositoryId = &server.repositoryID
+					server.queue.repositoryStatus = status
+					runner.config.ForgeHosts = []string{"forge.test"}
+				case "input":
+					server.prepareStatus = status
+				case "lookup":
+					server.lookupStatus = status
+				case "registration":
+					server.registerStatus = status
+				case "record":
+					server.recordStatus = status
+				}
+				firstID, secondID := *server.queue.order.Id, uuid.New()
+				server.queue.onClaim = func() {
+					switch attempt.Add(1) {
+					case 2:
+						expires := time.Now().Add(time.Minute)
+						server.queue.order.Id, server.queue.order.LeaseExpiresAt = &secondID, &expires
+						server.queue.order.State, server.queue.order.Reason = traust.RunOrderStateLeased, nil
+						server.queue.order.RepositoryId = nil
+						server.queue.manifestStatus, server.queue.repositoryStatus = 0, 0
+						server.prepareStatus, server.lookupStatus, server.registerStatus, server.recordStatus = 0, 0, 0, 0
+					case 3:
+						server.queue.empty = true
+						cancel()
+					}
+				}
+				var logs bytes.Buffer
+				runner.config.Logger = slog.New(slog.NewJSONHandler(&logs, nil))
+				err := runner.Run(ctx)
+				var problem *traust.ProblemError
+				events, _ := recordingEvents(server)
+				if !errors.As(err, &problem) || problem.StatusCode != status || attempt.Load() != 1 ||
+					slices.Contains(events, "complete") {
+					t.Fatalf("host error closed/drained orders or lost typed cause: err=%v attempts=%d events=%v", err, attempt.Load(), events)
+				}
+				server.queue.mu.Lock()
+				retained := copyOrder(server.queue.order)
+				server.queue.mu.Unlock()
+				if retained.Id == nil || *retained.Id != firstID || retained.State != traust.RunOrderStateLeased {
+					t.Fatalf("host error lost first order's reconciliation identity: %+v", retained)
+				}
+				if strings.Contains(logs.String(), "secret-host-diagnostic") {
+					t.Fatalf("host diagnostic leaked into ordinary logs: %s", logs.String())
+				}
+				records, registrations := 0, 0
+				for _, event := range events {
+					if event == "record" {
+						records++
+					}
+					if event == "register-ref" {
+						registrations++
+					}
+				}
+				if records > 1 || registrations > 1 || (stage == "record" && records != 1) ||
+					(stage == "registration" && registrations != 1) {
+					t.Fatalf("host error retried or advanced a POST: %v", events)
+				}
+			})
+		}
+	}
+}
+
+func TestRemediationPreparationRefusesInconsistentWorkItemAndRepository(t *testing.T) {
+	for _, mismatch := range []string{"work item", "repository"} {
+		for _, dispatched := range []bool{false, true} {
+			name := mismatch + "/queued"
+			if dispatched {
+				name = mismatch + "/dispatched"
+			}
+			t.Run(name, func(t *testing.T) {
+				executed := false
+				request := RecordingRequest{Remediation: &traust.RemediationRecordBody{
+					Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport},
+				}}
+				runner, server := newQueuedRecordingRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+					executed = true
+					return ProducedReport{}, nil
+				}), fixedRecordingTemplate(request))
+				server.queue.order.RepositoryId = &server.repositoryID
+				server.queue.repository = &traust.Repository{Id: &server.repositoryID, Url: "https://forge.test/example/repository"}
+				runner.config.ForgeHosts = []string{"forge.test"}
+				switch mismatch {
+				case "work item":
+					server.remediationInput.WorkItem.WorkItemId = uuid.New()
+				case "repository":
+					server.remediationInput.Subject.RepositoryId = uuid.New()
+				}
+				var order *traust.RunOrder
+				var err error
+				if dispatched {
+					run := RecordingRun{
+						Client: runner.config.Client, Request: request, Executor: runner.config.Executor,
+						Start:             traust.StartRecordingRequest{LeaseSeconds: 30, Order: traust.OrderRequest{Asset: "ledger_audit"}},
+						HeartbeatInterval: 5 * time.Millisecond, RequestTimeout: time.Second,
+					}
+					result, runErr := run.Run(context.Background())
+					err = runErr
+					if result != nil {
+						order = &result.Order
+					}
+				} else {
+					order, err = runner.RunOnce(context.Background())
+				}
+				var refusal *PreparationRefusedError
+				events, result := recordingEvents(server)
+				if !errors.As(err, &refusal) || refusal.Reason != traust.RunOrderReasonBadRequest ||
+					order == nil || order.State != traust.RunOrderStateRefused || executed ||
+					result.Outcome != traust.OutcomeRefused || slices.Contains(events, "record") ||
+					!slices.Contains(events, "complete") {
+					t.Fatalf("mismatched remediation input reached execution or remained leased: order=%+v err=%v events=%v result=%+v", order, err, events, result)
+				}
+			})
+		}
+	}
+}
+
+func TestSuccessfulMismatchedVerificationRefReceiptRefusesBeforeExecution(t *testing.T) {
+	for _, mismatch := range []string{"commit", "kind"} {
+		t.Run(mismatch, func(t *testing.T) {
+			executed := false
+			runner, server := newQueuedRecordingRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+				executed = true
+				return ProducedReport{}, nil
+			}), fixedRecordingTemplate(verificationRecordingTemplate()))
+			ref := server.preparedFixRef()
+			switch mismatch {
+			case "commit":
+				ref.Sha = strings.Repeat("d", 40)
+			case "kind":
+				ref.Kind = nil
+			}
+			server.registrationReply = &ref
+			order, err := runner.RunOnce(context.Background())
+			var refusal *PreparationRefusedError
+			events, result := recordingEvents(server)
+			if !errors.As(err, &refusal) || refusal.Reason != traust.RunOrderReasonBadRequest ||
+				order == nil || order.State != traust.RunOrderStateRefused || executed ||
+				result.Outcome != traust.OutcomeRefused || slices.Contains(events, "record") ||
+				!slices.Contains(events, "complete") {
+				t.Fatalf("successful mismatched ref receipt executed or remained leased: order=%+v err=%v events=%v result=%+v", order, err, events, result)
+			}
+			registrations := 0
+			for _, event := range events {
+				if event == "register-ref" {
+					registrations++
+				}
+			}
+			if registrations != 1 {
+				t.Fatalf("successful mismatched registration was retried: %v", events)
 			}
 		})
 	}

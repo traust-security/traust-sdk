@@ -525,7 +525,7 @@ func TestVocabularyRunnerRefusesARepositoryURLCoreWouldNotParse(t *testing.T) {
 	}
 }
 
-func TestVocabularyRunnerFailsAnOrderWhoseRepositoryCoreWillNotHandOver(t *testing.T) {
+func TestVocabularyRunnerClosesOnlyOrderSpecificRepositoryErrors(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		change func(*queuedServer)
@@ -545,11 +545,20 @@ func TestVocabularyRunnerFailsAnOrderWhoseRepositoryCoreWillNotHandOver(t *testi
 			tc.change(server)
 			order, err := runner.RunOnce(context.Background())
 			var problem *traust.ProblemError
-			if !errors.As(err, &problem) || order == nil || order.State != traust.RunOrderStateFailed {
+			if !errors.As(err, &problem) || order == nil {
 				t.Fatalf("order=%+v err=%v", order, err)
 			}
-			if _, result := server.snapshot(); result.Reason != nil || result.Outcome != traust.OutcomeFailed {
-				t.Fatalf("result=%+v", result)
+			wantClosed := problem.StatusCode == http.StatusNotFound || problem.StatusCode == http.StatusGone ||
+				problem.StatusCode == http.StatusUnprocessableEntity
+			events, result := server.snapshot()
+			if slices.Contains(events, "complete") != wantClosed || result.Reason != nil {
+				t.Fatalf("repository error closed incorrectly: events=%v result=%+v", events, result)
+			}
+			if wantClosed && (order.State != traust.RunOrderStateFailed || result.Outcome != traust.OutcomeFailed) {
+				t.Fatalf("order-specific repository error was not closed failed: order=%+v result=%+v", order, result)
+			}
+			if !wantClosed && order.State != traust.RunOrderStateLeased {
+				t.Fatalf("host repository error lost reconciliation identity: %+v", order)
 			}
 		})
 	}
@@ -885,8 +894,8 @@ func TestQueuedRunnerRefusesAnOrderNotPinnedToExactlyItsPack(t *testing.T) {
 	}
 }
 
-func TestQueuedRunnerClosesDefinitiveManifestErrorsWithoutInventingARefusal(t *testing.T) {
-	for _, status := range []int{http.StatusUnauthorized, http.StatusNotFound, http.StatusUnprocessableEntity, http.StatusTooManyRequests} {
+func TestQueuedRunnerClosesOnlyOrderSpecificManifestErrors(t *testing.T) {
+	for _, status := range []int{http.StatusUnauthorized, http.StatusForbidden, http.StatusNotFound, http.StatusUnprocessableEntity, http.StatusTooManyRequests} {
 		t.Run(http.StatusText(status), func(t *testing.T) {
 			runner, server := queuedRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
 				t.Error("executor ran after the manifest read failed")
@@ -896,10 +905,18 @@ func TestQueuedRunnerClosesDefinitiveManifestErrorsWithoutInventingARefusal(t *t
 			order, err := runner.RunOnce(context.Background())
 			var problem *traust.ProblemError
 			events, result := server.snapshot()
-			if !errors.As(err, &problem) || problem.StatusCode != status || order == nil ||
-				order.State != traust.RunOrderStateFailed || result.Outcome != traust.OutcomeFailed ||
-				result.Reason != nil || !slices.Contains(events, "complete") {
-				t.Fatalf("manifest HTTP error was lost, reclassified or left leased: order=%+v err=%v events=%v result=%+v", order, err, events, result)
+			if !errors.As(err, &problem) || problem.StatusCode != status || order == nil {
+				t.Fatalf("manifest HTTP error lost: order=%+v err=%v", order, err)
+			}
+			wantClosed := status == http.StatusNotFound || status == http.StatusUnprocessableEntity
+			if slices.Contains(events, "complete") != wantClosed || result.Reason != nil {
+				t.Fatalf("manifest error was reclassified or closed incorrectly: events=%v result=%+v", events, result)
+			}
+			if wantClosed && (order.State != traust.RunOrderStateFailed || result.Outcome != traust.OutcomeFailed) {
+				t.Fatalf("order-specific manifest error left leased: order=%+v result=%+v", order, result)
+			}
+			if !wantClosed && order.State != traust.RunOrderStateLeased {
+				t.Fatalf("host manifest error lost reconciliation identity: %+v", order)
 			}
 		})
 	}
