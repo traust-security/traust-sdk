@@ -139,6 +139,14 @@ failures, 5xx and malformed registration receipts leave the order for reconcilia
 execution or recording. A worker report naming a different commit is left unchanged for Core to
 reject, never used to register another ref.
 
+Remediation reports reconcile their source_finding refs through the prepared work item's
+findings: contracts document `source_findings[].finding_ref` as the source report's stable
+reference (`<report>#<finding-id>`), while Core's record door validates the bare finding id its
+prepare served — the spelling disagreement answered 422 on the dev cluster's first full record.
+The SDK's record seam rewrites the id after the last `#` only when it names one of the prepared
+work item's findings; every other byte of the report rides through untouched, and a ref that
+reconciles to nothing is posted exactly as the executor produced it for Core's door to refuse.
+
 Return `*ops.PreparationRefusedError` with a generated `traust.RunOrderReason` when the consumer
 has definitively found no usable input, such as no source assessment. The SDK completes that
 order refused without executing or recording. `RunOnce` returns that typed refusal, including

@@ -66,7 +66,9 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 		server.events = append(server.events, "prepare")
 		json.NewEncoder(w).Encode(traust.RemediationInput{
 			FixBranch: "server-fix-branch",
-			WorkItem:  traust.WorkItem{WorkItemId: *server.order.WorkItemId},
+			WorkItem: traust.WorkItem{WorkItemId: *server.order.WorkItemId, FindingIds: []uuid.UUID{
+				uuid.MustParse("1e4a4a1c-636b-4f73-9ca1-3b62e639f30b"),
+			}},
 		})
 	case request.URL.Path == "/v1/assessment-records" || request.URL.Path == "/v1/remediation-records":
 		server.events = append(server.events, "record")

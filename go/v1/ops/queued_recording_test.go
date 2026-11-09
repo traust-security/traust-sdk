@@ -265,7 +265,7 @@ func newQueuedRecordingRunner(t *testing.T, executor Executor, preparer Recordin
 	}
 	server.remediationInput = &traust.RemediationInput{
 		Subject: server.verificationInput.Subject, FixBranch: "core-fix-branch",
-		WorkItem: traust.WorkItem{WorkItemId: workItemID},
+		WorkItem: traust.WorkItem{WorkItemId: workItemID, FindingIds: []uuid.UUID{uuid.New()}},
 	}
 	httpServer := httptest.NewServer(server)
 	t.Cleanup(httpServer.Close)
@@ -1668,5 +1668,141 @@ func TestSuccessfulMismatchedVerificationRefReceiptRefusesBeforeExecution(t *tes
 				t.Fatalf("successful mismatched registration was retried: %v", events)
 			}
 		})
+	}
+}
+
+func TestReconcileFindingRefs(t *testing.T) {
+	preparedA := uuid.MustParse("1e4a4a1c-636b-4f73-9ca1-3b62e639f30b")
+	preparedB := uuid.MustParse("2f5b5b2d-747c-4084-adb2-4c73f740a41c")
+	foreign := uuid.MustParse("3a6c6c3e-858d-5195-bec3-5d84a851b52d")
+	qualified := func(report, id string) string {
+		return `{"source_findings":[{"finding_ref":"` + report + `#` + id + `"}],"summary":{"status":"patched"}}`
+	}
+	for _, tc := range []struct {
+		name     string
+		report   string
+		prepared []uuid.UUID
+		want     string
+	}{
+		{
+			name:     "the qualified spelling rewrites to the prepared bare id",
+			report:   qualified("service-security-audit.json", preparedA.String()),
+			prepared: []uuid.UUID{preparedA, preparedB},
+			want:     `{"source_findings":[{"finding_ref":"` + preparedA.String() + `"}],"summary":{"status":"patched"}}`,
+		},
+		{
+			name:     "a bare prepared id rides through untouched",
+			report:   `{"source_findings":[{"finding_ref":"` + preparedA.String() + `"}]}`,
+			prepared: []uuid.UUID{preparedA},
+			want:     `{"source_findings":[{"finding_ref":"` + preparedA.String() + `"}]}`,
+		},
+		{
+			name:     "a tail naming no prepared finding rides through for the door to refuse",
+			report:   qualified("service-security-audit.json", foreign.String()),
+			prepared: []uuid.UUID{preparedA},
+			want:     qualified("service-security-audit.json", foreign.String()),
+		},
+		{
+			name:     "an unparseable tail rides through for the door to refuse",
+			report:   qualified("service-security-audit.json", "FIND-005"),
+			prepared: []uuid.UUID{preparedA},
+			want:     qualified("service-security-audit.json", "FIND-005"),
+		},
+		{
+			name:     "a report without source_findings is untouched",
+			report:   `{"finding_ref":"worker-label","text":"é"}`,
+			prepared: []uuid.UUID{preparedA},
+			want:     `{"finding_ref":"worker-label","text":"é"}`,
+		},
+		{
+			name:     "a malformed report is untouched",
+			report:   "malformed report\r\n finding_ref: worker-chosen\n",
+			prepared: []uuid.UUID{preparedA},
+			want:     "malformed report\r\n finding_ref: worker-chosen\n",
+		},
+		{
+			name:     "an empty source_findings array is untouched",
+			report:   `{"source_findings":[],"summary":{}}`,
+			prepared: []uuid.UUID{preparedA},
+			want:     `{"source_findings":[],"summary":{}}`,
+		},
+		{
+			name:     "a non-string finding_ref is untouched",
+			report:   `{"source_findings":[{"finding_ref":17}]}`,
+			prepared: []uuid.UUID{preparedA},
+			want:     `{"source_findings":[{"finding_ref":17}]}`,
+		},
+		{
+			name:     "a source_finding without finding_ref is untouched",
+			report:   `{"source_findings":[{"finding_ref":"` + preparedA.String() + `"},{"title":"no ref"}]}`,
+			prepared: []uuid.UUID{preparedA},
+			want:     `{"source_findings":[{"finding_ref":"` + preparedA.String() + `"},{"title":"no ref"}]}`,
+		},
+		{
+			name:     "no prepared findings leaves the report untouched",
+			report:   qualified("service-security-audit.json", preparedA.String()),
+			prepared: nil,
+			want:     qualified("service-security-audit.json", preparedA.String()),
+		},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			if got := string(reconcileFindingRefs([]byte(tc.report), tc.prepared)); got != tc.want {
+				t.Fatalf("reconcileFindingRefs(%q) = %q, want %q", tc.report, got, tc.want)
+			}
+		})
+	}
+}
+
+func TestQueuedRemediationRecordingReconcilesQualifiedFindingRefs(t *testing.T) {
+	preparedA := uuid.MustParse("1e4a4a1c-636b-4f73-9ca1-3b62e639f30b")
+	preparedB := uuid.MustParse("2f5b5b2d-747c-4084-adb2-4c73f740a41c")
+	foreign := uuid.MustParse("3a6c6c3e-858d-5195-bec3-5d84a851b52d")
+	var server *queuedRecordingServer
+	runner, core := newQueuedRecordingRunner(t, executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
+		server.event("execute")
+		report := `{"metadata":{"repository":"https://github.com/octo/service"},"source_findings":[` +
+			`{"finding_ref":"service-security-audit.json#` + preparedA.String() + `","title":"runs as root","severity":"medium"},` +
+			`{"finding_ref":"` + preparedB.String() + `","title":"hardcoded token","severity":"high"},` +
+			`{"finding_ref":"other-report.json#` + foreign.String() + `","title":"foreign finding","severity":"low"}` +
+			`],"fork":{"url":"https://github.com/octo-mirrors/sci-patch-service","fix_branch":"fix/authoritative"},"summary":{"status":"patched"}}`
+		return ProducedReport{Payload: []byte(report), Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
+	}), fixedRecordingTemplate(RecordingRequest{Remediation: &traust.RemediationRecordBody{
+		Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport},
+	}}))
+	server = core
+	server.remediationInput.WorkItem.FindingIds = []uuid.UUID{preparedA, preparedB}
+	order, err := runner.RunOnce(context.Background())
+	if err != nil || order == nil || order.State != traust.RunOrderStateSucceeded {
+		t.Fatalf("order=%+v err=%v", order, err)
+	}
+	events, _ := recordingEvents(server)
+	if !slices.Contains(events, "prepare") || !slices.Contains(events, "record") || !slices.Contains(events, "complete") {
+		t.Fatalf("the remediation recording did not run its lifecycle: %v", events)
+	}
+	var doc struct {
+		SourceFindings []struct {
+			FindingRef string `json:"finding_ref"`
+		} `json:"source_findings"`
+		Fork struct {
+			URL string `json:"url"`
+		} `json:"fork"`
+	}
+	if err := json.Unmarshal([]byte(server.recorded.Payload), &doc); err != nil {
+		t.Fatalf("the recorded payload is not the reconciled report: %v %q", err, server.recorded.Payload)
+	}
+	if len(doc.SourceFindings) != 3 {
+		t.Fatalf("the recorded payload lost findings: %q", server.recorded.Payload)
+	}
+	if doc.SourceFindings[0].FindingRef != preparedA.String() {
+		t.Fatalf("the qualified prepared ref was not reconciled to the bare id: %q", doc.SourceFindings[0].FindingRef)
+	}
+	if doc.SourceFindings[1].FindingRef != preparedB.String() {
+		t.Fatalf("the bare prepared ref was rewritten: %q", doc.SourceFindings[1].FindingRef)
+	}
+	if doc.SourceFindings[2].FindingRef != "other-report.json#"+foreign.String() {
+		t.Fatalf("the foreign qualified ref was rewritten instead of left for the door: %q", doc.SourceFindings[2].FindingRef)
+	}
+	if doc.Fork.URL != "https://github.com/octo-mirrors/sci-patch-service" {
+		t.Fatalf("the report's other bytes did not ride through: %q", server.recorded.Payload)
 	}
 }

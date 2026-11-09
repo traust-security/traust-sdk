@@ -7,6 +7,7 @@ import (
 	"errors"
 	"fmt"
 	"net/http"
+	"slices"
 	"time"
 	"unicode/utf8"
 
@@ -43,7 +44,9 @@ type RecordingResult struct {
 }
 
 // RecordingRun starts one explicitly dispatched order, holds its lease while the executor runs,
-// records the executor's original bytes and completes the order. No POST is retried.
+// records the executor's report — the remediation template's source_finding refs reconciled to
+// the door's bare finding ids, every other byte original — and completes the order. No POST is
+// retried.
 type RecordingRun struct {
 	Client            *traust.Client
 	Start             traust.StartRecordingRequest
@@ -78,7 +81,7 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 	if err := l.stamp(&id, &provenance, &payload, ""); err != nil {
 		return run.fail(ctx, l, traust.JobResult{}, err)
 	}
-	prepared, err := run.prepare(ctx, l, execution)
+	prepared, preparedFindings, err := run.prepare(ctx, l, execution)
 	if err != nil {
 		return run.preparationFailed(ctx, l, err)
 	}
@@ -105,7 +108,7 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 		return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
 	}
 	receipt, err := superviseRequest(ctx, l, func(work context.Context) (RecordingReceipt, error) {
-		return run.record(work, l, produced.Payload)
+		return run.record(work, l, produced.Payload, preparedFindings)
 	})
 	if err != nil {
 		if lost(err) || ctx.Err() != nil {
@@ -169,17 +172,22 @@ func (run RecordingRun) start(ctx context.Context, timeout time.Duration) (*trau
 	return order, nil
 }
 
-func (run RecordingRun) prepare(ctx context.Context, l *lease, execution Execution) (Execution, error) {
+// prepare runs the run's domain preparation under the lease and returns the execution it
+// shaped plus, for the remediation template, the prepared work item's finding ids — the ids
+// core's record door validates source_finding refs against, kept for the record-time
+// reconciliation of the qualified spelling contracts documents.
+func (run RecordingRun) prepare(ctx context.Context, l *lease, execution Execution) (Execution, []uuid.UUID, error) {
 	execution.Input = run.Request.Input
 	if run.Request.Triage == nil && run.Request.Remediation == nil && run.Request.Verification == nil {
-		return execution, nil
+		return execution, nil, nil
 	}
 	if (run.Request.Remediation != nil || run.Request.Verification != nil) &&
 		(l.origin.WorkItemId == nil || *l.origin.WorkItemId == uuid.Nil) {
-		return execution, &PreparationRefusedError{Reason: traust.RunOrderReasonBadRequest,
+		return execution, nil, &PreparationRefusedError{Reason: traust.RunOrderReasonBadRequest,
 			Err: errors.New("ops: recording order needs a work_item_id")}
 	}
-	return superviseRequest(ctx, l, func(work context.Context) (Execution, error) {
+	var preparedFindings []uuid.UUID
+	shaped, err := superviseRequest(ctx, l, func(work context.Context) (Execution, error) {
 		switch {
 		case run.Request.Triage != nil:
 			input, err := run.Client.PrepareTriage(work, run.Request.AssessmentID)
@@ -197,6 +205,11 @@ func (run RecordingRun) prepare(ctx context.Context, l *lease, execution Executi
 				return execution, &PreparationRefusedError{Reason: traust.RunOrderReasonBadRequest,
 					Err: errors.New("ops: remediation input does not match the bound work item and repository")}
 			}
+			if len(input.WorkItem.FindingIds) == 0 {
+				return execution, &PreparationRefusedError{Reason: traust.RunOrderReasonBadRequest,
+					Err: errors.New("ops: prepared work item names no findings to record against")}
+			}
+			preparedFindings = slices.Clone(input.WorkItem.FindingIds)
 			execution.Input, err = json.Marshal(input)
 			if err != nil {
 				return execution, fmt.Errorf("ops: encode remediation input: %w", err)
@@ -216,6 +229,7 @@ func (run RecordingRun) prepare(ctx context.Context, l *lease, execution Executi
 		}
 		return execution, nil
 	})
+	return shaped, preparedFindings, err
 }
 
 func (run RecordingRun) verificationRef(ctx context.Context, l *lease, input *traust.VerificationInput) error {
