@@ -280,7 +280,9 @@ func (run RecordingRun) preparationFailed(ctx context.Context, l *lease, cause e
 	var refusal *PreparationRefusedError
 	if !errors.As(cause, &refusal) {
 		if definitive(causeProblem(cause)) {
-			return run.fail(ctx, l, traust.JobResult{}, cause)
+			// A definitive preparation read (404 from prepare's own reads) completes
+			// failed carrying the read's diagnosis, so the row stays attributable.
+			return run.fail(ctx, l, traust.JobResult{Reason: reason(readFailedReason(cause))}, cause)
 		}
 		return &RecordingResult{Order: *l.snapshot()}, cause
 	}

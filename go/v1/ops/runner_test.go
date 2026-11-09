@@ -1,6 +1,7 @@
 package ops
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -528,14 +529,15 @@ func TestVocabularyRunnerRefusesARepositoryURLCoreWouldNotParse(t *testing.T) {
 func TestVocabularyRunnerClosesOnlyOrderSpecificRepositoryErrors(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
+		status int
 		change func(*queuedServer)
 	}{
-		{"missing", func(server *queuedServer) { server.repository = nil }},
-		{"gone", func(server *queuedServer) { server.repositoryStatus = http.StatusGone }},
-		{"unauthorized", func(server *queuedServer) { server.repositoryStatus = http.StatusUnauthorized }},
-		{"forbidden", func(server *queuedServer) { server.repositoryStatus = http.StatusForbidden }},
-		{"invalid request", func(server *queuedServer) { server.repositoryStatus = http.StatusUnprocessableEntity }},
-		{"rate limited", func(server *queuedServer) { server.repositoryStatus = http.StatusTooManyRequests }},
+		{"missing", http.StatusNotFound, func(server *queuedServer) { server.repository = nil }},
+		{"gone", http.StatusGone, func(server *queuedServer) { server.repositoryStatus = http.StatusGone }},
+		{"unauthorized", http.StatusUnauthorized, func(server *queuedServer) { server.repositoryStatus = http.StatusUnauthorized }},
+		{"forbidden", http.StatusForbidden, func(server *queuedServer) { server.repositoryStatus = http.StatusForbidden }},
+		{"invalid request", http.StatusUnprocessableEntity, func(server *queuedServer) { server.repositoryStatus = http.StatusUnprocessableEntity }},
+		{"rate limited", http.StatusTooManyRequests, func(server *queuedServer) { server.repositoryStatus = http.StatusTooManyRequests }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			runner, server := vocabularyRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
@@ -551,11 +553,24 @@ func TestVocabularyRunnerClosesOnlyOrderSpecificRepositoryErrors(t *testing.T) {
 			wantClosed := problem.StatusCode == http.StatusNotFound || problem.StatusCode == http.StatusGone ||
 				problem.StatusCode == http.StatusUnprocessableEntity
 			events, result := server.snapshot()
-			if slices.Contains(events, "complete") != wantClosed || result.Reason != nil {
+			if slices.Contains(events, "complete") != wantClosed {
 				t.Fatalf("repository error closed incorrectly: events=%v result=%+v", events, result)
 			}
 			if wantClosed && (order.State != traust.RunOrderStateFailed || result.Outcome != traust.OutcomeFailed) {
 				t.Fatalf("order-specific repository error was not closed failed: order=%+v result=%+v", order, result)
+			}
+			if wantClosed {
+				// A definitively failed read keeps its diagnosis on the completed row: the
+				// 404 names not_found, every other definitive refusal stays runner-crashed
+				// (the read failed without core naming a reason). Either way the row is
+				// attributable — never a bare failed.
+				wantReason := traust.RunOrderReasonRunnerCrashed
+				if tc.status == http.StatusNotFound {
+					wantReason = traust.RunOrderReasonNotFound
+				}
+				if result.Reason == nil || *result.Reason != wantReason {
+					t.Fatalf("order-specific repository error lost its reason: result=%+v want=%s", result, wantReason)
+				}
 			}
 			if !wantClosed && order.State != traust.RunOrderStateLeased {
 				t.Fatalf("host repository error lost reconciliation identity: %+v", order)
@@ -577,6 +592,61 @@ func TestVocabularyRunnerStopsOnAFailedRepositoryRead(t *testing.T) {
 	events, _ := server.snapshot()
 	if slices.Contains(events, "complete") {
 		t.Fatalf("completed after a failed repository read: %v", events)
+	}
+}
+
+// TestRunnerLogsRefusedAtWarnAndFailedAtError pins the log-level split: a refused order is a
+// routine terminal state the runner closes on its own, while a failed one names a problem a
+// human must act on.
+func TestRunnerLogsRefusedAtWarnAndFailedAtError(t *testing.T) {
+	for _, tc := range []struct {
+		name       string
+		change     func(*queuedServer)
+		wantState  traust.RunOrderState
+		wantLevel  string
+		wantReason string
+	}{
+		{"refused pack mismatch", func(server *queuedServer) { server.wrongDigest = true },
+			traust.RunOrderStateRefused, "WARN", "bad_request"},
+		{"failed repository read", func(server *queuedServer) { server.repository = nil },
+			traust.RunOrderStateFailed, "ERROR", "not_found"},
+	} {
+		t.Run(tc.name, func(t *testing.T) {
+			runner, server := vocabularyRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+				t.Fatal("executor ran for an order that closes before execution")
+				return ProducedReport{}, nil
+			}))
+			tc.change(server)
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			var claimed bool
+			server.onClaim = func() {
+				// The first claim returns the order under test; let the runner finish
+				// and log it before the queue runs dry and the loop stops.
+				if claimed {
+					server.empty = true
+					cancel()
+				}
+				claimed = true
+			}
+			var logs bytes.Buffer
+			runner.config.Logger = slog.New(slog.NewJSONHandler(&logs, nil))
+			if err := runner.Run(ctx); !errors.Is(err, context.Canceled) {
+				t.Fatalf("runner stopped with %v", err)
+			}
+			var entry struct {
+				Level  string               `json:"level"`
+				State  traust.RunOrderState `json:"state"`
+				Reason string               `json:"reason"`
+			}
+			if err := json.Unmarshal(bytes.TrimSpace(logs.Bytes()), &entry); err != nil {
+				t.Fatalf("expected one completed-order diagnostic: %q: %v", logs.String(), err)
+			}
+			if entry.Level != tc.wantLevel || entry.State != tc.wantState || entry.Reason != tc.wantReason {
+				t.Fatalf("terminal diagnostic logged wrong: level=%s state=%s reason=%s, want %s/%s/%s: %s",
+					entry.Level, entry.State, entry.Reason, tc.wantLevel, tc.wantState, tc.wantReason, logs.String())
+			}
+		})
 	}
 }
 
@@ -909,8 +979,19 @@ func TestQueuedRunnerClosesOnlyOrderSpecificManifestErrors(t *testing.T) {
 				t.Fatalf("manifest HTTP error lost: order=%+v err=%v", order, err)
 			}
 			wantClosed := status == http.StatusNotFound || status == http.StatusUnprocessableEntity
-			if slices.Contains(events, "complete") != wantClosed || result.Reason != nil {
+			if slices.Contains(events, "complete") != wantClosed {
 				t.Fatalf("manifest error was reclassified or closed incorrectly: events=%v result=%+v", events, result)
+			}
+			if wantClosed {
+				// The closed row keeps the read's diagnosis: not_found for a 404
+				// manifest, runner-crashed for any other definitive refusal.
+				wantReason := traust.RunOrderReasonRunnerCrashed
+				if status == http.StatusNotFound {
+					wantReason = traust.RunOrderReasonNotFound
+				}
+				if result.Reason == nil || *result.Reason != wantReason {
+					t.Fatalf("order-specific manifest error lost its reason: result=%+v want=%s", result, wantReason)
+				}
 			}
 			if wantClosed && (order.State != traust.RunOrderStateFailed || result.Outcome != traust.OutcomeFailed) {
 				t.Fatalf("order-specific manifest error left leased: order=%+v result=%+v", order, result)

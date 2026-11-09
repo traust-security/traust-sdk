@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"log/slog"
 	"maps"
+	"net/http"
 	"net/url"
 	"reflect"
 	"regexp"
@@ -223,15 +224,32 @@ func (r *Runner) logCompleted(ctx context.Context, order *traust.RunOrder, err e
 			attrs = append(attrs, "preparation_cause_type", fmt.Sprintf("%T", refusal.Err))
 		}
 	}
-	r.config.Logger.ErrorContext(ctx, "ops: order completed with an error or refusal", attrs...)
+	// A refused order (bad request, pack mismatch) is a routine terminal state the runner
+	// closes on its own; a failed one needs a human. Warn for the routine, error for the rest.
+	if order.State == traust.RunOrderStateRefused {
+		r.config.Logger.WarnContext(ctx, "ops: order refused", attrs...)
+		return
+	}
+	r.config.Logger.ErrorContext(ctx, "ops: order completed with an error", attrs...)
 }
 
 func (r *Runner) readFailed(ctx context.Context, l *lease, cause error) (*traust.RunOrder, error) {
 	if lost(cause) || ctx.Err() != nil || !definitive(causeProblem(cause)) {
 		return l.snapshot(), cause
 	}
-	order, err := r.finish(ctx, l, traust.JobResult{Outcome: traust.OutcomeFailed})
+	order, err := r.finish(ctx, l, traust.JobResult{Outcome: traust.OutcomeFailed, Reason: reason(readFailedReason(cause))})
 	return order, errors.Join(cause, err)
+}
+
+// readFailedReason keeps a definitively failed read attributable in the order row: a 404
+// names the read's own diagnosis (not_found, a resource core no longer serves), and anything
+// else stays runner-crashed — the read failed without core naming a reason.
+func readFailedReason(cause error) traust.RunOrderReason {
+	problem := causeProblem(cause)
+	if problem != nil && problem.StatusCode == http.StatusNotFound {
+		return traust.RunOrderReasonNotFound
+	}
+	return traust.RunOrderReasonRunnerCrashed
 }
 
 func (r *Runner) claim(ctx context.Context) (*traust.RunOrder, error) {

@@ -309,6 +309,20 @@ func recordingEvents(server *queuedRecordingServer) ([]string, traust.JobResult)
 	return slices.DeleteFunc(events, func(event string) bool { return event == "heartbeat" }), result
 }
 
+// failureDiagnosis reports whether a completed-failed result carries a domain refusal reason
+// (bad_request and friends) an infrastructure failure was never entitled to. The failure
+// diagnoses — runner-crashed, and not_found for a read core answered 404 — are legitimate.
+func failureDiagnosis(result traust.JobResult) bool {
+	if result.Reason == nil {
+		return false
+	}
+	switch *result.Reason {
+	case traust.RunOrderReasonRunnerCrashed, traust.RunOrderReasonNotFound:
+		return false
+	}
+	return true
+}
+
 func TestQueuedRecordingPreparesExecutesRecordsAndCompletesOriginalReport(t *testing.T) {
 	for _, kind := range []string{"assessment", "triage", "remediation", "verification", "validation"} {
 		t.Run(kind, func(t *testing.T) {
@@ -594,8 +608,11 @@ func TestQueuedPreparationProblemsNeverMasqueradeAsDomainRefusals(t *testing.T) 
 				executed || slices.Contains(events, "record") || slices.Contains(events, "complete") != wantClosed {
 				t.Fatalf("order=%+v err=%v executed=%v events=%v", order, err, executed, events)
 			}
-			if wantClosed && (completed.Outcome != traust.OutcomeFailed || completed.Reason != nil || order.State != traust.RunOrderStateFailed) {
+			if wantClosed && (completed.Outcome != traust.OutcomeFailed || order.State != traust.RunOrderStateFailed) {
 				t.Fatalf("HTTP preparation error became a domain refusal: order=%+v result=%+v", order, completed)
+			}
+			if wantClosed && failureDiagnosis(completed) {
+				t.Fatalf("HTTP preparation error closed with a domain refusal reason: %+v", completed)
 			}
 		})
 	}
@@ -1069,8 +1086,10 @@ func TestQueuedVerificationRefFailuresNeverExecuteRecordOrRetryRegistration(t *t
 					completed.Outcome != traust.OutcomeRefused || completed.Reason == nil || *completed.Reason != traust.RunOrderReasonBadRequest {
 					t.Fatalf("successful mismatched ref receipt was left ambiguous: order=%+v err=%v result=%+v", order, err, completed)
 				}
-			} else if wantClosed && (order.State != traust.RunOrderStateFailed || completed.Outcome != traust.OutcomeFailed || completed.Reason != nil) {
+			} else if wantClosed && (order.State != traust.RunOrderStateFailed || completed.Outcome != traust.OutcomeFailed) {
 				t.Fatalf("definitive ref error became a domain refusal or remained leased: order=%+v result=%+v", order, completed)
+			} else if wantClosed && failureDiagnosis(completed) {
+				t.Fatalf("definitive ref error closed with a domain refusal reason: %+v", completed)
 			}
 			posts := 0
 			for _, event := range events {
@@ -1275,8 +1294,11 @@ func TestDispatchedPreparationFailuresCloseOnlyDefinitiveErrors(t *testing.T) {
 					t.Fatalf("typed preparation error lost: %v", err)
 				}
 			}
-			if wantClosed && (result.Order.State != traust.RunOrderStateFailed || completed.Outcome != traust.OutcomeFailed || completed.Reason != nil) {
-				t.Fatalf("generic HTTP error did not close failed without a domain reason: %+v", result)
+			if wantClosed && (result.Order.State != traust.RunOrderStateFailed || completed.Outcome != traust.OutcomeFailed) {
+				t.Fatalf("generic HTTP error did not close failed: %+v", result)
+			}
+			if wantClosed && failureDiagnosis(completed) {
+				t.Fatalf("generic HTTP error closed with a domain refusal reason: %+v", completed)
 			}
 			if !wantClosed && result.Order.State != traust.RunOrderStateLeased {
 				t.Fatalf("ambiguous preparation did not retain reconciliation identity: %+v", result)
@@ -1470,8 +1492,11 @@ func TestConsumerPreparationHTTPFailuresCloseOnlyDefinitiveErrors(t *testing.T) 
 				slices.Contains(events, "record") || slices.Contains(events, "complete") != (status == http.StatusUnprocessableEntity) {
 				t.Fatalf("consumer HTTP error was lost or reclassified: order=%+v err=%v events=%v", order, err, events)
 			}
-			if status == http.StatusUnprocessableEntity && (order.State != traust.RunOrderStateFailed || result.Outcome != traust.OutcomeFailed || result.Reason != nil) {
+			if status == http.StatusUnprocessableEntity && (order.State != traust.RunOrderStateFailed || result.Outcome != traust.OutcomeFailed) {
 				t.Fatalf("definitive consumer HTTP error did not close failed: order=%+v result=%+v", order, result)
+			}
+			if status == http.StatusUnprocessableEntity && failureDiagnosis(result) {
+				t.Fatalf("definitive consumer HTTP error closed with a domain refusal reason: %+v", result)
 			}
 			if status != http.StatusUnprocessableEntity && order.State != traust.RunOrderStateLeased {
 				t.Fatalf("ambiguous consumer read did not preserve held identity: %+v", order)
