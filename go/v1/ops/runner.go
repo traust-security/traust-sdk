@@ -6,7 +6,9 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"maps"
 	"net/url"
+	"reflect"
 	"regexp"
 	"slices"
 	"strings"
@@ -22,6 +24,8 @@ type RunnerConfig struct {
 	Pack     *Pack
 	Executor Executor
 	Assets   []string
+	// Recordings declares assets whose reports must be recorded before completion.
+	Recordings map[string]RecordingPreparer
 	// ForgeHosts are the repository hosts a repository-bound order may name: the keys of
 	// core's forge_hosts, copied deliberately. This is a defense-in-depth allowlist, not a
 	// mirror of core's config: the runner checks every repository-bound order against its
@@ -74,6 +78,21 @@ func NewRunner(cfg RunnerConfig) (*Runner, error) {
 			return nil, fmt.Errorf("ops: asset %q runs per repository: RunnerConfig.ForgeHosts is required", name)
 		}
 	}
+	for asset, preparer := range cfg.Recordings {
+		value := reflect.ValueOf(preparer)
+		if value.IsValid() {
+			switch value.Kind() {
+			case reflect.Chan, reflect.Func, reflect.Interface, reflect.Map, reflect.Ptr, reflect.Slice:
+				if value.IsNil() {
+					return nil, fmt.Errorf("ops: recording asset %q needs a non-nil preparer", asset)
+				}
+			}
+		}
+		if preparer == nil || !slices.Contains(cfg.Assets, asset) {
+			return nil, fmt.Errorf("ops: recording asset %q needs a preparer and must be in Assets", asset)
+		}
+	}
+	cfg.Recordings = maps.Clone(cfg.Recordings)
 	cfg.Assets = slices.Clone(cfg.Assets)
 	cfg.ForgeHosts = slices.Clone(cfg.ForgeHosts)
 	return &Runner{config: cfg}, nil
@@ -135,6 +154,18 @@ func (r *Runner) RunOnce(ctx context.Context) (*traust.RunOrder, error) {
 	if err := l.renew(ctx); err != nil {
 		return l.snapshot(), err
 	}
+	if preparer, recording := r.config.Recordings[order.Asset]; recording {
+		request, err := superviseRequest(ctx, l, func(work context.Context) (RecordingRequest, error) {
+			return preparer.PrepareRecording(work, l.order())
+		})
+		run := RecordingRun{Client: r.config.Client, Request: request, Executor: r.config.Executor}
+		if err != nil {
+			result, prepareErr := run.preparationFailed(ctx, l, err)
+			return queuedRecordingResult(result, prepareErr)
+		}
+		result, recordingErr := run.runHeld(ctx, l, Execution{Argv: argv})
+		return queuedRecordingResult(result, recordingErr)
+	}
 	produced, err := l.run(ctx, r.config.Executor, Execution{Argv: argv})
 	if lost(err) || ctx.Err() != nil {
 		return l.snapshot(), err
@@ -147,6 +178,17 @@ func (r *Runner) RunOnce(ctx context.Context) (*traust.RunOrder, error) {
 		return finished, errors.Join(err, finishErr)
 	}
 	return r.finish(ctx, l, produced.Result)
+}
+
+func queuedRecordingResult(result *RecordingResult, err error) (*traust.RunOrder, error) {
+	if result == nil {
+		return nil, err
+	}
+	var refusal *PreparationRefusedError
+	if errors.As(err, &refusal) && result.Order.State == traust.RunOrderStateRefused && result.Result.Outcome == traust.OutcomeRefused {
+		return &result.Order, nil
+	}
+	return &result.Order, err
 }
 
 func (r *Runner) claim(ctx context.Context) (*traust.RunOrder, error) {

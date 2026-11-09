@@ -11,11 +11,7 @@ import (
 // record posts the executor's bytes through the run's one template.
 func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte) (RecordingReceipt, error) {
 	var receipt RecordingReceipt
-	ctx, cancel, err := l.call(ctx)
-	if err != nil {
-		return receipt, err
-	}
-	defer cancel()
+	var err error
 	// raw passed utf8.Valid, so the string carries the exact original bytes.
 	payload := string(raw)
 	request := run.Request
@@ -76,18 +72,18 @@ func (l *lease) stamp(runOrderID *uuid.UUID, provenance *traust.Provenance, payl
 	return nil
 }
 
-func (request RecordingRequest) template() (string, traust.Provenance) {
+func (request RecordingRequest) template() (uuid.UUID, string, traust.Provenance) {
 	switch {
 	case request.Assessment != nil:
-		return request.Assessment.Payload, request.Assessment.Provenance
+		return request.Assessment.RunOrderId, request.Assessment.Payload, request.Assessment.Provenance
 	case request.Triage != nil:
-		return request.Triage.Payload, request.Triage.Provenance
+		return request.Triage.RunOrderId, request.Triage.Payload, request.Triage.Provenance
 	case request.Validation != nil:
-		return request.Validation.Payload, request.Validation.Provenance
+		return request.Validation.RunOrderId, request.Validation.Payload, request.Validation.Provenance
 	case request.Verification != nil:
-		return request.Verification.Payload, request.Verification.Provenance
+		return request.Verification.RunOrderId, request.Verification.Payload, request.Verification.Provenance
 	case request.Remediation != nil:
-		return request.Remediation.Payload, request.Remediation.Provenance
+		return request.Remediation.RunOrderId, request.Remediation.Payload, request.Remediation.Provenance
 	}
-	return "", traust.Provenance{}
+	return uuid.Nil, "", traust.Provenance{}
 }

@@ -23,6 +23,27 @@ type Executor interface {
 	Execute(context.Context, Execution) (ProducedReport, error)
 }
 
+// RecordingPreparer selects a recording template and its explicit bindings for a queued order.
+// The SDK calls it under the held lease and prepares any domain input before execution.
+type RecordingPreparer interface {
+	PrepareRecording(context.Context, traust.RunOrder) (RecordingRequest, error)
+}
+
+// PreparationRefusedError means a preparer definitively cannot run this order.
+type PreparationRefusedError struct {
+	Reason traust.RunOrderReason
+	Err    error
+}
+
+func (e *PreparationRefusedError) Error() string {
+	if e.Err != nil {
+		return fmt.Sprintf("ops: recording preparation refused (%s): %v", e.Reason, e.Err)
+	}
+	return fmt.Sprintf("ops: recording preparation refused (%s)", e.Reason)
+}
+
+func (e *PreparationRefusedError) Unwrap() error { return e.Err }
+
 // Execution is what an Executor runs: server context, never credentials.
 type Execution struct {
 	Order       traust.RunOrder     `json:"order"`
@@ -31,8 +52,8 @@ type Execution struct {
 	Argv        []string            `json:"argv,omitempty"`
 }
 
-// ProducedReport is the executor's outcome and its original output, byte for byte. RecordingRun
-// sends Payload to its record door; Runner sends only Result.
+// ProducedReport is the executor's outcome and its original output, byte for byte.
+// Recording runs send Payload to their record door without rewriting it.
 type ProducedReport struct {
 	Payload []byte
 	Result  traust.JobResult

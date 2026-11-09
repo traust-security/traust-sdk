@@ -99,9 +99,59 @@ err = runner.Run(ctx)
 - **Asking for a run** (a person's token) pins the order to the pack:
   `client.Submit(ctx, traust.SubmitRequest{Order: …, Config: &[]traust.ConfigDigest{pack.Pin()}})`.
 - **`ops.RecordingRun`** runs one explicitly dispatched order and records the executor's report
-  through core's record door (triage, validation, verification, assessments). Give it one request
-  template with an empty payload; it binds the server's order id and start time as provenance,
-  and never retries a record POST: an ambiguous failure keeps the order for reconciliation.
+  through core's record door (triage, remediation, validation, verification, assessments). Give it
+  one request template with an empty payload; it binds the server's order id and start time as
+  provenance and shares the queued runner's preparation, recording and completion lifecycle.
+
+### Record queued reports
+
+Declare recording assets in `RunnerConfig.Recordings`, a
+`map[string]ops.RecordingPreparer`. Assets absent from the map retain plain command execution.
+The SDK calls `PrepareRecording(context.Context, traust.RunOrder) (ops.RecordingRequest, error)`
+under the claimed lease, with the server's order and a bounded request context:
+
+```go
+runner, err := ops.NewRunner(ops.RunnerConfig{
+    Client: client, Pack: pack, Executor: executor,
+    Assets: pack.Assets(), LeaseSeconds: 300, PollInterval: 10 * time.Second,
+    Recordings: map[string]ops.RecordingPreparer{recordedAsset: preparer},
+})
+```
+
+Your preparer chooses exactly one generated request template, its provenance source and explicit
+bindings. Leave its payload empty. For triage, choose `RecordingRequest.AssessmentID`; the SDK
+calls `PrepareTriage` for that assessment and passes the result as `Execution.TriageInput`.
+For remediation or verification, the SDK calls `PrepareRemediation` or `PrepareVerification`
+using only the order's `WorkItemId`, then passes the generated input as JSON in `Execution.Input`.
+A missing work-item binding refuses the order before execution. For other templates,
+`RecordingRequest.Input` passes through as `Execution.Input`. Every executor still receives the
+pinned argv and server order.
+
+Verification also needs `VerificationInput.WorkItem.FixCommit`, `FixBranch` and
+`Subject.RepositoryId`. Before execution the SDK reuses an exact registered branch ref or calls
+`RegisterRef` once with only that Core-prepared immutable commit and branch (`traust.Branch`).
+The subject/work-item repository-ref IDs describe the baseline, not a substitute fix ref.
+Missing authoritative fix context refuses the order; lookup or registration errors stop without
+executing, recording or completing. A worker report naming a different commit is left unchanged
+for Core to reject, never used to register another ref.
+
+Return `*ops.PreparationRefusedError` with a generated `traust.RunOrderReason` when the consumer
+has definitively found no usable input, such as no source assessment. The SDK completes that
+order refused without executing or recording. Other preparation errors, including typed
+authentication, rate-limit or server problems, stop without completing; they are not classified
+from problem text. Nil preparers and declarations outside `Assets` fail construction; an empty,
+multiple or invalid template never reaches the executor.
+
+The SDK renews during template selection, domain preparation, execution and recording. A
+cancelled or lost lease cancels and waits for the active operation, then makes no further writes.
+Executors return their original UTF-8 report bytes as `ProducedReport.Payload` and their measured
+`JobResult`; the SDK never rewrites references, registers a report-selected ref or invents usage.
+It sends eligible report payloads unchanged through the selected generated record request,
+then completes with the executor's result. Refused work and failures with no payload complete
+without recording; a completed preparation refusal does not stop the queued runner.
+No record POST is retried. A definitive record 4xx can complete failed while held; a transport
+failure, 5xx or malformed success receipt leaves the order identity available for reconciliation
+and does not complete.
 
 ## Test your code
 

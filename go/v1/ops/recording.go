@@ -67,31 +67,48 @@ func (run RecordingRun) Run(ctx context.Context) (*RecordingResult, error) {
 	if err != nil {
 		return nil, err
 	}
-	execution := Execution{Input: run.Request.Input}
-	if run.Request.Triage != nil {
-		input, err := run.prepareTriage(ctx, l)
-		if err != nil {
-			return run.fail(ctx, l, traust.JobResult{}, err)
-		}
-		execution = Execution{TriageInput: input}
+	return run.runHeld(ctx, l, Execution{})
+}
+
+func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Execution) (*RecordingResult, error) {
+	if err := run.Request.validate(); err != nil {
+		return run.fail(ctx, l, traust.JobResult{}, err)
 	}
-	produced, err := l.run(ctx, run.Executor, execution)
+	id, payload, provenance := run.Request.template()
+	if err := l.stamp(&id, &provenance, &payload, ""); err != nil {
+		return run.fail(ctx, l, traust.JobResult{}, err)
+	}
+	prepared, err := run.prepare(ctx, l, execution)
+	if err != nil {
+		return run.preparationFailed(ctx, l, err)
+	}
+	produced, err := l.run(ctx, run.Executor, prepared)
 	switch {
 	case lost(err) || ctx.Err() != nil:
 		return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
 	case err != nil:
 		return run.fail(ctx, l, produced.Result, err)
-	case !utf8.Valid(produced.Payload):
-		return run.fail(ctx, l, produced.Result, errors.New("ops: executor report is not valid UTF-8"))
 	}
 	if err := checkOutcome(produced.Result); err != nil {
 		return run.fail(ctx, l, produced.Result, err)
 	}
+	if produced.Result.Outcome == traust.OutcomeRefused || (produced.Result.Outcome == traust.OutcomeFailed && len(produced.Payload) == 0) {
+		completed, err := l.complete(ctx, produced.Result)
+		return &RecordingResult{Order: l.latest(completed), Result: produced.Result}, err
+	}
+	if !utf8.Valid(produced.Payload) {
+		return run.fail(ctx, l, produced.Result, errors.New("ops: executor report is not valid UTF-8"))
+	}
 	if err := l.renew(ctx); err != nil {
 		return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
 	}
-	receipt, err := run.record(ctx, l, produced.Payload)
+	receipt, err := superviseRequest(ctx, l, func(work context.Context) (RecordingReceipt, error) {
+		return run.record(work, l, produced.Payload)
+	})
 	if err != nil {
+		if lost(err) || ctx.Err() != nil {
+			return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
+		}
 		var refusal *traust.ProblemError
 		if errors.As(err, &refusal) && refusal.StatusCode >= 400 && refusal.StatusCode < 500 {
 			// The gate answered definitively: a terminally rejected artifact (never
@@ -101,7 +118,7 @@ func (run RecordingRun) Run(ctx context.Context) (*RecordingResult, error) {
 			// refusal (401/403/429) says nothing about the output, so no classifier is
 			// invented for it.
 			if produced.Result.Reason == nil && payloadRejected(refusal.StatusCode) {
-				produced.Result.Reason = ptr(sessionOutputInvalid)
+				produced.Result.Reason = ptr(traust.RunOrderReasonSessionOutputInvalid)
 			}
 			return run.fail(ctx, l, produced.Result, err)
 		}
@@ -121,10 +138,14 @@ func (run RecordingRun) validate() error {
 	if run.Start.LeaseSeconds <= 0 || run.RequestTimeout < 0 || run.HeartbeatInterval < 0 || run.HeartbeatInterval >= lease {
 		return errors.New("ops: recording run needs a positive lease and a heartbeat shorter than it")
 	}
+	return run.Request.validate()
+}
+
+func (request RecordingRequest) validate() error {
 	templates := 0
 	for _, set := range []bool{
-		run.Request.Assessment != nil, run.Request.Triage != nil, run.Request.Validation != nil,
-		run.Request.Verification != nil, run.Request.Remediation != nil,
+		request.Assessment != nil, request.Triage != nil, request.Validation != nil,
+		request.Verification != nil, request.Remediation != nil,
 	} {
 		if set {
 			templates++
@@ -133,10 +154,10 @@ func (run RecordingRun) validate() error {
 	if templates != 1 {
 		return errors.New("ops: recording run needs exactly one request template")
 	}
-	if run.Request.Triage != nil && run.Request.AssessmentID == uuid.Nil {
+	if request.Triage != nil && request.AssessmentID == uuid.Nil {
 		return errors.New("ops: triage recording needs the source assessment id")
 	}
-	if payload, provenance := run.Request.template(); payload != "" || provenance.Source == "" {
+	if _, payload, provenance := request.template(); payload != "" || provenance.Source == "" {
 		return errors.New("ops: request template needs an empty payload and an explicit provenance source")
 	}
 	return nil
@@ -152,17 +173,110 @@ func (run RecordingRun) start(ctx context.Context, timeout time.Duration) (*trau
 	return order, nil
 }
 
-func (run RecordingRun) prepareTriage(ctx context.Context, l *lease) (*traust.TriageInput, error) {
-	ctx, cancel, err := l.call(ctx)
-	if err != nil {
-		return nil, err
+func (run RecordingRun) prepare(ctx context.Context, l *lease, execution Execution) (Execution, error) {
+	execution.Input = run.Request.Input
+	if run.Request.Triage == nil && run.Request.Remediation == nil && run.Request.Verification == nil {
+		return execution, nil
 	}
-	defer cancel()
-	input, err := run.Client.PrepareTriage(ctx, run.Request.AssessmentID)
-	if err != nil {
-		return nil, fmt.Errorf("ops: prepare triage: %w", err)
+	if (run.Request.Remediation != nil || run.Request.Verification != nil) &&
+		(l.origin.WorkItemId == nil || *l.origin.WorkItemId == uuid.Nil) {
+		return execution, &PreparationRefusedError{Reason: traust.RunOrderReasonBadRequest,
+			Err: errors.New("ops: recording order needs a work_item_id")}
 	}
-	return input, nil
+	return superviseRequest(ctx, l, func(work context.Context) (Execution, error) {
+		switch {
+		case run.Request.Triage != nil:
+			input, err := run.Client.PrepareTriage(work, run.Request.AssessmentID)
+			if err != nil {
+				return execution, fmt.Errorf("ops: prepare triage: %w", err)
+			}
+			execution.Input, execution.TriageInput = nil, input
+		case run.Request.Remediation != nil:
+			input, err := run.Client.PrepareRemediation(work, *l.origin.WorkItemId)
+			if err != nil {
+				return execution, fmt.Errorf("ops: prepare remediation: %w", err)
+			}
+			execution.Input, err = json.Marshal(input)
+			if err != nil {
+				return execution, fmt.Errorf("ops: encode remediation input: %w", err)
+			}
+		case run.Request.Verification != nil:
+			input, err := run.Client.PrepareVerification(work, *l.origin.WorkItemId)
+			if err != nil {
+				return execution, fmt.Errorf("ops: prepare verification: %w", err)
+			}
+			if err := run.verificationRef(work, l, input); err != nil {
+				return execution, err
+			}
+			execution.Input, err = json.Marshal(input)
+			if err != nil {
+				return execution, fmt.Errorf("ops: encode verification input: %w", err)
+			}
+		}
+		return execution, nil
+	})
+}
+
+func (run RecordingRun) verificationRef(ctx context.Context, l *lease, input *traust.VerificationInput) error {
+	if input == nil || input.Subject.RepositoryId == uuid.Nil || input.WorkItem.WorkItemId != *l.origin.WorkItemId ||
+		(l.origin.RepositoryId != nil && input.Subject.RepositoryId != *l.origin.RepositoryId) ||
+		input.WorkItem.FixCommit == nil || *input.WorkItem.FixCommit == "" ||
+		input.WorkItem.FixBranch == nil || *input.WorkItem.FixBranch == "" {
+		return &PreparationRefusedError{Reason: traust.RunOrderReasonBadRequest,
+			Err: errors.New("ops: verification input needs the bound work item's repository, fix commit and branch")}
+	}
+	workItem := &input.WorkItem
+	repository, commit, branch := input.Subject.RepositoryId, *workItem.FixCommit, *workItem.FixBranch
+	matches := func(ref *traust.RepositoryRef) bool {
+		return ref != nil && ref.Id != nil && *ref.Id != uuid.Nil &&
+			ref.RepositoryId == repository && ref.Sha == commit &&
+			ref.Name != nil && *ref.Name == branch && ref.Kind != nil && *ref.Kind == string(traust.Branch)
+	}
+	refs, err := run.Client.ListRefs(ctx, repository, &traust.ListRefsParams{Sha: workItem.FixCommit})
+	if err != nil {
+		return fmt.Errorf("ops: look up verification fix ref: %w", err)
+	}
+	for i := range refs {
+		if matches(&refs[i]) {
+			return nil
+		}
+	}
+	kind := traust.Branch
+	registered, err := run.Client.RegisterRef(ctx, repository, traust.RegisterRefJSONRequestBody{
+		Sha: commit, Name: workItem.FixBranch, Kind: &kind,
+	})
+	if err != nil {
+		return fmt.Errorf("ops: register verification fix ref: %w", err)
+	}
+	if !matches(registered) {
+		return errors.New("ops: registered verification ref does not match the prepared fix context")
+	}
+	return nil
+}
+
+func (run RecordingRun) preparationFailed(ctx context.Context, l *lease, cause error) (*RecordingResult, error) {
+	if lost(cause) || ctx.Err() != nil {
+		return &RecordingResult{Order: *l.snapshot()}, cause
+	}
+	var refusal *PreparationRefusedError
+	if !errors.As(cause, &refusal) {
+		return &RecordingResult{Order: *l.snapshot()}, cause
+	}
+	switch refusal.Reason {
+	case traust.RunOrderReasonAssetNotInPack, traust.RunOrderReasonBadRequest,
+		traust.RunOrderReasonBudgetExhausted, traust.RunOrderReasonBudgetOver,
+		traust.RunOrderReasonDiffTooLarge, traust.RunOrderReasonLedgerUnconfigured,
+		traust.RunOrderReasonNotFound, traust.RunOrderReasonRunnerCrashed,
+		traust.RunOrderReasonSessionOutputInvalid, traust.RunOrderReasonSnapshotUnavailable,
+		traust.RunOrderReasonSourceUnavailable, traust.RunOrderReasonUpstreamStale,
+		traust.RunOrderReasonWriteRejected:
+	default:
+		return &RecordingResult{Order: *l.snapshot()}, errors.Join(cause,
+			fmt.Errorf("ops: preparation refusal has unknown reason %q", refusal.Reason))
+	}
+	result := refused(refusal.Reason)
+	completed, err := l.complete(ctx, result)
+	return &RecordingResult{Order: l.latest(completed), Result: result}, errors.Join(cause, err)
 }
 
 // fail completes the order failed while it is still held, keeping the executor's result.
@@ -173,15 +287,6 @@ func (run RecordingRun) fail(ctx context.Context, l *lease, result traust.JobRes
 }
 
 func ptr[T any](value T) *T { return &value }
-
-// sessionOutputInvalid is contracts' run-order-reason "session-output-invalid": the session's
-// output failed the record gate's schema validation or lint. Core's reason vocabulary loads at
-// runtime from contracts, so core takes the write today; this generated client predates the
-// constant (client.gen.go carries 11 of the 12 contract values). contracts#109 merged the
-// write-rejected definition (the gate-refusal spelling, distinct from this runner-caught
-// validation spelling), but the switch needs core's own contracts pin to roll past 38f01a1
-// first — then CORE_REF, the regenerated client, and the stamp change together.
-const sessionOutputInvalid = traust.RunOrderReason("session-output-invalid")
 
 // payloadRejected reports whether a record-gate status means the payload itself is
 // unacceptable — core maps every payload refusal to 422 (both ValidationError and FastAPI's

@@ -2,6 +2,19 @@
 
 All notable changes to the Go SDK are documented here.
 
+## [0.30.0]
+
+### Added
+
+- `RunnerConfig.Recordings` declares per-asset `RecordingPreparer` extensions: queued orders now prepare domain input, execute, record the executor's original report bytes and complete under the same lease; explicit `PreparationRefusedError` values refuse unavailable input without executing.
+- Generated Core reads resolve the latest recorded assessment and an exact repository fingerprint without downloading assessment or finding histories.
+
+### Fixed
+
+- Queued and dispatched recording runs share preparation and record semantics, renewing during slow preparation and record calls; remediation and verification use the server order's work-item binding, and ambiguous record writes are never retried or completed.
+- Verification reuses or registers only the fix commit and branch from Core's prepared work item before execution; missing authoritative context refuses preparation, and worker-selected report references are never registered or rewritten.
+- Refused executions and report-less failures complete without recording; a successfully completed preparation refusal does not stop the queued runner.
+
 ## [0.29.1]
 
 ### Fixed

@@ -399,6 +399,22 @@ func (c *Client) GetFinding(ctx context.Context, findingId openapi_types.UUID) (
 	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
+// GetFindingByFingerprint is GET /v1/repositories/{repositoryId}/findings/by-fingerprint: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) GetFindingByFingerprint(ctx context.Context, repositoryId openapi_types.UUID, params *GetFindingByFingerprintParams) (*FindingView, error) {
+	raw, err := c.ClientInterface.GetFindingByFingerprint(ctx, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetFindingByFingerprintResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
 // GetInsight is GET /v1/insights/{name}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetInsight(ctx context.Context, name ViewName, params *GetInsightParams) (*ViewModel, error) {
 	raw, err := c.ClientInterface.GetInsight(ctx, name, params)
@@ -409,6 +425,22 @@ func (c *Client) GetInsight(ctx context.Context, name ViewName, params *GetInsig
 		return nil, err
 	}
 	response, err := ParseGetInsightResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
+// GetLatestRecordedAssessment is GET /v1/repositories/{repositoryId}/assessments/latest: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) GetLatestRecordedAssessment(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams) (*Assessment, error) {
+	raw, err := c.ClientInterface.GetLatestRecordedAssessment(ctx, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetLatestRecordedAssessmentResponse(raw)
 	if err != nil {
 		return nil, err
 	}

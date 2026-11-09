@@ -62,6 +62,12 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 			server.order.StartedAt = &changed
 		}
 		json.NewEncoder(w).Encode(server.order)
+	case strings.HasSuffix(request.URL.Path, "/remediation-input"):
+		server.events = append(server.events, "prepare")
+		json.NewEncoder(w).Encode(traust.RemediationInput{
+			FixBranch: "server-fix-branch",
+			WorkItem:  traust.WorkItem{WorkItemId: *server.order.WorkItemId},
+		})
 	case request.URL.Path == "/v1/assessment-records" || request.URL.Path == "/v1/remediation-records":
 		server.events = append(server.events, "record")
 		if server.disconnect {
@@ -290,7 +296,7 @@ func TestDeterministicRefusalCanCompleteFailedAfterOwnershipCheck(t *testing.T) 
 	}
 	// The refused payload is attributable from the order row alone: the gate's validation
 	// refusal is the session-output-invalid spelling, not an access failure's.
-	if server.completed.Reason == nil || *server.completed.Reason != sessionOutputInvalid {
+	if server.completed.Reason == nil || *server.completed.Reason != traust.RunOrderReasonSessionOutputInvalid {
 		t.Fatalf("record refusal did not stamp a reason: %+v", server.completed.Reason)
 	}
 }
@@ -333,11 +339,17 @@ func TestUnknownExecutorOutcomeCompletesFailedWithoutRecording(t *testing.T) {
 // The remediation template posts the executor's report through core's remediation record door,
 // stamped with the held order's identity, and carries the recorded work item back.
 func TestRemediationTemplateRecordsThroughTheRemediationDoor(t *testing.T) {
-	run, server := newRecordingRun(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+	run, server := newRecordingRun(t, executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
+		var input traust.RemediationInput
+		if err := json.Unmarshal(execution.Input, &input); err != nil || input.FixBranch != "server-fix-branch" {
+			return ProducedReport{}, errors.New("missing core-prepared remediation input")
+		}
 		return ProducedReport{Payload: []byte("remediation report"), Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
 	}), RecordingRequest{Remediation: &traust.RemediationRecordBody{
 		Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport},
 	}})
+	workItemID := uuid.MustParse("cbb60c79-1c48-4938-b71e-e19d0b9b9ca7")
+	server.order.WorkItemId = &workItemID
 	result, err := run.Run(context.Background())
 	if err != nil {
 		t.Fatal(err)

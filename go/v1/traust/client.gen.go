@@ -594,6 +594,7 @@ const (
 // Defines values for ViewName.
 const (
 	AttackCoverage      ViewName = "attack-coverage"
+	BenchmarkScorecards ViewName = "benchmark-scorecards"
 	Census              ViewName = "census"
 	Compliance          ViewName = "compliance"
 	CompliancePrecision ViewName = "compliance-precision"
@@ -607,6 +608,7 @@ const (
 	FindingsTrend       ViewName = "findings-trend"
 	Freshness           ViewName = "freshness"
 	InsecurePatterns    ViewName = "insecure-patterns"
+	InventoryExport     ViewName = "inventory-export"
 	Loc                 ViewName = "loc"
 	Oscal               ViewName = "oscal"
 	Pqc                 ViewName = "pqc"
@@ -705,6 +707,7 @@ type Artifact struct {
 	Digest       string              `json:"digest"`
 	Id           *openapi_types.UUID `json:"id"`
 	Kind         string              `json:"kind"`
+	RunOrderId   *openapi_types.UUID `json:"run_order_id"`
 	Uri          string              `json:"uri"`
 }
 
@@ -1437,8 +1440,6 @@ type OrderManifest map[string]interface{}
 type OrderRequest struct {
 	Asset        string              `json:"asset"`
 	EventSource  *string             `json:"event_source"`
-	ForkBranch   *string             `json:"fork_branch"`
-	ForkUrl      *string             `json:"fork_url"`
 	Lane         *string             `json:"lane"`
 	Priority     int                 `json:"priority"`
 	RepositoryId *openapi_types.UUID `json:"repository_id"`
@@ -1737,6 +1738,7 @@ type Repository struct {
 // RepositoryRef A commit, optionally on a named branch or tag; a line is (repository_id, name).
 type RepositoryRef struct {
 	CreatedAt                *time.Time          `json:"created_at"`
+	DefaultNamedAt           *time.Time          `json:"default_named_at"`
 	Id                       *openapi_types.UUID `json:"id"`
 	IsDefault                *bool               `json:"is_default,omitempty"`
 	Kind                     *string             `json:"kind"`
@@ -1837,27 +1839,28 @@ type RoleRouting struct {
 
 // RunOrder 4a · one unit of work; queued, leased by a worker, finished with an outcome.
 type RunOrder struct {
-	ArtifactId     *openapi_types.UUID `json:"artifact_id"`
-	Asset          string              `json:"asset"`
-	CreatedAt      *time.Time          `json:"created_at"`
-	EventSource    *string             `json:"event_source"`
-	FinishedAt     *time.Time          `json:"finished_at"`
-	ForkBranch     *string             `json:"fork_branch"`
-	ForkUrl        *string             `json:"fork_url"`
-	Id             *openapi_types.UUID `json:"id"`
-	Lane           *string             `json:"lane"`
-	LeaseExpiresAt *time.Time          `json:"lease_expires_at"`
-	LeaseHolder    *string             `json:"lease_holder"`
-	Priority       int                 `json:"priority"`
-	Reason         *string             `json:"reason"`
-	RepositoryId   *openapi_types.UUID `json:"repository_id"`
-	RequestedBy    string              `json:"requested_by"`
-	Rule           *string             `json:"rule"`
-	RunBatchId     *openapi_types.UUID `json:"run_batch_id"`
-	StartedAt      *time.Time          `json:"started_at"`
-	State          RunOrderState       `json:"state"`
-	UpdatedAt      *time.Time          `json:"updated_at"`
-	WorkItemId     *openapi_types.UUID `json:"work_item_id"`
+	ArtifactId      *openapi_types.UUID `json:"artifact_id"`
+	Asset           string              `json:"asset"`
+	CreatedAt       *time.Time          `json:"created_at"`
+	EventSource     *string             `json:"event_source"`
+	FinishedAt      *time.Time          `json:"finished_at"`
+	ForkBranch      *string             `json:"fork_branch"`
+	ForkScheduledAt *time.Time          `json:"fork_scheduled_at"`
+	ForkUrl         *string             `json:"fork_url"`
+	Id              *openapi_types.UUID `json:"id"`
+	Lane            *string             `json:"lane"`
+	LeaseExpiresAt  *time.Time          `json:"lease_expires_at"`
+	LeaseHolder     *string             `json:"lease_holder"`
+	Priority        int                 `json:"priority"`
+	Reason          *string             `json:"reason"`
+	RepositoryId    *openapi_types.UUID `json:"repository_id"`
+	RequestedBy     string              `json:"requested_by"`
+	Rule            *string             `json:"rule"`
+	RunBatchId      *openapi_types.UUID `json:"run_batch_id"`
+	StartedAt       *time.Time          `json:"started_at"`
+	State           RunOrderState       `json:"state"`
+	UpdatedAt       *time.Time          `json:"updated_at"`
+	WorkItemId      *openapi_types.UUID `json:"work_item_id"`
 }
 
 // RunOrderReason defines model for RunOrderReason.
@@ -1883,6 +1886,7 @@ type ScheduledEffort struct {
 	ForkUrl      string              `json:"fork_url"`
 	OrderId      *openapi_types.UUID `json:"order_id"`
 	RepositoryId openapi_types.UUID  `json:"repository_id"`
+	ScheduledAt  *time.Time          `json:"scheduled_at"`
 	Status       RemediationStatus   `json:"status"`
 
 	// WorkItem One remediation attempt: a `remediation` assessment of the commit the findings were found
@@ -2178,12 +2182,13 @@ type WorkItem struct {
 	FixCommit  *string              `json:"fix_commit"`
 
 	// Fork Where a fix is pushed: a private mirror of the upstream, or the repository itself.
-	Fork            *Fork              `json:"fork,omitempty"`
-	OpenedAt        time.Time          `json:"opened_at"`
-	Report          *ArtifactRef       `json:"report,omitempty"`
-	RepositoryRefId openapi_types.UUID `json:"repository_ref_id"`
-	Status          RemediationStatus  `json:"status"`
-	Strategy        *FixStrategy       `json:"strategy,omitempty"`
+	Fork            *Fork               `json:"fork,omitempty"`
+	OpenedAt        time.Time           `json:"opened_at"`
+	Report          *ArtifactRef        `json:"report,omitempty"`
+	ReportedBy      *openapi_types.UUID `json:"reported_by"`
+	RepositoryRefId openapi_types.UUID  `json:"repository_ref_id"`
+	Status          RemediationStatus   `json:"status"`
+	Strategy        *FixStrategy        `json:"strategy,omitempty"`
 
 	// Tracker A thing in another system: a merge request, a commit or a ticket, by URL or key.
 	Tracker    *ExternalRef       `json:"tracker,omitempty"`
@@ -2328,6 +2333,11 @@ type ListRepositoryAssessmentsParams struct {
 	Kind *AssessmentKind `form:"kind,omitempty" json:"kind,omitempty"`
 }
 
+// GetLatestRecordedAssessmentParams defines parameters for GetLatestRecordedAssessment.
+type GetLatestRecordedAssessmentParams struct {
+	Kind AssessmentKind `form:"kind" json:"kind"`
+}
+
 // ListFindingsParams defines parameters for ListFindings.
 type ListFindingsParams struct {
 	Limit    *int       `form:"limit,omitempty" json:"limit,omitempty"`
@@ -2335,6 +2345,12 @@ type ListFindingsParams struct {
 	Validity *Validity  `form:"validity,omitempty" json:"validity,omitempty"`
 	Open     *bool      `form:"open,omitempty" json:"open,omitempty"`
 	AsOf     *time.Time `form:"as_of,omitempty" json:"as_of,omitempty"`
+}
+
+// GetFindingByFingerprintParams defines parameters for GetFindingByFingerprint.
+type GetFindingByFingerprintParams struct {
+	Fingerprint     string  `form:"fingerprint" json:"fingerprint"`
+	FingerprintAlgo *string `form:"fingerprint_algo,omitempty" json:"fingerprint_algo,omitempty"`
 }
 
 // SummarizeFindingsParams defines parameters for SummarizeFindings.
@@ -3464,11 +3480,17 @@ type ClientInterface interface {
 	// ListRepositoryAssessments request
 	ListRepositoryAssessments(ctx context.Context, repositoryId openapi_types.UUID, params *ListRepositoryAssessmentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetLatestRecordedAssessment request
+	GetLatestRecordedAssessment(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListRepositoryDecisions request
 	ListRepositoryDecisions(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListFindings request
 	ListFindings(ctx context.Context, repositoryId openapi_types.UUID, params *ListFindingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetFindingByFingerprint request
+	GetFindingByFingerprint(ctx context.Context, repositoryId openapi_types.UUID, params *GetFindingByFingerprintParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// SummarizeFindings request
 	SummarizeFindings(ctx context.Context, repositoryId openapi_types.UUID, params *SummarizeFindingsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4397,6 +4419,18 @@ func (c *RawClient) ListRepositoryAssessments(ctx context.Context, repositoryId 
 	return c.Client.Do(req)
 }
 
+func (c *RawClient) GetLatestRecordedAssessment(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetLatestRecordedAssessmentRequest(c.Server, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *RawClient) ListRepositoryDecisions(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListRepositoryDecisionsRequest(c.Server, repositoryId)
 	if err != nil {
@@ -4411,6 +4445,18 @@ func (c *RawClient) ListRepositoryDecisions(ctx context.Context, repositoryId op
 
 func (c *RawClient) ListFindings(ctx context.Context, repositoryId openapi_types.UUID, params *ListFindingsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListFindingsRequest(c.Server, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) GetFindingByFingerprint(ctx context.Context, repositoryId openapi_types.UUID, params *GetFindingByFingerprintParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetFindingByFingerprintRequest(c.Server, repositoryId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -7807,6 +7853,58 @@ func NewListRepositoryAssessmentsRequest(server string, repositoryId openapi_typ
 	return req, nil
 }
 
+// NewGetLatestRecordedAssessmentRequest generates requests for GetLatestRecordedAssessment
+func NewGetLatestRecordedAssessmentRequest(server string, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "repository_id", runtime.ParamLocationPath, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/repositories/%s/assessments/latest", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "kind", runtime.ParamLocationQuery, params.Kind); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListRepositoryDecisionsRequest generates requests for ListRepositoryDecisions
 func NewListRepositoryDecisionsRequest(server string, repositoryId openapi_types.UUID) (*http.Request, error) {
 	var err error
@@ -7937,6 +8035,74 @@ func NewListFindingsRequest(server string, repositoryId openapi_types.UUID, para
 		if params.AsOf != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "as_of", runtime.ParamLocationQuery, *params.AsOf); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetFindingByFingerprintRequest generates requests for GetFindingByFingerprint
+func NewGetFindingByFingerprintRequest(server string, repositoryId openapi_types.UUID, params *GetFindingByFingerprintParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "repository_id", runtime.ParamLocationPath, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/repositories/%s/findings/by-fingerprint", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fingerprint", runtime.ParamLocationQuery, params.Fingerprint); err != nil {
+			return nil, err
+		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+			return nil, err
+		} else {
+			for k, v := range parsed {
+				for _, v2 := range v {
+					queryValues.Add(k, v2)
+				}
+			}
+		}
+
+		if params.FingerprintAlgo != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "fingerprint_algo", runtime.ParamLocationQuery, *params.FingerprintAlgo); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -9232,11 +9398,17 @@ type ClientWithResponsesInterface interface {
 	// ListRepositoryAssessmentsWithResponse request
 	ListRepositoryAssessmentsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *ListRepositoryAssessmentsParams, reqEditors ...RequestEditorFn) (*ListRepositoryAssessmentsResponse, error)
 
+	// GetLatestRecordedAssessmentWithResponse request
+	GetLatestRecordedAssessmentWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams, reqEditors ...RequestEditorFn) (*GetLatestRecordedAssessmentResponse, error)
+
 	// ListRepositoryDecisionsWithResponse request
 	ListRepositoryDecisionsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*ListRepositoryDecisionsResponse, error)
 
 	// ListFindingsWithResponse request
 	ListFindingsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *ListFindingsParams, reqEditors ...RequestEditorFn) (*ListFindingsResponse, error)
+
+	// GetFindingByFingerprintWithResponse request
+	GetFindingByFingerprintWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *GetFindingByFingerprintParams, reqEditors ...RequestEditorFn) (*GetFindingByFingerprintResponse, error)
 
 	// SummarizeFindingsWithResponse request
 	SummarizeFindingsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *SummarizeFindingsParams, reqEditors ...RequestEditorFn) (*SummarizeFindingsResponse, error)
@@ -10749,6 +10921,31 @@ func (r ListRepositoryAssessmentsResponse) StatusCode() int {
 	return 0
 }
 
+type GetLatestRecordedAssessmentResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Assessment
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r GetLatestRecordedAssessmentResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetLatestRecordedAssessmentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListRepositoryDecisionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -10791,6 +10988,32 @@ func (r ListFindingsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListFindingsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetFindingByFingerprintResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *FindingView
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON409      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r GetFindingByFingerprintResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetFindingByFingerprintResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -11880,6 +12103,15 @@ func (c *ClientWithResponses) ListRepositoryAssessmentsWithResponse(ctx context.
 	return ParseListRepositoryAssessmentsResponse(rsp)
 }
 
+// GetLatestRecordedAssessmentWithResponse request returning *GetLatestRecordedAssessmentResponse
+func (c *ClientWithResponses) GetLatestRecordedAssessmentWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams, reqEditors ...RequestEditorFn) (*GetLatestRecordedAssessmentResponse, error) {
+	rsp, err := c.GetLatestRecordedAssessment(ctx, repositoryId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetLatestRecordedAssessmentResponse(rsp)
+}
+
 // ListRepositoryDecisionsWithResponse request returning *ListRepositoryDecisionsResponse
 func (c *ClientWithResponses) ListRepositoryDecisionsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*ListRepositoryDecisionsResponse, error) {
 	rsp, err := c.ListRepositoryDecisions(ctx, repositoryId, reqEditors...)
@@ -11896,6 +12128,15 @@ func (c *ClientWithResponses) ListFindingsWithResponse(ctx context.Context, repo
 		return nil, err
 	}
 	return ParseListFindingsResponse(rsp)
+}
+
+// GetFindingByFingerprintWithResponse request returning *GetFindingByFingerprintResponse
+func (c *ClientWithResponses) GetFindingByFingerprintWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *GetFindingByFingerprintParams, reqEditors ...RequestEditorFn) (*GetFindingByFingerprintResponse, error) {
+	rsp, err := c.GetFindingByFingerprint(ctx, repositoryId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetFindingByFingerprintResponse(rsp)
 }
 
 // SummarizeFindingsWithResponse request returning *SummarizeFindingsResponse
@@ -14804,6 +15045,53 @@ func ParseListRepositoryAssessmentsResponse(rsp *http.Response) (*ListRepository
 	return response, nil
 }
 
+// ParseGetLatestRecordedAssessmentResponse parses an HTTP response from a GetLatestRecordedAssessmentWithResponse call
+func ParseGetLatestRecordedAssessmentResponse(rsp *http.Response) (*GetLatestRecordedAssessmentResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetLatestRecordedAssessmentResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Assessment
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListRepositoryDecisionsResponse parses an HTTP response from a ListRepositoryDecisionsWithResponse call
 func ParseListRepositoryDecisionsResponse(rsp *http.Response) (*ListRepositoryDecisionsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -14874,6 +15162,60 @@ func ParseListFindingsResponse(rsp *http.Response) (*ListFindingsResponse, error
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest PageFindingView
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetFindingByFingerprintResponse parses an HTTP response from a GetFindingByFingerprintWithResponse call
+func ParseGetFindingByFingerprintResponse(rsp *http.Response) (*GetFindingByFingerprintResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetFindingByFingerprintResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case rsp.Header.Get("Content-Type") == "application/json" && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FindingView
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

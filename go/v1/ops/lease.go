@@ -45,6 +45,10 @@ func (l *lease) order() traust.RunOrder {
 	order := l.origin
 	id, started, expires := *l.origin.Id, *l.origin.StartedAt, *l.origin.LeaseExpiresAt
 	order.Id, order.StartedAt, order.LeaseExpiresAt = &id, &started, &expires
+	if l.origin.WorkItemId != nil {
+		workItem := *l.origin.WorkItemId
+		order.WorkItemId = &workItem
+	}
 	return order
 }
 
@@ -152,6 +156,19 @@ func supervise[T any](ctx context.Context, l *lease, work func(context.Context) 
 			return finished.value, finished.err
 		}
 	}
+}
+
+// superviseRequest renews during one bounded call without racing its deadline against renewals.
+func superviseRequest[T any](ctx context.Context, l *lease, work func(context.Context) (T, error)) (T, error) {
+	deadline := time.Now().Add(l.timeout)
+	if l.current.LeaseExpiresAt.Before(deadline) {
+		deadline = *l.current.LeaseExpiresAt
+	}
+	return supervise(ctx, l, func(workCtx context.Context) (T, error) {
+		requestCtx, cancel := context.WithDeadline(workCtx, deadline)
+		defer cancel()
+		return work(requestCtx)
+	})
 }
 
 // complete renews the lease, then finishes the order with result.
