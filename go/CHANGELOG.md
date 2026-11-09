@@ -4,6 +4,12 @@ All notable changes to the Go SDK are documented here.
 
 ## [0.30.0]
 
+### Breaking
+
+- `RunnerConfig.Logger` is a required injected `*slog.Logger`. `Run` logs completed failures/refusals and continues; `RunOnce` now preserves their typed errors and consumer preparation-refusal causes.
+- `OrderRequest.ForkBranch` and `OrderRequest.ForkUrl` were removed: omit fork facts when submitting or starting an order. Bind remediation/verification with `WorkItemId`; use Core's prepared work-item input (`FixBranch`/`FixCommit`) and scheduled-effort/order read responses for authoritative fork facts instead of supplying caller-selected forks.
+- Generated `WithResponse` 422 fields use `*traust.Problem` instead of FastAPI's `*traust.HTTPValidationError`; read the problem's status/code/issues rather than validation-error detail arrays.
+
 ### Added
 
 - `RunnerConfig.Recordings` declares per-asset `RecordingPreparer` extensions: queued orders now prepare domain input, execute, record the executor's original report bytes and complete under the same lease; explicit `PreparationRefusedError` values refuse unavailable input without executing.
@@ -11,9 +17,10 @@ All notable changes to the Go SDK are documented here.
 
 ### Fixed
 
-- Queued and dispatched recording runs share preparation and record semantics, renewing during slow preparation and record calls; remediation and verification use the server order's work-item binding, and ambiguous record writes are never retried or completed.
+- Queued and dispatched recording runs share preparation and record semantics, renewing short leases throughout bounded slow requests; every mutable order pointer exposed to preparers, executors or callers is isolated from the lease origin. Remediation and verification use the server order's work-item binding, and ambiguous writes are never retried or completed.
 - Verification reuses or registers only the fix commit and branch from Core's prepared work item before execution; missing authoritative context refuses preparation, and worker-selected report references are never registered or rewritten.
-- Refused executions and report-less failures complete without recording; a successfully completed preparation refusal does not stop the queued runner.
+- Refused executions and report-less failures complete without recording. Definitive preparation/read/ref-registration 4xx errors complete failed while held without becoming domain refusals; actual executor crashes and invalid outcomes retain `RunnerCrashed`.
+- Preparation refusals pass nonempty generated `RunOrderReason` values to Core for validation instead of copying its vocabulary locally. Generated `WithResponse` methods decode Core's problem+json errors, including 422, through normalized OpenAPI error schemas.
 
 ## [0.29.1]
 

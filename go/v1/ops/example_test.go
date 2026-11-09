@@ -4,6 +4,7 @@ import (
 	"context"
 	"fmt"
 	"log"
+	"log/slog"
 	"os"
 	"time"
 
@@ -44,6 +45,7 @@ func ExampleRunner() {
 	}
 	runner, err := ops.NewRunner(ops.RunnerConfig{
 		Client: runnerClient, Pack: p, Executor: ops.ProcessExecutor{},
+		Logger: slog.New(slog.NewJSONHandler(os.Stderr, nil)),
 		Assets: p.Assets(), LeaseSeconds: 300, PollInterval: 10 * time.Second,
 	})
 	if err != nil {

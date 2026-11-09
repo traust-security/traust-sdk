@@ -24,7 +24,7 @@ func hold(client *traust.Client, order *traust.RunOrder, seconds int, interval, 
 	if err := live(order); err != nil {
 		return nil, &LeaseLostError{Err: err}
 	}
-	return &lease{client: client, origin: *order, current: *order, seconds: seconds, interval: interval, timeout: timeout}, nil
+	return &lease{client: client, origin: copyOrder(*order), current: copyOrder(*order), seconds: seconds, interval: interval, timeout: timeout}, nil
 }
 
 func live(order *traust.RunOrder) error {
@@ -42,14 +42,7 @@ func (l *lease) id() uuid.UUID { return *l.origin.Id }
 // order is the server's original order with its own copies of the pointers an executor could
 // otherwise use to rewrite the lease.
 func (l *lease) order() traust.RunOrder {
-	order := l.origin
-	id, started, expires := *l.origin.Id, *l.origin.StartedAt, *l.origin.LeaseExpiresAt
-	order.Id, order.StartedAt, order.LeaseExpiresAt = &id, &started, &expires
-	if l.origin.WorkItemId != nil {
-		workItem := *l.origin.WorkItemId
-		order.WorkItemId = &workItem
-	}
-	return order
+	return copyOrder(l.origin)
 }
 
 // check fails with lease loss once the lease has expired or the caller has given up.
@@ -160,12 +153,8 @@ func supervise[T any](ctx context.Context, l *lease, work func(context.Context) 
 
 // superviseRequest renews during one bounded call without racing its deadline against renewals.
 func superviseRequest[T any](ctx context.Context, l *lease, work func(context.Context) (T, error)) (T, error) {
-	deadline := time.Now().Add(l.timeout)
-	if l.current.LeaseExpiresAt.Before(deadline) {
-		deadline = *l.current.LeaseExpiresAt
-	}
 	return supervise(ctx, l, func(workCtx context.Context) (T, error) {
-		requestCtx, cancel := context.WithDeadline(workCtx, deadline)
+		requestCtx, cancel := context.WithTimeout(workCtx, l.timeout)
 		defer cancel()
 		return work(requestCtx)
 	})
@@ -186,14 +175,43 @@ func (l *lease) complete(ctx context.Context, result traust.JobResult) (*traust.
 
 // snapshot is a copy of the lease's current view of the order.
 func (l *lease) snapshot() *traust.RunOrder {
-	order := l.current
+	order := copyOrder(l.current)
 	return &order
 }
 
 // latest is the completed order when there is one, else the lease's current view of it.
 func (l *lease) latest(completed *traust.RunOrder) traust.RunOrder {
 	if completed != nil {
-		return *completed
+		return copyOrder(*completed)
 	}
-	return l.current
+	return copyOrder(l.current)
+}
+
+func copyOrder(order traust.RunOrder) traust.RunOrder {
+	order.ArtifactId = copyPointer(order.ArtifactId)
+	order.CreatedAt = copyPointer(order.CreatedAt)
+	order.EventSource = copyPointer(order.EventSource)
+	order.FinishedAt = copyPointer(order.FinishedAt)
+	order.ForkBranch = copyPointer(order.ForkBranch)
+	order.ForkScheduledAt = copyPointer(order.ForkScheduledAt)
+	order.ForkUrl = copyPointer(order.ForkUrl)
+	order.Id = copyPointer(order.Id)
+	order.Lane = copyPointer(order.Lane)
+	order.LeaseExpiresAt = copyPointer(order.LeaseExpiresAt)
+	order.LeaseHolder = copyPointer(order.LeaseHolder)
+	order.Reason = copyPointer(order.Reason)
+	order.RepositoryId = copyPointer(order.RepositoryId)
+	order.Rule = copyPointer(order.Rule)
+	order.RunBatchId = copyPointer(order.RunBatchId)
+	order.StartedAt = copyPointer(order.StartedAt)
+	order.UpdatedAt = copyPointer(order.UpdatedAt)
+	order.WorkItemId = copyPointer(order.WorkItemId)
+	return order
+}
+
+func copyPointer[T any](value *T) *T {
+	if value == nil {
+		return nil
+	}
+	return ptr(*value)
 }

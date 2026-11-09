@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"fmt"
+	"log/slog"
 	"maps"
 	"net/url"
 	"reflect"
@@ -24,6 +25,7 @@ type RunnerConfig struct {
 	Pack     *Pack
 	Executor Executor
 	Assets   []string
+	Logger   *slog.Logger
 	// Recordings declares assets whose reports must be recorded before completion.
 	Recordings map[string]RecordingPreparer
 	// ForgeHosts are the repository hosts a repository-bound order may name: the keys of
@@ -51,6 +53,9 @@ type Runner struct {
 func NewRunner(cfg RunnerConfig) (*Runner, error) {
 	if cfg.Client == nil || cfg.Pack == nil || cfg.Executor == nil {
 		return nil, errors.New("ops: runner needs a Client, a Pack and an Executor")
+	}
+	if cfg.Logger == nil {
+		return nil, errors.New("ops: runner needs a Logger")
 	}
 	if len(cfg.Assets) == 0 || cfg.LeaseSeconds <= 0 || cfg.LeaseSeconds > maxLeaseSeconds {
 		return nil, fmt.Errorf("ops: runner needs assets and a lease of 1..%d seconds", maxLeaseSeconds)
@@ -103,7 +108,12 @@ func (r *Runner) Run(ctx context.Context) error {
 	for {
 		order, err := r.RunOnce(ctx)
 		if err != nil {
-			return err
+			if order == nil || !closed(order.State) {
+				return err
+			}
+			r.logCompleted(ctx, order, err)
+		} else if order != nil && (order.State == traust.RunOrderStateFailed || order.State == traust.RunOrderStateRefused) {
+			r.logCompleted(ctx, order, nil)
 		}
 		if order != nil {
 			continue
@@ -138,7 +148,7 @@ func (r *Runner) RunOnce(ctx context.Context) (*traust.RunOrder, error) {
 	}
 	pinned, err := supervise(ctx, l, func(read context.Context) (bool, error) { return r.pinned(read, l) })
 	if err != nil {
-		return l.snapshot(), err
+		return r.readFailed(ctx, l, err)
 	}
 	if !pinned {
 		return r.finish(ctx, l, refused(traust.RunOrderReasonBadRequest))
@@ -149,7 +159,7 @@ func (r *Runner) RunOnce(ctx context.Context) (*traust.RunOrder, error) {
 		return r.finish(ctx, l, refused(unresolved.reason))
 	}
 	if err != nil {
-		return l.snapshot(), err
+		return r.readFailed(ctx, l, err)
 	}
 	if err := l.renew(ctx); err != nil {
 		return l.snapshot(), err
@@ -184,11 +194,44 @@ func queuedRecordingResult(result *RecordingResult, err error) (*traust.RunOrder
 	if result == nil {
 		return nil, err
 	}
-	var refusal *PreparationRefusedError
-	if errors.As(err, &refusal) && result.Order.State == traust.RunOrderStateRefused && result.Result.Outcome == traust.OutcomeRefused {
-		return &result.Order, nil
-	}
 	return &result.Order, err
+}
+
+func closed(state traust.RunOrderState) bool {
+	switch state {
+	case traust.RunOrderStateSucceeded, traust.RunOrderStateDegraded, traust.RunOrderStateFailed, traust.RunOrderStateRefused:
+		return true
+	}
+	return false
+}
+
+func (r *Runner) logCompleted(ctx context.Context, order *traust.RunOrder, err error) {
+	attrs := []any{"order_id", order.Id, "asset", order.Asset, "state", order.State}
+	if err != nil {
+		attrs = append(attrs, "error_type", fmt.Sprintf("%T", err))
+	}
+	if order.Reason != nil {
+		attrs = append(attrs, "reason", *order.Reason)
+	}
+	if problem := causeProblem(err); problem != nil {
+		attrs = append(attrs, "http_status", problem.StatusCode)
+	}
+	var refusal *PreparationRefusedError
+	if errors.As(err, &refusal) {
+		attrs = append(attrs, "preparation_reason", refusal.Reason)
+		if refusal.Err != nil && causeProblem(refusal.Err) == nil {
+			attrs = append(attrs, "preparation_cause", refusal.Err.Error())
+		}
+	}
+	r.config.Logger.ErrorContext(ctx, "ops: order completed with an error or refusal", attrs...)
+}
+
+func (r *Runner) readFailed(ctx context.Context, l *lease, cause error) (*traust.RunOrder, error) {
+	if lost(cause) || ctx.Err() != nil || !definitive(causeProblem(cause)) {
+		return l.snapshot(), cause
+	}
+	order, err := r.finish(ctx, l, traust.JobResult{Outcome: traust.OutcomeFailed})
+	return order, errors.Join(cause, err)
 }
 
 func (r *Runner) claim(ctx context.Context) (*traust.RunOrder, error) {
@@ -271,15 +314,6 @@ func (r *Runner) repositoryURL(ctx context.Context, id uuid.UUID) (string, error
 	defer cancel()
 	repository, err := r.config.Client.GetRepository(ctx, id)
 	if err != nil {
-		var problem *traust.ProblemError
-		if errors.As(err, &problem) && problem.StatusCode >= 400 && problem.StatusCode < 500 {
-			// A definitive answer — the repository is missing or gone, or this runner
-			// may not read it — never resolves for this order, so the order is refused:
-			// completing it stops the runner from re-claiming it after each lease expiry
-			// and starving every other asset it serves. A 5xx stays ambiguous: stop
-			// without completing, never a partial run.
-			return "", &unresolvedParam{reason: traust.RunOrderReasonNotFound, err: fmt.Errorf("repository %s: %w", id, err)}
-		}
 		return "", fmt.Errorf("ops: order repository %s: %w", id, err)
 	}
 	normalized, err := httpsRepoURL(repository.Url, r.config.ForgeHosts)

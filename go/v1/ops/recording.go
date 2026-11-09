@@ -87,9 +87,11 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 	case lost(err) || ctx.Err() != nil:
 		return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
 	case err != nil:
+		produced.Result.Reason = ptr(traust.RunOrderReasonRunnerCrashed)
 		return run.fail(ctx, l, produced.Result, err)
 	}
 	if err := checkOutcome(produced.Result); err != nil {
+		produced.Result.Reason = ptr(traust.RunOrderReasonRunnerCrashed)
 		return run.fail(ctx, l, produced.Result, err)
 	}
 	if produced.Result.Outcome == traust.OutcomeRefused || (produced.Result.Outcome == traust.OutcomeFailed && len(produced.Payload) == 0) {
@@ -109,8 +111,8 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 		if lost(err) || ctx.Err() != nil {
 			return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
 		}
-		var refusal *traust.ProblemError
-		if errors.As(err, &refusal) && refusal.StatusCode >= 400 && refusal.StatusCode < 500 {
+		refusal := causeProblem(err)
+		if definitive(refusal) {
 			// The gate answered definitively: a terminally rejected artifact (never
 			// retried, never mangled), completed failed while the lease is still held.
 			// Only a payload refusal carries a reason — the order row alone says what
@@ -260,19 +262,14 @@ func (run RecordingRun) preparationFailed(ctx context.Context, l *lease, cause e
 	}
 	var refusal *PreparationRefusedError
 	if !errors.As(cause, &refusal) {
+		if definitive(causeProblem(cause)) {
+			return run.fail(ctx, l, traust.JobResult{}, cause)
+		}
 		return &RecordingResult{Order: *l.snapshot()}, cause
 	}
-	switch refusal.Reason {
-	case traust.RunOrderReasonAssetNotInPack, traust.RunOrderReasonBadRequest,
-		traust.RunOrderReasonBudgetExhausted, traust.RunOrderReasonBudgetOver,
-		traust.RunOrderReasonDiffTooLarge, traust.RunOrderReasonLedgerUnconfigured,
-		traust.RunOrderReasonNotFound, traust.RunOrderReasonRunnerCrashed,
-		traust.RunOrderReasonSessionOutputInvalid, traust.RunOrderReasonSnapshotUnavailable,
-		traust.RunOrderReasonSourceUnavailable, traust.RunOrderReasonUpstreamStale,
-		traust.RunOrderReasonWriteRejected:
-	default:
+	if refusal.Reason == "" {
 		return &RecordingResult{Order: *l.snapshot()}, errors.Join(cause,
-			fmt.Errorf("ops: preparation refusal has unknown reason %q", refusal.Reason))
+			errors.New("ops: preparation refusal needs a reason"))
 	}
 	result := refused(refusal.Reason)
 	completed, err := l.complete(ctx, result)
@@ -284,6 +281,16 @@ func (run RecordingRun) fail(ctx context.Context, l *lease, result traust.JobRes
 	result.Outcome = traust.OutcomeFailed
 	completed, err := l.complete(ctx, result)
 	return &RecordingResult{Order: l.latest(completed), Result: result}, errors.Join(cause, err)
+}
+
+func causeProblem(err error) *traust.ProblemError {
+	var problem *traust.ProblemError
+	errors.As(err, &problem)
+	return problem
+}
+
+func definitive(problem *traust.ProblemError) bool {
+	return problem != nil && problem.StatusCode >= 400 && problem.StatusCode < 500
 }
 
 func ptr[T any](value T) *T { return &value }

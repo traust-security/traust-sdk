@@ -4,6 +4,7 @@ import (
 	"context"
 	"encoding/json"
 	"errors"
+	"log/slog"
 	"net/http"
 	"net/http/httptest"
 	"os"
@@ -59,6 +60,8 @@ type queuedServer struct {
 	heartbeatStatus  int
 	claimStatus      int
 	manifestStatus   int
+	completeStatus   int
+	leaseLength      time.Duration
 	repository       *traust.Repository
 	repositoryStatus int
 	manifestDelay    time.Duration
@@ -165,6 +168,9 @@ func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Reque
 			return
 		}
 		expires := time.Now().Add(time.Duration(body.LeaseSeconds) * time.Second)
+		if server.leaseLength > 0 {
+			expires = time.Now().Add(server.leaseLength)
+		}
 		server.order.LeaseExpiresAt = &expires
 		_ = json.NewEncoder(w).Encode(server.order)
 	case strings.HasSuffix(request.URL.Path, "/complete"):
@@ -175,7 +181,17 @@ func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Reque
 			return
 		}
 		server.result = body.Result
+		if server.completeStatus != 0 {
+			w.Header().Set("Content-Type", "application/problem+json")
+			w.WriteHeader(server.completeStatus)
+			_ = json.NewEncoder(w).Encode(traust.Problem{Title: "completion rejected", Status: server.completeStatus})
+			return
+		}
 		server.order.State = traust.RunOrderState(body.Result.Outcome)
+		if body.Result.Reason != nil {
+			value := string(*body.Result.Reason)
+			server.order.Reason = &value
+		}
 		_ = json.NewEncoder(w).Encode(server.order)
 	default:
 		w.WriteHeader(http.StatusNotFound)
@@ -239,6 +255,7 @@ func serveRunner(t *testing.T, executor Executor, server *queuedServer, forgeHos
 	}
 	runner, err := NewRunner(RunnerConfig{
 		Client: client, Pack: server.pack, Executor: executor, Assets: []string{server.asset},
+		Logger:       slog.New(slog.NewTextHandler(os.Stderr, nil)),
 		ForgeHosts:   forgeHosts,
 		LeaseSeconds: 30, HeartbeatInterval: 5 * time.Millisecond, RequestTimeout: time.Second, PollInterval: time.Millisecond,
 	})
@@ -508,11 +525,7 @@ func TestVocabularyRunnerRefusesARepositoryURLCoreWouldNotParse(t *testing.T) {
 	}
 }
 
-func TestVocabularyRunnerRefusesAnOrderWhoseRepositoryCoreWillNotHandOver(t *testing.T) {
-	// The definitive 4xx family core answers on a repository read. A 422 is absent: the
-	// generated parser decodes any JSON 422 as FastAPI's validation-error shape, which
-	// core's problem+json answers are not — and a typed UUID path cannot fail validation,
-	// so core never sends one here.
+func TestVocabularyRunnerFailsAnOrderWhoseRepositoryCoreWillNotHandOver(t *testing.T) {
 	for _, tc := range []struct {
 		name   string
 		change func(*queuedServer)
@@ -521,6 +534,8 @@ func TestVocabularyRunnerRefusesAnOrderWhoseRepositoryCoreWillNotHandOver(t *tes
 		{"gone", func(server *queuedServer) { server.repositoryStatus = http.StatusGone }},
 		{"unauthorized", func(server *queuedServer) { server.repositoryStatus = http.StatusUnauthorized }},
 		{"forbidden", func(server *queuedServer) { server.repositoryStatus = http.StatusForbidden }},
+		{"invalid request", func(server *queuedServer) { server.repositoryStatus = http.StatusUnprocessableEntity }},
+		{"rate limited", func(server *queuedServer) { server.repositoryStatus = http.StatusTooManyRequests }},
 	} {
 		t.Run(tc.name, func(t *testing.T) {
 			runner, server := vocabularyRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
@@ -529,10 +544,11 @@ func TestVocabularyRunnerRefusesAnOrderWhoseRepositoryCoreWillNotHandOver(t *tes
 			}))
 			tc.change(server)
 			order, err := runner.RunOnce(context.Background())
-			if err != nil || order == nil || order.State != traust.RunOrderStateRefused {
+			var problem *traust.ProblemError
+			if !errors.As(err, &problem) || order == nil || order.State != traust.RunOrderStateFailed {
 				t.Fatalf("order=%+v err=%v", order, err)
 			}
-			if _, result := server.snapshot(); result.Reason == nil || *result.Reason != traust.RunOrderReasonNotFound {
+			if _, result := server.snapshot(); result.Reason != nil || result.Outcome != traust.OutcomeFailed {
 				t.Fatalf("result=%+v", result)
 			}
 		})
@@ -688,6 +704,7 @@ func TestQueuedRunnerRejectsInvalidConfiguration(t *testing.T) {
 		{"missing client", func(cfg *RunnerConfig) { cfg.Client = nil }},
 		{"missing pack", func(cfg *RunnerConfig) { cfg.Pack = nil }},
 		{"missing executor", func(cfg *RunnerConfig) { cfg.Executor = nil }},
+		{"missing logger", func(cfg *RunnerConfig) { cfg.Logger = nil }},
 		{"missing assets", func(cfg *RunnerConfig) { cfg.Assets = nil }},
 		{"duplicate asset", func(cfg *RunnerConfig) { cfg.Assets = append(cfg.Assets, cfg.Assets[0]) }},
 		{"unknown asset", func(cfg *RunnerConfig) { cfg.Assets = []string{"unknown"} }},
@@ -863,6 +880,26 @@ func TestQueuedRunnerRefusesAnOrderNotPinnedToExactlyItsPack(t *testing.T) {
 			}
 			if _, result := server.snapshot(); result.Reason == nil || *result.Reason != traust.RunOrderReasonBadRequest {
 				t.Fatalf("result=%+v", result)
+			}
+		})
+	}
+}
+
+func TestQueuedRunnerClosesDefinitiveManifestErrorsWithoutInventingARefusal(t *testing.T) {
+	for _, status := range []int{http.StatusUnauthorized, http.StatusNotFound, http.StatusUnprocessableEntity, http.StatusTooManyRequests} {
+		t.Run(http.StatusText(status), func(t *testing.T) {
+			runner, server := queuedRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+				t.Error("executor ran after the manifest read failed")
+				return ProducedReport{}, nil
+			}))
+			server.manifestStatus = status
+			order, err := runner.RunOnce(context.Background())
+			var problem *traust.ProblemError
+			events, result := server.snapshot()
+			if !errors.As(err, &problem) || problem.StatusCode != status || order == nil ||
+				order.State != traust.RunOrderStateFailed || result.Outcome != traust.OutcomeFailed ||
+				result.Reason != nil || !slices.Contains(events, "complete") {
+				t.Fatalf("manifest HTTP error was lost, reclassified or left leased: order=%+v err=%v events=%v result=%+v", order, err, events, result)
 			}
 		})
 	}

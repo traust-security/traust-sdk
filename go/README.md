@@ -78,15 +78,15 @@ if errors.As(err, &problem) && problem.StatusCode == http.StatusNotFound { … }
 ## Run work
 
 A runner claims the orders its pack can run, runs each asset's command, and completes it. You
-supply the pack and an executor; the SDK holds the lease, stops the work if the lease is lost,
-and never runs an order planned with a different pack.
+supply the pack, an executor and a required `*slog.Logger`; the SDK holds the lease, stops the work
+if the lease is lost, and never runs an order planned with a different pack.
 
 ```go
 import "github.com/traust-security/traust-sdk/go/v1/ops"
 
 pack, err := ops.LoadPack(packYAML)   // validated against core's pack schema
 runner, err := ops.NewRunner(ops.RunnerConfig{
-    Client: client, Pack: pack, Executor: ops.ProcessExecutor{},
+    Client: client, Pack: pack, Executor: ops.ProcessExecutor{}, Logger: logger,
     Assets: pack.Assets(), LeaseSeconds: 300, PollInterval: 10 * time.Second,
 })
 err = runner.Run(ctx)
@@ -112,7 +112,7 @@ under the claimed lease, with the server's order and a bounded request context:
 
 ```go
 runner, err := ops.NewRunner(ops.RunnerConfig{
-    Client: client, Pack: pack, Executor: executor,
+    Client: client, Pack: pack, Executor: executor, Logger: logger,
     Assets: pack.Assets(), LeaseSeconds: 300, PollInterval: 10 * time.Second,
     Recordings: map[string]ops.RecordingPreparer{recordedAsset: preparer},
 })
@@ -131,16 +131,19 @@ Verification also needs `VerificationInput.WorkItem.FixCommit`, `FixBranch` and
 `Subject.RepositoryId`. Before execution the SDK reuses an exact registered branch ref or calls
 `RegisterRef` once with only that Core-prepared immutable commit and branch (`traust.Branch`).
 The subject/work-item repository-ref IDs describe the baseline, not a substitute fix ref.
-Missing authoritative fix context refuses the order; lookup or registration errors stop without
-executing, recording or completing. A worker report naming a different commit is left unchanged
-for Core to reject, never used to register another ref.
+Missing authoritative fix context refuses the order. Definitive lookup or registration 4xx
+responses complete failed while held, preserving the typed HTTP error; transport failures, 5xx
+and ambiguous registration receipts leave the order for reconciliation without execution or
+recording. A worker report naming a different commit is left unchanged for Core to reject,
+never used to register another ref.
 
 Return `*ops.PreparationRefusedError` with a generated `traust.RunOrderReason` when the consumer
 has definitively found no usable input, such as no source assessment. The SDK completes that
-order refused without executing or recording. Other preparation errors, including typed
-authentication, rate-limit or server problems, stop without completing; they are not classified
-from problem text. Nil preparers and declarations outside `Assets` fail construction; an empty,
-multiple or invalid template never reaches the executor.
+order refused without executing or recording. `RunOnce` returns that typed refusal, including
+its consumer cause, even after completion. Other definitive preparation/read 4xx errors complete
+failed, not refused; transport failures, server problems and malformed responses stop without
+completing. Classification never uses problem text. Nil preparers and declarations outside
+`Assets` fail construction; an empty, multiple or invalid template never reaches the executor.
 
 The SDK renews during template selection, domain preparation, execution and recording. A
 cancelled or lost lease cancels and waits for the active operation, then makes no further writes.
@@ -148,10 +151,13 @@ Executors return their original UTF-8 report bytes as `ProducedReport.Payload` a
 `JobResult`; the SDK never rewrites references, registers a report-selected ref or invents usage.
 It sends eligible report payloads unchanged through the selected generated record request,
 then completes with the executor's result. Refused work and failures with no payload complete
-without recording; a completed preparation refusal does not stop the queued runner.
-No record POST is retried. A definitive record 4xx can complete failed while held; a transport
-failure, 5xx or malformed success receipt leaves the order identity available for reconciliation
-and does not complete.
+without recording. `Run` logs completed-order failures and refusals through the injected logger
+and continues claiming; `RunOnce` preserves typed errors for one-shot callers. Logs include safe
+order/status/reason fields, never HTTP problem text or response bodies. A consumer's
+`PreparationRefusedError.Err` may be logged when it is not an HTTP problem: keep that diagnostic
+free of secrets. No POST is retried. A definitive record 4xx completes failed while held; a
+transport failure, 5xx or malformed success receipt leaves the order identity available for
+reconciliation and does not complete.
 
 ## Test your code
 

@@ -257,8 +257,9 @@ func TestExecutorFailureCompletesFailedOnlyWhileStillOwned(t *testing.T) {
 		t.Fatal("executor failure was hidden")
 	}
 	_, records, completions := server.counts()
-	if records != 0 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed || server.completed.Reason != nil {
-		t.Fatal("executor failure did not use native failed outcome without an invented reason classifier")
+	if records != 0 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed ||
+		server.completed.Reason == nil || *server.completed.Reason != traust.RunOrderReasonRunnerCrashed {
+		t.Fatal("executor failure did not preserve the runner-crashed classifier")
 	}
 }
 
@@ -331,7 +332,8 @@ func TestUnknownExecutorOutcomeCompletesFailedWithoutRecording(t *testing.T) {
 		t.Fatal("an unknown outcome was accepted")
 	}
 	_, records, completions := server.counts()
-	if records != 0 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed {
+	if records != 0 || completions != 1 || server.completed.Outcome != traust.OutcomeFailed ||
+		server.completed.Reason == nil || *server.completed.Reason != traust.RunOrderReasonRunnerCrashed {
 		t.Fatalf("records=%d completions=%d completed=%+v", records, completions, server.completed)
 	}
 }

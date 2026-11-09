@@ -367,6 +367,22 @@ func (c *Client) GetAssessmentIntake(ctx context.Context, assessmentId openapi_t
 	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
+// GetCurrentDefaultRef is GET /v1/repositories/{repositoryId}/refs/current-default: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) GetCurrentDefaultRef(ctx context.Context, repositoryId openapi_types.UUID) (*RepositoryRef, error) {
+	raw, err := c.ClientInterface.GetCurrentDefaultRef(ctx, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetCurrentDefaultRefResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
 // GetDecision is GET /v1/decisions/{decisionId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetDecision(ctx context.Context, decisionId openapi_types.UUID) (*Decision, error) {
 	raw, err := c.ClientInterface.GetDecision(ctx, decisionId)
@@ -1349,6 +1365,22 @@ func (c *Client) RecordRemediation(ctx context.Context, body RecordRemediationJS
 		return nil, err
 	}
 	response, err := ParseRecordRemediationResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
+// RecordRemediationPullRequest is POST /v1/remediations/{workItemId}/pull-request: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) RecordRemediationPullRequest(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationPullRequestJSONRequestBody) (*WorkItem, error) {
+	raw, err := c.ClientInterface.RecordRemediationPullRequest(ctx, workItemId, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseRecordRemediationPullRequestResponse(raw)
 	if err != nil {
 		return nil, err
 	}
