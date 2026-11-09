@@ -584,13 +584,13 @@ const (
 
 // Defines values for Validity.
 const (
-	Confirmed     Validity = "confirmed"
-	Corrected     Validity = "corrected"
-	FalsePositive Validity = "false_positive"
-	Hardening     Validity = "hardening"
-	NotAffected   Validity = "not_affected"
-	NotVerified   Validity = "not_verified"
-	TruePositive  Validity = "true_positive"
+	ValidityConfirmed     Validity = "confirmed"
+	ValidityCorrected     Validity = "corrected"
+	ValidityFalsePositive Validity = "false_positive"
+	ValidityHardening     Validity = "hardening"
+	ValidityNotAffected   Validity = "not_affected"
+	ValidityNotVerified   Validity = "not_verified"
+	ValidityTruePositive  Validity = "true_positive"
 )
 
 // Defines values for VerificationVerdict.

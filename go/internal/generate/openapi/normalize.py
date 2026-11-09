@@ -66,8 +66,10 @@ def normalize_problems(spec: dict) -> None:
 
 
 # Enums whose constants carry their type name, so a value shared with another enum never renames
-# existing constants (SourceType beside SourceChannel; RunOrderReason's not_found, bad_request).
-NAMESPACED = ("SourceType", "RunOrderReason")
+# existing constants (SourceType beside SourceChannel; RunOrderReason's not_found, bad_request;
+# Validity's confirmed beside ReviewItemStatus and ValidationVerdict, whose naming oapi-codegen
+# flipped when the impact schemas joined the spec).
+NAMESPACED = ("SourceType", "RunOrderReason", "Validity")
 
 
 def _camel(value: str) -> str:
