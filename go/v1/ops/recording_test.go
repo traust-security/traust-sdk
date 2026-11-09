@@ -319,8 +319,8 @@ func TestAccessAndRateFailuresPreserveRecordingOrderWithoutCompletion(t *testing
 			t.Fatalf("status %d: records=%d completions=%d completed=%+v", status, records, completions, server.completed)
 		}
 		// An access or rate refusal says nothing about the output: no classifier is invented.
-		if server.completed.Reason != nil {
-			t.Fatalf("status %d stamped an invented reason: %+v", status, server.completed.Reason)
+		if result.Result.Reason != nil {
+			t.Fatalf("status %d returned an invented reason: %+v", status, result.Result.Reason)
 		}
 	}
 }
