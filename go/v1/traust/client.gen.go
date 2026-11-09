@@ -318,6 +318,19 @@ const (
 	SymbolsUsed     ImpactEvidenceSymbolUsageScan = "symbols_used"
 )
 
+// Defines values for ImpactState.
+const (
+	ImpactStateAffected           ImpactState = "affected"
+	ImpactStateCoverageUnknown    ImpactState = "coverage_unknown"
+	ImpactStateFixed              ImpactState = "fixed"
+	ImpactStateNoSbom             ImpactState = "no_sbom"
+	ImpactStateNotInEcosystem     ImpactState = "not_in_ecosystem"
+	ImpactStateNotUsing           ImpactState = "not_using"
+	ImpactStateStale              ImpactState = "stale"
+	ImpactStateUndetermined       ImpactState = "undetermined"
+	ImpactStateUnresolvedManifest ImpactState = "unresolved_manifest"
+)
+
 // Defines values for ImpactTier.
 const (
 	BinaryScan     ImpactTier = "binary_scan"
@@ -571,13 +584,13 @@ const (
 
 // Defines values for Validity.
 const (
-	ValidityConfirmed     Validity = "confirmed"
-	ValidityCorrected     Validity = "corrected"
-	ValidityFalsePositive Validity = "false_positive"
-	ValidityHardening     Validity = "hardening"
-	ValidityNotAffected   Validity = "not_affected"
-	ValidityNotVerified   Validity = "not_verified"
-	ValidityTruePositive  Validity = "true_positive"
+	Confirmed     Validity = "confirmed"
+	Corrected     Validity = "corrected"
+	FalsePositive Validity = "false_positive"
+	Hardening     Validity = "hardening"
+	NotAffected   Validity = "not_affected"
+	NotVerified   Validity = "not_verified"
+	TruePositive  Validity = "true_positive"
 )
 
 // Defines values for VerificationVerdict.
@@ -765,6 +778,11 @@ type AssessmentRecordResult struct {
 
 	// Intake Each candidate's finding by its report label, and the findings this intake created.
 	Intake IntakeResult `json:"intake"`
+}
+
+// BranchAttachment defines model for BranchAttachment.
+type BranchAttachment struct {
+	Branch string `json:"branch"`
 }
 
 // Checkpoint A layer after restamping its root; `warning` is what the caller must surface.
@@ -1181,6 +1199,14 @@ type Health struct {
 	Status string `json:"status"`
 }
 
+// HeldPackage One of the advisory's packages a commit's SBOM holds, at its installed version.
+type HeldPackage struct {
+	Ecosystem Ecosystem `json:"ecosystem"`
+	InRange   *bool     `json:"in_range"`
+	Name      string    `json:"name"`
+	Version   string    `json:"version"`
+}
+
 // IdentitySource defines model for IdentitySource.
 type IdentitySource string
 
@@ -1192,6 +1218,20 @@ type ImpactAnalysis struct {
 	Classification  ImpactClassification `json:"classification"`
 	FindingId       *openapi_types.UUID  `json:"finding_id"`
 	RepositoryRefId openapi_types.UUID   `json:"repository_ref_id"`
+}
+
+// ImpactAnswer The whole-fleet answer for one advisory. Rows carry the refs whose SBOM uses the
+// advisory's ecosystems; the proven rest and every gap are counts by state.
+type ImpactAnswer struct {
+	AdvisoryId          *openapi_types.UUID `json:"advisory_id"`
+	AsOf                *time.Time          `json:"as_of"`
+	Complete            *bool               `json:"complete,omitempty"`
+	Counts              *map[string]int     `json:"counts,omitempty"`
+	Ecosystems          *[]Ecosystem        `json:"ecosystems,omitempty"`
+	Fixable             *int                `json:"fixable,omitempty"`
+	Identifier          string              `json:"identifier"`
+	Rows                *[]RefImpact        `json:"rows,omitempty"`
+	UnmodeledEcosystems *[]string           `json:"unmodeled_ecosystems,omitempty"`
 }
 
 // ImpactClassification defines model for ImpactClassification.
@@ -1320,6 +1360,10 @@ type ImpactScopeMember struct {
 	Module    string    `json:"module"`
 	Version   *string   `json:"version"`
 }
+
+// ImpactState One tracked ref's outcome for an advisory. The first three are proven; every other
+// state is a gap that says why it can't be judged (never read as "not affected").
+type ImpactState string
 
 // ImpactTier defines model for ImpactTier.
 type ImpactTier string
@@ -1646,6 +1690,22 @@ type RefDependency struct {
 	Package    Package    `json:"package"`
 }
 
+// RefImpact One tracked ref's answer for one advisory: its state, why if it can't be judged, what
+// it holds of the advisory's packages, and the products shipping the commit.
+type RefImpact struct {
+	Branch          *string            `json:"branch"`
+	Held            *[]HeldPackage     `json:"held,omitempty"`
+	ProductSlugs    *[]string          `json:"product_slugs,omitempty"`
+	Reason          *string            `json:"reason"`
+	RepositoryId    openapi_types.UUID `json:"repository_id"`
+	RepositoryRefId openapi_types.UUID `json:"repository_ref_id"`
+	Sha             string             `json:"sha"`
+
+	// State One tracked ref's outcome for an advisory. The first three are proven; every other
+	// state is a gap that says why it can't be judged (never read as "not affected").
+	State ImpactState `json:"state"`
+}
+
 // RefKind defines model for RefKind.
 type RefKind string
 
@@ -1830,6 +1890,15 @@ type RoleRouting struct {
 	Connection ConnectionConfig `json:"connection"`
 	Model      string           `json:"model"`
 	Provider   string           `json:"provider"`
+}
+
+// RunBatch 4a · a tranche: one per (kind, period), e.g. drain_tranche / 2026-W31.
+type RunBatch struct {
+	CreatedAt *time.Time          `json:"created_at"`
+	Id        *openapi_types.UUID `json:"id"`
+	Kind      string              `json:"kind"`
+	Period    string              `json:"period"`
+	UpdatedAt *time.Time          `json:"updated_at"`
 }
 
 // RunOrder 4a · one unit of work; queued, leased by a worker, finished with an outcome.
@@ -2422,6 +2491,9 @@ type CreateRemediationJSONRequestBody = RemediationRequest
 
 // RecordRemediationPullRequestJSONRequestBody defines body for RecordRemediationPullRequest for application/json ContentType.
 type RecordRemediationPullRequestJSONRequestBody = ExternalRef
+
+// AttachBranchJSONRequestBody defines body for AttachBranch for application/json ContentType.
+type AttachBranchJSONRequestBody = BranchAttachment
 
 // SetOwnersJSONRequestBody defines body for SetOwners for application/json ContentType.
 type SetOwnersJSONRequestBody = Owners
@@ -3212,6 +3284,12 @@ type ClientInterface interface {
 	// PackagesAffected request
 	PackagesAffected(ctx context.Context, advisoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// AdvisoryImpact request
+	AdvisoryImpact(ctx context.Context, identifier string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// FillAdvisoryImpact request
+	FillAdvisoryImpact(ctx context.Context, identifier string, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetArtifact request
 	GetArtifact(ctx context.Context, artifactId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3404,6 +3482,11 @@ type ClientInterface interface {
 	// GetLatestRecordedAssessment request
 	GetLatestRecordedAssessment(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// AttachBranchWithBody request with any body
+	AttachBranchWithBody(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	AttachBranch(ctx context.Context, repositoryId openapi_types.UUID, body AttachBranchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListRepositoryDecisions request
 	ListRepositoryDecisions(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3541,6 +3624,30 @@ func (c *RawClient) ExportAdvisoryImpacts(ctx context.Context, advisoryId openap
 
 func (c *RawClient) PackagesAffected(ctx context.Context, advisoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewPackagesAffectedRequest(c.Server, advisoryId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) AdvisoryImpact(ctx context.Context, identifier string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAdvisoryImpactRequest(c.Server, identifier)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) FillAdvisoryImpact(ctx context.Context, identifier string, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewFillAdvisoryImpactRequest(c.Server, identifier)
 	if err != nil {
 		return nil, err
 	}
@@ -4379,6 +4486,30 @@ func (c *RawClient) GetLatestRecordedAssessment(ctx context.Context, repositoryI
 	return c.Client.Do(req)
 }
 
+func (c *RawClient) AttachBranchWithBody(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAttachBranchRequestWithBody(c.Server, repositoryId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) AttachBranch(ctx context.Context, repositoryId openapi_types.UUID, body AttachBranchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewAttachBranchRequest(c.Server, repositoryId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *RawClient) ListRepositoryDecisions(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListRepositoryDecisionsRequest(c.Server, repositoryId)
 	if err != nil {
@@ -4917,6 +5048,74 @@ func NewPackagesAffectedRequest(server string, advisoryId openapi_types.UUID) (*
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewAdvisoryImpactRequest generates requests for AdvisoryImpact
+func NewAdvisoryImpactRequest(server string, identifier string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "identifier", runtime.ParamLocationPath, identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/advisories/%s/impact", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewFillAdvisoryImpactRequest generates requests for FillAdvisoryImpact
+func NewFillAdvisoryImpactRequest(server string, identifier string) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "identifier", runtime.ParamLocationPath, identifier)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/advisories/%s/impact/fill", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -7912,6 +8111,53 @@ func NewGetLatestRecordedAssessmentRequest(server string, repositoryId openapi_t
 	return req, nil
 }
 
+// NewAttachBranchRequest calls the generic AttachBranch builder with application/json body
+func NewAttachBranchRequest(server string, repositoryId openapi_types.UUID, body AttachBranchJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewAttachBranchRequestWithBody(server, repositoryId, "application/json", bodyReader)
+}
+
+// NewAttachBranchRequestWithBody generates requests for AttachBranch with any type of body
+func NewAttachBranchRequestWithBody(server string, repositoryId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "repository_id", runtime.ParamLocationPath, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/repositories/%s/branches", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListRepositoryDecisionsRequest generates requests for ListRepositoryDecisions
 func NewListRepositoryDecisionsRequest(server string, repositoryId openapi_types.UUID) (*http.Request, error) {
 	var err error
@@ -9255,6 +9501,12 @@ type ClientWithResponsesInterface interface {
 	// PackagesAffectedWithResponse request
 	PackagesAffectedWithResponse(ctx context.Context, advisoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*PackagesAffectedResponse, error)
 
+	// AdvisoryImpactWithResponse request
+	AdvisoryImpactWithResponse(ctx context.Context, identifier string, reqEditors ...RequestEditorFn) (*AdvisoryImpactResponse, error)
+
+	// FillAdvisoryImpactWithResponse request
+	FillAdvisoryImpactWithResponse(ctx context.Context, identifier string, reqEditors ...RequestEditorFn) (*FillAdvisoryImpactResponse, error)
+
 	// GetArtifactWithResponse request
 	GetArtifactWithResponse(ctx context.Context, artifactId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetArtifactResponse, error)
 
@@ -9446,6 +9698,11 @@ type ClientWithResponsesInterface interface {
 
 	// GetLatestRecordedAssessmentWithResponse request
 	GetLatestRecordedAssessmentWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams, reqEditors ...RequestEditorFn) (*GetLatestRecordedAssessmentResponse, error)
+
+	// AttachBranchWithBodyWithResponse request with any body
+	AttachBranchWithBodyWithResponse(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AttachBranchResponse, error)
+
+	AttachBranchWithResponse(ctx context.Context, repositoryId openapi_types.UUID, body AttachBranchJSONRequestBody, reqEditors ...RequestEditorFn) (*AttachBranchResponse, error)
 
 	// ListRepositoryDecisionsWithResponse request
 	ListRepositoryDecisionsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*ListRepositoryDecisionsResponse, error)
@@ -9664,6 +9921,57 @@ func (r PackagesAffectedResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r PackagesAffectedResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type AdvisoryImpactResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *ImpactAnswer
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r AdvisoryImpactResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AdvisoryImpactResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type FillAdvisoryImpactResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RunBatch
+	JSON401      *Problem
+	JSON403      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r FillAdvisoryImpactResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r FillAdvisoryImpactResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -11022,6 +11330,31 @@ func (r GetLatestRecordedAssessmentResponse) StatusCode() int {
 	return 0
 }
 
+type AttachBranchResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RepositoryRef
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r AttachBranchResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r AttachBranchResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListRepositoryDecisionsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -11622,6 +11955,24 @@ func (c *ClientWithResponses) PackagesAffectedWithResponse(ctx context.Context, 
 		return nil, err
 	}
 	return ParsePackagesAffectedResponse(rsp)
+}
+
+// AdvisoryImpactWithResponse request returning *AdvisoryImpactResponse
+func (c *ClientWithResponses) AdvisoryImpactWithResponse(ctx context.Context, identifier string, reqEditors ...RequestEditorFn) (*AdvisoryImpactResponse, error) {
+	rsp, err := c.AdvisoryImpact(ctx, identifier, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAdvisoryImpactResponse(rsp)
+}
+
+// FillAdvisoryImpactWithResponse request returning *FillAdvisoryImpactResponse
+func (c *ClientWithResponses) FillAdvisoryImpactWithResponse(ctx context.Context, identifier string, reqEditors ...RequestEditorFn) (*FillAdvisoryImpactResponse, error) {
+	rsp, err := c.FillAdvisoryImpact(ctx, identifier, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseFillAdvisoryImpactResponse(rsp)
 }
 
 // GetArtifactWithResponse request returning *GetArtifactResponse
@@ -12230,6 +12581,23 @@ func (c *ClientWithResponses) GetLatestRecordedAssessmentWithResponse(ctx contex
 	return ParseGetLatestRecordedAssessmentResponse(rsp)
 }
 
+// AttachBranchWithBodyWithResponse request with arbitrary body returning *AttachBranchResponse
+func (c *ClientWithResponses) AttachBranchWithBodyWithResponse(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*AttachBranchResponse, error) {
+	rsp, err := c.AttachBranchWithBody(ctx, repositoryId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAttachBranchResponse(rsp)
+}
+
+func (c *ClientWithResponses) AttachBranchWithResponse(ctx context.Context, repositoryId openapi_types.UUID, body AttachBranchJSONRequestBody, reqEditors ...RequestEditorFn) (*AttachBranchResponse, error) {
+	rsp, err := c.AttachBranch(ctx, repositoryId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseAttachBranchResponse(rsp)
+}
+
 // ListRepositoryDecisionsWithResponse request returning *ListRepositoryDecisionsResponse
 func (c *ClientWithResponses) ListRepositoryDecisionsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*ListRepositoryDecisionsResponse, error) {
 	rsp, err := c.ListRepositoryDecisions(ctx, repositoryId, reqEditors...)
@@ -12715,6 +13083,107 @@ func ParsePackagesAffectedResponse(rsp *http.Response) (*PackagesAffectedRespons
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAdvisoryImpactResponse parses an HTTP response from a AdvisoryImpactWithResponse call
+func ParseAdvisoryImpactResponse(rsp *http.Response) (*AdvisoryImpactResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AdvisoryImpactResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest ImpactAnswer
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseFillAdvisoryImpactResponse parses an HTTP response from a FillAdvisoryImpactWithResponse call
+func ParseFillAdvisoryImpactResponse(rsp *http.Response) (*FillAdvisoryImpactResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &FillAdvisoryImpactResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RunBatch
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest Problem
@@ -15249,6 +15718,53 @@ func ParseGetLatestRecordedAssessmentResponse(rsp *http.Response) (*GetLatestRec
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Assessment
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseAttachBranchResponse parses an HTTP response from a AttachBranchWithResponse call
+func ParseAttachBranchResponse(rsp *http.Response) (*AttachBranchResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &AttachBranchResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RepositoryRef
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
