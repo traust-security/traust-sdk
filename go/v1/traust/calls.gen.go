@@ -35,6 +35,22 @@ func (c *Client) AdvisoriesFor(ctx context.Context, findingId openapi_types.UUID
 	return *found, nil
 }
 
+// AdvisoryImpact is GET /v1/advisories/{identifier}/impact: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) AdvisoryImpact(ctx context.Context, identifier string) (*ImpactAnswer, error) {
+	raw, err := c.ClientInterface.AdvisoryImpact(ctx, identifier)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseAdvisoryImpactResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
 // Affected is GET /v1/advisories/{advisoryId}/affected: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([]AffectedDependency, error) {
 	raw, err := c.ClientInterface.Affected(ctx, advisoryId)
@@ -53,6 +69,22 @@ func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([
 		return nil, err
 	}
 	return *found, nil
+}
+
+// AttachBranch is POST /v1/repositories/{repositoryId}/branches: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) AttachBranch(ctx context.Context, repositoryId openapi_types.UUID, body AttachBranchJSONRequestBody) (*RepositoryRef, error) {
+	raw, err := c.ClientInterface.AttachBranch(ctx, repositoryId, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseAttachBranchResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
 // Checkpoint is POST /v1/repositories/{repositoryId}/ledger/checkpoint: the decoded body, or a *ProblemError when core refuses.
@@ -233,6 +265,22 @@ func (c *Client) FeedStatuses(ctx context.Context) ([]FeedStatus, error) {
 		return nil, err
 	}
 	return *found, nil
+}
+
+// FillAdvisoryImpact is POST /v1/advisories/{identifier}/impact/fill: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) FillAdvisoryImpact(ctx context.Context, identifier string) (*RunBatch, error) {
+	raw, err := c.ClientInterface.FillAdvisoryImpact(ctx, identifier)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseFillAdvisoryImpactResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
 // FindAdvisory is GET /v1/advisories: the decoded body, or a *ProblemError when core refuses.

@@ -66,8 +66,10 @@ def normalize_problems(spec: dict) -> None:
 
 
 # Enums whose constants carry their type name, so a value shared with another enum never renames
-# existing constants (SourceType beside SourceChannel; RunOrderReason's not_found, bad_request).
-NAMESPACED = ("SourceType", "RunOrderReason")
+# existing constants (SourceType beside SourceChannel; RunOrderReason's not_found, bad_request;
+# Validity's confirmed beside ReviewItemStatus and ValidationVerdict, whose naming oapi-codegen
+# flipped when the impact schemas joined the spec).
+NAMESPACED = ("SourceType", "RunOrderReason", "Validity")
 
 
 def _camel(value: str) -> str:
@@ -84,8 +86,11 @@ def main(argv: list[str]) -> int:
     normalize_problems(spec)
     for name in NAMESPACED:
         schema = spec["components"]["schemas"].get(name)
-        if schema is not None:
-            schema["x-enum-varnames"] = [name + _camel(value) for value in schema["enum"]]
+        if schema is None:
+            # A namespaced enum gone from the spec means its pinned constant names silently
+            # revert to oapi-codegen's bare ones — a consumer-breaking rename. Refuse instead.
+            raise SystemExit(f"normalize: namespaced enum {name} is gone from core's spec")
+        schema["x-enum-varnames"] = [name + _camel(value) for value in schema["enum"]]
     spec["openapi"] = "3.0.3"
     with open(argv[2], "w", encoding="utf-8") as handle:
         json.dump(spec, handle, indent=2)

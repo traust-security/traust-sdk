@@ -21,7 +21,7 @@ err = r.Run(ctx)
 | I want to… | Use | Core operations |
 |---|---|---|
 | onboard a product and its repositories | `c` | `PlanOnboarding` (dry run) → `Onboard` |
-| keep inventory current | `c` | `RegisterRef` (a commit and its branch), `SetOwners` (the teams a source reports; core stamps when ownership opens and closes) |
+| keep inventory current | `c` | `RegisterRef` (a commit and its branch), `AttachBranch` (a line to track: its current head, the Snyk-style "scan this branch"), `SetOwners` (the teams a source reports; core stamps when ownership opens and closes) |
 | look up inventory | `c` | `ListRepositories` (by `url`), `ListRefs` (by `sha`), `ListProducts`, `ListOwners`, `ListProductsOf`, `ListOwnedRepositories` |
 | ask for a run (a person's token) | `c` | `Submit` with `Config: &[]traust.ConfigDigest{pack.Pin()}`, the pack version it must run under |
 | run queued pack commands | `ops.Runner` + `ops.ProcessExecutor` or your `Executor` | `Claim` → `GetOrderManifest` → your run → `Complete` (the runner calls these, you don't) |
@@ -31,7 +31,7 @@ err = r.Run(ctx)
 | work findings (a person's token) | `c` | `ReviewQueue`, `Decide`, `Restate` |
 | follow remediation | `c` | `ListWorkItems`, `PrepareRemediation`, `PrepareVerification`, `ListVerifications` |
 | check the ledger | `c` | `ListLayers`, `ListEvents`, `VerifyLayer`, `Checkpoint`; core writes ledger events when records and decisions land, you never append them |
-| find exposure | `c` | `GetAdvisory`, `Affected`, `PackagesAffected`, `Dependents`, `Dependencies`, `ListImpacts`, `SummarizeExposure`, `ExposureTimeline`, `FeedStatuses` |
+| find exposure | `c` | `GetAdvisory`, `AdvisoryImpact` (every tracked ref's outcome for one advisory, its gaps counted), `FillAdvisoryImpact` (queue what completes it, one batch), `Affected`, `PackagesAffected`, `Dependents`, `Dependencies`, `ListImpacts`, `SummarizeExposure`, `ExposureTimeline`, `FeedStatuses` |
 | read validation | `c` | `ListValidationAttempts` |
 | show a dashboard, rollup or export | `c` | `GetInsight` (one call for every insight: findings-rollup, exposure, sla, sarif, …) |
 | react to changes | `c` | `ReadFeed` / `ReadFeedAll` |
