@@ -92,11 +92,37 @@ func GenerateStorage(storageSourceDir, schemasDir, storageOutDir, fixtureDir, sa
 	); err != nil {
 		return err
 	}
-	return generateProjectionIdentifiers(
+	if err := generateProjectionIdentifiers(
 		filepath.Join(storageOutDir, "projection_identifiers.go"),
 		contractsRef,
 		vocabulary,
-	)
+	); err != nil {
+		return err
+	}
+	return generateStorageRevision(storageSourceDir, filepath.Join(storageOutDir, "revision.go"), contractsRef)
+}
+
+func generateStorageRevision(source, output, ref string) error {
+	path := filepath.Join(source, "..", "..", "src", "traust_contracts", filepath.Base(source), "storage", "sql.py")
+	const script = `import ast,pathlib,sys
+nodes = ast.parse(pathlib.Path(sys.argv[1]).read_text(encoding="utf-8")).body
+values = [ast.literal_eval(node.value) for node in nodes
+          if isinstance(node, ast.Assign)
+          and any(isinstance(target, ast.Name) and target.id == "REVISION" for target in node.targets)]
+if len(values) != 1 or type(values[0]) is not int or values[0] < 1:
+    raise ValueError("expected one positive integer REVISION assignment")
+print(values[0])
+`
+	data, err := exec.Command("python3", "-c", script, path).CombinedOutput()
+	if err != nil {
+		return fmt.Errorf("read storage revision from %s: %w: %s", path, err, data)
+	}
+	revision, err := strconv.Atoi(strings.TrimSpace(string(data)))
+	if err != nil {
+		return fmt.Errorf("parse storage revision from %s: %w", path, err)
+	}
+	content := fmt.Sprintf("// Code generated from traust-contracts %s storage metadata. DO NOT EDIT.\n\npackage storage\n\nconst contractRevision = %d\n", ref, revision)
+	return formatAndWrite(output, []byte(content))
 }
 
 func generateSQL(source, ddlOutput, queriesOutput, ref string) error {

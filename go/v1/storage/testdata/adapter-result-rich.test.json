@@ -1,0 +1,53 @@
+{
+  "target": "example/repository",
+  "scanned_at": "2026-10-23T00:00:00Z",
+  "metadata": {"tool": "native-scanner", "scanner_version": "1.0"},
+  "findings": [{
+    "id": "EXAMPLE-abc1234-001",
+    "title": "Historical dependency finding",
+    "severity": "high",
+    "cwes": ["CWE-79"],
+    "locations": [{"path": "package.json", "lines": "12", "description": "Dependency"}],
+    "description": "A historical finding with the complete authored description retained unchanged.",
+    "remediation": "Upgrade the affected dependency.",
+    "asvs_references": ["V5.1.1"],
+    "peach_references": ["PEACH-P"],
+    "owasp_llm_references": ["LLM01"],
+    "cvss": {"score": 7.5, "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N"},
+    "capec": ["CAPEC-63"],
+    "evidence": [{"code": "dependency@1.0.0", "language": "text", "caption": "Version"}],
+    "attack_pattern": "An attacker reaches the affected dependency.",
+    "category": "historical-free-form-category",
+    "validation_status": "not_verified",
+    "source_findings": ["native:advisory"],
+    "origin": "impact-analysis",
+    "pqc_classification": "pqc-adoption",
+    "remediation_effort": "moderate",
+    "blocked_external": false,
+    "isolation_dimensions": ["privilege"],
+    "isolation_boundary": "tenant-api",
+    "disposition": {
+      "validity": "not_verified",
+      "resolution": "open",
+      "last_updated": "2026-10-23T00:00:00Z",
+      "events": []
+    },
+    "fingerprint": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "fingerprint_algo": "v3",
+    "effective_severity": "high",
+    "passes": [1, 2],
+    "dependency": {
+      "advisory": "GHSA-example",
+      "module": "example-package",
+      "ecosystem": "npm",
+      "purl": "pkg:npm/example-package@1.0.0",
+      "vulnerable_range": "<2.0.0",
+      "fixed_version": "2.0.0",
+      "installed_version": "1.0.0",
+      "evidence_level": "manifest",
+      "classification": "likely_affected",
+      "impact_artifact": "impact-analysis.json"
+    }
+  }],
+  "summary": {"total": 1, "by_severity": {"high": 1}}
+}

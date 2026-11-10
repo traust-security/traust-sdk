@@ -430,6 +430,10 @@ func (s *sqlStore) projectThreatModel(
 		if err != nil {
 			return projectionError(projectionThreat, projectionFieldAttackRefs, err)
 		}
+		reviewSurfaces, err := optionalProjectionJSON(threat.ReviewSurfaces)
+		if err != nil {
+			return projectionError(projectionThreat, projectionFieldRow, err)
+		}
 		// Legacy labels: present only on a threat not yet re-rated with the
 		// OWASP Risk Rating Methodology. The legacy score orders those
 		// threats; a rated one orders by severity and has no score.
@@ -488,6 +492,7 @@ func (s *sqlStore) projectThreatModel(
 			// Python projector writes nil here too.
 			isolationBoundaries: nil,
 			isolationDimensions: dimensions,
+			reviewSurfaces:      reviewSurfaces,
 		}); err != nil {
 			return projectionError(projectionThreat, projectionFieldRow, err)
 		}

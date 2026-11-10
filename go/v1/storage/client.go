@@ -9,7 +9,6 @@ import (
 
 const (
 	storageFormatVersion   = "v1"
-	contractRevision       = 1
 	minimumPostgresVersion = 140000
 )
 
