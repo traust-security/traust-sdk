@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 105cca4f16e2bbf52349156f1971f1dba6f53c22. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package validate
 
@@ -1544,6 +1544,382 @@ var Schemas = map[string]string{
   }
 }
 `,
+	"cve-replay": `{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/traust-contracts/artifacts_schema/v1/cve-replay.schema.json",
+  "title": "CVE replay audit snapshot",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "audit",
+    "watermark",
+    "checks",
+    "revision"
+  ],
+  "properties": {
+    "audit": {
+      "$ref": "#/$defs/audit"
+    },
+    "watermark": {
+      "anyOf": [
+        {
+          "type": "string",
+          "format": "date-time"
+        },
+        {
+          "type": "null"
+        }
+      ]
+    },
+    "checks": {
+      "type": "array",
+      "items": {
+        "$ref": "#/$defs/candidate"
+      }
+    },
+    "revision": {
+      "type": "integer",
+      "minimum": 1
+    }
+  },
+  "$defs": {
+    "audit": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "repository_ref_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "audit_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "report_artifact_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "audited_commit": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+        },
+        "audited_at": {
+          "type": "string",
+          "format": "date-time"
+        }
+      },
+      "required": [
+        "repository_id",
+        "repository_ref_id",
+        "audit_id",
+        "report_artifact_id",
+        "repository",
+        "audited_commit",
+        "audited_at"
+      ]
+    },
+    "candidate": {
+      "type": "object",
+      "additionalProperties": false,
+      "properties": {
+        "repository_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "repository_ref_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "audit_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "report_artifact_id": {
+          "type": "string",
+          "format": "uuid"
+        },
+        "repository": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "audited_commit": {
+          "type": "string",
+          "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+        },
+        "audited_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "advisory_id": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "aliases": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "published_at": {
+          "anyOf": [
+            {
+              "type": "string",
+              "format": "date-time"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "withdrawn": {
+          "type": "boolean",
+          "default": false,
+          "description": "Source advisory withdrawal recorded by the replay classifier; omission preserves historical non-withdrawn candidates."
+        },
+        "checked_at": {
+          "type": "string",
+          "format": "date-time"
+        },
+        "severity": {
+          "type": "string",
+          "enum": [
+            "critical",
+            "high",
+            "medium",
+            "low",
+            "informational",
+            "unrated"
+          ]
+        },
+        "summary": {
+          "type": "string"
+        },
+        "present_at_audit": {
+          "type": [
+            "boolean",
+            "null"
+          ]
+        },
+        "reviewer": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "presence_identity_source": {
+          "enum": [
+            "local-user",
+            "database",
+            "oidc",
+            null
+          ]
+        },
+        "presence_evidence": {
+          "anyOf": [
+            {
+              "type": "string",
+              "minLength": 1,
+              "pattern": "\\S"
+            },
+            {
+              "type": "null"
+            }
+          ]
+        },
+        "matched_advisory_ids": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "uniqueItems": true
+        },
+        "audit_verdict": {
+          "enum": [
+            "detected",
+            "unclear",
+            "missed",
+            "not_applicable"
+          ]
+        },
+        "reason": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "source": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "requires_human_review": {
+          "const": true
+        }
+      },
+      "required": [
+        "repository_id",
+        "repository_ref_id",
+        "audit_id",
+        "report_artifact_id",
+        "repository",
+        "audited_commit",
+        "audited_at",
+        "advisory_id",
+        "aliases",
+        "published_at",
+        "checked_at",
+        "severity",
+        "summary",
+        "present_at_audit",
+        "reviewer",
+        "presence_identity_source",
+        "presence_evidence",
+        "matched_advisory_ids",
+        "audit_verdict",
+        "reason",
+        "source",
+        "requires_human_review"
+      ],
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "present_at_audit": {
+                "type": "boolean"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "reviewer": {
+                "type": "string",
+                "pattern": "^human:\\S(?:.*\\S)?$"
+              },
+              "presence_identity_source": {
+                "enum": [
+                  "local-user",
+                  "database",
+                  "oidc"
+                ]
+              },
+              "presence_evidence": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              }
+            }
+          },
+          "else": {
+            "properties": {
+              "reviewer": {
+                "type": "null"
+              },
+              "presence_identity_source": {
+                "type": "null"
+              },
+              "presence_evidence": {
+                "type": "null"
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "audit_verdict": {
+                "const": "missed"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "present_at_audit": {
+                "const": true
+              },
+              "matched_advisory_ids": {
+                "maxItems": 0
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "audit_verdict": {
+                "const": "detected"
+              }
+            }
+          },
+          "then": {
+            "properties": {
+              "present_at_audit": {
+                "enum": [
+                  true,
+                  null
+                ]
+              },
+              "matched_advisory_ids": {
+                "minItems": 1
+              }
+            }
+          }
+        },
+        {
+          "if": {
+            "properties": {
+              "audit_verdict": {
+                "const": "not_applicable"
+              }
+            }
+          },
+          "then": {
+            "anyOf": [
+              {
+                "properties": {
+                  "present_at_audit": {
+                    "const": false
+                  }
+                }
+              },
+              {
+                "required": [
+                  "withdrawn"
+                ],
+                "properties": {
+                  "withdrawn": {
+                    "const": true
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ]
+    }
+  }
+}
+`,
 	"doc-variance": `{
   "$schema": "https://json-schema.org/draft/2020-12/schema",
   "$id": "https://example.com/traust-contracts/artifacts_schema/v1/doc-variance.schema.json",
@@ -1712,6 +2088,245 @@ var Schemas = map[string]string{
               "type": "string"
             },
             "description": "threat-model rows (e.g. TM-042) that carry this discrepancy"
+          }
+        }
+      }
+    }
+  }
+}
+`,
+	"finding-claim": `{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/traust-contracts/artifacts_schema/v1/finding-claim.schema.json",
+  "title": "Reviewed finding claim revision",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "finding_id",
+    "repository_id",
+    "assessment_id",
+    "label",
+    "base",
+    "claim"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "finding_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "repository_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "assessment_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "label": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "\\S"
+    },
+    "base": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "fingerprint_algo",
+        "fingerprint",
+        "title",
+        "claim_decision_id",
+        "occurrence_ids"
+      ],
+      "properties": {
+        "fingerprint_algo": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "claim_decision_id": {
+          "type": [
+            "string",
+            "null"
+          ],
+          "format": "uuid"
+        },
+        "occurrence_ids": {
+          "type": "array",
+          "uniqueItems": true,
+          "items": {
+            "type": "string",
+            "format": "uuid"
+          }
+        }
+      }
+    },
+    "claim": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "title",
+        "description",
+        "fingerprint_algo",
+        "fingerprint",
+        "cwes",
+        "category",
+        "locations"
+      ],
+      "properties": {
+        "title": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "description": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "fingerprint_algo": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "fingerprint": {
+          "type": "string",
+          "minLength": 1,
+          "pattern": "\\S"
+        },
+        "cwes": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "pattern": "^CWE-[0-9]+$"
+          },
+          "uniqueItems": true
+        },
+        "category": {
+          "type": [
+            "string",
+            "null"
+          ]
+        },
+        "locations": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "path",
+              "line_start",
+              "line_end",
+              "symbol"
+            ],
+            "properties": {
+              "path": {
+                "type": "string",
+                "minLength": 1,
+                "pattern": "\\S"
+              },
+              "line_start": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1
+              },
+              "line_end": {
+                "type": [
+                  "integer",
+                  "null"
+                ],
+                "minimum": 1
+              },
+              "symbol": {
+                "type": [
+                  "string",
+                  "null"
+                ]
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+`,
+	"finding-intake": `{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/traust-contracts/artifacts_schema/v1/finding-intake.schema.json",
+  "title": "Original native scanner finding bindings",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "schema_version",
+    "repository_id",
+    "repository_ref_id",
+    "repository",
+    "commit",
+    "bindings"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": "1.0"
+    },
+    "repository_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "repository_ref_id": {
+      "type": "string",
+      "format": "uuid"
+    },
+    "repository": {
+      "type": "string",
+      "format": "uri",
+      "pattern": "^https://"
+    },
+    "commit": {
+      "type": "string",
+      "pattern": "^(?:[0-9a-f]{40}|[0-9a-f]{64})$"
+    },
+    "bindings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "label",
+          "fingerprint_algo",
+          "fingerprint"
+        ],
+        "properties": {
+          "label": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "fingerprint_algo": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
+          },
+          "fingerprint": {
+            "type": "string",
+            "minLength": 1,
+            "pattern": "\\S"
           }
         }
       }
@@ -5431,13 +6046,19 @@ var Schemas = map[string]string{
     "comparison": {
       "$ref": "#/$defs/comparison"
     },
+    "fork": {
+      "type": "boolean",
+      "description": "Whether the forge calls this repository a fork; absent when it didn't say. false is the forge's answer that it isn't one, which an absent fork_of alone cannot tell from no answer."
+    },
     "fork_of": {
       "type": "string",
       "format": "uri",
       "pattern": "^https://",
-      "description": "The repository this one forks, as the forge reported it (https URL); absent when it isn't a fork. The observation that brings an upstream into the inventory."
+      "description": "The repository this one forks, as the forge reported it (https URL); absent when it isn't a fork or the forge named no parent. The observation that brings an upstream into the inventory."
     }
   },
+  "if": {"required": ["fork_of"]},
+  "then": {"not": {"properties": {"fork": {"const": false}}, "required": ["fork"]}},
   "additionalProperties": false,
   "$defs": {
     "comparison_status": {

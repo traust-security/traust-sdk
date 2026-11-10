@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 105cca4f16e2bbf52349156f1971f1dba6f53c22. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package enums
 
@@ -20,6 +20,7 @@ const (
 	AssessmentKindPqcReadinessCanonical    AssessmentKind = "pqc_readiness"
 	AssessmentKindFuzz                     AssessmentKind = "fuzz"
 	AssessmentKindRepoStateCanonical       AssessmentKind = "repo_state"
+	AssessmentKindCveReplay                AssessmentKind = "cve_replay"
 	AssessmentKindAudit                    AssessmentKind = "audit"
 	AssessmentKindTriage                   AssessmentKind = "triage"
 	AssessmentKindValidation               AssessmentKind = "validation"
@@ -56,6 +57,7 @@ func AssessmentKindValues() []AssessmentKind {
 		AssessmentKindPqcReadinessCanonical,
 		AssessmentKindFuzz,
 		AssessmentKindRepoStateCanonical,
+		AssessmentKindCveReplay,
 		AssessmentKindAudit,
 		AssessmentKindTriage,
 		AssessmentKindValidation,

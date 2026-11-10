@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 105cca4f16e2bbf52349156f1971f1dba6f53c22. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package types
 
@@ -160,6 +160,18 @@ func EncodeCorpusRegistryArtifact(value CorpusRegistry) (Artifact[CorpusRegistry
 	return ParseCorpusRegistryArtifact(payload)
 }
 
+func ParseCveReplayArtifact(payload []byte) (Artifact[CveReplay], error) {
+	return ParseArtifact[CveReplay]("cve-replay", payload)
+}
+
+func EncodeCveReplayArtifact(value CveReplay) (Artifact[CveReplay], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[CveReplay]{}, err
+	}
+	return ParseCveReplayArtifact(payload)
+}
+
 func ParseDocVarianceArtifact(payload []byte) (Artifact[DocVariance], error) {
 	return ParseArtifact[DocVariance]("doc-variance", payload)
 }
@@ -170,6 +182,30 @@ func EncodeDocVarianceArtifact(value DocVariance) (Artifact[DocVariance], error)
 		return Artifact[DocVariance]{}, err
 	}
 	return ParseDocVarianceArtifact(payload)
+}
+
+func ParseFindingClaimArtifact(payload []byte) (Artifact[FindingClaim], error) {
+	return ParseArtifact[FindingClaim]("finding-claim", payload)
+}
+
+func EncodeFindingClaimArtifact(value FindingClaim) (Artifact[FindingClaim], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[FindingClaim]{}, err
+	}
+	return ParseFindingClaimArtifact(payload)
+}
+
+func ParseFindingIntakeArtifact(payload []byte) (Artifact[FindingIntake], error) {
+	return ParseArtifact[FindingIntake]("finding-intake", payload)
+}
+
+func EncodeFindingIntakeArtifact(value FindingIntake) (Artifact[FindingIntake], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[FindingIntake]{}, err
+	}
+	return ParseFindingIntakeArtifact(payload)
 }
 
 func ParseFleetFixArtifact(payload []byte) (Artifact[FleetFix], error) {

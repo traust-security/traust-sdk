@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 105cca4f16e2bbf52349156f1971f1dba6f53c22. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package enums
 
@@ -44,6 +44,7 @@ var enumNormalizationRegistry = map[string]map[string]Normalization{
 	"compliance_verdict_source":         {},
 	"cross_repo_propagation":            {},
 	"crypto_governance_class":           {},
+	"cve_replay_verdict":                {},
 	"cvss_attack_vector":                {},
 	"cvss_privileges_required":          {},
 	"cvss_user_interaction":             {},
@@ -90,6 +91,7 @@ var enumNormalizationRegistry = map[string]map[string]Normalization{
 	"fuzz_gap_reason":                       {},
 	"fuzz_run_outcome":                      {},
 	"fuzz_sanitizer":                        {},
+	"identity_source":                       {},
 	"impact_classification":                 {},
 	"impact_evidence_binary_linked_library": {},
 	"impact_evidence_binary_string_scan":    {},
