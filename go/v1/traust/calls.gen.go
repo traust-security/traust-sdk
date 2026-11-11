@@ -1371,6 +1371,22 @@ func (c *Client) RecordRemediation(ctx context.Context, body RecordRemediationJS
 	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
+// RecordRemediationProgress is POST /v1/remediations/{workItemId}/progress: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) RecordRemediationProgress(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationProgressJSONRequestBody) (*WorkItem, error) {
+	raw, err := c.ClientInterface.RecordRemediationProgress(ctx, workItemId, body)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseRecordRemediationProgressResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
 // RecordRemediationPullRequest is POST /v1/remediations/{workItemId}/pull-request: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordRemediationPullRequest(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationPullRequestJSONRequestBody) (*WorkItem, error) {
 	raw, err := c.ClientInterface.RecordRemediationPullRequest(ctx, workItemId, body)

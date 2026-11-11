@@ -36,6 +36,7 @@ const (
 	AssessmentKindCloudConfig1     AssessmentKind = "cloud_config"
 	AssessmentKindCompliance       AssessmentKind = "compliance"
 	AssessmentKindContainer        AssessmentKind = "container"
+	AssessmentKindCveReplay        AssessmentKind = "cve_replay"
 	AssessmentKindFleetFix         AssessmentKind = "fleet_fix"
 	AssessmentKindFuzz             AssessmentKind = "fuzz"
 	AssessmentKindImpact           AssessmentKind = "impact"
@@ -777,6 +778,14 @@ type Checkpoint struct {
 	Warning *string `json:"warning"`
 }
 
+// ClaimLocation defines model for ClaimLocation.
+type ClaimLocation struct {
+	LineEnd   *int    `json:"line_end"`
+	LineStart *int    `json:"line_start"`
+	Path      string  `json:"path"`
+	Symbol    *string `json:"symbol"`
+}
+
 // ClaimRequest defines model for ClaimRequest.
 type ClaimRequest struct {
 	Assets       *[]string           `json:"assets"`
@@ -1138,13 +1147,18 @@ type FindingView struct {
 	EffectiveSeverity *Severity    `json:"effective_severity,omitempty"`
 
 	// Finding 3b · one weakness or vulnerability in a repository, identified by fingerprint.
-	Finding   Finding         `json:"finding"`
-	Labels    *[]FindingLabel `json:"labels,omitempty"`
-	Locations *[]Location     `json:"locations,omitempty"`
+	Finding   Finding                       `json:"finding"`
+	Labels    *[]FindingLabel               `json:"labels,omitempty"`
+	Locations *[]FindingView_Locations_Item `json:"locations,omitempty"`
 
 	// Occurrence A finding as one assessment reported it.
 	Occurrence *Occurrence `json:"occurrence,omitempty"`
 	SlaDue     *time.Time  `json:"sla_due"`
+}
+
+// FindingView_Locations_Item defines model for FindingView.locations.Item.
+type FindingView_Locations_Item struct {
+	union json.RawMessage
 }
 
 // FixStrategy defines model for FixStrategy.
@@ -1624,6 +1638,14 @@ type Product struct {
 	UpdatedAt *time.Time          `json:"updated_at"`
 }
 
+// ProgressReport An attempt's end reported from outside a run: merged (the commit it merged as) or
+// abandoned — a run's own statuses come from its report, never this door.
+type ProgressReport struct {
+	Actor    *string           `json:"actor"`
+	MergeSha *string           `json:"merge_sha"`
+	Status   RemediationStatus `json:"status"`
+}
+
 // Provenance defines model for Provenance.
 type Provenance struct {
 	Artifact   *ArtifactRef       `json:"artifact,omitempty"`
@@ -1704,6 +1726,7 @@ type RemediationItem struct {
 
 // RemediationRecordBody defines model for RemediationRecordBody.
 type RemediationRecordBody struct {
+	Diff       *string            `json:"diff"`
 	Payload    string             `json:"payload"`
 	Provenance Provenance         `json:"provenance"`
 	RunOrderId openapi_types.UUID `json:"run_order_id"`
@@ -2157,8 +2180,12 @@ type WorkItem struct {
 	FixCommit  *string              `json:"fix_commit"`
 
 	// Fork Where a fix is pushed: a private mirror of the upstream, or the repository itself.
-	Fork            *Fork               `json:"fork,omitempty"`
-	OpenedAt        time.Time           `json:"opened_at"`
+	Fork     *Fork        `json:"fork,omitempty"`
+	OpenedAt time.Time    `json:"opened_at"`
+	Patch    *ArtifactRef `json:"patch,omitempty"`
+
+	// PatchRefusal Secret categories when recording withholds a patch for removed/context-line secrets; null on report-only calls and subsequent reads. Not persisted.
+	PatchRefusal    *string             `json:"patch_refusal"`
 	Report          *ArtifactRef        `json:"report,omitempty"`
 	ReportedBy      *openapi_types.UUID `json:"reported_by"`
 	RepositoryRefId openapi_types.UUID  `json:"repository_ref_id"`
@@ -2419,6 +2446,9 @@ type RecordRemediationJSONRequestBody = RemediationRecordBody
 
 // CreateRemediationJSONRequestBody defines body for CreateRemediation for application/json ContentType.
 type CreateRemediationJSONRequestBody = RemediationRequest
+
+// RecordRemediationProgressJSONRequestBody defines body for RecordRemediationProgress for application/json ContentType.
+type RecordRemediationProgressJSONRequestBody = ProgressReport
 
 // RecordRemediationPullRequestJSONRequestBody defines body for RecordRemediationPullRequest for application/json ContentType.
 type RecordRemediationPullRequestJSONRequestBody = ExternalRef
@@ -2997,6 +3027,68 @@ func (t *Finding_Kind) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsLocation returns the union data inside the FindingView_Locations_Item as a Location
+func (t FindingView_Locations_Item) AsLocation() (Location, error) {
+	var body Location
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromLocation overwrites any union data inside the FindingView_Locations_Item as the provided Location
+func (t *FindingView_Locations_Item) FromLocation(v Location) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeLocation performs a merge with any union data inside the FindingView_Locations_Item, using the provided Location
+func (t *FindingView_Locations_Item) MergeLocation(v Location) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsClaimLocation returns the union data inside the FindingView_Locations_Item as a ClaimLocation
+func (t FindingView_Locations_Item) AsClaimLocation() (ClaimLocation, error) {
+	var body ClaimLocation
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromClaimLocation overwrites any union data inside the FindingView_Locations_Item as the provided ClaimLocation
+func (t *FindingView_Locations_Item) FromClaimLocation(v ClaimLocation) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeClaimLocation performs a merge with any union data inside the FindingView_Locations_Item, using the provided ClaimLocation
+func (t *FindingView_Locations_Item) MergeClaimLocation(v ClaimLocation) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t FindingView_Locations_Item) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *FindingView_Locations_Item) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsReviewReason returns the union data inside the ReviewItem_Reason as a ReviewReason
 func (t ReviewItem_Reason) AsReviewReason() (ReviewReason, error) {
 	var body ReviewReason
@@ -3386,6 +3478,11 @@ type ClientInterface interface {
 
 	// GetRemediation request
 	GetRemediation(ctx context.Context, workItemId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RecordRemediationProgressWithBody request with any body
+	RecordRemediationProgressWithBody(ctx context.Context, workItemId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RecordRemediationProgress(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationProgressJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// RecordRemediationPullRequestWithBody request with any body
 	RecordRemediationPullRequestWithBody(ctx context.Context, workItemId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4297,6 +4394,30 @@ func (c *RawClient) CreateRemediation(ctx context.Context, body CreateRemediatio
 
 func (c *RawClient) GetRemediation(ctx context.Context, workItemId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetRemediationRequest(c.Server, workItemId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) RecordRemediationProgressWithBody(ctx context.Context, workItemId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRecordRemediationProgressRequestWithBody(c.Server, workItemId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) RecordRemediationProgress(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationProgressJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRecordRemediationProgressRequest(c.Server, workItemId, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7642,6 +7763,53 @@ func NewGetRemediationRequest(server string, workItemId openapi_types.UUID) (*ht
 	return req, nil
 }
 
+// NewRecordRemediationProgressRequest calls the generic RecordRemediationProgress builder with application/json body
+func NewRecordRemediationProgressRequest(server string, workItemId openapi_types.UUID, body RecordRemediationProgressJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRecordRemediationProgressRequestWithBody(server, workItemId, "application/json", bodyReader)
+}
+
+// NewRecordRemediationProgressRequestWithBody generates requests for RecordRemediationProgress with any type of body
+func NewRecordRemediationProgressRequestWithBody(server string, workItemId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "work_item_id", runtime.ParamLocationPath, workItemId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/remediations/%s/progress", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewRecordRemediationPullRequestRequest calls the generic RecordRemediationPullRequest builder with application/json body
 func NewRecordRemediationPullRequestRequest(server string, workItemId openapi_types.UUID, body RecordRemediationPullRequestJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -9430,6 +9598,11 @@ type ClientWithResponsesInterface interface {
 	// GetRemediationWithResponse request
 	GetRemediationWithResponse(ctx context.Context, workItemId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetRemediationResponse, error)
 
+	// RecordRemediationProgressWithBodyWithResponse request with any body
+	RecordRemediationProgressWithBodyWithResponse(ctx context.Context, workItemId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordRemediationProgressResponse, error)
+
+	RecordRemediationProgressWithResponse(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationProgressJSONRequestBody, reqEditors ...RequestEditorFn) (*RecordRemediationProgressResponse, error)
+
 	// RecordRemediationPullRequestWithBodyWithResponse request with any body
 	RecordRemediationPullRequestWithBodyWithResponse(ctx context.Context, workItemId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordRemediationPullRequestResponse, error)
 
@@ -10897,6 +11070,33 @@ func (r GetRemediationResponse) StatusCode() int {
 	return 0
 }
 
+type RecordRemediationProgressResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *WorkItem
+	JSON401      *Problem
+	JSON403      *Problem
+	JSON404      *Problem
+	JSON409      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r RecordRemediationProgressResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RecordRemediationProgressResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type RecordRemediationPullRequestResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -12175,6 +12375,23 @@ func (c *ClientWithResponses) GetRemediationWithResponse(ctx context.Context, wo
 		return nil, err
 	}
 	return ParseGetRemediationResponse(rsp)
+}
+
+// RecordRemediationProgressWithBodyWithResponse request with arbitrary body returning *RecordRemediationProgressResponse
+func (c *ClientWithResponses) RecordRemediationProgressWithBodyWithResponse(ctx context.Context, workItemId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordRemediationProgressResponse, error) {
+	rsp, err := c.RecordRemediationProgressWithBody(ctx, workItemId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRecordRemediationProgressResponse(rsp)
+}
+
+func (c *ClientWithResponses) RecordRemediationProgressWithResponse(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationProgressJSONRequestBody, reqEditors ...RequestEditorFn) (*RecordRemediationProgressResponse, error) {
+	rsp, err := c.RecordRemediationProgress(ctx, workItemId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRecordRemediationProgressResponse(rsp)
 }
 
 // RecordRemediationPullRequestWithBodyWithResponse request with arbitrary body returning *RecordRemediationPullRequestResponse
@@ -15032,6 +15249,67 @@ func ParseGetRemediationResponse(rsp *http.Response) (*GetRemediationResponse, e
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRecordRemediationProgressResponse parses an HTTP response from a RecordRemediationProgressWithResponse call
+func ParseRecordRemediationProgressResponse(rsp *http.Response) (*RecordRemediationProgressResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RecordRemediationProgressResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest WorkItem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest Problem
