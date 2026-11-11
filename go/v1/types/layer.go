@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 2e521561f022fe839dd828ddf2185ba3a0a1045f. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package types
 
@@ -33,23 +33,23 @@ type Disposition struct {
 }
 
 type Event struct {
-	Alias           *EventAlias       `json:"alias,omitempty"`
-	AutoAcceptTier  *bool             `json:"auto_accept_tier,omitempty"`
-	Disposition     Disposition       `json:"disposition"`
-	EventId         string            `json:"event_id"`
-	EvidenceGrade   *string           `json:"evidence_grade,omitempty"`
-	EvidenceRefs    []string          `json:"evidence_refs,omitempty"`
-	Finding         *EventFinding     `json:"finding,omitempty"`
-	FindingRef      string            `json:"finding_ref"`
-	Fingerprint     *string           `json:"fingerprint,omitempty"`
-	FingerprintAlgo *string           `json:"fingerprint_algo,omitempty"`
-	HarnessVersion  *string           `json:"harness_version,omitempty"`
-	OccurredAt      *string           `json:"occurred_at,omitempty"`
-	Rationale       string            `json:"rationale"`
-	RecordedAt      string            `json:"recorded_at"`
-	Restatement     *EventRestatement `json:"restatement,omitempty"`
-	RiskWeight      *EventRiskWeight  `json:"risk_weight,omitempty"`
-	Source          EventSource       `json:"source"`
+	Alias           *EventAlias          `json:"alias,omitempty"`
+	AutoAcceptTier  *bool                `json:"auto_accept_tier,omitempty"`
+	Disposition     Disposition          `json:"disposition"`
+	EventId         string               `json:"event_id"`
+	EvidenceGrade   *enums.EvidenceGrade `json:"evidence_grade,omitempty"`
+	EvidenceRefs    []string             `json:"evidence_refs,omitempty"`
+	Finding         *EventFinding        `json:"finding,omitempty"`
+	FindingRef      string               `json:"finding_ref"`
+	Fingerprint     *string              `json:"fingerprint,omitempty"`
+	FingerprintAlgo *string              `json:"fingerprint_algo,omitempty"`
+	HarnessVersion  *string              `json:"harness_version,omitempty"`
+	OccurredAt      *string              `json:"occurred_at,omitempty"`
+	Rationale       string               `json:"rationale"`
+	RecordedAt      string               `json:"recorded_at"`
+	Restatement     *EventRestatement    `json:"restatement,omitempty"`
+	RiskWeight      *EventRiskWeight     `json:"risk_weight,omitempty"`
+	Source          EventSource          `json:"source"`
 }
 
 type EventAlias struct {
@@ -155,14 +155,14 @@ type LayerMetadataFindingAliasesEntry struct {
 }
 
 type ReviewItem struct {
-	Author               string                        `json:"author"`
-	QueueReason          *enums.LayerReviewQueueReason `json:"queue_reason,omitempty"`
-	QueuedAt             string                        `json:"queued_at"`
-	Quote                string                        `json:"quote"`
-	ResolutionNote       *string                       `json:"resolution_note,omitempty"`
-	SourceRef            string                        `json:"source_ref"`
-	Status               enums.ReviewItemStatus        `json:"status"`
-	SubmittedBy          *Actor                        `json:"submitted_by,omitempty"`
-	SuggestedDisposition *Disposition                  `json:"suggested_disposition,omitempty"`
-	SuggestedFindingRef  *string                       `json:"suggested_finding_ref,omitempty"`
+	Author               string                 `json:"author"`
+	QueueReason          *enums.ReviewReason    `json:"queue_reason,omitempty"`
+	QueuedAt             string                 `json:"queued_at"`
+	Quote                string                 `json:"quote"`
+	ResolutionNote       *string                `json:"resolution_note,omitempty"`
+	SourceRef            string                 `json:"source_ref"`
+	Status               enums.ReviewItemStatus `json:"status"`
+	SubmittedBy          *Actor                 `json:"submitted_by,omitempty"`
+	SuggestedDisposition *Disposition           `json:"suggested_disposition,omitempty"`
+	SuggestedFindingRef  *string                `json:"suggested_finding_ref,omitempty"`
 }

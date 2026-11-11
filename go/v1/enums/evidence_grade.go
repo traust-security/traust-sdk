@@ -1,8 +1,8 @@
-// Code generated from traust-contracts 2e521561f022fe839dd828ddf2185ba3a0a1045f. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package enums
 
-// EvidenceGrade — P4 evidence grade carried from the validation report; E2/E3 demote the event to machine-static class regardless of source type.
+// EvidenceGrade — The single evidence-strength scale, E0 strongest through E3 weakest. An absent or null grade is ungraded; a bare claim or human approval does not supply a grade.
 type EvidenceGrade string
 
 const (

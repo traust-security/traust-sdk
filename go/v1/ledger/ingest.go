@@ -5,9 +5,6 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/url"
-
-	"github.com/traust-security/traust-sdk/go/v1/ledger/internal/check"
-	"github.com/traust-security/traust-sdk/go/v1/validate"
 )
 
 type submissionOp[In any] struct {
@@ -23,55 +20,6 @@ func (o submissionOp[In]) Submit(ctx context.Context, p Provider, in In) (Submit
 	}
 
 	resp, err := p.Ingest(ctx, IngestMeta{Kind: o.kind}, raw)
-	return decodeSubmitResponse(resp, err, o.kind)
-}
-
-type reportSubmissionOp[In any] struct {
-	kind         IngestKind
-	reportSchema string
-	convert      func(In) (ConvertResult, error)
-	layerID      func(In) string
-	sourceRef    func(In) string
-	recordedAt   func(In) string
-}
-
-func (o reportSubmissionOp[In]) Submit(ctx context.Context, p Provider, in In) (SubmitResponse, error) {
-	var zero SubmitResponse
-
-	raw, err := json.Marshal(in)
-	if err != nil {
-		return zero, ingestErr(o.kind, PhaseMarshal, err)
-	}
-
-	if err := validateReportField(raw, o.reportSchema); err != nil {
-		return zero, ingestErr(o.kind, PhaseValidate, err)
-	}
-
-	converted, err := o.convert(in)
-	if err != nil {
-		return zero, ingestErr(o.kind, PhaseConvert, err)
-	}
-
-	// Fingerprints are validated on the converted events, not the raw report:
-	// report-lane payloads (triage/validation/verification) do not carry
-	// fingerprints on their findings — the caller supplies them via the input's
-	// FingerprintIndex and conversion stamps each event. Checking here confirms
-	// every derived event got its fingerprint.
-	if err := check.EventFingerprints(converted.Events); err != nil {
-		return zero, ingestErr(o.kind, PhaseFingerprint, err)
-	}
-
-	batch, err := json.Marshal(BatchSubmitInput{
-		SourceRef:   o.sourceRef(in),
-		RecordedAt:  o.recordedAt(in),
-		Events:      converted.Events,
-		NeedsReview: converted.NeedsReview,
-	})
-	if err != nil {
-		return zero, ingestErr(o.kind, PhaseMarshal, err)
-	}
-
-	resp, err := p.Submit(ctx, o.layerID(in), batch)
 	return decodeSubmitResponse(resp, err, o.kind)
 }
 
@@ -136,19 +84,6 @@ func decodeSignResponse(resp []byte, err error) (SignResponse, error) {
 		return zero, fmt.Errorf("ingest sign decode: %w", err)
 	}
 	return out, nil
-}
-
-func validateReportField(raw []byte, schema string) error {
-	var wrapper struct {
-		Report json.RawMessage `json:"report"`
-	}
-	if err := json.Unmarshal(raw, &wrapper); err != nil {
-		return fmt.Errorf("decode report field: %w", err)
-	}
-	if err := validate.ValidateBytes(schema, wrapper.Report); err != nil {
-		return fmt.Errorf("validate report against %q: %w", schema, err)
-	}
-	return nil
 }
 
 // BatchSubmit sends pre-formed events to POST /v1/ledger/layer/submit?layer_id=.

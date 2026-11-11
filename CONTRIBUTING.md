@@ -56,22 +56,23 @@ Only bump languages touched by the PR.
 
 CI/infra-only PRs: use `ci:` / `chore:` commits — no VERSION bump.
 
-Registry: `ci/languages.json` (must stay aligned with `ci/lang/*.yml`).
+Registry: `ci/languages.json`.
 
 ## CI pipeline
 
-Stages fan out across languages in parallel:
+GitHub Actions (`.github/workflows/ci.yml`) on every PR, in the merge queue and after each merge to `main` / `development`. Each job is a Makefile target, so CI and local behave the same:
 
-| Stage | Jobs (parallel) |
-|-------|-----------------|
-| `lint` | `lint:<lang>`, … + gates (MR only) |
-| `test` | `test:<lang>`, … |
-| `security` | `security:<lang>`, … |
-| `release` | `release:tag` — tags each language with a pending `{lang}/VERSION` bump |
+| Job | Runs |
+|-----|------|
+| `lint` | `make lint` |
+| `test` | `go test -race ./...` |
+| `integration` | `make test-integration` on PostgreSQL 16 |
+| `security` | `make security` |
+| `drift` | `make -C go check-drift`: generated code matches the pinned contracts and core commits |
+| `e2e` | `make e2e`: the generated client against `traust-server` built from core at `CORE_REF` |
+| `guardrails` | `make guardrails`: the AGENTS.md rules a machine can check, plus commit subjects |
 
-Jobs auto-enable when a language's marker file exists (`ci/languages.json`). Add a language: extend the table in `AGENTS.md`, register in `ci/languages.json`, add `ci/lang/<lang>.yml` + `ci/lang/<lang>/ci.py`.
-
-**Main:** `release.py release-if-ready --all` compares each `{lang}/VERSION` to latest `{tag_prefix}/v*` tag.
+`core-head.yml` runs nightly against core's `development` tip; red means bump `CORE_REF`. `review-after-merge.yml` follows traust-core's merge-by-risk flow; paths in `CODEOWNERS` wait for a code owner.
 
 ## Running tests
 
@@ -80,7 +81,9 @@ make test              # network-free unit tests
 make test-integration  # SQLite plus optional local PostgreSQL storage coverage
 make security          # govulncheck + gosec (required in CI)
 make -C go test
-make -C go check-drift # fetches/verifies the pinned contracts commit
+make -C go check-drift # regenerates from the pinned contracts and core commits
+make e2e               # generated client vs traust-server at CORE_REF (needs uv)
+make guardrails        # AGENTS.md rules a machine can check
 ```
 
 `make test-integration` uses one fixed local PostgreSQL test DSN. Start it with:

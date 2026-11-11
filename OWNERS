@@ -1,5 +1,8 @@
 # Prow (openshift-ci) approval config; see OWNERS_ALIASES for membership.
+# The root governs the framework's shape (AGENTS.md, ci/, .github/, go/Makefile, go/go.mod,
+# go/internal/generate, go/v1/ops, go/v1/traust bindings, new packages). Directories with their own
+# OWNERS hand routine changes to the whole team.
 approvers:
-  - traust-admins
+  - sdk-framework
 reviewers:
   - traust-admins

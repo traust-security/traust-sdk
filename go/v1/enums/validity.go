@@ -1,8 +1,8 @@
-// Code generated from traust-contracts 2e521561f022fe839dd828ddf2185ba3a0a1045f. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package enums
 
-// Validity — Finding validity disposition state. Indicates whether a finding is confirmed, false positive, etc.
+// Validity — Finding validity: confirmed means the claim is real; false_positive means the claim is wrong; not_affected means a real issue does not apply to this repository, version or deployment. Historical values remain readable.
 type Validity string
 
 const (
@@ -11,6 +11,8 @@ const (
 	ValidityFalsePositive Validity = "false_positive"
 	ValidityNotVerified   Validity = "not_verified"
 	ValidityHardening     Validity = "hardening"
+	ValidityNotAffected   Validity = "not_affected"
+	ValidityTruePositive  Validity = "true_positive"
 )
 
 // ValidityValues returns all valid Validity values.
@@ -21,5 +23,7 @@ func ValidityValues() []Validity {
 		ValidityFalsePositive,
 		ValidityNotVerified,
 		ValidityHardening,
+		ValidityNotAffected,
+		ValidityTruePositive,
 	}
 }

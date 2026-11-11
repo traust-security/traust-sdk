@@ -1,0 +1,42 @@
+# Nightly: does the client still generate, build and pass e2e against core's development tip?
+# Red means core moved: bump CORE_REF in go/Makefile, run `make -C go api-generate`, open a PR.
+name: core-head
+
+on:
+  schedule:
+    - cron: "17 6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  core-head:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: development
+      - uses: actions/setup-go@v5
+        with:
+          go-version-file: go/go.mod
+          cache-dependency-path: go/go.sum
+      - uses: astral-sh/setup-uv@v6
+        with:
+          enable-cache: true
+          python-version: "3.12"
+      - name: Pin core's development tip
+        run: echo "CORE_REF=$(git ls-remote https://github.com/traust-security/traust-core.git refs/heads/development | cut -f1)" >> "$GITHUB_ENV"
+      - run: make -C go api-generate CORE_REF="$CORE_REF"
+      - run: go build ./... && go vet ./...
+        working-directory: go
+      - run: make -C go e2e CORE_REF="$CORE_REF"
+      - name: Client changes since the pin
+        run: |
+          {
+            echo "core development: \`$CORE_REF\`"
+            echo '```'
+            git diff --stat -- go/v1/traust/client.gen.go
+            echo '```'
+          } >> "$GITHUB_STEP_SUMMARY"
+          git diff --quiet -- go/v1/traust/client.gen.go || { echo "::error::core development changes the generated client; bump CORE_REF"; exit 1; }

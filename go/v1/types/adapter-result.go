@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 2e521561f022fe839dd828ddf2185ba3a0a1045f. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package types
 
@@ -33,9 +33,10 @@ type AdapterFinding struct {
 	Id                  string                     `json:"id"`
 	IsolationBoundary   *string                    `json:"isolation_boundary,omitempty"`
 	IsolationDimensions []enums.IsolationDimension `json:"isolation_dimensions,omitempty"`
-	Locations           []Location                 `json:"locations"`
+	Kind                *enums.FindingKind         `json:"kind,omitempty"`
+	Locations           []ReportLocation           `json:"locations"`
 	Origin              *enums.FindingOrigin       `json:"origin,omitempty"`
-	OwaspLlmReferences  []string                   `json:"owasp_llm_references,omitempty"`
+	OwaspLlmReferences  []enums.OwaspLlmCategory   `json:"owasp_llm_references,omitempty"`
 	Passes              []int                      `json:"passes,omitempty"`
 	PeachReferences     []string                   `json:"peach_references,omitempty"`
 	PqcClassification   *enums.PqcClassification   `json:"pqc_classification,omitempty"`

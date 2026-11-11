@@ -1,8 +1,8 @@
-// Code generated from traust-contracts 2e521561f022fe839dd828ddf2185ba3a0a1045f. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package enums
 
-// Effort — Canonical effort-size labels for explicitly selected future-write contracts.
+// Effort — Canonical effort-size labels for explicitly selected future-write contracts. Null means unknown size; blocked_external is an independent boolean and never implies a size.
 type Effort string
 
 const (

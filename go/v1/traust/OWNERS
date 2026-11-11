@@ -1,0 +1,8 @@
+# The regenerated client and its tests are routine; the bindings in client.go are the root's.
+filters:
+  "\\.gen\\.go$":
+    approvers:
+      - traust-admins
+  "_test\\.go$":
+    approvers:
+      - traust-admins

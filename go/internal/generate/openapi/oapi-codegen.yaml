@@ -1,0 +1,10 @@
+# Go client for traust-core's REST API. `make api-generate` builds the spec
+# from core at CORE_REF (go/Makefile), normalizes it and generates this output.
+# The raw client is RawClient so the package's Client is the one users take.
+package: traust
+generate:
+  models: true
+  client: true
+output-options:
+  client-type-name: RawClient
+output: v1/traust/client.gen.go

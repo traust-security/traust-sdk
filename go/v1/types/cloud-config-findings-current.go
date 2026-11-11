@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 2e521561f022fe839dd828ddf2185ba3a0a1045f. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package types
 
@@ -48,6 +48,7 @@ type CloudConfigFindingsCurrentFindingsItem struct {
 	Id                  string                                                `json:"id"`
 	IsolationBoundary   *string                                               `json:"isolation_boundary,omitempty"`
 	IsolationDimensions []enums.IsolationDimension                            `json:"isolation_dimensions,omitempty"`
+	Kind                *enums.FindingKind                                    `json:"kind,omitempty"`
 	Locations           []CloudConfigFindingsCurrentFindingsItemLocationsItem `json:"locations,omitempty"`
 	Provider            enums.CloudProvider                                   `json:"provider"`
 	Rationale           *string                                               `json:"rationale,omitempty"`
@@ -63,6 +64,7 @@ type CloudConfigFindingsCurrentFindingsItemDisposition struct {
 	Assurance              enums.DispositionAssurance                                         `json:"assurance"`
 	Conflict               interface{}                                                        `json:"conflict,omitempty"`
 	Events                 []string                                                           `json:"events"`
+	EvidenceGrade          *enums.EvidenceGrade                                               `json:"evidence_grade,omitempty"`
 	FpOverridden           interface{}                                                        `json:"fp_overridden,omitempty"`
 	FpReassertionBlocked   interface{}                                                        `json:"fp_reassertion_blocked,omitempty"`
 	LastUpdated            string                                                             `json:"last_updated"`

@@ -2,6 +2,10 @@
 # (https://github.com/orgs/traust-security/teams/traust-admins), which also gates
 # merges via branch protection (CODEOWNERS + required code-owner review).
 aliases:
+  # Approves the framework's shape; matches CODEOWNERS.
+  sdk-framework:
+    - chubirka
+    - smith-xyz
   traust-admins:
     - chubirka
     - girish1430

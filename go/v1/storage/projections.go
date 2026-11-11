@@ -142,7 +142,7 @@ func (s *sqlStore) projectLayer(
 			actorKind:        &actorKind,
 			validity:         validity,
 			resolution:       resolution,
-			evidenceGrade:    event.EvidenceGrade,
+			evidenceGrade:    (*string)(event.EvidenceGrade),
 			autoAcceptTier:   optionalBoolAsInt(event.AutoAcceptTier),
 			rationale:        projectedText(event.Rationale),
 			harnessVersion:   event.HarnessVersion,

@@ -61,11 +61,6 @@ func (p *StaticProvider) WithSubmitResponse(resp ledger.SubmitResponse) *StaticP
 	return p
 }
 
-// WithTriageResponse is a shorthand for WithSubmitResponse.
-func (p *StaticProvider) WithTriageResponse(resp ledger.SubmitResponse) *StaticProvider {
-	return p.WithSubmitResponse(resp)
-}
-
 // WithCountersignResponse is a shorthand for WithResponse(KindCountersign, resp).
 func (p *StaticProvider) WithCountersignResponse(resp ledger.SubmitResponse) *StaticProvider {
 	return p.WithResponse(ledger.KindCountersign, resp)
@@ -136,18 +131,6 @@ func (p *StaticProvider) PostCalls() []PostCall { return p.postCalls }
 
 // Calls is an alias for IngestCalls for backward compatibility in tests.
 func (p *StaticProvider) Calls() []IngestCall { return p.ingestCalls }
-
-// FixtureTriageResponse returns a typical triage submission response.
-func FixtureTriageResponse() ledger.SubmitResponse {
-	ec := 1
-	return ledger.SubmitResponse{
-		ID:         "triage-001",
-		Status:     "accepted",
-		EventCount: &ec,
-		EventIDs:   []string{"evt-triage-001"},
-		QueueAdded: 0,
-	}
-}
 
 // FixtureSignResponse returns a typical layer signing response.
 func FixtureSignResponse() ledger.SignResponse {

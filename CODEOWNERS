@@ -1,7 +1,13 @@
-# Reviewer routing — pair with the forge's branch protection:
-#   (owners are the @traust-security/traust-admins team; adjust to your fork)
-#   - Require CODEOWNERS approval on main
-#   - Require pipeline success before merge
-#
-
-* @traust-security/traust-admins
+# The framework's shape: a change here waits for one of these owners (branch protection requires
+# code-owner review). Everything else merges on green CI and is reviewed after merge.
+/AGENTS.md                  @smith-xyz @chubirka
+/.agents/                   @smith-xyz @chubirka
+/CODEOWNERS                 @smith-xyz @chubirka
+/.github/                   @smith-xyz @chubirka
+/ci/                        @smith-xyz @chubirka
+/go/go.mod                  @smith-xyz @chubirka
+/go/Makefile                @smith-xyz @chubirka
+/go/internal/generate/      @smith-xyz @chubirka
+/go/v1/traust/client.go     @smith-xyz @chubirka
+/go/v1/ops/                 @smith-xyz @chubirka
+/go/v1/feed/                @smith-xyz @chubirka

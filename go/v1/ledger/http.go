@@ -35,7 +35,7 @@ func WithAuthFunc(fn func(*http.Request)) HTTPOption {
 //	client := ledger.NewHTTPClient("https://ledger.example.com",
 //	    ledger.WithBearerToken(os.Getenv("LEDGER_TOKEN")),
 //	)
-//	resp, err := client.SubmitTriageReport(ctx, ledger.TriageReportInput{...})
+//	findings, err := client.GetFindings(ctx, "repo-a")
 func NewHTTPClient(baseURL string, opts ...HTTPOption) *Client {
 	tOpts := make([]transport.Option, len(opts))
 	for i, o := range opts {

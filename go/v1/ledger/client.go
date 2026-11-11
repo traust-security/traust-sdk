@@ -20,21 +20,6 @@ type Client struct {
 // NewClient creates a Client backed by the given Provider.
 func NewClient(p Provider) *Client { return &Client{p: p} }
 
-// SubmitTriageReport converts a triage report to events and batch-submits them.
-func (c *Client) SubmitTriageReport(ctx context.Context, in TriageReportInput) (SubmitResponse, error) {
-	return triageOp.Submit(ctx, c.p, in)
-}
-
-// SubmitValidationReport converts a validation report to events and batch-submits them.
-func (c *Client) SubmitValidationReport(ctx context.Context, in ValidationReportInput) (SubmitResponse, error) {
-	return validationOp.Submit(ctx, c.p, in)
-}
-
-// SubmitVerificationReport converts a verification report to events and batch-submits them.
-func (c *Client) SubmitVerificationReport(ctx context.Context, in VerificationReportInput) (SubmitResponse, error) {
-	return verificationOp.Submit(ctx, c.p, in)
-}
-
 // BatchSubmit sends pre-formed events via POST /v1/ledger/layer/submit?layer_id=.
 func (c *Client) BatchSubmit(ctx context.Context, layerID string, input BatchSubmitInput) (SubmitResponse, error) {
 	return BatchSubmit(ctx, c.p, layerID, input)

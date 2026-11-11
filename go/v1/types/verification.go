@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 2e521561f022fe839dd828ddf2185ba3a0a1045f. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package types
 
@@ -28,21 +28,24 @@ type CrossRepo struct {
 }
 
 type Regression struct {
-	AttackPattern   *string         `json:"attack_pattern,omitempty"`
-	Category        *string         `json:"category,omitempty"`
-	Cvss            *RegressionCvss `json:"cvss,omitempty"`
-	Cwes            []string        `json:"cwes"`
-	Description     string          `json:"description"`
-	Evidence        []EvidenceBlock `json:"evidence,omitempty"`
-	Fingerprint     *string         `json:"fingerprint,omitempty"`
-	FingerprintAlgo *string         `json:"fingerprint_algo,omitempty"`
-	Id              string          `json:"id"`
-	IntroducedBy    string          `json:"introduced_by"`
-	Locations       []Location      `json:"locations"`
-	Remediation     string          `json:"remediation"`
-	RoutedId        *string         `json:"routed_id,omitempty"`
-	Severity        enums.Severity  `json:"severity"`
-	Title           string          `json:"title"`
+	AttackPattern     *string                  `json:"attack_pattern,omitempty"`
+	BlockedExternal   *bool                    `json:"blocked_external,omitempty"`
+	Category          *string                  `json:"category,omitempty"`
+	Cvss              *RegressionCvss          `json:"cvss,omitempty"`
+	Cwes              []string                 `json:"cwes"`
+	Description       string                   `json:"description"`
+	Evidence          []EvidenceBlock          `json:"evidence,omitempty"`
+	Fingerprint       *string                  `json:"fingerprint,omitempty"`
+	FingerprintAlgo   *string                  `json:"fingerprint_algo,omitempty"`
+	Id                string                   `json:"id"`
+	IntroducedBy      string                   `json:"introduced_by"`
+	Locations         []ReportLocation         `json:"locations"`
+	PqcClassification *enums.PqcClassification `json:"pqc_classification,omitempty"`
+	Remediation       string                   `json:"remediation"`
+	RemediationEffort *enums.RemediationEffort `json:"remediation_effort,omitempty"`
+	RoutedId          *string                  `json:"routed_id,omitempty"`
+	Severity          enums.Severity           `json:"severity"`
+	Title             string                   `json:"title"`
 }
 
 type RegressionCvss struct {

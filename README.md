@@ -1,21 +1,22 @@
 # traust-sdk
 
-Typed SDKs that let a consumer plug traust in without re-modeling it: storage, ledger access, skill invocation, and generated types/validation.
+The Go SDK for traust: read its inventory, findings and insights, keep inventory current, and run
+work for it, all through traust-core's REST API. Start with [go/README.md](go/README.md).
 
 ## Purpose
 
-The SDK's primary goal is **plug-and-play consumption**. A consumer imports the SDK, points it at a database and a ledger URL, and gets traust's data model working with no tables, schemas, or identity logic of its own.
+A consumer imports the SDK, points it at traust-core with a token, and works with traust's data
+without tables, schemas or identity logic of its own. traust-core owns the data and every
+decision; the consumer keeps only its own extension data, joined to traust by id.
 
-Data flows left to right: **traust data → consumer extension data**.
+| Layer | Owns |
+|---|---|
+| [traust-core](https://github.com/traust-security/traust-core) | the data and its services, served over REST |
+| traust-sdk (this repo) | the client generated from core's OpenAPI, the `(T, error)` calls and iterators on it, the run lifecycle (`ops`), and a fake core for tests (`traustest`) |
+| consumer | its own extension data, keyed by traust ids |
 
-| Layer | Owns | Reference |
-|---|---|---|
-| [traust-contracts](https://github.com/traust-security/traust-contracts) | Schemas, enums, and the `traust_storage` / `traust_ledger` DDL | source of truth |
-| traust-sdk (this repo) | Typed access to that data: `storage.Init` bootstraps the contracts DDL; `ledger` wraps the ledger service; `types`/`enums`/`validate` are generated | [`go/README.md`](go/README.md) |
-| [traust-ledger](https://github.com/traust-security/traust-ledger) | Dispositions, countersign gates, finding identity/fingerprints | [docs/consumer-integration.md](https://github.com/traust-security/traust-ledger/blob/main/docs/consumer-integration.md) |
-| Consumer | Only its own extension data (whatever its domain needs), joined to traust rows by `binding_id` / `layer_id` | the consumer's own docs |
-
-Consumers are free to extend traust for their own use cases. When several consumers duplicate the same traust data or behavior, that's a sign it belongs in the SDK (or traust-contracts).
+When several consumers build the same thing on top of traust, it belongs in core (a route) or
+here (an extension point).
 
 ## Setup
 
@@ -37,22 +38,19 @@ Each language has its own `{lang}/VERSION` and git tag (`{tag_prefix}/vX.Y.Z` in
 ## Architecture
 
 ```
-traust-contracts        ← schemas, enums, DDL (source of truth)
-traust-sdk              ← typed SDKs that consumers import (this repo)
-consumer                ← extension data only
+traust-core   ← data, services, REST API, OpenAPI
+traust-sdk    ← generated client + calls + run lifecycle (this repo)
+consumer      ← extension data only
 ```
 
-The SDK is opinionated on **contracts** (shapes, storage DDL, and ledger API come from
-`traust-contracts` and `traust-ledger`) and unopinionated on **infrastructure**: the
-consumer supplies the database handle, a resolver for artifact bytes it already wrote, the ledger URL and token,
-and a skill `Provider` for execution.
-
-## Regenerating from contracts
+## Regenerating
 
 ```bash
 cd go/
-make generate   # fetches and verifies the pinned canonical contracts commit
-make test       # network-free unit tests
+make api-generate   # client, calls and pack schema from core at CORE_REF
+make generate       # the legacy contracts-generated packages at CONTRACTS_REF
+make test           # network-free unit tests
+make e2e            # the client and runner against a real traust-server
 ```
 
 For storage integration coverage, `make test-integration` always exercises SQLite

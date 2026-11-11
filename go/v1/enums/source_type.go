@@ -1,8 +1,8 @@
-// Code generated from traust-contracts 2e521561f022fe839dd828ddf2185ba3a0a1045f. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package enums
 
-// SourceType — Event source type classifying evidence origin. Evidence classes for validity precedence: validation_report/verification_report/fuzz_report are execution-verified (class 1), human static (class 2), machine static incl. triage_report/impact_report/vuln_scan_report (class 3). rebaseline is NOT an evidence class and never participates in validity precedence: it records that a finding was RENAMED, so the alias lives in the Merkle-covered event stream rather than in mutable metadata.Every one of them carries an EMPTY disposition, which is the invariant a consumer should rely on -- a rebaseline event asserts nothing about whether a finding is real. restatement is NOT an evidence class either: it records that DATA was wrong -- a claim hash, a report digest, an artifact digest map, or a field on a prior event -- and carries an empty disposition plus a `restatement` block.
+// SourceType — Historical combined source vocabulary. Human channels now belong to Decision.source_channel, producing machine kinds to Assessment.kind. Rebaseline and restatement remain administrative operations, not evidence kinds. Source type never supplies a missing evidence grade.
 type SourceType string
 
 const (

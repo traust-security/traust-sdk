@@ -1,10 +1,6 @@
 package ledger
 
-import (
-	"fmt"
-
-	"github.com/traust-security/traust-sdk/go/v1/ledger/internal/check"
-)
+import "fmt"
 
 // Phase identifies where in the submission pipeline an error occurred.
 type Phase string
@@ -35,7 +31,3 @@ func (e *IngestError) Unwrap() error { return e.Err }
 func ingestErr(kind IngestKind, phase Phase, err error) *IngestError {
 	return &IngestError{Kind: kind, Phase: phase, Err: err}
 }
-
-// FingerprintError is re-exported from the internal check package so consumers
-// can use errors.As against fingerprint validation failures.
-type FingerprintError = check.FingerprintError

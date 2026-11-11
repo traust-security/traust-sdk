@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 2e521561f022fe839dd828ddf2185ba3a0a1045f. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package types
 
@@ -40,6 +40,30 @@ func EncodeAttackMappingArtifact(value AttackMapping) (Artifact[AttackMapping], 
 	return ParseAttackMappingArtifact(payload)
 }
 
+func ParseBelowRangePacketsArtifact(payload []byte) (Artifact[BelowRangePackets], error) {
+	return ParseArtifact[BelowRangePackets]("below-range-packets", payload)
+}
+
+func EncodeBelowRangePacketsArtifact(value BelowRangePackets) (Artifact[BelowRangePackets], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[BelowRangePackets]{}, err
+	}
+	return ParseBelowRangePacketsArtifact(payload)
+}
+
+func ParseBelowRangeVerdictsArtifact(payload []byte) (Artifact[BelowRangeVerdicts], error) {
+	return ParseArtifact[BelowRangeVerdicts]("below-range-verdicts", payload)
+}
+
+func EncodeBelowRangeVerdictsArtifact(value BelowRangeVerdicts) (Artifact[BelowRangeVerdicts], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[BelowRangeVerdicts]{}, err
+	}
+	return ParseBelowRangeVerdictsArtifact(payload)
+}
+
 func ParseBenchmarkTargetArtifact(payload []byte) (Artifact[BenchmarkTarget], error) {
 	return ParseArtifact[BenchmarkTarget]("benchmark-target", payload)
 }
@@ -74,6 +98,18 @@ func EncodeCloudConfigFindingsCurrentArtifact(value CloudConfigFindingsCurrent) 
 		return Artifact[CloudConfigFindingsCurrent]{}, err
 	}
 	return ParseCloudConfigFindingsCurrentArtifact(payload)
+}
+
+func ParseCodeFactsArtifact(payload []byte) (Artifact[CodeFacts], error) {
+	return ParseArtifact[CodeFacts]("code-facts", payload)
+}
+
+func EncodeCodeFactsArtifact(value CodeFacts) (Artifact[CodeFacts], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[CodeFacts]{}, err
+	}
+	return ParseCodeFactsArtifact(payload)
 }
 
 func ParseComplianceAssessmentArtifact(payload []byte) (Artifact[ComplianceAssessment], error) {
@@ -124,6 +160,18 @@ func EncodeCorpusRegistryArtifact(value CorpusRegistry) (Artifact[CorpusRegistry
 	return ParseCorpusRegistryArtifact(payload)
 }
 
+func ParseCveReplayArtifact(payload []byte) (Artifact[CveReplay], error) {
+	return ParseArtifact[CveReplay]("cve-replay", payload)
+}
+
+func EncodeCveReplayArtifact(value CveReplay) (Artifact[CveReplay], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[CveReplay]{}, err
+	}
+	return ParseCveReplayArtifact(payload)
+}
+
 func ParseDocVarianceArtifact(payload []byte) (Artifact[DocVariance], error) {
 	return ParseArtifact[DocVariance]("doc-variance", payload)
 }
@@ -136,6 +184,30 @@ func EncodeDocVarianceArtifact(value DocVariance) (Artifact[DocVariance], error)
 	return ParseDocVarianceArtifact(payload)
 }
 
+func ParseFindingClaimArtifact(payload []byte) (Artifact[FindingClaim], error) {
+	return ParseArtifact[FindingClaim]("finding-claim", payload)
+}
+
+func EncodeFindingClaimArtifact(value FindingClaim) (Artifact[FindingClaim], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[FindingClaim]{}, err
+	}
+	return ParseFindingClaimArtifact(payload)
+}
+
+func ParseFindingIntakeArtifact(payload []byte) (Artifact[FindingIntake], error) {
+	return ParseArtifact[FindingIntake]("finding-intake", payload)
+}
+
+func EncodeFindingIntakeArtifact(value FindingIntake) (Artifact[FindingIntake], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[FindingIntake]{}, err
+	}
+	return ParseFindingIntakeArtifact(payload)
+}
+
 func ParseFleetFixArtifact(payload []byte) (Artifact[FleetFix], error) {
 	return ParseArtifact[FleetFix]("fleet-fix", payload)
 }
@@ -146,6 +218,30 @@ func EncodeFleetFixArtifact(value FleetFix) (Artifact[FleetFix], error) {
 		return Artifact[FleetFix]{}, err
 	}
 	return ParseFleetFixArtifact(payload)
+}
+
+func ParseFuzzCampaignArtifact(payload []byte) (Artifact[FuzzCampaign], error) {
+	return ParseArtifact[FuzzCampaign]("fuzz-campaign", payload)
+}
+
+func EncodeFuzzCampaignArtifact(value FuzzCampaign) (Artifact[FuzzCampaign], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[FuzzCampaign]{}, err
+	}
+	return ParseFuzzCampaignArtifact(payload)
+}
+
+func ParseFuzzReportArtifact(payload []byte) (Artifact[FuzzReport], error) {
+	return ParseArtifact[FuzzReport]("fuzz-report", payload)
+}
+
+func EncodeFuzzReportArtifact(value FuzzReport) (Artifact[FuzzReport], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[FuzzReport]{}, err
+	}
+	return ParseFuzzReportArtifact(payload)
 }
 
 func ParseImpactAnalysisArtifact(payload []byte) (Artifact[ImpactAnalysis], error) {
@@ -182,6 +278,18 @@ func EncodeLayerArtifact(value Layer) (Artifact[Layer], error) {
 		return Artifact[Layer]{}, err
 	}
 	return ParseLayerArtifact(payload)
+}
+
+func ParseManifestCoverageArtifact(payload []byte) (Artifact[ManifestCoverage], error) {
+	return ParseArtifact[ManifestCoverage]("manifest-coverage", payload)
+}
+
+func EncodeManifestCoverageArtifact(value ManifestCoverage) (Artifact[ManifestCoverage], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[ManifestCoverage]{}, err
+	}
+	return ParseManifestCoverageArtifact(payload)
 }
 
 func ParseOperatorPrivProfileArtifact(payload []byte) (Artifact[OperatorPrivProfile], error) {
@@ -256,6 +364,30 @@ func EncodePqcReadinessArtifact(value PqcReadiness) (Artifact[PqcReadiness], err
 	return ParsePqcReadinessArtifact(payload)
 }
 
+func ParsePqcVendorClaimsArtifact(payload []byte) (Artifact[PqcVendorClaims], error) {
+	return ParseArtifact[PqcVendorClaims]("pqc-vendor-claims", payload)
+}
+
+func EncodePqcVendorClaimsArtifact(value PqcVendorClaims) (Artifact[PqcVendorClaims], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[PqcVendorClaims]{}, err
+	}
+	return ParsePqcVendorClaimsArtifact(payload)
+}
+
+func ParseProductDefinitionsMapArtifact(payload []byte) (Artifact[ProductDefinitionsMap], error) {
+	return ParseArtifact[ProductDefinitionsMap]("product-definitions-map", payload)
+}
+
+func EncodeProductDefinitionsMapArtifact(value ProductDefinitionsMap) (Artifact[ProductDefinitionsMap], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[ProductDefinitionsMap]{}, err
+	}
+	return ParseProductDefinitionsMapArtifact(payload)
+}
+
 func ParseRefutedRegisterArtifact(payload []byte) (Artifact[RefutedRegister], error) {
 	return ParseArtifact[RefutedRegister]("refuted-register", payload)
 }
@@ -280,6 +412,30 @@ func EncodeRemediationArtifact(value Remediation) (Artifact[Remediation], error)
 	return ParseRemediationArtifact(payload)
 }
 
+func ParseRepoLivenessArtifact(payload []byte) (Artifact[RepoLiveness], error) {
+	return ParseArtifact[RepoLiveness]("repo-liveness", payload)
+}
+
+func EncodeRepoLivenessArtifact(value RepoLiveness) (Artifact[RepoLiveness], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[RepoLiveness]{}, err
+	}
+	return ParseRepoLivenessArtifact(payload)
+}
+
+func ParseRepoStateArtifact(payload []byte) (Artifact[RepoState], error) {
+	return ParseArtifact[RepoState]("repo-state", payload)
+}
+
+func EncodeRepoStateArtifact(value RepoState) (Artifact[RepoState], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[RepoState]{}, err
+	}
+	return ParseRepoStateArtifact(payload)
+}
+
 func ParseReportArtifact(payload []byte) (Artifact[Report], error) {
 	return ParseArtifact[Report]("report", payload)
 }
@@ -302,6 +458,42 @@ func EncodeRiskRatingMethodologyArtifact(value RiskRatingMethodology) (Artifact[
 		return Artifact[RiskRatingMethodology]{}, err
 	}
 	return ParseRiskRatingMethodologyArtifact(payload)
+}
+
+func ParseRunManifestArtifact(payload []byte) (Artifact[RunManifest], error) {
+	return ParseArtifact[RunManifest]("run-manifest", payload)
+}
+
+func EncodeRunManifestArtifact(value RunManifest) (Artifact[RunManifest], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[RunManifest]{}, err
+	}
+	return ParseRunManifestArtifact(payload)
+}
+
+func ParseSessionResultArtifact(payload []byte) (Artifact[SessionResult], error) {
+	return ParseArtifact[SessionResult]("session-result", payload)
+}
+
+func EncodeSessionResultArtifact(value SessionResult) (Artifact[SessionResult], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[SessionResult]{}, err
+	}
+	return ParseSessionResultArtifact(payload)
+}
+
+func ParseSessionTaskArtifact(payload []byte) (Artifact[SessionTask], error) {
+	return ParseArtifact[SessionTask]("session-task", payload)
+}
+
+func EncodeSessionTaskArtifact(value SessionTask) (Artifact[SessionTask], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[SessionTask]{}, err
+	}
+	return ParseSessionTaskArtifact(payload)
 }
 
 func ParseSlaPolicyArtifact(payload []byte) (Artifact[SlaPolicy], error) {
@@ -338,6 +530,30 @@ func EncodeTriageArtifact(value Triage) (Artifact[Triage], error) {
 		return Artifact[Triage]{}, err
 	}
 	return ParseTriageArtifact(payload)
+}
+
+func ParseValidationAuthorizationArtifact(payload []byte) (Artifact[ValidationAuthorization], error) {
+	return ParseArtifact[ValidationAuthorization]("validation-authorization", payload)
+}
+
+func EncodeValidationAuthorizationArtifact(value ValidationAuthorization) (Artifact[ValidationAuthorization], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[ValidationAuthorization]{}, err
+	}
+	return ParseValidationAuthorizationArtifact(payload)
+}
+
+func ParseValidationPlanArtifact(payload []byte) (Artifact[ValidationPlan], error) {
+	return ParseArtifact[ValidationPlan]("validation-plan", payload)
+}
+
+func EncodeValidationPlanArtifact(value ValidationPlan) (Artifact[ValidationPlan], error) {
+	payload, err := json.Marshal(value)
+	if err != nil {
+		return Artifact[ValidationPlan]{}, err
+	}
+	return ParseValidationPlanArtifact(payload)
 }
 
 func ParseValidationArtifact(payload []byte) (Artifact[Validation], error) {

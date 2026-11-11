@@ -1,0 +1,4 @@
+filters:
+  "^(README\\.md|CHANGELOG\\.md|VERSION)$":
+    approvers:
+      - traust-admins

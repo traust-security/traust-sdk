@@ -1,8 +1,8 @@
-// Code generated from traust-contracts 2e521561f022fe839dd828ddf2185ba3a0a1045f. DO NOT EDIT.
+// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
 
 package enums
 
-// LayerReviewQueueReason — Reason a finding entered the layer disposition review queue.
+// LayerReviewQueueReason — Historical layer review reasons, retained with their original codes. The merged review_reason vocabulary now owns ReviewItem.reason and layer queue_reason.
 type LayerReviewQueueReason string
 
 const (
