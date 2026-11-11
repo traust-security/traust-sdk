@@ -726,6 +726,39 @@ func (c *Client) ListFindingsAll(ctx context.Context, repositoryId openapi_types
 	})
 }
 
+// ListFindingsIn is GET /v1/findings: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) ListFindingsIn(ctx context.Context, params *ListFindingsInParams) (*PageFindingView, error) {
+	raw, err := c.ClientInterface.ListFindingsIn(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListFindingsInResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
+// ListFindingsInAll iterates every item of ListFindingsIn, following the cursor page by page; it stops at
+// the first error.
+func (c *Client) ListFindingsInAll(ctx context.Context, params *ListFindingsInParams) iter.Seq2[FindingView, error] {
+	var page ListFindingsInParams
+	if params != nil {
+		page = *params
+	}
+	return pages(func(cursor *string) ([]FindingView, *string, error) {
+		page.Cursor = cursor
+		found, err := c.ListFindingsIn(ctx, &page)
+		if err != nil {
+			return nil, nil, err
+		}
+		return found.Items, found.Next, nil
+	})
+}
+
 // ListImpacts is GET /v1/impacts: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListImpacts(ctx context.Context, params *ListImpactsParams) (*PageImpactAnalysis, error) {
 	raw, err := c.ClientInterface.ListImpacts(ctx, params)
