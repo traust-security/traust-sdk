@@ -4,9 +4,7 @@ CONTRACTS_CACHE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/contracts
 CONTRACTS_SOURCE := $(CONTRACTS_CACHE)/checkout-$(CONTRACTS_REF)
 ENUMS_DIR := $(CONTRACTS_SOURCE)/enums/v1
 SCHEMAS_DIR := $(CONTRACTS_SOURCE)/artifacts_schema/v1
-# storage/ is frozen at the pre-db/v1 layout: the storage generator reads queries/ dirs the
-# db/v1 restructure dropped. Regenerating it is the G6 layout adaptation (plan 28), and plan 05
-# retires the package; until then v1/storage/ is hand-maintained and checked by drift.
+# v1/storage uses the pre-db/v1 layout and is hand-maintained until its generator is adapted.
 CORE_REPO := https://github.com/traust-security/traust-core.git
 CORE_REF := 799ea4faca4bbdaefe06708dbc09b70d3c48de23
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
