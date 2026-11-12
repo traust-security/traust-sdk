@@ -1,0 +1,13 @@
+# Go types for traust-core's Insight view contracts. `make api-generate` writes the
+# components from core at CORE_REF (internal/generate/openapi/views.py) and generates this
+# output; internal/generate/insights then binds each type to its view name.
+package: traust
+generate:
+  models: true
+output: v1/traust/views.gen.go
+output-options:
+  # no route references the view components: keep them all
+  skip-prune: true
+compatibility:
+  # each constant carries its type name, so a view's values never collide with the client's
+  always-prefix-enum-values: true

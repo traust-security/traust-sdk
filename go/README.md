@@ -53,6 +53,14 @@ Each paged listing has an `…All` iterator that follows the cursor and stops at
 Counts, rollups and dashboards come from core, never from walking a listing:
 `SummarizeFindings`, `FindingTimeline`, `SummarizeExposure`, `ExposureTimeline`, and
 `GetInsight(ctx, "findings-rollup", params)` for any insight (dashboards, SARIF, OSCAL, …).
+A view with a contract in traust-contracts `views_schema/v1` also has a generated `…Insight`
+type; `GetInsightAs` asks for that view and decodes it strictly, refusing a field outside the
+contract:
+
+```go
+rollup, err := traust.GetInsightAs[traust.FindingsRollupInsight](ctx, client, params)
+critical := rollup.Total.Open.Critical                 // unknown is nil, e.g. rollup.AsOf
+```
 
 ## Keep inventory current
 

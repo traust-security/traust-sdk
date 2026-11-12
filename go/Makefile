@@ -8,7 +8,7 @@ SCHEMAS_DIR := $(CONTRACTS_SOURCE)/artifacts_schema/v1
 # db/v1 restructure dropped. Regenerating it is the G6 layout adaptation (plan 28), and plan 05
 # retires the package; until then v1/storage/ is hand-maintained and checked by drift.
 CORE_REPO := https://github.com/traust-security/traust-core.git
-CORE_REF := 799ea4faca4bbdaefe06708dbc09b70d3c48de23
+CORE_REF := 9b074b5204ba982e964276613560d1ea72d88d33
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
 CORE_PYTHON := cd "$(CORE_SOURCE)" && uv run --quiet python
 OPENAPI_DIR := ./internal/generate/openapi
@@ -43,7 +43,7 @@ test-integration:
 	go test -count=1 -v ./v1/storage/...
 
 check-drift: generate api-generate
-	@git diff --exit-code $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/ops/pack.schema.json || (echo "ERROR: generated files are out of date; run 'make generate api-generate' and commit" && exit 1)
+	@git diff --exit-code $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go ./v1/ops/pack.schema.json || (echo "ERROR: generated files are out of date; run 'make generate api-generate' and commit" && exit 1)
 
 core:
 	@set -eu; \
@@ -60,7 +60,8 @@ core:
 	git -C "$(CORE_SOURCE)" clean -ffdq
 
 # Everything the SDK knows about core comes from core at CORE_REF: the client from its OpenAPI
-# (built, used once, deleted) and the pack schema from the contracts core validates packs with.
+# (built, used once, deleted), the Go types of the Insight view contracts core validates its
+# views with, and the pack schema from the contracts core validates packs with.
 api-generate: core
 	@set -eu; \
 	tmp="$$(mktemp -d)"; trap 'rm -rf "$$tmp"' EXIT; \
@@ -68,6 +69,9 @@ api-generate: core
 	python3 $(OPENAPI_DIR)/normalize.py "$(CORE_SOURCE)/.openapi/openapi.json" "$$tmp/openapi.json"; \
 	go tool oapi-codegen --config $(OPENAPI_DIR)/oapi-codegen.yaml "$$tmp/openapi.json"; \
 	go run ./internal/generate/calls ./v1/traust/client.gen.go "$$tmp/openapi.json" ./v1/traust/calls.gen.go; \
+	($(CORE_PYTHON) "$(CURDIR)/$(OPENAPI_DIR)/views.py" "$$tmp/views.json"); \
+	go tool oapi-codegen --config $(OPENAPI_DIR)/views.yaml "$$tmp/views.json"; \
+	go run ./internal/generate/insights ./v1/traust/client.gen.go "$$tmp/views.json" ./v1/traust/insights.gen.go; \
 	($(CORE_PYTHON) -c "import json; from traust_core.v1.contracts import config_schema; print(json.dumps(config_schema('pack'), indent=2))") > ./v1/ops/pack.schema.json
 
 # A local-issuer token for the e2e server: $(1) identity, $(2) machine (True/False), $(3) file.
