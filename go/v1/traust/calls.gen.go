@@ -656,6 +656,26 @@ func (c *Client) ListAssessmentsAll(ctx context.Context, params *ListAssessments
 	})
 }
 
+// ListAssessmentsIn is GET /v1/assessments/in: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) ListAssessmentsIn(ctx context.Context, params *ListAssessmentsInParams) ([]Assessment, error) {
+	raw, err := c.ClientInterface.ListAssessmentsIn(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListAssessmentsInResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil || found == nil {
+		return nil, err
+	}
+	return *found, nil
+}
+
 // ListDecisions is GET /v1/findings/{findingId}/decisions: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListDecisions(ctx context.Context, findingId openapi_types.UUID) ([]Decision, error) {
 	raw, err := c.ClientInterface.ListDecisions(ctx, findingId)
@@ -1004,6 +1024,26 @@ func (c *Client) ListRefs(ctx context.Context, repositoryId openapi_types.UUID, 
 		return nil, err
 	}
 	response, err := ParseListRefsResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil || found == nil {
+		return nil, err
+	}
+	return *found, nil
+}
+
+// ListRefsIn is GET /v1/refs/in: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) ListRefsIn(ctx context.Context, params *ListRefsInParams) ([]RepositoryRef, error) {
+	raw, err := c.ClientInterface.ListRefsIn(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseListRefsInResponse(raw)
 	if err != nil {
 		return nil, err
 	}
@@ -1659,6 +1699,26 @@ func (c *Client) SummarizeFindings(ctx context.Context, repositoryId openapi_typ
 		return nil, err
 	}
 	response, err := ParseSummarizeFindingsResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil || found == nil {
+		return nil, err
+	}
+	return *found, nil
+}
+
+// SummarizeFindingsIn is GET /v1/findings/summaries: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) SummarizeFindingsIn(ctx context.Context, params *SummarizeFindingsInParams) ([]FindingRollup, error) {
+	raw, err := c.ClientInterface.SummarizeFindingsIn(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseSummarizeFindingsInResponse(raw)
 	if err != nil {
 		return nil, err
 	}
