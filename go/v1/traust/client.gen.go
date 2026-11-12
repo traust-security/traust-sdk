@@ -199,10 +199,27 @@ const (
 	FindingDimensionValidity   FindingDimension = "validity"
 )
 
+// Defines values for FindingExposure.
+const (
+	FindingExposureClosed        FindingExposure = "closed"
+	FindingExposureFalsePositive FindingExposure = "false_positive"
+	FindingExposureHardening     FindingExposure = "hardening"
+	FindingExposureOpen          FindingExposure = "open"
+)
+
 // Defines values for FindingKind.
 const (
 	Vulnerability FindingKind = "vulnerability"
 	Weakness      FindingKind = "weakness"
+)
+
+// Defines values for FindingSort.
+const (
+	FindingSortCvss      FindingSort = "cvss"
+	FindingSortFindingId FindingSort = "finding_id"
+	FindingSortNewest    FindingSort = "newest"
+	FindingSortSeverity  FindingSort = "severity"
+	FindingSortTitle     FindingSort = "title"
 )
 
 // Defines values for FixStrategy.
@@ -501,6 +518,12 @@ const (
 	Failed       Signing = "failed"
 	Signed       Signing = "signed"
 	Unconfigured Signing = "unconfigured"
+)
+
+// Defines values for SortDirection.
+const (
+	SortDirectionAsc  SortDirection = "asc"
+	SortDirectionDesc SortDirection = "desc"
 )
 
 // Defines values for SourceChannel.
@@ -1088,8 +1111,20 @@ type FindingContext struct {
 	Precedents *[]Precedent   `json:"precedents,omitempty"`
 }
 
+// FindingCount The filtered total a paged listing's pager reads: one number, from one bounded
+// fold that holds no views.
+type FindingCount struct {
+	Total int `json:"total"`
+}
+
 // FindingDimension defines model for FindingDimension.
 type FindingDimension string
+
+// FindingExposure The census classification a cross-repository worklist cuts by (see
+// `FindingSetFilter`): the worklist's exposure vocabulary, which is narrower than
+// `FindingState` — the worklist's "closed" merges resolved and risk_accepted, and its
+// "open" keeps everything not affirmatively closed, including `not_affected`.
+type FindingExposure string
 
 // FindingKind defines model for FindingKind.
 type FindingKind string
@@ -1131,6 +1166,14 @@ type FindingSeriesPoint struct {
 	Resolved          int            `json:"resolved"`
 	RiskIndex         *float32       `json:"risk_index"`
 }
+
+// FindingSort The columns a cross-repository listing orders by. `newest` is the listing's own
+// keyset discipline (cursor-paged, bounded per page); the others are served as one
+// sorted window per request — a bounded top-K fold over the set, so a consumer pages a
+// worklist without walking every row itself. Columns the fold holds (severity, cvss,
+// title, finding id) are here; columns a consumer joins outside core's model (its own
+// repository or product spellings) are not — those stay the consumer's sort.
+type FindingSort string
 
 // FindingVerdict defines model for FindingVerdict.
 type FindingVerdict struct {
@@ -1791,7 +1834,12 @@ type RestatementBody struct {
 // RestatementReason defines model for RestatementReason.
 type RestatementReason string
 
-// ReviewCase One thing for a person: a fold state on a finding, or a pending review item.
+// ReviewCase One thing for a person: a fold state on a finding, or a pending review item. The
+// optional `view` carries the display fields a queue row renders (title, effective
+// severity, kind, cwes, locations) assembled by the queue's own fold — the facts the
+// fold already loaded, plus one bounded locations read — so a consumer serves its
+// queue without one finding-detail call per case. Absent on cases a fold could not
+// assemble a view for; the case itself is still the actionable datum.
 type ReviewCase struct {
 	// Disposition A finding's merged judgement, ordered only by explicit E0-E3 evidence strength.
 	Disposition *Disposition       `json:"disposition,omitempty"`
@@ -1802,6 +1850,7 @@ type ReviewCase struct {
 	RepositoryId openapi_types.UUID `json:"repository_id"`
 	ReviewItem   *ReviewItem        `json:"review_item,omitempty"`
 	Since        time.Time          `json:"since"`
+	View         *FindingView       `json:"view,omitempty"`
 }
 
 // ReviewCaseKind Why a person must look, worst first: the fold's states, then a pending review item.
@@ -1917,6 +1966,9 @@ type Severity string
 
 // Signing How signing a layer's root went (traust-ledger `SignAttempt.status`).
 type Signing string
+
+// SortDirection Which way a sorted listing orders its column; the id tiebreak is asc either way.
+type SortDirection string
 
 // SourceChannel defines model for SourceChannel.
 type SourceChannel string
@@ -2238,15 +2290,36 @@ type ReadFeedParams struct {
 	Limit *int    `form:"limit,omitempty" json:"limit,omitempty"`
 }
 
+// ListFindingsInParams defines parameters for ListFindingsIn.
+type ListFindingsInParams struct {
+	RepositoryIds *[]openapi_types.UUID `form:"repository_ids,omitempty" json:"repository_ids,omitempty"`
+	AsOf          *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
+	Exposure      *FindingExposure      `form:"exposure,omitempty" json:"exposure,omitempty"`
+	Severity      *[]string             `form:"severity,omitempty" json:"severity,omitempty"`
+	Sort          *FindingSort          `form:"sort,omitempty" json:"sort,omitempty"`
+	Direction     *SortDirection        `form:"direction,omitempty" json:"direction,omitempty"`
+	Limit         *int                  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor        *string               `form:"cursor,omitempty" json:"cursor,omitempty"`
+}
+
+// CountFindingsInParams defines parameters for CountFindingsIn.
+type CountFindingsInParams struct {
+	RepositoryIds *[]openapi_types.UUID `form:"repository_ids,omitempty" json:"repository_ids,omitempty"`
+	AsOf          *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
+	Exposure      *FindingExposure      `form:"exposure,omitempty" json:"exposure,omitempty"`
+	Severity      *[]string             `form:"severity,omitempty" json:"severity,omitempty"`
+}
+
 // ReviewQueueParams defines parameters for ReviewQueue.
 type ReviewQueueParams struct {
-	Status       *ReviewItemStatus   `form:"status,omitempty" json:"status,omitempty"`
-	Reason       *ReviewReason       `form:"reason,omitempty" json:"reason,omitempty"`
-	Kind         *ReviewCaseKind     `form:"kind,omitempty" json:"kind,omitempty"`
-	FindingId    *openapi_types.UUID `form:"finding_id,omitempty" json:"finding_id,omitempty"`
-	RepositoryId *openapi_types.UUID `form:"repository_id,omitempty" json:"repository_id,omitempty"`
-	Limit        *int                `form:"limit,omitempty" json:"limit,omitempty"`
-	Cursor       *string             `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Status        *ReviewItemStatus     `form:"status,omitempty" json:"status,omitempty"`
+	Reason        *ReviewReason         `form:"reason,omitempty" json:"reason,omitempty"`
+	Kind          *ReviewCaseKind       `form:"kind,omitempty" json:"kind,omitempty"`
+	FindingId     *openapi_types.UUID   `form:"finding_id,omitempty" json:"finding_id,omitempty"`
+	RepositoryId  *openapi_types.UUID   `form:"repository_id,omitempty" json:"repository_id,omitempty"`
+	RepositoryIds *[]openapi_types.UUID `form:"repository_ids,omitempty" json:"repository_ids,omitempty"`
+	Limit         *int                  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor        *string               `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
 // ListImpactsParams defines parameters for ListImpacts.
@@ -2316,11 +2389,12 @@ type ResolveRoleParams struct {
 
 // ListRemediationsParams defines parameters for ListRemediations.
 type ListRemediationsParams struct {
-	Status       *RemediationStatus  `form:"status,omitempty" json:"status,omitempty"`
-	RepositoryId *openapi_types.UUID `form:"repository_id,omitempty" json:"repository_id,omitempty"`
-	FindingId    *openapi_types.UUID `form:"finding_id,omitempty" json:"finding_id,omitempty"`
-	Limit        *int                `form:"limit,omitempty" json:"limit,omitempty"`
-	Cursor       *string             `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Status        *RemediationStatus    `form:"status,omitempty" json:"status,omitempty"`
+	RepositoryId  *openapi_types.UUID   `form:"repository_id,omitempty" json:"repository_id,omitempty"`
+	FindingId     *openapi_types.UUID   `form:"finding_id,omitempty" json:"finding_id,omitempty"`
+	RepositoryIds *[]openapi_types.UUID `form:"repository_ids,omitempty" json:"repository_ids,omitempty"`
+	Limit         *int                  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor        *string               `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
 // ListRepositoriesParams defines parameters for ListRepositories.
@@ -3352,6 +3426,12 @@ type ClientInterface interface {
 	// FeedStatuses request
 	FeedStatuses(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListFindingsIn request
+	ListFindingsIn(ctx context.Context, params *ListFindingsInParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// CountFindingsIn request
+	CountFindingsIn(ctx context.Context, params *CountFindingsInParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ReviewQueue request
 	ReviewQueue(ctx context.Context, params *ReviewQueueParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3842,6 +3922,30 @@ func (c *RawClient) ReadFeed(ctx context.Context, params *ReadFeedParams, reqEdi
 
 func (c *RawClient) FeedStatuses(ctx context.Context, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewFeedStatusesRequest(c.Server)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) ListFindingsIn(ctx context.Context, params *ListFindingsInParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListFindingsInRequest(c.Server, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) CountFindingsIn(ctx context.Context, params *CountFindingsInParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCountFindingsInRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5774,6 +5878,264 @@ func NewFeedStatusesRequest(server string) (*http.Request, error) {
 	return req, nil
 }
 
+// NewListFindingsInRequest generates requests for ListFindingsIn
+func NewListFindingsInRequest(server string, params *ListFindingsInParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/findings")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.RepositoryIds != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ids", runtime.ParamLocationQuery, *params.RepositoryIds); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.AsOf != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "as_of", runtime.ParamLocationQuery, *params.AsOf); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Exposure != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "exposure", runtime.ParamLocationQuery, *params.Exposure); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Severity != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "severity", runtime.ParamLocationQuery, *params.Severity); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Sort != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "sort", runtime.ParamLocationQuery, *params.Sort); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Direction != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "direction", runtime.ParamLocationQuery, *params.Direction); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Limit != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Cursor != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cursor", runtime.ParamLocationQuery, *params.Cursor); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewCountFindingsInRequest generates requests for CountFindingsIn
+func NewCountFindingsInRequest(server string, params *CountFindingsInParams) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/findings/count")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.RepositoryIds != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ids", runtime.ParamLocationQuery, *params.RepositoryIds); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.AsOf != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "as_of", runtime.ParamLocationQuery, *params.AsOf); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Exposure != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "exposure", runtime.ParamLocationQuery, *params.Exposure); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Severity != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "severity", runtime.ParamLocationQuery, *params.Severity); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewReviewQueueRequest generates requests for ReviewQueue
 func NewReviewQueueRequest(server string, params *ReviewQueueParams) (*http.Request, error) {
 	var err error
@@ -5863,6 +6225,22 @@ func NewReviewQueueRequest(server string, params *ReviewQueueParams) (*http.Requ
 		if params.RepositoryId != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_id", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RepositoryIds != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ids", runtime.ParamLocationQuery, *params.RepositoryIds); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -7633,6 +8011,22 @@ func NewListRemediationsRequest(server string, params *ListRemediationsParams) (
 		if params.FindingId != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "finding_id", runtime.ParamLocationQuery, *params.FindingId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RepositoryIds != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ids", runtime.ParamLocationQuery, *params.RepositoryIds); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -9471,6 +9865,12 @@ type ClientWithResponsesInterface interface {
 	// FeedStatusesWithResponse request
 	FeedStatusesWithResponse(ctx context.Context, reqEditors ...RequestEditorFn) (*FeedStatusesResponse, error)
 
+	// ListFindingsInWithResponse request
+	ListFindingsInWithResponse(ctx context.Context, params *ListFindingsInParams, reqEditors ...RequestEditorFn) (*ListFindingsInResponse, error)
+
+	// CountFindingsInWithResponse request
+	CountFindingsInWithResponse(ctx context.Context, params *CountFindingsInParams, reqEditors ...RequestEditorFn) (*CountFindingsInResponse, error)
+
 	// ReviewQueueWithResponse request
 	ReviewQueueWithResponse(ctx context.Context, params *ReviewQueueParams, reqEditors ...RequestEditorFn) (*ReviewQueueResponse, error)
 
@@ -10189,6 +10589,54 @@ func (r FeedStatusesResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r FeedStatusesResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListFindingsInResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *PageFindingView
+	JSON401      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r ListFindingsInResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListFindingsInResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type CountFindingsInResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *FindingCount
+	JSON401      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r CountFindingsInResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CountFindingsInResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -11974,6 +12422,24 @@ func (c *ClientWithResponses) FeedStatusesWithResponse(ctx context.Context, reqE
 	return ParseFeedStatusesResponse(rsp)
 }
 
+// ListFindingsInWithResponse request returning *ListFindingsInResponse
+func (c *ClientWithResponses) ListFindingsInWithResponse(ctx context.Context, params *ListFindingsInParams, reqEditors ...RequestEditorFn) (*ListFindingsInResponse, error) {
+	rsp, err := c.ListFindingsIn(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListFindingsInResponse(rsp)
+}
+
+// CountFindingsInWithResponse request returning *CountFindingsInResponse
+func (c *ClientWithResponses) CountFindingsInWithResponse(ctx context.Context, params *CountFindingsInParams, reqEditors ...RequestEditorFn) (*CountFindingsInResponse, error) {
+	rsp, err := c.CountFindingsIn(ctx, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCountFindingsInResponse(rsp)
+}
+
 // ReviewQueueWithResponse request returning *ReviewQueueResponse
 func (c *ClientWithResponses) ReviewQueueWithResponse(ctx context.Context, params *ReviewQueueParams, reqEditors ...RequestEditorFn) (*ReviewQueueResponse, error) {
 	rsp, err := c.ReviewQueue(ctx, params, reqEditors...)
@@ -13611,6 +14077,86 @@ func ParseFeedStatusesResponse(rsp *http.Response) (*FeedStatusesResponse, error
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListFindingsInResponse parses an HTTP response from a ListFindingsInWithResponse call
+func ParseListFindingsInResponse(rsp *http.Response) (*ListFindingsInResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListFindingsInResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest PageFindingView
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseCountFindingsInResponse parses an HTTP response from a CountFindingsInWithResponse call
+func ParseCountFindingsInResponse(rsp *http.Response) (*CountFindingsInResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CountFindingsInResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest FindingCount
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
 
 	}
 

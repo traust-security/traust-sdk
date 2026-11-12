@@ -80,3 +80,56 @@ func TestE2EUnverifiedTokenIsUnauthorized(t *testing.T) {
 		t.Fatalf("want a 401 problem, got %v", err)
 	}
 }
+
+func TestE2EBatchFindingsListingRefusesWithoutRepositories(t *testing.T) {
+	resp, err := e2eClient(t).ListFindingsInWithResponse(context.Background(), &ListFindingsInParams{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var problem *ProblemError
+	_, err = Decode(resp.HTTPResponse, resp.Body, resp.JSON200)
+	if !errors.As(err, &problem) || problem.StatusCode != http.StatusUnprocessableEntity || problem.Problem == nil || problem.Problem.RequestId == "" {
+		t.Fatalf("want a 422 problem with a request id, got %v", err)
+	}
+}
+
+func TestE2ECountFindingsInCountsARepositorySet(t *testing.T) {
+	set := []uuid.UUID{uuid.New()}
+	counted, err := e2eClient(t).CountFindingsIn(context.Background(), &CountFindingsInParams{
+		RepositoryIds: &set,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if counted == nil || counted.Total != 0 {
+		t.Fatalf("a repository the fresh server does not know counted %v", counted)
+	}
+}
+
+func TestE2ECountFindingsInRefusesWithoutRepositories(t *testing.T) {
+	resp, err := e2eClient(t).CountFindingsInWithResponse(context.Background(), &CountFindingsInParams{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	var problem *ProblemError
+	_, err = Decode(resp.HTTPResponse, resp.Body, resp.JSON200)
+	if !errors.As(err, &problem) || problem.StatusCode != http.StatusUnprocessableEntity || problem.Problem == nil || problem.Problem.RequestId == "" {
+		t.Fatalf("want a 422 problem with a request id, got %v", err)
+	}
+}
+
+func TestE2EBatchFindingsListingPagesARepositorySet(t *testing.T) {
+	set := []uuid.UUID{uuid.New()}
+	var seen int
+	for _, err := range e2eClient(t).ListFindingsInAll(context.Background(), &ListFindingsInParams{
+		RepositoryIds: &set,
+	}) {
+		if err != nil {
+			t.Fatal(err)
+		}
+		seen++
+	}
+	if seen != 0 {
+		t.Fatalf("a repository the fresh server does not know listed %d findings", seen)
+	}
+}
