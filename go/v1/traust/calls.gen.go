@@ -107,6 +107,22 @@ func (c *Client) Complete(ctx context.Context, orderId openapi_types.UUID, body 
 	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
+// CountFindingsIn is GET /v1/findings/count: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) CountFindingsIn(ctx context.Context, params *CountFindingsInParams) (*FindingCount, error) {
+	raw, err := c.ClientInterface.CountFindingsIn(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseCountFindingsInResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
 // CreateRemediation is POST /v1/remediations: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) CreateRemediation(ctx context.Context, body CreateRemediationJSONRequestBody) (*ScheduledEffort, error) {
 	raw, err := c.ClientInterface.CreateRemediation(ctx, body)
