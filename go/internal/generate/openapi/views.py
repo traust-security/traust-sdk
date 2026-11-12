@@ -16,7 +16,10 @@ from __future__ import annotations
 import copy
 import json
 import sys
-from typing import Any
+from typing import TypeAlias
+
+# a JSON Schema tree as json.load returns it
+Json: TypeAlias = dict[str, "Json"] | list["Json"] | str | int | float | bool | None
 
 VALIDATION_ONLY = (
     "if",
@@ -38,14 +41,14 @@ def pascal(value: str) -> str:
     return "".join(part[:1].upper() + part[1:] for part in value.replace("-", "_").split("_"))
 
 
-def pointer(document: Any, path: str) -> Any:
+def pointer(document: Json, path: str) -> Json:
     node = document
     for part in filter(None, path.split("/")):
         node = node[part.replace("~1", "/").replace("~0", "~")]
     return node
 
 
-def inline_external(node: Any, document: Any) -> Any:
+def inline_external(node: Json, document: Json) -> Json:
     """Every reference outside the view inlined from the artifact schema it names."""
     from traust_core.v1 import contracts  # core's environment, at CORE_REF
 
@@ -63,7 +66,7 @@ def inline_external(node: Any, document: Any) -> Any:
     return {key: inline_external(value, document) for key, value in node.items()}
 
 
-def inline_local(node: Any, document: Any) -> Any:
+def inline_local(node: Json, document: Json) -> Json:
     """An artifact-schema fragment's own `#/...` references inlined against that schema."""
     if isinstance(node, list):
         return [inline_local(item, document) for item in node]
@@ -76,13 +79,13 @@ def inline_local(node: Any, document: Any) -> Any:
     return {key: inline_local(value, document) for key, value in node.items()}
 
 
-def openapi(node: Any, prefix: str) -> Any:
+def openapi(node: Json, prefix: str) -> Json:
     """One schema node in OpenAPI 3.0 form, its `#/$defs/x` references renamed."""
     if isinstance(node, list):
         return [openapi(item, prefix) for item in node]
     if not isinstance(node, dict):
         return node
-    out: dict[str, Any] = {}
+    out: dict[str, Json] = {}
     for key, value in node.items():
         if key in VALIDATION_ONLY or key == "$defs":
             continue
@@ -133,7 +136,7 @@ def openapi(node: Any, prefix: str) -> Any:
     return out
 
 
-def refs(node: Any) -> list[str]:
+def refs(node: Json) -> list[str]:
     if isinstance(node, list):
         return [r for item in node for r in refs(item)]
     if not isinstance(node, dict):
@@ -142,12 +145,12 @@ def refs(node: Any) -> list[str]:
     return own + [r for value in node.values() for r in refs(value)]
 
 
-def components() -> tuple[dict[str, Any], dict[str, str]]:
+def components() -> tuple[dict[str, Json], dict[str, str]]:
     from traust_core.v1 import contracts  # core's environment, at CORE_REF
     from traust_core.v1.errors import ConfigError
     from traust_core.v1.models.insight import ViewName
 
-    schemas: dict[str, Any] = {}
+    schemas: dict[str, Json] = {}
     views: dict[str, str] = {}
     for view in ViewName:
         try:

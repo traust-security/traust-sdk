@@ -59,7 +59,7 @@ contract:
 
 ```go
 rollup, err := traust.GetInsightAs[traust.FindingsRollupInsight](ctx, client, params)
-open := rollup.Total.Open.Critical                     // unknown is nil, e.g. rollup.AsOf
+critical := rollup.Total.Open.Critical                 // unknown is nil, e.g. rollup.AsOf
 ```
 
 ## Keep inventory current

@@ -19,17 +19,17 @@ func GetInsightAs[T any, PT insightView[T]](ctx context.Context, c *Client, para
 	name := PT(nil).insightName()
 	raw, err := c.ClientInterface.GetInsight(ctx, name, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting the %s insight: %w", name, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("getting the %s insight: %w", name, err)
 	}
 	response, err := ParseGetInsightResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading the %s insight: %w", name, err)
 	}
 	if _, err := Decode(response.HTTPResponse, response.Body, response.JSON200); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("reading the %s insight: %w", name, err)
 	}
 	var view T
 	decoder := json.NewDecoder(bytes.NewReader(response.Body))
