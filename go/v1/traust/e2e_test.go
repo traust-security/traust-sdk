@@ -133,3 +133,70 @@ func TestE2EBatchFindingsListingPagesARepositorySet(t *testing.T) {
 		t.Fatalf("a repository the fresh server does not know listed %d findings", seen)
 	}
 }
+
+// The wave-f reads refuse without a named set exactly as the batch listing and count do:
+// a 422 problem with a request id, never a firehose of everything the server holds.
+func TestE2ESetScopedReadsRefuseWithoutRepositories(t *testing.T) {
+	client := e2eClient(t)
+	reads := []struct {
+		name string
+		read func() error
+	}{
+		{"assessments", func() error {
+			_, err := client.ListAssessmentsIn(context.Background(), &ListAssessmentsInParams{})
+			return err
+		}},
+		{"refs", func() error {
+			_, err := client.ListRefsIn(context.Background(), &ListRefsInParams{})
+			return err
+		}},
+		{"summaries", func() error {
+			_, err := client.SummarizeFindingsIn(context.Background(), &SummarizeFindingsInParams{})
+			return err
+		}},
+	}
+	for _, read := range reads {
+		t.Run(read.name, func(t *testing.T) {
+			err := read.read()
+			var problem *ProblemError
+			if !errors.As(err, &problem) || problem.StatusCode != http.StatusUnprocessableEntity || problem.Problem == nil || problem.Problem.RequestId == "" {
+				t.Fatalf("want a 422 problem with a request id, got %v", err)
+			}
+		})
+	}
+}
+
+// The wave-f reads over a repository set the fresh server does not know decode as an empty
+// page: the refusal, parse and decode branches all take their success paths.
+func TestE2ESetScopedReadsListARepositorySet(t *testing.T) {
+	client := e2eClient(t)
+	set := []uuid.UUID{uuid.New()}
+	reads := []struct {
+		name string
+		read func() (int, error)
+	}{
+		{"assessments", func() (int, error) {
+			found, err := client.ListAssessmentsIn(context.Background(), &ListAssessmentsInParams{RepositoryIds: &set})
+			return len(found), err
+		}},
+		{"refs", func() (int, error) {
+			found, err := client.ListRefsIn(context.Background(), &ListRefsInParams{RepositoryIds: &set})
+			return len(found), err
+		}},
+		{"summaries", func() (int, error) {
+			found, err := client.SummarizeFindingsIn(context.Background(), &SummarizeFindingsInParams{RepositoryIds: &set})
+			return len(found), err
+		}},
+	}
+	for _, read := range reads {
+		t.Run(read.name, func(t *testing.T) {
+			seen, err := read.read()
+			if err != nil {
+				t.Fatal(err)
+			}
+			if seen != 0 {
+				t.Fatalf("a repository the fresh server does not know listed %d rows", seen)
+			}
+		})
+	}
+}
