@@ -486,22 +486,29 @@ func TestWithResponseDecodesCoreProblemMediaAndValidationErrors(t *testing.T) {
 
 // The set-scoped reads decode a non-empty page and an empty one, and the repository set
 // rides the request as one exploded query value per id — the encoding core's bound reads.
+// The assessments read rides its collection (GET /v1/assessments?repository_ids=...) and
+// decodes the collection's own page shape (items plus cursor); the refs read rides the
+// refs collection (GET /v1/refs?repository_ids=...) and decodes its bare listing.
 func TestSetScopedReadsDecodeTheirPages(t *testing.T) {
 	set := []uuid.UUID{uuid.New(), uuid.New()}
 	reads := []struct {
-		name string
-		page string
-		read func(*Client) (int, error)
+		name  string
+		page  string
+		empty string
+		read  func(*Client) (int, error)
 	}{
-		{"ListAssessmentsIn", `[{"id":"` + uuid.New().String() + `","occurred_at":"2026-01-01T00:00:00Z","repository_ref_id":"` + uuid.New().String() + `","assessor":"scanner","assessor_version":"1.0","kind":"sbom","status":"recorded"}]`, func(c *Client) (int, error) {
-			found, err := c.ListAssessmentsIn(context.Background(), &ListAssessmentsInParams{RepositoryIds: &set})
+		{"ListAssessments", `{"items":[{"id":"` + uuid.New().String() + `","occurred_at":"2026-01-01T00:00:00Z","repository_ref_id":"` + uuid.New().String() + `","assessor":"scanner","assessor_version":"1.0","kind":"sbom","status":"recorded"}],"next":null}`, `{"items":[],"next":null}`, func(c *Client) (int, error) {
+			found, err := c.ListAssessments(context.Background(), &ListAssessmentsParams{RepositoryIds: &set})
+			if found == nil {
+				return 0, err
+			}
+			return len(found.Items), err
+		}},
+		{"ListRefsForRepositories", `[{"id":"` + uuid.New().String() + `","repository_id":"` + uuid.New().String() + `","sha":"4c7f0b9a","name":"main"}]`, `[]`, func(c *Client) (int, error) {
+			found, err := c.ListRefsForRepositories(context.Background(), &ListRefsForRepositoriesParams{RepositoryIds: &set})
 			return len(found), err
 		}},
-		{"ListRefsIn", `[{"id":"` + uuid.New().String() + `","repository_id":"` + uuid.New().String() + `","sha":"4c7f0b9a","name":"main"}]`, func(c *Client) (int, error) {
-			found, err := c.ListRefsIn(context.Background(), &ListRefsInParams{RepositoryIds: &set})
-			return len(found), err
-		}},
-		{"SummarizeFindingsIn", `[{"key":null,"findings":3,"open":1,"accepted":1,"false_positives":0,"hardening":0,"resolved":1,"open_by_severity":{"high":1}}]`, func(c *Client) (int, error) {
+		{"SummarizeFindingsIn", `[{"key":null,"findings":3,"open":1,"accepted":1,"false_positives":0,"hardening":0,"resolved":1,"open_by_severity":{"high":1}}]`, `[]`, func(c *Client) (int, error) {
 			found, err := c.SummarizeFindingsIn(context.Background(), &SummarizeFindingsInParams{RepositoryIds: &set})
 			return len(found), err
 		}},
@@ -514,7 +521,7 @@ func TestSetScopedReadsDecodeTheirPages(t *testing.T) {
 				want int
 			}{
 				{"a non-empty page", read.page, 1},
-				{"an empty page", "[]", 0},
+				{"an empty page", read.empty, 0},
 			} {
 				t.Run(page.name, func(t *testing.T) {
 					var query url.Values
@@ -555,12 +562,15 @@ func TestSetScopedReadsFailClosed(t *testing.T) {
 		name string
 		read func(*Client) (int, error)
 	}{
-		{"ListAssessmentsIn", func(c *Client) (int, error) {
-			found, err := c.ListAssessmentsIn(context.Background(), &ListAssessmentsInParams{RepositoryIds: &set})
-			return len(found), err
+		{"ListAssessments", func(c *Client) (int, error) {
+			found, err := c.ListAssessments(context.Background(), &ListAssessmentsParams{RepositoryIds: &set})
+			if found == nil {
+				return 0, err
+			}
+			return len(found.Items), err
 		}},
-		{"ListRefsIn", func(c *Client) (int, error) {
-			found, err := c.ListRefsIn(context.Background(), &ListRefsInParams{RepositoryIds: &set})
+		{"ListRefsForRepositories", func(c *Client) (int, error) {
+			found, err := c.ListRefsForRepositories(context.Background(), &ListRefsForRepositoriesParams{RepositoryIds: &set})
 			return len(found), err
 		}},
 		{"SummarizeFindingsIn", func(c *Client) (int, error) {
@@ -586,7 +596,7 @@ func TestSetScopedReadsFailClosed(t *testing.T) {
 				},
 				{
 					name: "a malformed body on 200", status: http.StatusOK,
-					contentType: "application/json", body: `[{"id":`, attempts: 1,
+					contentType: "application/json", body: `{"items":[{"id":`, attempts: 1,
 				},
 				{
 					name: "an unrecognized problem code", status: http.StatusConflict,

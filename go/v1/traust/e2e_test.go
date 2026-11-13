@@ -143,11 +143,11 @@ func TestE2ESetScopedReadsRefuseWithoutRepositories(t *testing.T) {
 		read func() error
 	}{
 		{"assessments", func() error {
-			_, err := client.ListAssessmentsIn(context.Background(), &ListAssessmentsInParams{})
+			_, err := client.ListAssessments(context.Background(), &ListAssessmentsParams{})
 			return err
 		}},
 		{"refs", func() error {
-			_, err := client.ListRefsIn(context.Background(), &ListRefsInParams{})
+			_, err := client.ListRefsForRepositories(context.Background(), &ListRefsForRepositoriesParams{})
 			return err
 		}},
 		{"summaries", func() error {
@@ -176,11 +176,14 @@ func TestE2ESetScopedReadsListARepositorySet(t *testing.T) {
 		read func() (int, error)
 	}{
 		{"assessments", func() (int, error) {
-			found, err := client.ListAssessmentsIn(context.Background(), &ListAssessmentsInParams{RepositoryIds: &set})
-			return len(found), err
+			found, err := client.ListAssessments(context.Background(), &ListAssessmentsParams{RepositoryIds: &set})
+			if found == nil {
+				return 0, err
+			}
+			return len(found.Items), err
 		}},
 		{"refs", func() (int, error) {
-			found, err := client.ListRefsIn(context.Background(), &ListRefsInParams{RepositoryIds: &set})
+			found, err := client.ListRefsForRepositories(context.Background(), &ListRefsForRepositoriesParams{RepositoryIds: &set})
 			return len(found), err
 		}},
 		{"summaries", func() (int, error) {

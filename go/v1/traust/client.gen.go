@@ -2262,17 +2262,12 @@ type PrepareAdvisoryImpactsParams struct {
 
 // ListAssessmentsParams defines parameters for ListAssessments.
 type ListAssessmentsParams struct {
-	RepositoryRefId openapi_types.UUID `form:"repository_ref_id" json:"repository_ref_id"`
-	Kind            *AssessmentKind    `form:"kind,omitempty" json:"kind,omitempty"`
-	Status          *string            `form:"status,omitempty" json:"status,omitempty"`
-	Limit           *int               `form:"limit,omitempty" json:"limit,omitempty"`
-	Cursor          *string            `form:"cursor,omitempty" json:"cursor,omitempty"`
-}
-
-// ListAssessmentsInParams defines parameters for ListAssessmentsIn.
-type ListAssessmentsInParams struct {
-	RepositoryIds *[]openapi_types.UUID `form:"repository_ids,omitempty" json:"repository_ids,omitempty"`
-	Kind          *AssessmentKind       `form:"kind,omitempty" json:"kind,omitempty"`
+	RepositoryRefId *openapi_types.UUID   `form:"repository_ref_id,omitempty" json:"repository_ref_id,omitempty"`
+	RepositoryIds   *[]openapi_types.UUID `form:"repository_ids,omitempty" json:"repository_ids,omitempty"`
+	Kind            *AssessmentKind       `form:"kind,omitempty" json:"kind,omitempty"`
+	Status          *string               `form:"status,omitempty" json:"status,omitempty"`
+	Limit           *int                  `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor          *string               `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
 // SummarizeExposureParams defines parameters for SummarizeExposure.
@@ -2359,6 +2354,9 @@ type GetInsightParams struct {
 	Chokepoint      *[]string             `form:"chokepoint,omitempty" json:"chokepoint,omitempty"`
 	Framework       *ComplianceFramework  `form:"framework,omitempty" json:"framework,omitempty"`
 	PrecisionGate   *float32              `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
+
+	// Refresh Fold the view on demand, ignoring any stored census build.
+	Refresh *bool `form:"refresh,omitempty" json:"refresh,omitempty"`
 }
 
 // ListEventsParams defines parameters for ListEvents.
@@ -2394,8 +2392,8 @@ type ListProductsParams struct {
 	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
-// ListRefsInParams defines parameters for ListRefsIn.
-type ListRefsInParams struct {
+// ListRefsForRepositoriesParams defines parameters for ListRefsForRepositories.
+type ListRefsForRepositoriesParams struct {
 	RepositoryIds *[]openapi_types.UUID `form:"repository_ids,omitempty" json:"repository_ids,omitempty"`
 }
 
@@ -3410,9 +3408,6 @@ type ClientInterface interface {
 	// ListAssessments request
 	ListAssessments(ctx context.Context, params *ListAssessmentsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListAssessmentsIn request
-	ListAssessmentsIn(ctx context.Context, params *ListAssessmentsInParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// GetAssessment request
 	GetAssessment(ctx context.Context, assessmentId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3558,8 +3553,8 @@ type ClientInterface interface {
 	// ListProductRefs request
 	ListProductRefs(ctx context.Context, productId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// ListRefsIn request
-	ListRefsIn(ctx context.Context, params *ListRefsInParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+	// ListRefsForRepositories request
+	ListRefsForRepositories(ctx context.Context, params *ListRefsForRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetRef request
 	GetRef(ctx context.Context, repositoryRefId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3805,18 +3800,6 @@ func (c *RawClient) RecordAssessment(ctx context.Context, body RecordAssessmentJ
 
 func (c *RawClient) ListAssessments(ctx context.Context, params *ListAssessmentsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListAssessmentsRequest(c.Server, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *RawClient) ListAssessmentsIn(ctx context.Context, params *ListAssessmentsInParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListAssessmentsInRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4451,8 +4434,8 @@ func (c *RawClient) ListProductRefs(ctx context.Context, productId openapi_types
 	return c.Client.Do(req)
 }
 
-func (c *RawClient) ListRefsIn(ctx context.Context, params *ListRefsInParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewListRefsInRequest(c.Server, params)
+func (c *RawClient) ListRefsForRepositories(ctx context.Context, params *ListRefsForRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListRefsForRepositoriesRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5342,16 +5325,36 @@ func NewListAssessmentsRequest(server string, params *ListAssessmentsParams) (*h
 	if params != nil {
 		queryValues := queryURL.Query()
 
-		if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ref_id", runtime.ParamLocationQuery, params.RepositoryRefId); err != nil {
-			return nil, err
-		} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-			return nil, err
-		} else {
-			for k, v := range parsed {
-				for _, v2 := range v {
-					queryValues.Add(k, v2)
+		if params.RepositoryRefId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ref_id", runtime.ParamLocationQuery, *params.RepositoryRefId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
 				}
 			}
+
+		}
+
+		if params.RepositoryIds != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ids", runtime.ParamLocationQuery, *params.RepositoryIds); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
 		}
 
 		if params.Kind != nil {
@@ -5405,71 +5408,6 @@ func NewListAssessmentsRequest(server string, params *ListAssessmentsParams) (*h
 		if params.Cursor != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cursor", runtime.ParamLocationQuery, *params.Cursor); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewListAssessmentsInRequest generates requests for ListAssessmentsIn
-func NewListAssessmentsInRequest(server string, params *ListAssessmentsInParams) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/assessments/in")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.RepositoryIds != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ids", runtime.ParamLocationQuery, *params.RepositoryIds); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Kind != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "kind", runtime.ParamLocationQuery, *params.Kind); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -7016,6 +6954,22 @@ func NewGetInsightRequest(server string, name ViewName, params *GetInsightParams
 
 		}
 
+		if params.Refresh != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "refresh", runtime.ParamLocationQuery, *params.Refresh); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
 		queryURL.RawQuery = queryValues.Encode()
 	}
 
@@ -7978,8 +7932,8 @@ func NewListProductRefsRequest(server string, productId openapi_types.UUID) (*ht
 	return req, nil
 }
 
-// NewListRefsInRequest generates requests for ListRefsIn
-func NewListRefsInRequest(server string, params *ListRefsInParams) (*http.Request, error) {
+// NewListRefsForRepositoriesRequest generates requests for ListRefsForRepositories
+func NewListRefsForRepositoriesRequest(server string, params *ListRefsForRepositoriesParams) (*http.Request, error) {
 	var err error
 
 	serverURL, err := url.Parse(server)
@@ -7987,7 +7941,7 @@ func NewListRefsInRequest(server string, params *ListRefsInParams) (*http.Reques
 		return nil, err
 	}
 
-	operationPath := fmt.Sprintf("/v1/refs/in")
+	operationPath := fmt.Sprintf("/v1/refs")
 	if operationPath[0] == '/' {
 		operationPath = "." + operationPath
 	}
@@ -10073,9 +10027,6 @@ type ClientWithResponsesInterface interface {
 	// ListAssessmentsWithResponse request
 	ListAssessmentsWithResponse(ctx context.Context, params *ListAssessmentsParams, reqEditors ...RequestEditorFn) (*ListAssessmentsResponse, error)
 
-	// ListAssessmentsInWithResponse request
-	ListAssessmentsInWithResponse(ctx context.Context, params *ListAssessmentsInParams, reqEditors ...RequestEditorFn) (*ListAssessmentsInResponse, error)
-
 	// GetAssessmentWithResponse request
 	GetAssessmentWithResponse(ctx context.Context, assessmentId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetAssessmentResponse, error)
 
@@ -10221,8 +10172,8 @@ type ClientWithResponsesInterface interface {
 	// ListProductRefsWithResponse request
 	ListProductRefsWithResponse(ctx context.Context, productId openapi_types.UUID, reqEditors ...RequestEditorFn) (*ListProductRefsResponse, error)
 
-	// ListRefsInWithResponse request
-	ListRefsInWithResponse(ctx context.Context, params *ListRefsInParams, reqEditors ...RequestEditorFn) (*ListRefsInResponse, error)
+	// ListRefsForRepositoriesWithResponse request
+	ListRefsForRepositoriesWithResponse(ctx context.Context, params *ListRefsForRepositoriesParams, reqEditors ...RequestEditorFn) (*ListRefsForRepositoriesResponse, error)
 
 	// GetRefWithResponse request
 	GetRefWithResponse(ctx context.Context, repositoryRefId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetRefResponse, error)
@@ -10589,30 +10540,6 @@ func (r ListAssessmentsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListAssessmentsResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type ListAssessmentsInResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *[]Assessment
-	JSON401      *Problem
-	JSON422      *Problem
-}
-
-// Status returns HTTPResponse.Status
-func (r ListAssessmentsInResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r ListAssessmentsInResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -11639,7 +11566,7 @@ func (r ListProductRefsResponse) StatusCode() int {
 	return 0
 }
 
-type ListRefsInResponse struct {
+type ListRefsForRepositoriesResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
 	JSON200      *[]RepositoryRef
@@ -11648,7 +11575,7 @@ type ListRefsInResponse struct {
 }
 
 // Status returns HTTPResponse.Status
-func (r ListRefsInResponse) Status() string {
+func (r ListRefsForRepositoriesResponse) Status() string {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.Status
 	}
@@ -11656,7 +11583,7 @@ func (r ListRefsInResponse) Status() string {
 }
 
 // StatusCode returns HTTPResponse.StatusCode
-func (r ListRefsInResponse) StatusCode() int {
+func (r ListRefsForRepositoriesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -12639,15 +12566,6 @@ func (c *ClientWithResponses) ListAssessmentsWithResponse(ctx context.Context, p
 	return ParseListAssessmentsResponse(rsp)
 }
 
-// ListAssessmentsInWithResponse request returning *ListAssessmentsInResponse
-func (c *ClientWithResponses) ListAssessmentsInWithResponse(ctx context.Context, params *ListAssessmentsInParams, reqEditors ...RequestEditorFn) (*ListAssessmentsInResponse, error) {
-	rsp, err := c.ListAssessmentsIn(ctx, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseListAssessmentsInResponse(rsp)
-}
-
 // GetAssessmentWithResponse request returning *GetAssessmentResponse
 func (c *ClientWithResponses) GetAssessmentWithResponse(ctx context.Context, assessmentId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetAssessmentResponse, error) {
 	rsp, err := c.GetAssessment(ctx, assessmentId, reqEditors...)
@@ -13105,13 +13023,13 @@ func (c *ClientWithResponses) ListProductRefsWithResponse(ctx context.Context, p
 	return ParseListProductRefsResponse(rsp)
 }
 
-// ListRefsInWithResponse request returning *ListRefsInResponse
-func (c *ClientWithResponses) ListRefsInWithResponse(ctx context.Context, params *ListRefsInParams, reqEditors ...RequestEditorFn) (*ListRefsInResponse, error) {
-	rsp, err := c.ListRefsIn(ctx, params, reqEditors...)
+// ListRefsForRepositoriesWithResponse request returning *ListRefsForRepositoriesResponse
+func (c *ClientWithResponses) ListRefsForRepositoriesWithResponse(ctx context.Context, params *ListRefsForRepositoriesParams, reqEditors ...RequestEditorFn) (*ListRefsForRepositoriesResponse, error) {
+	rsp, err := c.ListRefsForRepositories(ctx, params, reqEditors...)
 	if err != nil {
 		return nil, err
 	}
-	return ParseListRefsInResponse(rsp)
+	return ParseListRefsForRepositoriesResponse(rsp)
 }
 
 // GetRefWithResponse request returning *GetRefResponse
@@ -13932,46 +13850,6 @@ func ParseListAssessmentsResponse(rsp *http.Response) (*ListAssessmentsResponse,
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest PageAssessment
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseListAssessmentsInResponse parses an HTTP response from a ListAssessmentsInWithResponse call
-func ParseListAssessmentsInResponse(rsp *http.Response) (*ListAssessmentsInResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &ListAssessmentsInResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Assessment
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15888,15 +15766,15 @@ func ParseListProductRefsResponse(rsp *http.Response) (*ListProductRefsResponse,
 	return response, nil
 }
 
-// ParseListRefsInResponse parses an HTTP response from a ListRefsInWithResponse call
-func ParseListRefsInResponse(rsp *http.Response) (*ListRefsInResponse, error) {
+// ParseListRefsForRepositoriesResponse parses an HTTP response from a ListRefsForRepositoriesWithResponse call
+func ParseListRefsForRepositoriesResponse(rsp *http.Response) (*ListRefsForRepositoriesResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
 	defer func() { _ = rsp.Body.Close() }()
 	if err != nil {
 		return nil, err
 	}
 
-	response := &ListRefsInResponse{
+	response := &ListRefsForRepositoriesResponse{
 		Body:         bodyBytes,
 		HTTPResponse: rsp,
 	}
