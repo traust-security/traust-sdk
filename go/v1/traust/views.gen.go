@@ -9,6 +9,12 @@ import (
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
 
+// Defines values for AttackCoverageInsightScore.
+const (
+	AttackCoverageInsightScoreN1 AttackCoverageInsightScore = 1
+	AttackCoverageInsightScoreN2 AttackCoverageInsightScore = 2
+)
+
 // Defines values for CompliancePrecisionInsightCalibrationFramework.
 const (
 	CompliancePrecisionInsightCalibrationFrameworkFedrampHigh     CompliancePrecisionInsightCalibrationFramework = "fedramp-high"
@@ -92,6 +98,101 @@ const (
 	RemediationIndexInsightStatusRevalidatedFixed           RemediationIndexInsightStatus = "revalidated_fixed"
 	RemediationIndexInsightStatusRevalidatedStillVulnerable RemediationIndexInsightStatus = "revalidated_still_vulnerable"
 )
+
+// Defines values for SlaInsightClockStart.
+const (
+	SlaInsightClockStartAuditDate          SlaInsightClockStart = "audit_date"
+	SlaInsightClockStartFirstEvent         SlaInsightClockStart = "first_event"
+	SlaInsightClockStartFirstRoutedOrFiled SlaInsightClockStart = "first_routed_or_filed"
+)
+
+// Defines values for SlaInsightEscalationClockBasis.
+const (
+	SlaInsightEscalationClockBasisAuditDate  SlaInsightEscalationClockBasis = "audit_date"
+	SlaInsightEscalationClockBasisFiled      SlaInsightEscalationClockBasis = "filed"
+	SlaInsightEscalationClockBasisFirstEvent SlaInsightEscalationClockBasis = "first_event"
+)
+
+// Defines values for SlaInsightEscalationSeverity.
+const (
+	SlaInsightEscalationSeverityCritical      SlaInsightEscalationSeverity = "critical"
+	SlaInsightEscalationSeverityHigh          SlaInsightEscalationSeverity = "high"
+	SlaInsightEscalationSeverityInformational SlaInsightEscalationSeverity = "informational"
+	SlaInsightEscalationSeverityLow           SlaInsightEscalationSeverity = "low"
+	SlaInsightEscalationSeverityMedium        SlaInsightEscalationSeverity = "medium"
+)
+
+// AttackCoverageInsight Ephemeral derived Insight ViewModel from traust-core's attack-coverage view: the scope's MITRE ATT&CK coverage as of as_of against the pinned ATT&CK release. Modeled evidence (techniques the latest threat models cite) and weakness-derived candidates (finding categories through the pack's category map) are kept apart, never blended; observed coverage (confirmed validation chains) is not yet recorded. Includes an ATT&CK Navigator layer. Not a persisted artifact or SQL projection. Every serialized field is present. JSON Schema checks structure and ranges, not arithmetic across fields.
+type AttackCoverageInsight struct {
+	// AsOf The point in time the threat models and findings are read at: the filter's, else when the view was built.
+	AsOf time.Time `json:"as_of"`
+
+	// AttackVersion The pinned ATT&CK release (for example 19.1).
+	AttackVersion string `json:"attack_version"`
+
+	// Attribution MITRE's required attribution for ATT&CK content.
+	Attribution string `json:"attribution"`
+
+	// Dropped The citations threat models make that are not live in the pinned release, with how many threats cite each, most cited first. Keys are the raw cited strings: revoked or deprecated ids, unknown ids and malformed references alike, because reporting the citations that are not valid technique ids is this map's purpose. They count nowhere else.
+	Dropped        map[string]int             `json:"dropped"`
+	FindingsMapped AttackCoverageInsightCount `json:"findings_mapped"`
+
+	// MappingVersion The category-to-technique mapping's version.
+	MappingVersion string `json:"mapping_version"`
+
+	// NavigatorLayer The coverage as an ATT&CK Navigator layer (layer format 4.5), MITRE's own format: the envelope is checked here, the layer's full schema is MITRE's. Scores follow the technique scores (1 weakness-derived candidate, 2 modeled); the legend also names 3 (observed), which no technique carries yet.
+	NavigatorLayer struct {
+		Domain     string `json:"domain"`
+		Name       string `json:"name"`
+		Techniques []struct {
+			Comment *string `json:"comment,omitempty"`
+
+			// Score The strongest evidence class: 1 weakness-derived candidate, 2 modeled. Observed coverage (3, a confirmed validation chain) is not recorded yet, so this contract refuses it; it is added when Core records that evidence.
+			Score AttackCoverageInsightScore `json:"score"`
+
+			// TechniqueID An ATT&CK technique or sub-technique id (T1059, T1059.001).
+			TechniqueID AttackCoverageInsightTechniqueId `json:"techniqueID"`
+		} `json:"techniques"`
+		Versions struct {
+			Attack    string `json:"attack"`
+			Layer     string `json:"layer"`
+			Navigator string `json:"navigator"`
+		} `json:"versions"`
+	} `json:"navigator_layer"`
+	Repositories AttackCoverageInsightCount `json:"repositories"`
+
+	// Techniques Every technique with evidence, highest score first, then by technique id.
+	Techniques            []AttackCoverageInsightTechnique `json:"techniques"`
+	ThreatModels          AttackCoverageInsightCount       `json:"threat_models"`
+	ThreatsWithTechniques AttackCoverageInsightCount       `json:"threats_with_techniques"`
+}
+
+// AttackCoverageInsightCount defines model for AttackCoverageInsightCount.
+type AttackCoverageInsightCount = int
+
+// AttackCoverageInsightScore The strongest evidence class: 1 weakness-derived candidate, 2 modeled. Observed coverage (3, a confirmed validation chain) is not recorded yet, so this contract refuses it; it is added when Core records that evidence.
+type AttackCoverageInsightScore int
+
+// AttackCoverageInsightTechnique One technique's evidence: threats that model it and findings whose category implies it, counted apart.
+type AttackCoverageInsightTechnique struct {
+	Derived AttackCoverageInsightCount `json:"derived"`
+	Modeled AttackCoverageInsightCount `json:"modeled"`
+
+	// Name The technique's name in the pinned release.
+	Name string `json:"name"`
+
+	// Score The strongest evidence class: 1 weakness-derived candidate, 2 modeled. Observed coverage (3, a confirmed validation chain) is not recorded yet, so this contract refuses it; it is added when Core records that evidence.
+	Score AttackCoverageInsightScore `json:"score"`
+
+	// Tactics The tactics (kill-chain phases) the technique belongs to in the pinned release.
+	Tactics []string `json:"tactics"`
+
+	// TechniqueId An ATT&CK technique or sub-technique id (T1059, T1059.001).
+	TechniqueId AttackCoverageInsightTechniqueId `json:"technique_id"`
+}
+
+// AttackCoverageInsightTechniqueId An ATT&CK technique or sub-technique id (T1059, T1059.001).
+type AttackCoverageInsightTechniqueId = string
 
 // BenchmarkScorecardsInsight Ephemeral derived Insight ViewModel from DetectionQualityService.scorecards: one recall scorecard per auditor version over the recorded benchmark audits, scored against the newest answer key. Held-out targets are never included (release scoring is not a dashboard). Not a persisted artifact or SQL projection. Recall is detected over expected; null when nothing was expected.
 type BenchmarkScorecardsInsight struct {
@@ -690,3 +791,123 @@ type RemediationIndexInsightRow struct {
 
 // RemediationIndexInsightStatus Where the work item stands, from the remediation-status registry.
 type RemediationIndexInsightStatus string
+
+// SlaInsight Ephemeral derived Insight ViewModel from traust-core's sla view: owner-response SLA clocks over the scope's findings (named products and teams, else every repository; false positives and hardening excluded) as of as_of, one block per profile of the deployment's SLA policy. Profiles are different clocks over the same findings. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not arithmetic across fields.
+type SlaInsight struct {
+	// AsOf The point in time the clocks are read at: the filter's, else when the view was built.
+	AsOf time.Time `json:"as_of"`
+
+	// ClockStart The policy's clock-start rule, from the sla-clock-start registry.
+	ClockStart SlaInsightClockStart `json:"clock_start"`
+
+	// PolicyName The SLA policy's name, raw.
+	PolicyName string `json:"policy_name"`
+
+	// Profiles One block per policy profile: the default profile first, then by name.
+	Profiles []SlaInsightProfile `json:"profiles"`
+
+	// Source Where the SLA policy came from.
+	Source SlaInsightSource `json:"source"`
+}
+
+// SlaInsightClockStart The policy's clock-start rule, from the sla-clock-start registry.
+type SlaInsightClockStart string
+
+// SlaInsightCount defines model for SlaInsightCount.
+type SlaInsightCount = int
+
+// SlaInsightCounts Every in-scope finding lands in exactly one count; unclocked and out-of-profile findings are shown, never dropped.
+type SlaInsightCounts struct {
+	Accepted          SlaInsightCount `json:"accepted"`
+	OpenInSla         SlaInsightCount `json:"open_in_sla"`
+	OpenNoSla         SlaInsightCount `json:"open_no_sla"`
+	OpenOverdue       SlaInsightCount `json:"open_overdue"`
+	OutOfProfileScope SlaInsightCount `json:"out_of_profile_scope"`
+	ResolvedBreached  SlaInsightCount `json:"resolved_breached"`
+	ResolvedMet       SlaInsightCount `json:"resolved_met"`
+	ResolvedUnclocked SlaInsightCount `json:"resolved_unclocked"`
+	Unclocked         SlaInsightCount `json:"unclocked"`
+}
+
+// SlaInsightEscalation defines model for SlaInsightEscalation.
+type SlaInsightEscalation struct {
+	// ClockBasis What started the clock: the tracker filing, the first report or decision, or the first audit report.
+	ClockBasis  SlaInsightEscalationClockBasis `json:"clock_basis"`
+	DaysOverdue SlaInsightCount                `json:"days_overdue"`
+
+	// Due When the SLA fell due (before as_of).
+	Due       time.Time          `json:"due"`
+	FindingId openapi_types.UUID `json:"finding_id"`
+
+	// RepositoryUrl Raw registered URL, preserved as data.
+	RepositoryUrl string `json:"repository_url"`
+
+	// Severity Effective severity; null when unrated (in scope through the profile's CVSS floor).
+	Severity *SlaInsightEscalationSeverity `json:"severity"`
+
+	// Teams The repository's owner teams, raw, or (unassigned).
+	Teams []string `json:"teams"`
+
+	// Title Raw untrusted finding title, truncated to 120 characters and preserved as data rather than authored Markdown or HTML.
+	Title string `json:"title"`
+}
+
+// SlaInsightEscalationClockBasis What started the clock: the tracker filing, the first report or decision, or the first audit report.
+type SlaInsightEscalationClockBasis string
+
+// SlaInsightEscalationSeverity Effective severity; null when unrated (in scope through the profile's CVSS floor).
+type SlaInsightEscalationSeverity string
+
+// SlaInsightProfile defines model for SlaInsightProfile.
+type SlaInsightProfile struct {
+	// Counts Every in-scope finding lands in exactly one count; unclocked and out-of-profile findings are shown, never dropped.
+	Counts SlaInsightCounts `json:"counts"`
+
+	// Description The profile's description, raw; null when none.
+	Description *string `json:"description"`
+
+	// Escalations The escalation digest: overdue findings, critical first and unrated last, then most days overdue first; at most 100. Generated for human review, never sent.
+	Escalations []SlaInsightEscalation `json:"escalations"`
+
+	// MedianDaysToResolve Per severity (unrated for findings without one), the median whole days from clock start to resolution of the clocked resolved findings. Only severities with a resolution appear. A value can be negative when a finding was resolved before its clock started (for example, fixed before it was filed).
+	MedianDaysToResolve map[string]int `json:"median_days_to_resolve"`
+
+	// OverdueBySeverity Open overdue findings per severity (unrated for findings without one); only severities with one appear.
+	OverdueBySeverity map[string]int `json:"overdue_by_severity"`
+
+	// Profile The profile's name, raw.
+	Profile string `json:"profile"`
+
+	// ResolvedCompliancePct resolved_met as a percentage of resolved_met + resolved_breached, to one decimal; null when nothing resolved was clocked.
+	ResolvedCompliancePct *float64 `json:"resolved_compliance_pct"`
+
+	// Teams One row per owner team with an overdue finding, most overdue first, then by team name. A finding with no owner counts under (unassigned).
+	Teams []SlaInsightTeam `json:"teams"`
+}
+
+// SlaInsightSource Where the SLA policy came from.
+type SlaInsightSource struct {
+	// Name The source's name, raw.
+	Name string `json:"name"`
+
+	// Note A note on the source, raw; null when none.
+	Note *string `json:"note"`
+
+	// Retrieved When the source was retrieved.
+	Retrieved openapi_types.Date `json:"retrieved"`
+
+	// Url The source's URL, raw; null when none is recorded.
+	Url *string `json:"url"`
+}
+
+// SlaInsightTeam defines model for SlaInsightTeam.
+type SlaInsightTeam struct {
+	Critical SlaInsightCount `json:"critical"`
+
+	// Overdue The team's open overdue findings.
+	Overdue int `json:"overdue"`
+
+	// Team The owner team's name, raw, or (unassigned).
+	Team      string          `json:"team"`
+	WorstDays SlaInsightCount `json:"worst_days"`
+}

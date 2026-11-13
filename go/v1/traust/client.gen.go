@@ -3517,6 +3517,9 @@ type ClientInterface interface {
 	// GetOrder request
 	GetOrder(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// Approve request
+	Approve(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListOrderAssessments request
 	ListOrderAssessments(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4268,6 +4271,18 @@ func (c *RawClient) Start(ctx context.Context, body StartJSONRequestBody, reqEdi
 
 func (c *RawClient) GetOrder(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetOrderRequest(c.Server, orderId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) Approve(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewApproveRequest(c.Server, orderId)
 	if err != nil {
 		return nil, err
 	}
@@ -7484,6 +7499,40 @@ func NewGetOrderRequest(server string, orderId openapi_types.UUID) (*http.Reques
 	return req, nil
 }
 
+// NewApproveRequest generates requests for Approve
+func NewApproveRequest(server string, orderId openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "order_id", runtime.ParamLocationPath, orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/orders/%s/approve", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
 // NewListOrderAssessmentsRequest generates requests for ListOrderAssessments
 func NewListOrderAssessmentsRequest(server string, orderId openapi_types.UUID) (*http.Request, error) {
 	var err error
@@ -10136,6 +10185,9 @@ type ClientWithResponsesInterface interface {
 	// GetOrderWithResponse request
 	GetOrderWithResponse(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetOrderResponse, error)
 
+	// ApproveWithResponse request
+	ApproveWithResponse(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*ApproveResponse, error)
+
 	// ListOrderAssessmentsWithResponse request
 	ListOrderAssessmentsWithResponse(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*ListOrderAssessmentsResponse, error)
 
@@ -11308,6 +11360,33 @@ func (r GetOrderResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetOrderResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ApproveResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RunOrder
+	JSON401      *Problem
+	JSON403      *Problem
+	JSON404      *Problem
+	JSON409      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r ApproveResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ApproveResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -12907,6 +12986,15 @@ func (c *ClientWithResponses) GetOrderWithResponse(ctx context.Context, orderId 
 		return nil, err
 	}
 	return ParseGetOrderResponse(rsp)
+}
+
+// ApproveWithResponse request returning *ApproveResponse
+func (c *ClientWithResponses) ApproveWithResponse(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*ApproveResponse, error) {
+	rsp, err := c.Approve(ctx, orderId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseApproveResponse(rsp)
 }
 
 // ListOrderAssessmentsWithResponse request returning *ListOrderAssessmentsResponse
@@ -15269,6 +15357,67 @@ func ParseGetOrderResponse(rsp *http.Response) (*GetOrderResponse, error) {
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseApproveResponse parses an HTTP response from a ApproveWithResponse call
+func ParseApproveResponse(rsp *http.Response) (*ApproveResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ApproveResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RunOrder
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest Problem
