@@ -62,6 +62,10 @@ rollup, err := traust.GetInsightAs[traust.FindingsRollupInsight](ctx, client, pa
 critical := rollup.Total.Open.Critical                 // unknown is nil, e.g. rollup.AsOf
 ```
 
+A view composed from others uses their types: `ExecutiveSummaryInsight.Rollup` is a
+`FindingsRollupInsight`, its `Pqc` a `*PqcPortfolioInsight` (nil when the panel was not asked
+for), its isolation panel's `ThreatRegister` a `ThreatRegisterInsight`, and so on.
+
 ## Keep inventory current
 
 ```go

@@ -4,7 +4,9 @@
 Runs in core's environment at CORE_REF (`$(CORE_PYTHON)`), so the view schemas are the
 `views_schema/v1` contracts core validates its views with: no second contracts pin. Each
 view becomes `<View>Insight` and each of its `$defs` `<View>Insight<Def>`; references into
-artifact schemas are inlined. Validation-only keywords (if/then/else, contains, not,
+artifact schemas are inlined. A view composed from others (the executive summary) references
+their contracts: a reference to another view, or to one of its `$defs`, becomes that view's
+component, so a shape is generated once; a reference deeper into another view is inlined. Validation-only keywords (if/then/else, contains, not,
 propertyNames, const) are dropped: the structs carry the shape, core enforces the rest.
 Numbers are doubles so a measured value round-trips exactly.
 
@@ -48,8 +50,34 @@ def pointer(document: Json, path: str) -> Json:
     return node
 
 
+VIEWS = "views_schema/v1/"
+
+
+def view_reference(ref: str) -> tuple[str, str] | None:
+    """The view and its pointer when `ref` names another view contract, else None."""
+    target, _, path = ref.partition("#")
+    if VIEWS not in target:
+        return None
+    return target.rsplit("/", 1)[-1].removesuffix(".schema.json"), path
+
+
+def view_component(ref: str) -> str | None:
+    """The component a reference to another view (or one of its `$defs`) names, else None."""
+    found = view_reference(ref)
+    if found is None:
+        return None
+    view, path = found
+    parts = [p for p in path.split("/") if p]
+    if not parts:
+        return pascal(view) + "Insight"
+    if len(parts) == 2 and parts[0] == "$defs":
+        return pascal(view) + "Insight" + pascal(parts[1])
+    return None
+
+
 def inline_external(node: Json, document: Json) -> Json:
-    """Every reference outside the view inlined from the artifact schema it names."""
+    """Every reference outside the view inlined from the schema it names, except a reference
+    to another view or one of its `$defs`: that stays, to become the view's component."""
     from traust_core.v1 import contracts  # core's environment, at CORE_REF
 
     if isinstance(node, list):
@@ -57,9 +85,13 @@ def inline_external(node: Json, document: Json) -> Json:
     if not isinstance(node, dict):
         return node
     ref = node.get("$ref")
+    if isinstance(ref, str) and not ref.startswith("#") and view_component(ref) is not None:
+        return {key: inline_external(value, document) for key, value in node.items()}
     if isinstance(ref, str) and not ref.startswith("#"):
         target, _, path = ref.partition("#")
-        external = contracts.schema(target.rsplit("/", 1)[-1].removesuffix(".schema.json"))
+        view = view_reference(ref)
+        name = target.rsplit("/", 1)[-1].removesuffix(".schema.json")
+        external = contracts.view_schema(view[0]) if view else contracts.schema(name)
         resolved = inline_local(copy.deepcopy(pointer(external, path)), external)
         rest = {k: v for k, v in node.items() if k != "$ref"}
         return inline_external({**resolved, **rest}, document)
@@ -95,6 +127,10 @@ def openapi(node: Json, prefix: str) -> Json:
                 out.update(openapi(structural[0], prefix))  # a def composed by reference
             elif structural:
                 raise SystemExit(f"{prefix}: allOf carries structure; extend views.py")
+            continue
+        component = view_component(value) if key == "$ref" else None
+        if component is not None:
+            out["$ref"] = "#/components/schemas/" + component  # another view's, generated there
             continue
         if key == "$ref":
             if not value.startswith("#/$defs/") or value.count("/") != 2:
@@ -150,7 +186,7 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
     from traust_core.v1.errors import ConfigError
     from traust_core.v1.models.insight import ViewName
 
-    schemas: dict[str, Json] = {}
+    found: dict[str, Json] = {}
     views: dict[str, str] = {}
     for view in ViewName:
         try:
@@ -159,21 +195,23 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
             continue  # no contract yet: GetInsight still returns it untyped
         schema = inline_external(schema, schema)
         prefix = pascal(view.value) + "Insight"
-        found = {prefix: openapi(schema, prefix)}
+        found[prefix] = openapi(schema, prefix)
         found.update(
             (prefix + pascal(name), openapi(definition, prefix))
             for name, definition in schema.get("$defs", {}).items()
         )
-        # only definitions the shape reaches: validation-only helpers (a contains target) go
-        reached, pending = set(), [prefix]
-        while pending:
-            name = pending.pop()
-            if name not in reached:
-                reached.add(name)
-                pending += [r.rsplit("/", 1)[-1] for r in refs(found[name])]
-        schemas.update((name, found[name]) for name in sorted(reached))
         views[prefix] = view.value
-    return schemas, views
+    # only definitions a view's shape reaches, across views (a composed view reaches its
+    # components'): validation-only helpers (a contains target) go
+    reached, pending = set(), list(views)
+    while pending:
+        name = pending.pop()
+        if name not in reached:
+            if name not in found:
+                raise SystemExit(f"{name}: referenced, but no view contract defines it")
+            reached.add(name)
+            pending += [r.rsplit("/", 1)[-1] for r in refs(found[name])]
+    return {name: found[name] for name in sorted(reached)}, views
 
 
 def main(argv: list[str]) -> int:

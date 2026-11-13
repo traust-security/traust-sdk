@@ -15,6 +15,14 @@ const (
 	AttackCoverageInsightScoreN2 AttackCoverageInsightScore = 2
 )
 
+// Defines values for CensusInsightOwnership.
+const (
+	CensusInsightOwnershipExternalBu CensusInsightOwnership = "external-bu"
+	CensusInsightOwnershipHarnessQa  CensusInsightOwnership = "harness-qa"
+	CensusInsightOwnershipOwned      CensusInsightOwnership = "owned"
+	CensusInsightOwnershipUpstream   CensusInsightOwnership = "upstream"
+)
+
 // Defines values for CompliancePrecisionInsightCalibrationFramework.
 const (
 	CompliancePrecisionInsightCalibrationFrameworkFedrampHigh     CompliancePrecisionInsightCalibrationFramework = "fedramp-high"
@@ -29,6 +37,23 @@ const (
 const (
 	CriticalMissesInsightMissesReasonAreaReported CriticalMissesInsightMissesReason = "area_reported"
 	CriticalMissesInsightMissesReasonMissed       CriticalMissesInsightMissesReason = "missed"
+)
+
+// Defines values for ExecutiveSummaryInsightCredentialLeakSeverity.
+const (
+	ExecutiveSummaryInsightCredentialLeakSeverityCritical      ExecutiveSummaryInsightCredentialLeakSeverity = "critical"
+	ExecutiveSummaryInsightCredentialLeakSeverityHigh          ExecutiveSummaryInsightCredentialLeakSeverity = "high"
+	ExecutiveSummaryInsightCredentialLeakSeverityInformational ExecutiveSummaryInsightCredentialLeakSeverity = "informational"
+	ExecutiveSummaryInsightCredentialLeakSeverityLow           ExecutiveSummaryInsightCredentialLeakSeverity = "low"
+	ExecutiveSummaryInsightCredentialLeakSeverityMedium        ExecutiveSummaryInsightCredentialLeakSeverity = "medium"
+)
+
+// Defines values for ExecutiveSummaryInsightIsolationReviewPosture.
+const (
+	ExecutiveSummaryInsightIsolationReviewPostureAdequate    ExecutiveSummaryInsightIsolationReviewPosture = "adequate"
+	ExecutiveSummaryInsightIsolationReviewPostureCriticalGap ExecutiveSummaryInsightIsolationReviewPosture = "critical-gap"
+	ExecutiveSummaryInsightIsolationReviewPostureStrong      ExecutiveSummaryInsightIsolationReviewPosture = "strong"
+	ExecutiveSummaryInsightIsolationReviewPostureWeak        ExecutiveSummaryInsightIsolationReviewPosture = "weak"
 )
 
 // Defines values for FindingsRollupInsightTopFindingSeverity.
@@ -59,6 +84,77 @@ const (
 	FindingsTrendInsightDirectionMetricRegressions       FindingsTrendInsightDirectionMetric = "regressions"
 	FindingsTrendInsightDirectionMetricRiskIndex         FindingsTrendInsightDirectionMetric = "risk_index"
 	FindingsTrendInsightDirectionMetricVelocity          FindingsTrendInsightDirectionMetric = "velocity"
+)
+
+// Defines values for PqcPortfolioInsightEffort.
+const (
+	PqcPortfolioInsightEffortBlockedExternal PqcPortfolioInsightEffort = "blocked-external"
+	PqcPortfolioInsightEffortL               PqcPortfolioInsightEffort = "l"
+	PqcPortfolioInsightEffortM               PqcPortfolioInsightEffort = "m"
+	PqcPortfolioInsightEffortModerate        PqcPortfolioInsightEffort = "moderate"
+	PqcPortfolioInsightEffortS               PqcPortfolioInsightEffort = "s"
+	PqcPortfolioInsightEffortSignificant     PqcPortfolioInsightEffort = "significant"
+	PqcPortfolioInsightEffortTrivial         PqcPortfolioInsightEffort = "trivial"
+	PqcPortfolioInsightEffortXl              PqcPortfolioInsightEffort = "xl"
+	PqcPortfolioInsightEffortXs              PqcPortfolioInsightEffort = "xs"
+)
+
+// Defines values for PqcPortfolioInsightFactPathClass.
+const (
+	PqcPortfolioInsightFactPathClassFirstParty PqcPortfolioInsightFactPathClass = "first_party"
+	PqcPortfolioInsightFactPathClassTestDocs   PqcPortfolioInsightFactPathClass = "test_docs"
+	PqcPortfolioInsightFactPathClassVendor     PqcPortfolioInsightFactPathClass = "vendor"
+)
+
+// Defines values for PqcPortfolioInsightReadinessBucket.
+const (
+	PqcPortfolioInsightReadinessBucketBlockedExternal PqcPortfolioInsightReadinessBucket = "blocked-external"
+	PqcPortfolioInsightReadinessBucketNotApplicable   PqcPortfolioInsightReadinessBucket = "not-applicable"
+	PqcPortfolioInsightReadinessBucketNotReady        PqcPortfolioInsightReadinessBucket = "not-ready"
+	PqcPortfolioInsightReadinessBucketPartial         PqcPortfolioInsightReadinessBucket = "partial"
+	PqcPortfolioInsightReadinessBucketReady           PqcPortfolioInsightReadinessBucket = "ready"
+)
+
+// Defines values for PqcPortfolioInsightReadinessDominant.
+const (
+	PqcPortfolioInsightReadinessDominantDelegatedDependency     PqcPortfolioInsightReadinessDominant = "delegated-dependency"
+	PqcPortfolioInsightReadinessDominantExternalized            PqcPortfolioInsightReadinessDominant = "externalized"
+	PqcPortfolioInsightReadinessDominantInheritedConstrained    PqcPortfolioInsightReadinessDominant = "inherited-constrained"
+	PqcPortfolioInsightReadinessDominantInheritedPlatform       PqcPortfolioInsightReadinessDominant = "inherited-platform"
+	PqcPortfolioInsightReadinessDominantNativeFirstParty        PqcPortfolioInsightReadinessDominant = "native-first-party"
+	PqcPortfolioInsightReadinessDominantNone                    PqcPortfolioInsightReadinessDominant = "none"
+	PqcPortfolioInsightReadinessDominantNotAssessableFromSource PqcPortfolioInsightReadinessDominant = "not-assessable-from-source"
+	PqcPortfolioInsightReadinessDominantVendored                PqcPortfolioInsightReadinessDominant = "vendored"
+)
+
+// Defines values for PqcPortfolioInsightReadinessFipsInteraction.
+const (
+	PqcPortfolioInsightReadinessFipsInteractionBlockedByProviderVersion PqcPortfolioInsightReadinessFipsInteraction = "blocked-by-provider-version"
+	PqcPortfolioInsightReadinessFipsInteractionFipsValidationGap        PqcPortfolioInsightReadinessFipsInteraction = "fips-validation-gap"
+	PqcPortfolioInsightReadinessFipsInteractionNoPenalty                PqcPortfolioInsightReadinessFipsInteraction = "no-penalty"
+	PqcPortfolioInsightReadinessFipsInteractionPqcBlockedByFipsMode     PqcPortfolioInsightReadinessFipsInteraction = "pqc-blocked-by-fips-mode"
+)
+
+// Defines values for PqcPortfolioInsightRemediationBlastRadius.
+const (
+	PqcPortfolioInsightRemediationBlastRadiusComponent PqcPortfolioInsightRemediationBlastRadius = "component"
+	PqcPortfolioInsightRemediationBlastRadiusFleet     PqcPortfolioInsightRemediationBlastRadius = "fleet"
+	PqcPortfolioInsightRemediationBlastRadiusProduct   PqcPortfolioInsightRemediationBlastRadius = "product"
+	PqcPortfolioInsightRemediationBlastRadiusService   PqcPortfolioInsightRemediationBlastRadius = "service"
+)
+
+// Defines values for PqcPortfolioInsightRemediationCategory.
+const (
+	PqcPortfolioInsightRemediationCategoryDeadline          PqcPortfolioInsightRemediationCategory = "deadline"
+	PqcPortfolioInsightRemediationCategoryFixNow            PqcPortfolioInsightRemediationCategory = "fix-now"
+	PqcPortfolioInsightRemediationCategoryUpgrade           PqcPortfolioInsightRemediationCategory = "upgrade"
+	PqcPortfolioInsightRemediationCategoryWaitingOnUpstream PqcPortfolioInsightRemediationCategory = "waiting-on-upstream"
+)
+
+// Defines values for PqcPortfolioInsightSiteRowSiteKind.
+const (
+	PqcPortfolioInsightSiteRowSiteKindGroupPin  PqcPortfolioInsightSiteRowSiteKind = "group-pin"
+	PqcPortfolioInsightSiteRowSiteKindToolchain PqcPortfolioInsightSiteRowSiteKind = "toolchain"
 )
 
 // Defines values for PqcWorklistInsightEntryPriorityTier.
@@ -120,6 +216,96 @@ const (
 	SlaInsightEscalationSeverityInformational SlaInsightEscalationSeverity = "informational"
 	SlaInsightEscalationSeverityLow           SlaInsightEscalationSeverity = "low"
 	SlaInsightEscalationSeverityMedium        SlaInsightEscalationSeverity = "medium"
+)
+
+// Defines values for ThreatRegisterInsightActor.
+const (
+	ThreatRegisterInsightActorAdjacentNetwork ThreatRegisterInsightActor = "adjacent_network"
+	ThreatRegisterInsightActorInsider         ThreatRegisterInsightActor = "insider"
+	ThreatRegisterInsightActorLocalAdmin      ThreatRegisterInsightActor = "local_admin"
+	ThreatRegisterInsightActorLocalUser       ThreatRegisterInsightActor = "local_user"
+	ThreatRegisterInsightActorRemoteAuth      ThreatRegisterInsightActor = "remote_auth"
+	ThreatRegisterInsightActorRemoteUnauth    ThreatRegisterInsightActor = "remote_unauth"
+	ThreatRegisterInsightActorSupplyChain     ThreatRegisterInsightActor = "supply_chain"
+)
+
+// Defines values for ThreatRegisterInsightBand.
+const (
+	ThreatRegisterInsightBandCritical ThreatRegisterInsightBand = "critical"
+	ThreatRegisterInsightBandHigh     ThreatRegisterInsightBand = "high"
+	ThreatRegisterInsightBandLow      ThreatRegisterInsightBand = "low"
+	ThreatRegisterInsightBandMedium   ThreatRegisterInsightBand = "medium"
+	ThreatRegisterInsightBandNote     ThreatRegisterInsightBand = "note"
+)
+
+// Defines values for ThreatRegisterInsightBoundaryComplexity.
+const (
+	ThreatRegisterInsightBoundaryComplexityHigh   ThreatRegisterInsightBoundaryComplexity = "high"
+	ThreatRegisterInsightBoundaryComplexityLow    ThreatRegisterInsightBoundaryComplexity = "low"
+	ThreatRegisterInsightBoundaryComplexityMedium ThreatRegisterInsightBoundaryComplexity = "medium"
+)
+
+// Defines values for ThreatRegisterInsightDimension.
+const (
+	ThreatRegisterInsightDimensionAuthentication ThreatRegisterInsightDimension = "authentication"
+	ThreatRegisterInsightDimensionConnectivity   ThreatRegisterInsightDimension = "connectivity"
+	ThreatRegisterInsightDimensionEncryption     ThreatRegisterInsightDimension = "encryption"
+	ThreatRegisterInsightDimensionHygiene        ThreatRegisterInsightDimension = "hygiene"
+	ThreatRegisterInsightDimensionPrivilege      ThreatRegisterInsightDimension = "privilege"
+)
+
+// Defines values for ThreatRegisterInsightDocVarianceDisposition.
+const (
+	ThreatRegisterInsightDocVarianceDispositionOpen ThreatRegisterInsightDocVarianceDisposition = "open"
+)
+
+// Defines values for ThreatRegisterInsightDocVarianceKind.
+const (
+	ThreatRegisterInsightDocVarianceKindContradiction ThreatRegisterInsightDocVarianceKind = "contradiction"
+	ThreatRegisterInsightDocVarianceKindOmission      ThreatRegisterInsightDocVarianceKind = "omission"
+	ThreatRegisterInsightDocVarianceKindOverclaim     ThreatRegisterInsightDocVarianceKind = "overclaim"
+	ThreatRegisterInsightDocVarianceKindStale         ThreatRegisterInsightDocVarianceKind = "stale"
+	ThreatRegisterInsightDocVarianceKindUnderclaim    ThreatRegisterInsightDocVarianceKind = "underclaim"
+)
+
+// Defines values for ThreatRegisterInsightQuickWinBand.
+const (
+	ThreatRegisterInsightQuickWinBandCritical ThreatRegisterInsightQuickWinBand = "critical"
+	ThreatRegisterInsightQuickWinBandHigh     ThreatRegisterInsightQuickWinBand = "high"
+)
+
+// Defines values for ThreatRegisterInsightQuickWinEffort.
+const (
+	ThreatRegisterInsightQuickWinEffortS  ThreatRegisterInsightQuickWinEffort = "S"
+	ThreatRegisterInsightQuickWinEffortS1 ThreatRegisterInsightQuickWinEffort = "s"
+	ThreatRegisterInsightQuickWinEffortXS ThreatRegisterInsightQuickWinEffort = "XS"
+	ThreatRegisterInsightQuickWinEffortXs ThreatRegisterInsightQuickWinEffort = "xs"
+)
+
+// Defines values for ThreatRegisterInsightThreatImpact.
+const (
+	ThreatRegisterInsightThreatImpactCritical    ThreatRegisterInsightThreatImpact = "critical"
+	ThreatRegisterInsightThreatImpactExistential ThreatRegisterInsightThreatImpact = "existential"
+	ThreatRegisterInsightThreatImpactHigh        ThreatRegisterInsightThreatImpact = "high"
+	ThreatRegisterInsightThreatImpactLow         ThreatRegisterInsightThreatImpact = "low"
+	ThreatRegisterInsightThreatImpactMedium      ThreatRegisterInsightThreatImpact = "medium"
+)
+
+// Defines values for ThreatRegisterInsightThreatLikelihood.
+const (
+	ThreatRegisterInsightThreatLikelihoodAlmostCertain ThreatRegisterInsightThreatLikelihood = "almost_certain"
+	ThreatRegisterInsightThreatLikelihoodLikely        ThreatRegisterInsightThreatLikelihood = "likely"
+	ThreatRegisterInsightThreatLikelihoodPossible      ThreatRegisterInsightThreatLikelihood = "possible"
+	ThreatRegisterInsightThreatLikelihoodRare          ThreatRegisterInsightThreatLikelihood = "rare"
+	ThreatRegisterInsightThreatLikelihoodVeryRare      ThreatRegisterInsightThreatLikelihood = "very_rare"
+)
+
+// Defines values for ThreatRegisterInsightThreatStatus.
+const (
+	ThreatRegisterInsightThreatStatusMitigated          ThreatRegisterInsightThreatStatus = "mitigated"
+	ThreatRegisterInsightThreatStatusPartiallyMitigated ThreatRegisterInsightThreatStatus = "partially_mitigated"
+	ThreatRegisterInsightThreatStatusRiskAccepted       ThreatRegisterInsightThreatStatus = "risk_accepted"
+	ThreatRegisterInsightThreatStatusUnmitigated        ThreatRegisterInsightThreatStatus = "unmitigated"
 )
 
 // AttackCoverageInsight Ephemeral derived Insight ViewModel from traust-core's attack-coverage view: the scope's MITRE ATT&CK coverage as of as_of against the pinned ATT&CK release. Modeled evidence (techniques the latest threat models cite) and weakness-derived candidates (finding categories through the pack's category map) are kept apart, never blended; observed coverage (confirmed validation chains) is not yet recorded. Includes an ATT&CK Navigator layer. Not a persisted artifact or SQL projection. Every serialized field is present. JSON Schema checks structure and ranges, not arithmetic across fields.
@@ -255,6 +441,90 @@ type BenchmarkScorecardsInsightScorecard struct {
 	Overall        BenchmarkScorecardsInsightRecall `json:"overall"`
 	TargetsScored  int                              `json:"targets_scored"`
 	TargetsSkipped int                              `json:"targets_skipped"`
+}
+
+// CensusInsight Ephemeral derived Insight ViewModel from traust-core's census view, the denominator authority: for a scope (named products and teams, else every repository) as of as_of, the secure-code work done and the distinct vulnerabilities per corpus ownership class, with declared-IaC and container findings counted apart. Not a persisted artifact or SQL projection. Every serialized field is present. JSON Schema checks structure and ranges, not arithmetic across fields.
+type CensusInsight struct {
+	// AsOf The point in time the census is read at: the filter's, else when the view was built.
+	AsOf        time.Time          `json:"as_of"`
+	CloudConfig CensusInsightLayer `json:"cloud_config"`
+	Container   CensusInsightLayer `json:"container"`
+
+	// Cuts One cut per corpus ownership class present, in the ownership registry's order (owned, upstream, external-bu, harness-qa), then the cut whose ownership is null: the repositories no product with a registered ownership ships. A repository shipped by products of several classes counts in each.
+	Cuts          []CensusInsightCut `json:"cuts"`
+	Dispositioned CensusInsightCount `json:"dispositioned"`
+	NeverAssessed CensusInsightCount `json:"never_assessed"`
+
+	// Products The scope's products by slug (the filter's named products, else every product); with a team filter, only those shipping a repository in scope.
+	Products     []CensusInsightProduct `json:"products"`
+	Reported     CensusInsightCount     `json:"reported"`
+	Repositories CensusInsightCount     `json:"repositories"`
+
+	// Unregistered URLs of the repositories in scope that no product with a registered ownership ships, by URL.
+	Unregistered []string `json:"unregistered"`
+}
+
+// CensusInsightCount defines model for CensusInsightCount.
+type CensusInsightCount = int
+
+// CensusInsightCut One ownership class's work and distinct vulnerabilities. A distinct vulnerability is one finding reported on its repository's default line, neither a false positive nor hardening.
+type CensusInsightCut struct {
+	Audited         CensusInsightCount `json:"audited"`
+	Audits          CensusInsightCount `json:"audits"`
+	BranchAudits    CensusInsightCount `json:"branch_audits"`
+	BranchConfirmed CensusInsightCount `json:"branch_confirmed"`
+	BranchOnly      CensusInsightCount `json:"branch_only"`
+	Dispositioned   CensusInsightCount `json:"dispositioned"`
+
+	// Distinct Counts by effective severity; unrated counts findings with no severity. Every key is always present.
+	Distinct       CensusInsightSeverityCounts `json:"distinct"`
+	FalsePositives CensusInsightCount          `json:"false_positives"`
+	Hardening      CensusInsightCount          `json:"hardening"`
+	Occurrences    CensusInsightCount          `json:"occurrences"`
+
+	// Open Counts by effective severity; unrated counts findings with no severity. Every key is always present.
+	Open CensusInsightSeverityCounts `json:"open"`
+
+	// Ownership The class; null for the repositories no product with a registered ownership ships.
+	Ownership    *CensusInsightOwnership `json:"ownership"`
+	Products     CensusInsightCount      `json:"products"`
+	Repositories CensusInsightCount      `json:"repositories"`
+}
+
+// CensusInsightLayer defines model for CensusInsightLayer.
+type CensusInsightLayer struct {
+	FalsePositives CensusInsightCount `json:"false_positives"`
+
+	// Findings Counts by effective severity; unrated counts findings with no severity. Every key is always present.
+	Findings CensusInsightSeverityCounts `json:"findings"`
+}
+
+// CensusInsightOwnership The corpus ownership class, from the ownership registry.
+type CensusInsightOwnership string
+
+// CensusInsightProduct defines model for CensusInsightProduct.
+type CensusInsightProduct struct {
+	// BusinessUnit The registry's business unit, raw; null when unregistered.
+	BusinessUnit *string `json:"business_unit"`
+
+	// Name Raw product name, preserved as data.
+	Name string `json:"name"`
+
+	// Ownership The corpus registry's ownership class for the product; null when unregistered.
+	Ownership    *CensusInsightOwnership `json:"ownership"`
+	ProductId    openapi_types.UUID      `json:"product_id"`
+	Repositories CensusInsightCount      `json:"repositories"`
+	Slug         string                  `json:"slug"`
+}
+
+// CensusInsightSeverityCounts Counts by effective severity; unrated counts findings with no severity. Every key is always present.
+type CensusInsightSeverityCounts struct {
+	Critical      CensusInsightCount `json:"critical"`
+	High          CensusInsightCount `json:"high"`
+	Informational CensusInsightCount `json:"informational"`
+	Low           CensusInsightCount `json:"low"`
+	Medium        CensusInsightCount `json:"medium"`
+	Unrated       CensusInsightCount `json:"unrated"`
 }
 
 // CompliancePrecisionInsight Ephemeral Insight ViewModel wrapping DetectionQualityService.calibrate_compliance output. Review precision for recorded automatic compliance check firings and attributed human dismissals, not evaluator calibration, compliance coverage or a compliance score. Core derives counts, precision and inclusive precision <= gate flags; this schema validates their shape and ranges, not count arithmetic. No mutations or persisted artifact are implied.
@@ -417,6 +687,189 @@ type CriticalMissesInsight struct {
 
 // CriticalMissesInsightMissesReason missed denotes an actual miss; area_reported requires adjudication.
 type CriticalMissesInsightMissesReason string
+
+// ExecutiveSummaryInsight Ephemeral derived Insight ViewModel from traust-core's executive-summary view: the leadership roll-up of the scope as of the findings rollup's as_of. It is composed from the component view contracts by reference, never by copying their shapes: the findings rollup, and when the filter asks for them the ATT&CK, PQC, isolation (threat register) and IaC (census layer) panels; fleet-wide, the top advisory rows of dependency exposure. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
+type ExecutiveSummaryInsight struct {
+	// Attack The ATT&CK panel, when the filter asks for it: the attack-coverage view's contract. Null otherwise.
+	Attack *AttackCoverageInsight `json:"attack"`
+
+	// CredentialLeaks Open credential and secret findings, most severe first (unrated last), then by repository URL and title.
+	CredentialLeaks []ExecutiveSummaryInsightCredentialLeak `json:"credential_leaks"`
+
+	// Exposure Fleet-wide only: the top 10 advisory rows of the exposure view (most commits first), each the exposure contract's row keyed by an advisory id. Null for a product or team scope.
+	Exposure *[]ExposureInsightRollup `json:"exposure"`
+
+	// HardeningThemes Risk theme (raw label) to the findings carrying it; only themes seen appear.
+	HardeningThemes ExecutiveSummaryInsightThemeCounts `json:"hardening_themes"`
+
+	// Iac The declared-IaC panel, when the filter asks for it; null otherwise.
+	Iac *ExecutiveSummaryInsightIac `json:"iac"`
+
+	// Isolation The isolation panel, when the filter asks for it; null otherwise.
+	Isolation *ExecutiveSummaryInsightIsolation `json:"isolation"`
+
+	// Languages Open findings of the repositories whose primary language this is, most open first, then by language.
+	Languages []ExecutiveSummaryInsightLanguage `json:"languages"`
+
+	// Pqc The PQC panel, when the filter asks for it and names no as_of: the pqc-portfolio view's contract. Null otherwise.
+	Pqc *PqcPortfolioInsight `json:"pqc"`
+
+	// PqcUnavailable Why the PQC panel is empty when it was asked for at an as_of (Core reads current readiness only and never substitutes it); null otherwise.
+	PqcUnavailable *string `json:"pqc_unavailable"`
+
+	// Privileges Declared-privilege posture from the latest priv-profiles: posture, never finding counts.
+	Privileges ExecutiveSummaryInsightPrivileges `json:"privileges"`
+
+	// Rollup Ephemeral derived Insight ViewModel from traust-core's findings-rollup view: disposition-aware finding counts for a scope (named products and teams, else every repository) at a point in time, per product, per repository and per category label, with the open critical and high findings listed. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not count arithmetic.
+	Rollup FindingsRollupInsight `json:"rollup"`
+
+	// Themes Risk theme (raw label) to the findings carrying it; only themes seen appear.
+	Themes ExecutiveSummaryInsightThemeCounts `json:"themes"`
+}
+
+// ExecutiveSummaryInsightCount defines model for ExecutiveSummaryInsightCount.
+type ExecutiveSummaryInsightCount = int
+
+// ExecutiveSummaryInsightCredentialLeak An open credential or secret finding. The rollup's top findings are critical or high only; a leak can be any severity, or unrated.
+type ExecutiveSummaryInsightCredentialLeak struct {
+	// CvssScore CVSS base score from 0 to 10 as an exact decimal string. Core emits the shortest fixed-point form, the same from every storage backend (for example "9.8", "10", "0"); the pattern also admits trailing zeros, so compare as decimals. Null when the finding is unscored.
+	CvssScore       *string                     `json:"cvss_score"`
+	ExecutionProven bool                        `json:"execution_proven"`
+	FindingId       ExecutiveSummaryInsightUuid `json:"finding_id"`
+	RepositoryUrl   string                      `json:"repository_url"`
+
+	// Severity The severity registry's effective severity; null when unrated.
+	Severity *ExecutiveSummaryInsightCredentialLeakSeverity `json:"severity"`
+
+	// SlaDue When the finding's SLA falls due; null when no SLA deadline applies.
+	SlaDue *time.Time `json:"sla_due"`
+
+	// Title Raw untrusted finding title, preserved as data rather than authored Markdown or HTML.
+	Title string `json:"title"`
+}
+
+// ExecutiveSummaryInsightCredentialLeakSeverity The severity registry's effective severity; null when unrated.
+type ExecutiveSummaryInsightCredentialLeakSeverity string
+
+// ExecutiveSummaryInsightIac defines model for ExecutiveSummaryInsightIac.
+type ExecutiveSummaryInsightIac struct {
+	Assessments  ExecutiveSummaryInsightCount `json:"assessments"`
+	Findings     CensusInsightLayer           `json:"findings"`
+	Repositories ExecutiveSummaryInsightCount `json:"repositories"`
+
+	// Targets One row per audit, most unsuppressed findings first, then by repository.
+	Targets []ExecutiveSummaryInsightIacTarget `json:"targets"`
+}
+
+// ExecutiveSummaryInsightIacTarget defines model for ExecutiveSummaryInsightIacTarget.
+type ExecutiveSummaryInsightIacTarget struct {
+	AssessmentId ExecutiveSummaryInsightUuid  `json:"assessment_id"`
+	Ledgered     ExecutiveSummaryInsightCount `json:"ledgered"`
+	NeedsReview  ExecutiveSummaryInsightCount `json:"needs_review"`
+
+	// Repository Raw registered URL.
+	Repository string `json:"repository"`
+
+	// Severities Counts by effective severity; unrated counts findings with no severity. Every key is always present.
+	Severities ExecutiveSummaryInsightSeverityCounts `json:"severities"`
+	Suppressed ExecutiveSummaryInsightCount          `json:"suppressed"`
+
+	// Target The audited target, raw.
+	Target       string                       `json:"target"`
+	Unsuppressed ExecutiveSummaryInsightCount `json:"unsuppressed"`
+}
+
+// ExecutiveSummaryInsightIsolation defines model for ExecutiveSummaryInsightIsolation.
+type ExecutiveSummaryInsightIsolation struct {
+	// Reviews Each repository's latest completed default-line isolation review, worst posture first, then most gaps, then by service and repository.
+	Reviews []ExecutiveSummaryInsightIsolationReview `json:"reviews"`
+
+	// ThreatRegister Ephemeral derived Insight ViewModel from traust-core's threat-register view: the scope's standing threats from each repository's latest completed threat model as of as_of, ranked, with class-closing quick wins, tenant boundaries weakest first and the open doc variances. Threats, mitigations and boundaries are Core's projections of the threat-model documents, not the documents. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
+	ThreatRegister ThreatRegisterInsight `json:"threat_register"`
+}
+
+// ExecutiveSummaryInsightIsolationReview defines model for ExecutiveSummaryInsightIsolationReview.
+type ExecutiveSummaryInsightIsolationReview struct {
+	AssessmentId ExecutiveSummaryInsightUuid `json:"assessment_id"`
+
+	// Dimensions Isolation check result (as the review states it) to how many interface dimensions have it; only results seen appear.
+	Dimensions map[string]int               `json:"dimensions"`
+	Gaps       ExecutiveSummaryInsightCount `json:"gaps"`
+	Interfaces ExecutiveSummaryInsightCount `json:"interfaces"`
+
+	// Posture The isolation-posture registry's overall posture.
+	Posture ExecutiveSummaryInsightIsolationReviewPosture `json:"posture"`
+
+	// Repository Raw registered URL.
+	Repository string `json:"repository"`
+	Service    string `json:"service"`
+}
+
+// ExecutiveSummaryInsightIsolationReviewPosture The isolation-posture registry's overall posture.
+type ExecutiveSummaryInsightIsolationReviewPosture string
+
+// ExecutiveSummaryInsightLanguage defines model for ExecutiveSummaryInsightLanguage.
+type ExecutiveSummaryInsightLanguage struct {
+	// Language The primary language, raw; unknown when none was measured.
+	Language string `json:"language"`
+
+	// Open Counts by effective severity; unrated counts findings with no severity. Every key is always present.
+	Open         ExecutiveSummaryInsightSeverityCounts `json:"open"`
+	Repositories int                                   `json:"repositories"`
+}
+
+// ExecutiveSummaryInsightPrivileges Declared-privilege posture from the latest priv-profiles: posture, never finding counts.
+type ExecutiveSummaryInsightPrivileges struct {
+	// Flags Privilege flag (raw) to the profiles' count of it, most first; only flags seen appear.
+	Flags                map[string]int               `json:"flags"`
+	Privileged           ExecutiveSummaryInsightCount `json:"privileged"`
+	Profiles             ExecutiveSummaryInsightCount `json:"profiles"`
+	SccRequesting        ExecutiveSummaryInsightCount `json:"scc_requesting"`
+	WildcardRepositories ExecutiveSummaryInsightCount `json:"wildcard_repositories"`
+	WildcardRules        ExecutiveSummaryInsightCount `json:"wildcard_rules"`
+}
+
+// ExecutiveSummaryInsightSeverityCounts Counts by effective severity; unrated counts findings with no severity. Every key is always present.
+type ExecutiveSummaryInsightSeverityCounts = FindingsRollupInsightSeverityCounts
+
+// ExecutiveSummaryInsightThemeCounts Risk theme (raw label) to the findings carrying it; only themes seen appear.
+type ExecutiveSummaryInsightThemeCounts map[string]int
+
+// ExecutiveSummaryInsightUuid defines model for ExecutiveSummaryInsightUuid.
+type ExecutiveSummaryInsightUuid = openapi_types.UUID
+
+// ExposureInsight Ephemeral derived Insight ViewModel from traust-core's exposure view: fleet-wide dependency exposure as of as_of, from the analysis standing for each commit and advisory: its latest-prepared complete run (every package and version it declared), else its latest-prepared partial run, so recorded verdicts still show, else, for documents recorded before preparation scopes, the latest of each package and version. Counted by advisory, by product and by verdict. Fleet-wide only: Core refuses a product or team scope. Not a persisted artifact or SQL projection. Every serialized field is present. JSON Schema checks structure and ranges, not arithmetic across fields.
+type ExposureInsight struct {
+	// AsOf The point in time the analyses are read at: the filter's, else when the view was built.
+	AsOf time.Time `json:"as_of"`
+
+	// ByAdvisory One row per advisory id (never null).
+	ByAdvisory []ExposureInsightRollup `json:"by_advisory"`
+
+	// ByClassification One row per verdict, each commit and advisory pair counted once at its worst verdict; the key is that impact-classification value (never null).
+	ByClassification []ExposureInsightRollup `json:"by_classification"`
+
+	// ByProduct One row per product slug shipping an analysed commit (a commit counts in each product that ships it); key null for commits no product ships.
+	ByProduct []ExposureInsightRollup `json:"by_product"`
+}
+
+// ExposureInsightCount defines model for ExposureInsightCount.
+type ExposureInsightCount = int
+
+// ExposureInsightRollup The commits analysed in one group, each commit and advisory pair counted once at its worst verdict: most commits first, a null key last, then by key.
+type ExposureInsightRollup struct {
+	Affected ExposureInsightCount `json:"affected"`
+
+	// ByClassification The counted verdicts by impact-classification value; only verdicts seen appear, so a row (at least one commit) has at least one.
+	ByClassification map[string]int `json:"by_classification"`
+
+	// Commits Commit and advisory pairs counted.
+	Commits int                  `json:"commits"`
+	Exposed ExposureInsightCount `json:"exposed"`
+
+	// Key The group's advisory id, product slug or verdict, raw; null for commits without that dimension.
+	Key *string `json:"key"`
+}
 
 // FindingsRollupInsight Ephemeral derived Insight ViewModel from traust-core's findings-rollup view: disposition-aware finding counts for a scope (named products and teams, else every repository) at a point in time, per product, per repository and per category label, with the open critical and high findings listed. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not count arithmetic.
 type FindingsRollupInsight struct {
@@ -688,6 +1141,247 @@ type InventoryExportInsight struct {
 	} `json:"rows"`
 }
 
+// PqcPortfolioInsight Ephemeral derived Insight ViewModel from traust-core's pqc-portfolio view: post-quantum readiness worklists as recorded now (there is no as_of), one scope per named product (else one scope over every assessed commit), and, when no product is named, a product index worst first. Readiness records are Core's projection of the pqc-readiness reports, not the report documents. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null (empty when the report has none). JSON Schema checks structure and ranges, not arithmetic across fields.
+type PqcPortfolioInsight struct {
+	// Products Every product shipping an assessed commit, most not-ready repositories first, then lowest worst score (products with no scored repository last). Empty when the filter names products.
+	Products []PqcPortfolioInsightProduct `json:"products"`
+
+	// Scopes One scope per product the filter names, in the filter's order; one scope with product_id null when none is named.
+	Scopes []PqcPortfolioInsightScope `json:"scopes"`
+}
+
+// PqcPortfolioInsightClockItem defines model for PqcPortfolioInsightClockItem.
+type PqcPortfolioInsightClockItem struct {
+	// BlockedExternal Whether something outside the repository blocks it; null when unknown.
+	BlockedExternal *bool `json:"blocked_external"`
+
+	// DeprecatedAfter A NIST IR 8547 clock year; null when none applies.
+	DeprecatedAfter *PqcPortfolioInsightYear `json:"deprecated_after"`
+
+	// DisallowedAfter A NIST IR 8547 clock year; null when none applies.
+	DisallowedAfter *PqcPortfolioInsightYear `json:"disallowed_after"`
+
+	// Primitive The quantum-vulnerable primitive, raw.
+	Primitive string `json:"primitive"`
+
+	// RemediationEffort The remediation-effort registry's size; null when unsized.
+	RemediationEffort *PqcPortfolioInsightEffort `json:"remediation_effort"`
+}
+
+// PqcPortfolioInsightCount defines model for PqcPortfolioInsightCount.
+type PqcPortfolioInsightCount = int
+
+// PqcPortfolioInsightEffort The remediation-effort registry's size; null when unsized.
+type PqcPortfolioInsightEffort string
+
+// PqcPortfolioInsightFact A recorded PQC fact, as Core serves it: the pqc-facts fact with every optional field present (null when absent).
+type PqcPortfolioInsightFact struct {
+	CapabilityHint *string  `json:"capability_hint"`
+	Confidence     *float64 `json:"confidence"`
+	Detail         string   `json:"detail"`
+	FactId         string   `json:"fact_id"`
+	File           string   `json:"file"`
+	FindingId      *string  `json:"finding_id"`
+	FipsMode       *bool    `json:"fips_mode"`
+
+	// Ir8547 The rule's NIST IR 8547 mapping.
+	Ir8547 PqcPortfolioInsightIr8547 `json:"ir8547"`
+	Line   *int                      `json:"line"`
+	Match  *string                   `json:"match"`
+
+	// PathClass The pqc-path-class registry's class.
+	PathClass      PqcPortfolioInsightFactPathClass `json:"path_class"`
+	PqcCapable     *bool                            `json:"pqc_capable"`
+	ProvenanceHint string                           `json:"provenance_hint"`
+	Provider       *string                          `json:"provider"`
+	Risk           *string                          `json:"risk"`
+	RuleId         string                           `json:"rule_id"`
+	Severity       *string                          `json:"severity"`
+}
+
+// PqcPortfolioInsightFactPathClass The pqc-path-class registry's class.
+type PqcPortfolioInsightFactPathClass string
+
+// PqcPortfolioInsightIr8547 The rule's NIST IR 8547 mapping.
+type PqcPortfolioInsightIr8547 struct {
+	Clock *struct {
+		// DeprecatedAfter A NIST IR 8547 clock year; null when none applies.
+		DeprecatedAfter *PqcPortfolioInsightYear `json:"deprecated_after"`
+
+		// DisallowedAfter A NIST IR 8547 clock year; null when none applies.
+		DisallowedAfter *PqcPortfolioInsightYear `json:"disallowed_after"`
+		StatusNow       *string                  `json:"status_now"`
+	} `json:"clock"`
+
+	// MatchedPrefix The rule-map prefix that classified the fact; empty when none matched (never null).
+	MatchedPrefix  string  `json:"matched_prefix"`
+	Qclass         string  `json:"qclass"`
+	QclassResolved *string `json:"qclass_resolved"`
+	Usage          string  `json:"usage"`
+}
+
+// PqcPortfolioInsightPackage defines model for PqcPortfolioInsightPackage.
+type PqcPortfolioInsightPackage struct {
+	// Package The package, else its provider, raw.
+	Package string `json:"package"`
+
+	// Provider The crypto provider, raw; null when unrecorded.
+	Provider *string `json:"provider"`
+
+	// Repositories Repositories pulling it in.
+	Repositories int `json:"repositories"`
+}
+
+// PqcPortfolioInsightProduct defines model for PqcPortfolioInsightProduct.
+type PqcPortfolioInsightProduct struct {
+	Clock2030    PqcPortfolioInsightCount `json:"clock_2030"`
+	HndlPriority PqcPortfolioInsightCount `json:"hndl_priority"`
+	NotReady     PqcPortfolioInsightCount `json:"not_ready"`
+
+	// Product The product's slug.
+	Product string `json:"product"`
+
+	// Repositories Its assessed commits.
+	Repositories int `json:"repositories"`
+
+	// WorstOverall That commit's overall score; null when none is scored.
+	WorstOverall *PqcPortfolioInsightScore `json:"worst_overall"`
+
+	// WorstUrl The repository URL of its lowest-scored commit (not-applicable ones excluded); null when none is scored.
+	WorstUrl *string `json:"worst_url"`
+}
+
+// PqcPortfolioInsightReadiness A commit's recorded readiness: the report's scorecard and its remediations.
+type PqcPortfolioInsightReadiness struct {
+	// AssessedAt When the readiness assessment was recorded (its assessment's timezone-aware occurred_at), not the report's metadata string.
+	AssessedAt   time.Time               `json:"assessed_at"`
+	AssessmentId PqcPortfolioInsightUuid `json:"assessment_id"`
+
+	// Bucket The pqc-readiness-bucket registry's roll-up; null when the report predates buckets.
+	Bucket *PqcPortfolioInsightReadinessBucket `json:"bucket"`
+
+	// ClockItems Empty when the report has none (never null).
+	ClockItems []PqcPortfolioInsightClockItem `json:"clock_items"`
+
+	// Dominant The pqc-dominant-provenance registry's dominant provenance.
+	Dominant PqcPortfolioInsightReadinessDominant `json:"dominant"`
+
+	// FipsInteraction The pqc-fips-interaction registry's verdict; null when the report records none.
+	FipsInteraction   *PqcPortfolioInsightReadinessFipsInteraction `json:"fips_interaction"`
+	Has2030ClockItems bool                                         `json:"has_2030_clock_items"`
+	HndlPriority      bool                                         `json:"hndl_priority"`
+	Overall           PqcPortfolioInsightScore                     `json:"overall"`
+
+	// Pqca The PQC-agility domain score (0-100); null when not recorded.
+	Pqca *PqcPortfolioInsightScore `json:"pqca"`
+
+	// Remediations Empty when the report has none (never null).
+	Remediations                []PqcPortfolioInsightRemediation `json:"remediations"`
+	RepositoryRefId             PqcPortfolioInsightUuid          `json:"repository_ref_id"`
+	RuntimeVerificationRequired bool                             `json:"runtime_verification_required"`
+
+	// WhoSetsTls Who sets the TLS configuration, raw; null when not recorded.
+	WhoSetsTls *string `json:"who_sets_tls"`
+}
+
+// PqcPortfolioInsightReadinessBucket The pqc-readiness-bucket registry's roll-up; null when the report predates buckets.
+type PqcPortfolioInsightReadinessBucket string
+
+// PqcPortfolioInsightReadinessDominant The pqc-dominant-provenance registry's dominant provenance.
+type PqcPortfolioInsightReadinessDominant string
+
+// PqcPortfolioInsightReadinessFipsInteraction The pqc-fips-interaction registry's verdict; null when the report records none.
+type PqcPortfolioInsightReadinessFipsInteraction string
+
+// PqcPortfolioInsightRemediation defines model for PqcPortfolioInsightRemediation.
+type PqcPortfolioInsightRemediation struct {
+	// Action What to change, raw.
+	Action string `json:"action"`
+
+	// BlastRadius The pqc-blast-radius registry's scope; null when not recorded.
+	BlastRadius     *PqcPortfolioInsightRemediationBlastRadius `json:"blast_radius"`
+	BlockedExternal *bool                                      `json:"blocked_external"`
+
+	// BlockedOn What the item waits on, raw; null when nothing.
+	BlockedOn *string `json:"blocked_on"`
+
+	// Category The pqc-remediation-category registry's category.
+	Category PqcPortfolioInsightRemediationCategory `json:"category"`
+
+	// Deadline A NIST IR 8547 clock year; null when none applies.
+	Deadline *PqcPortfolioInsightYear `json:"deadline"`
+	Details  *string                  `json:"details"`
+
+	// Id The remediation's id in its report, raw. Historical reports are read unnarrowed, so an id can predate the canonical prefixed form (a bare REM-001).
+	Id string `json:"id"`
+
+	// Locations file:line anchors, raw; empty when the report records none (never null).
+	Locations []string `json:"locations"`
+
+	// Recipe The matching remediation playbook, raw; null when none.
+	Recipe *string `json:"recipe"`
+
+	// RemediationEffort The remediation-effort registry's size; null when unsized.
+	RemediationEffort *PqcPortfolioInsightEffort `json:"remediation_effort"`
+
+	// Target What to move to, raw; null when none.
+	Target *string `json:"target"`
+}
+
+// PqcPortfolioInsightRemediationBlastRadius The pqc-blast-radius registry's scope; null when not recorded.
+type PqcPortfolioInsightRemediationBlastRadius string
+
+// PqcPortfolioInsightRemediationCategory The pqc-remediation-category registry's category.
+type PqcPortfolioInsightRemediationCategory string
+
+// PqcPortfolioInsightRepository defines model for PqcPortfolioInsightRepository.
+type PqcPortfolioInsightRepository struct {
+	// Readiness A commit's recorded readiness: the report's scorecard and its remediations.
+	Readiness PqcPortfolioInsightReadiness `json:"readiness"`
+
+	// RepositoryUrl Raw registered URL, preserved as data.
+	RepositoryUrl string `json:"repository_url"`
+}
+
+// PqcPortfolioInsightScope defines model for PqcPortfolioInsightScope.
+type PqcPortfolioInsightScope struct {
+	// Packages Crypto packages in the scope's manifest SBOMs, most repositories first, then by name.
+	Packages []PqcPortfolioInsightPackage `json:"packages"`
+
+	// ProductId The scoped product; null for every assessed commit.
+	ProductId *PqcPortfolioInsightUuid `json:"product_id"`
+
+	// Repositories The scope's assessed commits, worst first (lowest overall score), then by repository URL.
+	Repositories []PqcPortfolioInsightRepository `json:"repositories"`
+
+	// Sites Crypto decision sites (group pins and toolchains) by kind, then repository URL, then fact id.
+	Sites       []PqcPortfolioInsightSiteRow `json:"sites"`
+	WithoutSbom PqcPortfolioInsightCount     `json:"without_sbom"`
+}
+
+// PqcPortfolioInsightScore defines model for PqcPortfolioInsightScore.
+type PqcPortfolioInsightScore = float64
+
+// PqcPortfolioInsightSiteRow defines model for PqcPortfolioInsightSiteRow.
+type PqcPortfolioInsightSiteRow struct {
+	RepositoryUrl string `json:"repository_url"`
+	Site          struct {
+		// Fact A recorded PQC fact, as Core serves it: the pqc-facts fact with every optional field present (null when absent).
+		Fact            PqcPortfolioInsightFact            `json:"fact"`
+		Kind            PqcPortfolioInsightSiteRowSiteKind `json:"kind"`
+		RepositoryRefId PqcPortfolioInsightUuid            `json:"repository_ref_id"`
+	} `json:"site"`
+}
+
+// PqcPortfolioInsightSiteRowSiteKind defines model for PqcPortfolioInsightSiteRow.Site.Kind.
+type PqcPortfolioInsightSiteRowSiteKind string
+
+// PqcPortfolioInsightUuid defines model for PqcPortfolioInsightUuid.
+type PqcPortfolioInsightUuid = openapi_types.UUID
+
+// PqcPortfolioInsightYear A NIST IR 8547 clock year; null when none applies.
+type PqcPortfolioInsightYear = int
+
 // PqcWorklistInsight Ephemeral derived Insight ViewModel from PqcService.worklist, using recorded repository liveness and scan state. Not a persisted artifact or SQL projection. Scope selection, ranking and routing belong to Core; unknown state does not establish readiness.
 type PqcWorklistInsight struct {
 	// Chokepoints Caller-supplied repository URL fragments, not persisted configuration. Strings remain raw untrusted data, not authored Markdown or HTML.
@@ -911,3 +1605,224 @@ type SlaInsightTeam struct {
 	Team      string          `json:"team"`
 	WorstDays SlaInsightCount `json:"worst_days"`
 }
+
+// ThreatRegisterInsight Ephemeral derived Insight ViewModel from traust-core's threat-register view: the scope's standing threats from each repository's latest completed threat model as of as_of, ranked, with class-closing quick wins, tenant boundaries weakest first and the open doc variances. Threats, mitigations and boundaries are Core's projections of the threat-model documents, not the documents. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
+type ThreatRegisterInsight struct {
+	// AsOf The point in time the threat models are read at: the filter's, else when the view was built.
+	AsOf   time.Time                  `json:"as_of"`
+	Models ThreatRegisterInsightCount `json:"models"`
+
+	// OpenVariances The scope's open doc variances (official-docs claims that code evidence contradicts), oldest verified first.
+	OpenVariances []ThreatRegisterInsightDocVariance `json:"open_variances"`
+
+	// QuickWins Class-closing xs or s mitigations over unmitigated critical or high threats, one per model and mitigation, critical first, then by mitigation text.
+	QuickWins []ThreatRegisterInsightQuickWin `json:"quick_wins"`
+
+	// RepositoryUrls Every repository in scope by id, with its raw registered URL.
+	RepositoryUrls map[string]string `json:"repository_urls"`
+
+	// TenantBoundaries Tenant-facing interfaces, weakest first (then most complex, most open threats, repository URL, boundary id).
+	TenantBoundaries []ThreatRegisterInsightRankedBoundary `json:"tenant_boundaries"`
+
+	// Threats Every threat, by band (critical first, unbanded last), then status, repository URL and label.
+	Threats []ThreatRegisterInsightRankedThreat `json:"threats"`
+}
+
+// ThreatRegisterInsightActor The threat-actor registry's position.
+type ThreatRegisterInsightActor string
+
+// ThreatRegisterInsightBand The risk-rating-band registry's OWASP band.
+type ThreatRegisterInsightBand string
+
+// ThreatRegisterInsightBoundary One tenant-facing interface as a multi-tenant threat model states it.
+type ThreatRegisterInsightBoundary struct {
+	AssessmentId ThreatRegisterInsightUuid `json:"assessment_id"`
+
+	// BoundaryId The model's interface id (IF-1, ...), raw.
+	BoundaryId string `json:"boundary_id"`
+
+	// Complexity The interface-complexity registry's level; null when not stated.
+	Complexity *ThreatRegisterInsightBoundaryComplexity `json:"complexity"`
+
+	// Dimensions Each isolation dimension's result as the model states it, raw.
+	Dimensions map[string]string `json:"dimensions"`
+
+	// Exposure Raw as the model states it.
+	Exposure           string  `json:"exposure"`
+	Interface          string  `json:"interface"`
+	IsolationReviewRef *string `json:"isolation_review_ref"`
+
+	// Kind Raw as the model states it.
+	Kind         string                    `json:"kind"`
+	RepositoryId ThreatRegisterInsightUuid `json:"repository_id"`
+	ThreatIds    []string                  `json:"threat_ids"`
+}
+
+// ThreatRegisterInsightBoundaryComplexity The interface-complexity registry's level; null when not stated.
+type ThreatRegisterInsightBoundaryComplexity string
+
+// ThreatRegisterInsightCount defines model for ThreatRegisterInsightCount.
+type ThreatRegisterInsightCount = int
+
+// ThreatRegisterInsightDimension The isolation-dimension registry's dimension.
+type ThreatRegisterInsightDimension string
+
+// ThreatRegisterInsightDocVariance One official-docs claim that code evidence contradicts (a doc-variance register record).
+type ThreatRegisterInsightDocVariance struct {
+	// Artifact The doc-variance register artifact the record is in.
+	Artifact struct {
+		// Digest The artifact's SHA-256, lowercase hex.
+		Digest string                    `json:"digest"`
+		Id     ThreatRegisterInsightUuid `json:"id"`
+		Name   string                    `json:"name"`
+	} `json:"artifact"`
+	Claim string `json:"claim"`
+
+	// Disposition Always open: the register lists open variances only.
+	Disposition ThreatRegisterInsightDocVarianceDisposition `json:"disposition"`
+
+	// Kind The doc-variance-kind registry's kind; null when the record states none.
+	Kind        *ThreatRegisterInsightDocVarianceKind `json:"kind"`
+	ProductSlug string                                `json:"product_slug"`
+
+	// Record The register record's id, raw.
+	Record       string                    `json:"record"`
+	RepositoryId ThreatRegisterInsightUuid `json:"repository_id"`
+	VerifiedAt   time.Time                 `json:"verified_at"`
+	Version      string                    `json:"version"`
+}
+
+// ThreatRegisterInsightDocVarianceDisposition Always open: the register lists open variances only.
+type ThreatRegisterInsightDocVarianceDisposition string
+
+// ThreatRegisterInsightDocVarianceKind The doc-variance-kind registry's kind; null when the record states none.
+type ThreatRegisterInsightDocVarianceKind string
+
+// ThreatRegisterInsightMitigation defines model for ThreatRegisterInsightMitigation.
+type ThreatRegisterInsightMitigation struct {
+	// BlockedExternal Whether something outside the repository blocks it; null when unknown.
+	BlockedExternal *bool `json:"blocked_external"`
+
+	// ClosesClass Whether it closes the threat's class (yes, partial, no), raw as the model states it.
+	ClosesClass string `json:"closes_class"`
+
+	// Effort Its size, raw as the model states it (a legacy XS is preserved); null when unsized.
+	Effort *string `json:"effort"`
+	Text   string  `json:"text"`
+}
+
+// ThreatRegisterInsightQuickWin A class-closing xs or s mitigation and the unmitigated critical or high threats it covers.
+type ThreatRegisterInsightQuickWin struct {
+	// Band The first covered threat's band.
+	Band            ThreatRegisterInsightQuickWinBand `json:"band"`
+	BlockedExternal *bool                             `json:"blocked_external"`
+
+	// Covers The labels of the threats it covers.
+	Covers []string `json:"covers"`
+
+	// Effort The mitigation-effort registry values that normalize to xs or s, as the model states them.
+	Effort       ThreatRegisterInsightQuickWinEffort `json:"effort"`
+	Mitigation   string                              `json:"mitigation"`
+	RepositoryId ThreatRegisterInsightUuid           `json:"repository_id"`
+}
+
+// ThreatRegisterInsightQuickWinBand The first covered threat's band.
+type ThreatRegisterInsightQuickWinBand string
+
+// ThreatRegisterInsightQuickWinEffort The mitigation-effort registry values that normalize to xs or s, as the model states them.
+type ThreatRegisterInsightQuickWinEffort string
+
+// ThreatRegisterInsightRankedBoundary A tenant boundary with what ranks it.
+type ThreatRegisterInsightRankedBoundary struct {
+	// Boundary One tenant-facing interface as a multi-tenant threat model states it.
+	Boundary ThreatRegisterInsightBoundary `json:"boundary"`
+
+	// Failed Dimensions stated no, or with a result outside the vocabulary.
+	Failed []ThreatRegisterInsightDimension `json:"failed"`
+
+	// OpenThreats Labels of the open threats it tags.
+	OpenThreats []string                         `json:"open_threats"`
+	Partial     []ThreatRegisterInsightDimension `json:"partial"`
+	Weakness    ThreatRegisterInsightCount       `json:"weakness"`
+}
+
+// ThreatRegisterInsightRankedThreat A threat with the band it ranks by.
+type ThreatRegisterInsightRankedThreat struct {
+	// Band Its stated OWASP severity, else the rating policy's crosswalk of its legacy likelihood and impact; null when it has neither.
+	Band *ThreatRegisterInsightBand `json:"band"`
+
+	// Crosswalked Whether the band came from the legacy crosswalk.
+	Crosswalked bool `json:"crosswalked"`
+
+	// Threat One threat as its threat model states it.
+	Threat ThreatRegisterInsightThreat `json:"threat"`
+}
+
+// ThreatRegisterInsightThreat One threat as its threat model states it.
+type ThreatRegisterInsightThreat struct {
+	// Actor The threat-actor registry's position.
+	Actor ThreatRegisterInsightActor `json:"actor"`
+
+	// Actors Every position, weakest first.
+	Actors       []ThreatRegisterInsightActor `json:"actors"`
+	AssessmentId ThreatRegisterInsightUuid    `json:"assessment_id"`
+
+	// Asset Raw; null when not stated.
+	Asset *string `json:"asset"`
+
+	// BoundaryIds The tenant boundaries naming it, raw.
+	BoundaryIds []string `json:"boundary_ids"`
+
+	// Controls Raw; null when not stated.
+	Controls *string `json:"controls"`
+
+	// Evidence Evidence anchors, raw; empty when modelled but not evidenced.
+	Evidence []string `json:"evidence"`
+
+	// Impact The threat-impact registry's legacy label; null when not stated.
+	Impact *ThreatRegisterInsightThreatImpact `json:"impact"`
+
+	// IsolationDimensions The isolation dimensions it stresses.
+	IsolationDimensions []ThreatRegisterInsightDimension `json:"isolation_dimensions"`
+
+	// IsolationReviewRef The first naming boundary's isolation-review artifact reference, raw; null when none.
+	IsolationReviewRef *string `json:"isolation_review_ref"`
+
+	// Label The model's threat id (T1, T2, ...), raw.
+	Label string `json:"label"`
+
+	// Likelihood The threat-likelihood registry's legacy label; null when not stated.
+	Likelihood *ThreatRegisterInsightThreatLikelihood `json:"likelihood"`
+
+	// Linddun Whether it is a LINDDUN privacy-overlay row.
+	Linddun      bool                              `json:"linddun"`
+	Mitigations  []ThreatRegisterInsightMitigation `json:"mitigations"`
+	RepositoryId ThreatRegisterInsightUuid         `json:"repository_id"`
+
+	// Severity The stated OWASP rating; null until re-rated.
+	Severity *ThreatRegisterInsightBand `json:"severity"`
+
+	// Status The threat-status registry's status.
+	Status ThreatRegisterInsightThreatStatus `json:"status"`
+
+	// Surface Raw; null when not stated.
+	Surface *string `json:"surface"`
+
+	// Techniques The ATT&CK techniques the threat cites, raw: a citation need not be a live or even well-formed technique id.
+	Techniques []struct {
+		Id string `json:"id"`
+	} `json:"techniques"`
+	Title string `json:"title"`
+}
+
+// ThreatRegisterInsightThreatImpact The threat-impact registry's legacy label; null when not stated.
+type ThreatRegisterInsightThreatImpact string
+
+// ThreatRegisterInsightThreatLikelihood The threat-likelihood registry's legacy label; null when not stated.
+type ThreatRegisterInsightThreatLikelihood string
+
+// ThreatRegisterInsightThreatStatus The threat-status registry's status.
+type ThreatRegisterInsightThreatStatus string
+
+// ThreatRegisterInsightUuid defines model for ThreatRegisterInsightUuid.
+type ThreatRegisterInsightUuid = openapi_types.UUID

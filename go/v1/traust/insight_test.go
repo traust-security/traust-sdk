@@ -5,6 +5,7 @@ import (
 	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
 	"strings"
 	"testing"
 
@@ -112,6 +113,34 @@ func TestEveryContractedViewDecodesFromItsOwnRoute(t *testing.T) {
 			_, err := traust.GetInsightAs[traust.InventoryExportInsight](ctx, c, nil)
 			return err
 		}},
+		{"sla", func(ctx context.Context, c *traust.Client) error {
+			_, err := traust.GetInsightAs[traust.SlaInsight](ctx, c, nil)
+			return err
+		}},
+		{"census", func(ctx context.Context, c *traust.Client) error {
+			_, err := traust.GetInsightAs[traust.CensusInsight](ctx, c, nil)
+			return err
+		}},
+		{"attack-coverage", func(ctx context.Context, c *traust.Client) error {
+			_, err := traust.GetInsightAs[traust.AttackCoverageInsight](ctx, c, nil)
+			return err
+		}},
+		{"pqc-portfolio", func(ctx context.Context, c *traust.Client) error {
+			_, err := traust.GetInsightAs[traust.PqcPortfolioInsight](ctx, c, nil)
+			return err
+		}},
+		{"threat-register", func(ctx context.Context, c *traust.Client) error {
+			_, err := traust.GetInsightAs[traust.ThreatRegisterInsight](ctx, c, nil)
+			return err
+		}},
+		{"exposure", func(ctx context.Context, c *traust.Client) error {
+			_, err := traust.GetInsightAs[traust.ExposureInsight](ctx, c, nil)
+			return err
+		}},
+		{"executive-summary", func(ctx context.Context, c *traust.Client) error {
+			_, err := traust.GetInsightAs[traust.ExecutiveSummaryInsight](ctx, c, nil)
+			return err
+		}},
 	}
 	for _, tt := range tests {
 		t.Run(tt.route, func(t *testing.T) {
@@ -194,4 +223,40 @@ func problemWithCode(status int, code traust.DenyCode) http.Handler {
 			Detail: "refused", Instance: r.URL.Path, RequestId: "traustest",
 		})
 	})
+}
+
+func is[T any](v T) T { return v }
+
+// The executive summary composes the component views: its panels decode, strictly, into
+// the components' own types (testdata is a document valid against the contracts).
+func TestTheExecutiveSummaryDecodesIntoItsComponentViews(t *testing.T) {
+	body, err := os.ReadFile("testdata/executive-summary.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	core := traustest.New(t)
+	core.Handle("GET /v1/insights/executive-summary", traustest.JSON(http.StatusOK, json.RawMessage(body)))
+	summary, err := traust.GetInsightAs[traust.ExecutiveSummaryInsight](context.Background(), core.Client(), nil)
+	if err != nil {
+		t.Fatalf("GetInsightAs: %v", err)
+	}
+	// each panel is the component view's own type (this does not compile on a copy)
+	rollup := is[traust.FindingsRollupInsight](summary.Rollup)
+	attack := is[*traust.AttackCoverageInsight](summary.Attack)
+	pqc := is[*traust.PqcPortfolioInsight](summary.Pqc)
+	if rollup.Total.Open.High != 1 || attack == nil || attack.AttackVersion != "19.1" {
+		t.Fatalf("rollup/attack = %+v / %+v", rollup.Total, attack)
+	}
+	if pqc == nil || len(pqc.Scopes) != 1 || summary.PqcUnavailable != nil {
+		t.Fatalf("pqc = %+v, unavailable = %v", pqc, summary.PqcUnavailable)
+	}
+	register := is[traust.ThreatRegisterInsight](summary.Isolation.ThreatRegister)
+	layer := is[traust.CensusInsightLayer](summary.Iac.Findings)
+	if register.Models != 0 || layer.Findings.Low != 1 {
+		t.Fatalf("register/layer = %+v / %+v", register, layer)
+	}
+	rows := is[*[]traust.ExposureInsightRollup](summary.Exposure)
+	if rows == nil || len(*rows) != 1 || *(*rows)[0].Key != "GHSA-xxxx-xxxx-xxxx" {
+		t.Fatalf("exposure = %+v", rows)
+	}
 }
