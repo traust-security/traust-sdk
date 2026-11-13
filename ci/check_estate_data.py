@@ -6,15 +6,21 @@ unlike a credential -- which is rotated and forgotten -- a corpus figure
 is a permanent statement about the size, backlog and error rate of the
 deployment that produced it. There is nothing to rotate.
 
-An accurate comment containing one organisation's measurements can disclose
-deployment information when the file is public, including in schema descriptions.
+The failure is not carelessness about secrets. It is writing an accurate
+comment: "measured 2026-08-06, N of M". Every instinct is right except
+that the number is one organisation's and the file is public. It has
+happened repeatedly, including in a schema `description` that ships
+inside the contract itself, where every adopter reads it.
 
 Standalone by design: this repo does not depend on the harness, so the
 guard cannot live there. Keep the copies behaviourally identical.
 
   --staged   scan only the lines being ADDED (the pre-commit mode);
              in a merge, only lines new to both parents.
-             Only newly added lines are checked in staged mode.
+             A public repo already carrying such figures cannot adopt a
+             whole-tree gate without blocking every commit, and a gate
+             people bypass is not a gate. Blocking what is ADDED stops
+             the bleeding now; the existing debt is a reviewed burndown.
 
 A genuinely public figure takes an inline `estate-data-ok: <reason>`.
 
