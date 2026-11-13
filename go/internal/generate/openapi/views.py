@@ -18,6 +18,7 @@ from __future__ import annotations
 import copy
 import json
 import sys
+from collections.abc import Iterable
 from typing import TypeAlias
 
 # a JSON Schema tree as json.load returns it
@@ -201,9 +202,15 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
             for name, definition in schema.get("$defs", {}).items()
         )
         views[prefix] = view.value
-    # only definitions a view's shape reaches, across views (a composed view reaches its
-    # components'): validation-only helpers (a contains target) go
-    reached, pending = set(), list(views)
+    return reachable(found, views), views
+
+
+def reachable(found: dict[str, Json], roots: Iterable[str]) -> dict[str, Json]:
+    """Only the components the roots' shapes reach, across views (a composed view reaches its
+    components'): validation-only helpers (a contains target) go. A reference no view
+    contract defines stops the generator, never a dangling `$ref` in the output."""
+    reached: set[str] = set()
+    pending = list(roots)
     while pending:
         name = pending.pop()
         if name not in reached:
@@ -211,7 +218,7 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
                 raise SystemExit(f"{name}: referenced, but no view contract defines it")
             reached.add(name)
             pending += [r.rsplit("/", 1)[-1] for r in refs(found[name])]
-    return {name: found[name] for name in sorted(reached)}, views
+    return {name: found[name] for name in sorted(reached)}
 
 
 def main(argv: list[str]) -> int:

@@ -1,6 +1,6 @@
 import unittest
 
-from views import openapi, pascal, refs, view_component
+from views import openapi, pascal, reachable, refs, view_component
 
 
 class ViewComponentTest(unittest.TestCase):
@@ -69,6 +69,20 @@ class ViewComponentTest(unittest.TestCase):
         self.assertIsNone(view_component(base + "#/$defs/top_finding/properties/cvss_score"))
         self.assertIsNone(view_component("https://example.com/traust-contracts/artifacts_schema/v1/x.schema.json"))
         self.assertIsNone(view_component("#/$defs/local"))
+
+    def test_reachable_keeps_what_the_roots_reach_across_views(self):
+        found = {
+            "AInsight": {"properties": {"b": {"$ref": "#/components/schemas/BInsightRow"}}},
+            "BInsight": {"items": {"$ref": "#/components/schemas/BInsightRow"}},
+            "BInsightRow": {"type": "object"},
+            "AInsightUnused": {"type": "string"},
+        }
+        self.assertEqual(sorted(reachable(found, ["AInsight"])), ["AInsight", "BInsightRow"])
+
+    def test_a_reference_no_view_defines_stops_the_generator(self):
+        found = {"AInsight": {"$ref": "#/components/schemas/MissingInsight"}}
+        with self.assertRaisesRegex(SystemExit, "MissingInsight: referenced, but no view"):
+            reachable(found, ["AInsight"])
 
     def test_refs_lists_every_reference(self):
         node = {"properties": {"a": {"$ref": "#/x/A"}, "b": {"items": {"$ref": "#/x/B"}}}}
