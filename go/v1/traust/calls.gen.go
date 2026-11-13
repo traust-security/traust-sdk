@@ -55,6 +55,22 @@ func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([
 	return *found, nil
 }
 
+// Approve is POST /v1/orders/{orderId}/approve: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) Approve(ctx context.Context, orderId openapi_types.UUID) (*RunOrder, error) {
+	raw, err := c.ClientInterface.Approve(ctx, orderId)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseApproveResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+}
+
 // Checkpoint is POST /v1/repositories/{repositoryId}/ledger/checkpoint: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Checkpoint(ctx context.Context, repositoryId openapi_types.UUID) (*Checkpoint, error) {
 	raw, err := c.ClientInterface.Checkpoint(ctx, repositoryId)

@@ -2,6 +2,8 @@
 
 package traust
 
+func (*AttackCoverageInsight) insightName() ViewName { return AttackCoverage }
+
 func (*BenchmarkScorecardsInsight) insightName() ViewName { return BenchmarkScorecards }
 
 func (*CompliancePrecisionInsight) insightName() ViewName { return CompliancePrecision }
@@ -19,3 +21,5 @@ func (*InventoryExportInsight) insightName() ViewName { return InventoryExport }
 func (*PqcWorklistInsight) insightName() ViewName { return PqcWorklist }
 
 func (*RemediationIndexInsight) insightName() ViewName { return RemediationIndex }
+
+func (*SlaInsight) insightName() ViewName { return Sla }
