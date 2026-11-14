@@ -177,6 +177,14 @@ const (
 	E3 EvidenceGrade = "E3"
 )
 
+// Defines values for ExecutivePanel.
+const (
+	ExecutivePanelAttack    ExecutivePanel = "attack"
+	ExecutivePanelIac       ExecutivePanel = "iac"
+	ExecutivePanelIsolation ExecutivePanel = "isolation"
+	ExecutivePanelPqc       ExecutivePanel = "pqc"
+)
+
 // Defines values for ExposureDimension.
 const (
 	ExposureDimensionAdvisory       ExposureDimension = "advisory"
@@ -652,6 +660,13 @@ const (
 	ValidationFuzz      ViewName = "validation-fuzz"
 )
 
+// Defines values for GetInsightReportParamsFormat.
+const (
+	Csv      GetInsightReportParamsFormat = "csv"
+	Html     GetInsightReportParamsFormat = "html"
+	Markdown GetInsightReportParamsFormat = "markdown"
+)
+
 // ActorKind defines model for ActorKind.
 type ActorKind string
 
@@ -1036,6 +1051,9 @@ type EvidenceItem struct {
 	PatchedObservation *string           `json:"patched_observation"`
 	Tool               *string           `json:"tool"`
 }
+
+// ExecutivePanel defines model for ExecutivePanel.
+type ExecutivePanel string
 
 // ExposureDimension defines model for ExposureDimension.
 type ExposureDimension string
@@ -2341,6 +2359,8 @@ type ListImpactsParams struct {
 
 // GetInsightParams defines parameters for GetInsight.
 type GetInsightParams struct {
+	// Refresh Fold the view on demand, ignoring any stored census build.
+	Refresh         *bool                 `form:"refresh,omitempty" json:"refresh,omitempty"`
 	ProductId       *[]openapi_types.UUID `form:"product_id,omitempty" json:"product_id,omitempty"`
 	TeamId          *[]openapi_types.UUID `form:"team_id,omitempty" json:"team_id,omitempty"`
 	AsOf            *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
@@ -2355,9 +2375,34 @@ type GetInsightParams struct {
 	Framework       *ComplianceFramework  `form:"framework,omitempty" json:"framework,omitempty"`
 	PrecisionGate   *float32              `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
 
-	// Refresh Fold the view on demand, ignoring any stored census build.
-	Refresh *bool `form:"refresh,omitempty" json:"refresh,omitempty"`
+	// ExecutivePanel The executive summary's optional panels to build (repeatable).
+	ExecutivePanel *[]ExecutivePanel `form:"executive_panel,omitempty" json:"executive_panel,omitempty"`
 }
+
+// GetInsightReportParams defines parameters for GetInsightReport.
+type GetInsightReportParams struct {
+	// Format markdown or html for every insight; csv for one with an export table.
+	Format          *GetInsightReportParamsFormat `form:"format,omitempty" json:"format,omitempty"`
+	ProductId       *[]openapi_types.UUID         `form:"product_id,omitempty" json:"product_id,omitempty"`
+	TeamId          *[]openapi_types.UUID         `form:"team_id,omitempty" json:"team_id,omitempty"`
+	AsOf            *time.Time                    `form:"as_of,omitempty" json:"as_of,omitempty"`
+	Bucket          *TimeBucket                   `form:"bucket,omitempty" json:"bucket,omitempty"`
+	ArtifactId      *openapi_types.UUID           `form:"artifact_id,omitempty" json:"artifact_id,omitempty"`
+	RepositoryId    *openapi_types.UUID           `form:"repository_id,omitempty" json:"repository_id,omitempty"`
+	Category        *[]string                     `form:"category,omitempty" json:"category,omitempty"`
+	WindowStart     *time.Time                    `form:"window_start,omitempty" json:"window_start,omitempty"`
+	WindowEnd       *time.Time                    `form:"window_end,omitempty" json:"window_end,omitempty"`
+	RepositoryRefId *[]openapi_types.UUID         `form:"repository_ref_id,omitempty" json:"repository_ref_id,omitempty"`
+	Chokepoint      *[]string                     `form:"chokepoint,omitempty" json:"chokepoint,omitempty"`
+	Framework       *ComplianceFramework          `form:"framework,omitempty" json:"framework,omitempty"`
+	PrecisionGate   *float32                      `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
+
+	// ExecutivePanel The executive summary's optional panels to build (repeatable).
+	ExecutivePanel *[]ExecutivePanel `form:"executive_panel,omitempty" json:"executive_panel,omitempty"`
+}
+
+// GetInsightReportParamsFormat defines parameters for GetInsightReport.
+type GetInsightReportParamsFormat string
 
 // ListEventsParams defines parameters for ListEvents.
 type ListEventsParams struct {
@@ -3477,6 +3522,9 @@ type ClientInterface interface {
 	// GetInsight request
 	GetInsight(ctx context.Context, name ViewName, params *GetInsightParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetInsightReport request
+	GetInsightReport(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetLayer request
 	GetLayer(ctx context.Context, layerId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4091,6 +4139,18 @@ func (c *RawClient) ListImpacts(ctx context.Context, params *ListImpactsParams, 
 
 func (c *RawClient) GetInsight(ctx context.Context, name ViewName, params *GetInsightParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInsightRequest(c.Server, name, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) GetInsightReport(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInsightReportRequest(c.Server, name, params)
 	if err != nil {
 		return nil, err
 	}
@@ -6761,6 +6821,22 @@ func NewGetInsightRequest(server string, name ViewName, params *GetInsightParams
 	if params != nil {
 		queryValues := queryURL.Query()
 
+		if params.Refresh != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "refresh", runtime.ParamLocationQuery, *params.Refresh); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
 		if params.ProductId != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "product_id", runtime.ParamLocationQuery, *params.ProductId); err != nil {
@@ -6969,9 +7045,289 @@ func NewGetInsightRequest(server string, name ViewName, params *GetInsightParams
 
 		}
 
-		if params.Refresh != nil {
+		if params.ExecutivePanel != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "refresh", runtime.ParamLocationQuery, *params.Refresh); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "executive_panel", runtime.ParamLocationQuery, *params.ExecutivePanel); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetInsightReportRequest generates requests for GetInsightReport
+func NewGetInsightReportRequest(server string, name ViewName, params *GetInsightReportParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/insights/%s/report", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Format != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "format", runtime.ParamLocationQuery, *params.Format); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ProductId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "product_id", runtime.ParamLocationQuery, *params.ProductId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.TeamId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "team_id", runtime.ParamLocationQuery, *params.TeamId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.AsOf != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "as_of", runtime.ParamLocationQuery, *params.AsOf); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Bucket != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "bucket", runtime.ParamLocationQuery, *params.Bucket); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ArtifactId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "artifact_id", runtime.ParamLocationQuery, *params.ArtifactId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RepositoryId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_id", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Category != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "category", runtime.ParamLocationQuery, *params.Category); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.WindowStart != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "window_start", runtime.ParamLocationQuery, *params.WindowStart); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.WindowEnd != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "window_end", runtime.ParamLocationQuery, *params.WindowEnd); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RepositoryRefId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ref_id", runtime.ParamLocationQuery, *params.RepositoryRefId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Chokepoint != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "chokepoint", runtime.ParamLocationQuery, *params.Chokepoint); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Framework != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "framework", runtime.ParamLocationQuery, *params.Framework); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PrecisionGate != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "precision_gate", runtime.ParamLocationQuery, *params.PrecisionGate); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ExecutivePanel != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "executive_panel", runtime.ParamLocationQuery, *params.ExecutivePanel); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -10145,6 +10501,9 @@ type ClientWithResponsesInterface interface {
 	// GetInsightWithResponse request
 	GetInsightWithResponse(ctx context.Context, name ViewName, params *GetInsightParams, reqEditors ...RequestEditorFn) (*GetInsightResponse, error)
 
+	// GetInsightReportWithResponse request
+	GetInsightReportWithResponse(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*GetInsightReportResponse, error)
+
 	// GetLayerWithResponse request
 	GetLayerWithResponse(ctx context.Context, layerId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetLayerResponse, error)
 
@@ -11111,6 +11470,30 @@ func (r GetInsightResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetInsightResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetInsightReportResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInsightReportResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInsightReportResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -12856,6 +13239,15 @@ func (c *ClientWithResponses) GetInsightWithResponse(ctx context.Context, name V
 		return nil, err
 	}
 	return ParseGetInsightResponse(rsp)
+}
+
+// GetInsightReportWithResponse request returning *GetInsightReportResponse
+func (c *ClientWithResponses) GetInsightReportWithResponse(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*GetInsightReportResponse, error) {
+	rsp, err := c.GetInsightReport(ctx, name, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInsightReportResponse(rsp)
 }
 
 // GetLayerWithResponse request returning *GetLayerResponse
@@ -14881,6 +15273,46 @@ func ParseGetInsightResponse(rsp *http.Response) (*GetInsightResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetInsightReportResponse parses an HTTP response from a GetInsightReportWithResponse call
+func ParseGetInsightReportResponse(rsp *http.Response) (*GetInsightReportResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInsightReportResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
