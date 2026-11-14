@@ -1,6 +1,6 @@
 import unittest
 
-from views import openapi, pascal, refs
+from views import openapi, pascal, reachable, refs, view_component
 
 
 class ViewComponentTest(unittest.TestCase):
@@ -50,6 +50,39 @@ class ViewComponentTest(unittest.TestCase):
     def test_numbers_are_doubles_and_a_bare_string_enum_is_a_string(self):
         self.assertEqual(openapi({"type": "number"}, "P"), {"type": "number", "format": "double"})
         self.assertEqual(openapi({"enum": ["a", "b"]}, "P"), {"enum": ["a", "b"], "type": "string"})
+
+    def test_a_reference_to_another_view_is_that_views_component(self):
+        base = "https://example.com/traust-contracts/views_schema/v1/findings-rollup.schema.json"
+        self.assertEqual(openapi({"$ref": base}, "E"), {"$ref": "#/components/schemas/FindingsRollupInsight"})
+        self.assertEqual(
+            openapi({"$ref": base + "#/$defs/severity_counts"}, "E"),
+            {"$ref": "#/components/schemas/FindingsRollupInsightSeverityCounts"},
+        )
+
+    def test_a_nullable_reference_to_another_view_rides_an_allof(self):
+        ref = "https://example.com/traust-contracts/views_schema/v1/pqc-portfolio.schema.json"
+        out = openapi({"oneOf": [{"$ref": ref}, {"type": "null"}]}, "E")
+        self.assertEqual(out, {"allOf": [{"$ref": "#/components/schemas/PqcPortfolioInsight"}], "nullable": True})
+
+    def test_only_a_view_or_its_defs_is_a_component(self):
+        base = "https://example.com/traust-contracts/views_schema/v1/findings-rollup.schema.json"
+        self.assertIsNone(view_component(base + "#/$defs/top_finding/properties/cvss_score"))
+        self.assertIsNone(view_component("https://example.com/traust-contracts/artifacts_schema/v1/x.schema.json"))
+        self.assertIsNone(view_component("#/$defs/local"))
+
+    def test_reachable_keeps_what_the_roots_reach_across_views(self):
+        found = {
+            "AInsight": {"properties": {"b": {"$ref": "#/components/schemas/BInsightRow"}}},
+            "BInsight": {"items": {"$ref": "#/components/schemas/BInsightRow"}},
+            "BInsightRow": {"type": "object"},
+            "AInsightUnused": {"type": "string"},
+        }
+        self.assertEqual(sorted(reachable(found, ["AInsight"])), ["AInsight", "BInsightRow"])
+
+    def test_a_reference_no_view_defines_stops_the_generator(self):
+        found = {"AInsight": {"$ref": "#/components/schemas/MissingInsight"}}
+        with self.assertRaisesRegex(SystemExit, "MissingInsight: referenced, but no view"):
+            reachable(found, ["AInsight"])
 
     def test_refs_lists_every_reference(self):
         node = {"properties": {"a": {"$ref": "#/x/A"}, "b": {"items": {"$ref": "#/x/B"}}}}

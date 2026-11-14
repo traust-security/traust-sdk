@@ -1,0 +1,180 @@
+{
+  "rollup": {
+    "as_of": "2026-11-13T00:00:00Z",
+    "total": {
+      "open": {
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 0,
+        "informational": 0,
+        "unrated": 0
+      },
+      "hardening": 0,
+      "resolved": 0,
+      "risk_accepted": 0,
+      "false_positive": 0,
+      "execution_proven": 0,
+      "unverified": 1,
+      "decided": 0,
+      "remediated": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 0,
+        "informational": 0,
+        "unrated": 0
+      },
+      "tracked": 0
+    },
+    "products": [],
+    "repositories": [],
+    "top": [],
+    "categories": [],
+    "attack_scenarios": []
+  },
+  "credential_leaks": [
+    {
+      "finding_id": "00000000-0000-4000-8000-000000000001",
+      "repository_url": "https://forge.example/o/svc",
+      "title": "AWS key in config",
+      "severity": "medium",
+      "cvss_score": null,
+      "execution_proven": false,
+      "sla_due": null
+    }
+  ],
+  "themes": {
+    "injection": 2
+  },
+  "hardening_themes": {},
+  "languages": [
+    {
+      "language": "go",
+      "repositories": 1,
+      "open": {
+        "critical": 0,
+        "high": 1,
+        "medium": 0,
+        "low": 0,
+        "informational": 0,
+        "unrated": 0
+      }
+    }
+  ],
+  "privileges": {
+    "profiles": 1,
+    "privileged": 1,
+    "scc_requesting": 0,
+    "wildcard_repositories": 0,
+    "wildcard_rules": 0,
+    "flags": {
+      "hostNetwork": 1
+    }
+  },
+  "exposure": [
+    {
+      "key": "GHSA-xxxx-xxxx-xxxx",
+      "commits": 2,
+      "exposed": 1,
+      "affected": 1,
+      "by_classification": {
+        "affected": 1,
+        "not_imported": 1
+      }
+    }
+  ],
+  "attack": {
+    "as_of": "2026-11-13T00:00:00Z",
+    "attack_version": "19.1",
+    "mapping_version": "1.0.0",
+    "attribution": "MITRE ATT&CK",
+    "repositories": 0,
+    "threat_models": 0,
+    "threats_with_techniques": 0,
+    "findings_mapped": 0,
+    "techniques": [],
+    "dropped": {},
+    "navigator_layer": {
+      "name": "coverage",
+      "versions": {
+        "attack": "19",
+        "navigator": "5.1.0",
+        "layer": "4.5"
+      },
+      "domain": "enterprise-attack",
+      "techniques": []
+    }
+  },
+  "pqc": {
+    "scopes": [
+      {
+        "product_id": null,
+        "repositories": [],
+        "sites": [],
+        "packages": [],
+        "without_sbom": 0
+      }
+    ],
+    "products": []
+  },
+  "pqc_unavailable": null,
+  "isolation": {
+    "reviews": [
+      {
+        "repository": "https://forge.example/o/svc",
+        "assessment_id": "00000000-0000-4000-8000-000000000001",
+        "service": "svc",
+        "posture": "weak",
+        "interfaces": 2,
+        "gaps": 1,
+        "dimensions": {
+          "yes": 7
+        }
+      }
+    ],
+    "threat_register": {
+      "as_of": "2026-11-13T00:00:00Z",
+      "repository_urls": {},
+      "models": 0,
+      "threats": [],
+      "quick_wins": [],
+      "tenant_boundaries": [],
+      "open_variances": []
+    }
+  },
+  "iac": {
+    "repositories": 1,
+    "assessments": 1,
+    "findings": {
+      "findings": {
+        "critical": 0,
+        "high": 0,
+        "medium": 0,
+        "low": 1,
+        "informational": 0,
+        "unrated": 0
+      },
+      "false_positives": 0
+    },
+    "targets": [
+      {
+        "repository": "https://forge.example/o/infra",
+        "assessment_id": "00000000-0000-4000-8000-000000000001",
+        "target": "terraform/",
+        "unsuppressed": 1,
+        "suppressed": 0,
+        "needs_review": 0,
+        "ledgered": 0,
+        "severities": {
+          "critical": 0,
+          "high": 0,
+          "medium": 0,
+          "low": 1,
+          "informational": 0,
+          "unrated": 0
+        }
+      }
+    ]
+  }
+}
