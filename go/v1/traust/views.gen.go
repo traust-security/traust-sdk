@@ -688,7 +688,7 @@ type CriticalMissesInsight struct {
 // CriticalMissesInsightMissesReason missed denotes an actual miss; area_reported requires adjudication.
 type CriticalMissesInsightMissesReason string
 
-// ExecutiveSummaryInsight Ephemeral derived Insight ViewModel from traust-core's executive-summary view: the leadership roll-up of the scope as of the findings rollup's as_of. It is composed from the component view contracts by reference, never by copying their shapes: the findings rollup, and when the filter asks for them the ATT&CK, PQC, isolation (threat register) and IaC (census layer) panels; fleet-wide, the top advisory rows of dependency exposure. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
+// ExecutiveSummaryInsight Ephemeral derived Insight ViewModel from traust-core's executive-summary view: the leadership roll-up of the scope as of the findings rollup's as_of. It is composed from the component view contracts by reference, never by copying their shapes: the findings rollup, and when the filter asks for them the ATT&CK, PQC, isolation (threat register) and IaC (census layer) panels; fleet-wide, the top advisory rows of dependency exposure. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null except exposure, which is null for a product or team scope. JSON Schema checks structure and ranges, not arithmetic across fields.
 type ExecutiveSummaryInsight struct {
 	// Attack The ATT&CK panel, when the filter asks for it: the attack-coverage view's contract. Null otherwise.
 	Attack *AttackCoverageInsight `json:"attack"`
