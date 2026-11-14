@@ -70,13 +70,13 @@ for), its isolation panel's `ThreatRegister` a `ThreatRegisterInsight`, and so o
 scoped the same way (`ExecutivePanel` asks for the executive summary's optional panels):
 
 ```go
-format := traust.Html
+format := traust.ReportFormatHtml
 panels := []traust.ExecutivePanel{traust.ExecutivePanelIsolation}
 html, err := client.GetInsightReport(ctx, traust.ExecutiveSummary,
 	&traust.GetInsightReportParams{Format: &format, ExecutivePanel: &panels})
 ```
 
-Formats are `Markdown`, `Html` and `Csv` (csv only for an insight with an export table).
+Formats are `ReportFormatMarkdown`, `ReportFormatHtml` and `ReportFormatCsv` (csv only for an insight with an export table).
 
 ## Keep inventory current
 

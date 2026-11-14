@@ -70,6 +70,7 @@ package traust
 
 import (
 	"context"
+	"fmt"
 	"iter"
 	"net/http"
 
@@ -86,14 +87,14 @@ var (
 func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 	raw, err := c.ClientInterface.{{.Name}}({{.Args}})
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("{{.Name}}: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("{{.Name}}: %w", err)
 	}
 	response, err := Parse{{.Name}}Response(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("{{.Name}}: %w", err)
 	}
 {{- if .Empty}}
 	if response.StatusCode() == http.StatusNoContent {
@@ -102,13 +103,24 @@ func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 {{- end}}
 {{- if .List}}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("{{.Name}}: %w", err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 {{- else if .Result}}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("{{.Name}}: %w", err)
+	}
+	return found, nil
 {{- else}}
+	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
+	if response.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("{{.Name}}: traust-core: HTTP %d, want 200 with the file", response.StatusCode())
+	}
 	return response.Body, nil
 {{- end}}
 }

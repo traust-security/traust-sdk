@@ -407,6 +407,13 @@ const (
 	RevalidatedStillVulnerable RemediationStatus = "revalidated_still_vulnerable"
 )
 
+// Defines values for ReportFormat.
+const (
+	ReportFormatCsv      ReportFormat = "csv"
+	ReportFormatHtml     ReportFormat = "html"
+	ReportFormatMarkdown ReportFormat = "markdown"
+)
+
 // Defines values for RestatementReason.
 const (
 	BaselineRewrite RestatementReason = "baseline_rewrite"
@@ -658,13 +665,6 @@ const (
 	ThreatRegister      ViewName = "threat-register"
 	Triage              ViewName = "triage"
 	ValidationFuzz      ViewName = "validation-fuzz"
-)
-
-// Defines values for GetInsightReportParamsFormat.
-const (
-	Csv      GetInsightReportParamsFormat = "csv"
-	Html     GetInsightReportParamsFormat = "html"
-	Markdown GetInsightReportParamsFormat = "markdown"
 )
 
 // ActorKind defines model for ActorKind.
@@ -1804,6 +1804,10 @@ type RemediationRequest struct {
 // RemediationStatus defines model for RemediationStatus.
 type RemediationStatus string
 
+// ReportFormat A rendered report's format: markdown and html for every insight, csv for one with an
+// export table. Each format carries its media type and file suffix.
+type ReportFormat string
+
 // Repository defines model for Repository.
 type Repository struct {
 	Archived   *bool               `json:"archived"`
@@ -2375,34 +2379,31 @@ type GetInsightParams struct {
 	Framework       *ComplianceFramework  `form:"framework,omitempty" json:"framework,omitempty"`
 	PrecisionGate   *float32              `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
 
-	// ExecutivePanel The executive summary's optional panels to build (repeatable).
+	// ExecutivePanel executive-summary only: its optional panels (repeatable).
 	ExecutivePanel *[]ExecutivePanel `form:"executive_panel,omitempty" json:"executive_panel,omitempty"`
 }
 
 // GetInsightReportParams defines parameters for GetInsightReport.
 type GetInsightReportParams struct {
 	// Format markdown or html for every insight; csv for one with an export table.
-	Format          *GetInsightReportParamsFormat `form:"format,omitempty" json:"format,omitempty"`
-	ProductId       *[]openapi_types.UUID         `form:"product_id,omitempty" json:"product_id,omitempty"`
-	TeamId          *[]openapi_types.UUID         `form:"team_id,omitempty" json:"team_id,omitempty"`
-	AsOf            *time.Time                    `form:"as_of,omitempty" json:"as_of,omitempty"`
-	Bucket          *TimeBucket                   `form:"bucket,omitempty" json:"bucket,omitempty"`
-	ArtifactId      *openapi_types.UUID           `form:"artifact_id,omitempty" json:"artifact_id,omitempty"`
-	RepositoryId    *openapi_types.UUID           `form:"repository_id,omitempty" json:"repository_id,omitempty"`
-	Category        *[]string                     `form:"category,omitempty" json:"category,omitempty"`
-	WindowStart     *time.Time                    `form:"window_start,omitempty" json:"window_start,omitempty"`
-	WindowEnd       *time.Time                    `form:"window_end,omitempty" json:"window_end,omitempty"`
-	RepositoryRefId *[]openapi_types.UUID         `form:"repository_ref_id,omitempty" json:"repository_ref_id,omitempty"`
-	Chokepoint      *[]string                     `form:"chokepoint,omitempty" json:"chokepoint,omitempty"`
-	Framework       *ComplianceFramework          `form:"framework,omitempty" json:"framework,omitempty"`
-	PrecisionGate   *float32                      `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
+	Format          *ReportFormat         `form:"format,omitempty" json:"format,omitempty"`
+	ProductId       *[]openapi_types.UUID `form:"product_id,omitempty" json:"product_id,omitempty"`
+	TeamId          *[]openapi_types.UUID `form:"team_id,omitempty" json:"team_id,omitempty"`
+	AsOf            *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
+	Bucket          *TimeBucket           `form:"bucket,omitempty" json:"bucket,omitempty"`
+	ArtifactId      *openapi_types.UUID   `form:"artifact_id,omitempty" json:"artifact_id,omitempty"`
+	RepositoryId    *openapi_types.UUID   `form:"repository_id,omitempty" json:"repository_id,omitempty"`
+	Category        *[]string             `form:"category,omitempty" json:"category,omitempty"`
+	WindowStart     *time.Time            `form:"window_start,omitempty" json:"window_start,omitempty"`
+	WindowEnd       *time.Time            `form:"window_end,omitempty" json:"window_end,omitempty"`
+	RepositoryRefId *[]openapi_types.UUID `form:"repository_ref_id,omitempty" json:"repository_ref_id,omitempty"`
+	Chokepoint      *[]string             `form:"chokepoint,omitempty" json:"chokepoint,omitempty"`
+	Framework       *ComplianceFramework  `form:"framework,omitempty" json:"framework,omitempty"`
+	PrecisionGate   *float32              `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
 
-	// ExecutivePanel The executive summary's optional panels to build (repeatable).
+	// ExecutivePanel executive-summary only: its optional panels (repeatable).
 	ExecutivePanel *[]ExecutivePanel `form:"executive_panel,omitempty" json:"executive_panel,omitempty"`
 }
-
-// GetInsightReportParamsFormat defines parameters for GetInsightReport.
-type GetInsightReportParamsFormat string
 
 // ListEventsParams defines parameters for ListEvents.
 type ListEventsParams struct {
