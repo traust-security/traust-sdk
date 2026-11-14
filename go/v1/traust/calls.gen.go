@@ -479,6 +479,22 @@ func (c *Client) GetInsight(ctx context.Context, name ViewName, params *GetInsig
 	return Decode(response.HTTPResponse, response.Body, response.JSON200)
 }
 
+// GetInsightReport is GET /v1/insights/{name}/report: the exact stored bytes, or a *ProblemError.
+func (c *Client) GetInsightReport(ctx context.Context, name ViewName, params *GetInsightReportParams) ([]byte, error) {
+	raw, err := c.ClientInterface.GetInsightReport(ctx, name, params)
+	if err != nil {
+		return nil, err
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, err
+	}
+	response, err := ParseGetInsightReportResponse(raw)
+	if err != nil {
+		return nil, err
+	}
+	return response.Body, nil
+}
+
 // GetLatestRecordedAssessment is GET /v1/repositories/{repositoryId}/assessments/latest: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetLatestRecordedAssessment(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams) (*Assessment, error) {
 	raw, err := c.ClientInterface.GetLatestRecordedAssessment(ctx, repositoryId, params)

@@ -66,6 +66,18 @@ A view composed from others uses their types: `ExecutiveSummaryInsight.Rollup` i
 `FindingsRollupInsight`, its `Pqc` a `*PqcPortfolioInsight` (nil when the panel was not asked
 for), its isolation panel's `ThreatRegister` a `ThreatRegisterInsight`, and so on.
 
+`GetInsightReport` returns any insight rendered as a report on demand, as one file's bytes,
+scoped the same way (`ExecutivePanel` asks for the executive summary's optional panels):
+
+```go
+format := traust.Html
+panels := []traust.ExecutivePanel{traust.ExecutivePanelIsolation}
+html, err := client.GetInsightReport(ctx, traust.ExecutiveSummary,
+	&traust.GetInsightReportParams{Format: &format, ExecutivePanel: &panels})
+```
+
+Formats are `Markdown`, `Html` and `Csv` (csv only for an insight with an export table).
+
 ## Keep inventory current
 
 ```go
