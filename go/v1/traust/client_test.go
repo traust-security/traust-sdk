@@ -695,44 +695,143 @@ func TestQueryOrdersPreservesNullAndEmptyIDs(t *testing.T) {
 }
 
 func TestQueryOrdersKeepsPerItemCursorsAndTypedProblems(t *testing.T) {
-	firstID := uuid.MustParse("00000000-0000-4000-8000-000000000001")
-	secondID := uuid.MustParse("00000000-0000-4000-8000-000000000002")
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		var query OrderQueryRequest
-		if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
-			t.Error(err)
-		}
-		if query.Cursor != nil {
-			problem(w, http.StatusUnprocessableEntity, "invalid or mismatched order query cursor")
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(OrderQueryPage{
-			Items: []OrderQueryItem{
-				{Order: RunOrder{Id: &firstID}, RepositoryUrl: strp("https://forge.example/a"), Cursor: "first"},
-				{Order: RunOrder{Id: &secondID}, Cursor: "second"},
-			},
-			Next: strp("second"),
+	tests := []struct {
+		name        string
+		status      int
+		contentType string
+		body        string
+		request     OrderQueryRequest
+		success     bool
+		problem     bool
+		code        DenyCode
+		cancelled   bool
+	}{
+		{
+			name: "per-item cursors and unknown repository", status: http.StatusOK,
+			contentType: "application/json",
+			body: `{"items":[
+				{"order":{"id":"00000000-0000-4000-8000-000000000001"},"repository_url":"https://forge.example/a","cursor":"first"},
+				{"order":{"id":"00000000-0000-4000-8000-000000000002"},"repository_url":null,"cursor":"second"}
+			],"next":"second"}`,
+			success: true,
+		},
+		{
+			name: "invalid cursor", status: http.StatusUnprocessableEntity,
+			contentType: "application/problem+json",
+			body:        `{"type":"about:blank","title":"Unprocessable Entity","status":422,"detail":"invalid or mismatched order query cursor","request_id":"req-query"}`,
+			request:     OrderQueryRequest{Cursor: strp("invalid")}, problem: true,
+		},
+		{
+			name: "malformed successful body", status: http.StatusOK,
+			contentType: "application/json", body: `{"items":[{"order":`,
+		},
+		{
+			name: "non-JSON successful body", status: http.StatusOK,
+			contentType: "text/plain", body: "not a page\n",
+		},
+		{
+			name: "null page", status: http.StatusOK,
+			contentType: "application/json", body: "null",
+		},
+		{
+			name: "missing page", status: http.StatusOK,
+			contentType: "application/json",
+		},
+		{
+			name: "raw service unavailable", status: http.StatusServiceUnavailable,
+			contentType: "text/plain", body: "unavailable\n", problem: true,
+		},
+		{
+			name: "typed unauthorized", status: http.StatusUnauthorized,
+			contentType: "application/problem+json",
+			body:        `{"type":"about:blank","title":"Unauthorized","status":401,"code":"role_denied","request_id":"req-query"}`,
+			problem:     true, code: RoleDenied,
+		},
+		{
+			name: "unknown problem code", status: http.StatusConflict,
+			contentType: "application/problem+json",
+			body:        `{"type":"about:blank","title":"Conflict","status":409,"code":"unrecognized","request_id":"req-query"}`,
+			problem:     true, code: DenyCode("unrecognized"),
+		},
+		{
+			name: "already cancelled context", status: http.StatusOK,
+			contentType: "application/json", body: `{"items":[],"next":null}`, cancelled: true,
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			var hits int32
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				atomic.AddInt32(&hits, 1)
+				w.Header().Set("Content-Type", tt.contentType)
+				w.WriteHeader(tt.status)
+				_, _ = w.Write([]byte(tt.body))
+			}))
+			defer server.Close()
+			client, err := NewClient(Config{
+				BaseURL: server.URL, Tokens: StaticToken("test-token"),
+				Retries: 1, Backoff: time.Millisecond,
+			})
+			if err != nil {
+				t.Fatal(err)
+			}
+			ctx, cancel := context.WithCancel(context.Background())
+			defer cancel()
+			if tt.cancelled {
+				cancel()
+			}
+			page, err := client.QueryOrders(ctx, tt.request)
+			wantHits := int32(1)
+			if tt.cancelled {
+				wantHits = 0
+			}
+			if got := atomic.LoadInt32(&hits); got != wantHits {
+				t.Fatalf("got %d round trips, want %d", got, wantHits)
+			}
+			if tt.success {
+				if err != nil || page == nil {
+					t.Fatalf("page=%+v err=%v, want a successful page", page, err)
+				}
+				if len(page.Items) != 2 || page.Items[0].Cursor != "first" || page.Items[1].Cursor != "second" {
+					t.Fatalf("item positions lost: %+v", page)
+				}
+				if page.Next == nil || *page.Next != "second" || page.Items[1].RepositoryUrl != nil {
+					t.Fatalf("page boundary or unknown repository changed: %+v", page)
+				}
+				return
+			}
+			if err == nil || page != nil {
+				t.Fatalf("page=%+v err=%v, want no successful page and an error", page, err)
+			}
+			if tt.cancelled {
+				if !errors.Is(err, context.Canceled) {
+					t.Fatalf("got %v, want context.Canceled", err)
+				}
+				return
+			}
+			var refused *ProblemError
+			if errors.As(err, &refused) != tt.problem {
+				t.Fatalf("got %v (%T), want typed problem=%v", err, err, tt.problem)
+			}
+			if !tt.problem {
+				return
+			}
+			if refused.StatusCode != tt.status || refused.Body != tt.body {
+				t.Fatalf("status=%d body=%q, want %d and %q", refused.StatusCode, refused.Body, tt.status, tt.body)
+			}
+			if tt.contentType == "text/plain" {
+				if refused.Problem != nil {
+					t.Fatalf("problem=%+v, want no decoded problem", refused.Problem)
+				}
+				return
+			}
+			document := refused.Problem
+			if document == nil || document.Status != tt.status || document.RequestId != "req-query" {
+				t.Fatalf("problem=%+v, want status %d and request id req-query", document, tt.status)
+			}
+			if tt.code != "" && (document.Code == nil || *document.Code != tt.code) {
+				t.Fatalf("problem=%+v, want code %q", document, tt.code)
+			}
 		})
-	}))
-	defer server.Close()
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
-	if err != nil {
-		t.Fatal(err)
-	}
-	page, err := client.QueryOrders(context.Background(), OrderQueryRequest{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(page.Items) != 2 || page.Items[0].Cursor != "first" || page.Items[1].Cursor != "second" {
-		t.Fatalf("item positions lost: %+v", page)
-	}
-	if page.Next == nil || *page.Next != "second" || page.Items[1].RepositoryUrl != nil {
-		t.Fatalf("page boundary or unknown repository changed: %+v", page)
-	}
-	_, err = client.QueryOrders(context.Background(), OrderQueryRequest{Cursor: &page.Items[0].Cursor})
-	var refused *ProblemError
-	if !errors.As(err, &refused) || refused.StatusCode != http.StatusUnprocessableEntity {
-		t.Fatalf("got %v, want typed 422", err)
 	}
 }

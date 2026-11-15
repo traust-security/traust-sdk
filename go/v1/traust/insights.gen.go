@@ -24,11 +24,15 @@ func (*FindingsRollupInsight) insightName() ViewName { return FindingsRollup }
 
 func (*FindingsTrendInsight) insightName() ViewName { return FindingsTrend }
 
+func (*InsecurePatternsInsight) insightName() ViewName { return InsecurePatterns }
+
 func (*InventoryExportInsight) insightName() ViewName { return InventoryExport }
 
 func (*PqcPortfolioInsight) insightName() ViewName { return PqcPortfolio }
 
 func (*PqcWorklistInsight) insightName() ViewName { return PqcWorklist }
+
+func (*PrivilegesInsight) insightName() ViewName { return Privileges }
 
 func (*RemediationIndexInsight) insightName() ViewName { return RemediationIndex }
 

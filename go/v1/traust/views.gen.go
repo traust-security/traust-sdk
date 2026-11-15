@@ -1165,6 +1165,67 @@ type FindingsTrendInsightPoint struct {
 	RiskIndex *FindingsTrendInsightIndex `json:"risk_index"`
 }
 
+// InsecurePatternsInsight Ephemeral derived Insight ViewModel from traust-core's insecure-patterns view: the scope's findings as of as_of (false positives dropped) grouped by primary CWE within each corpus ownership class, ranked by distinct repositories, then occurrences. An occurrence is one (repository, path) pair; a repository several ownership classes ship counts in each. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
+type InsecurePatternsInsight struct {
+	// AsOf The filter's point in time; null reads the current recorded state.
+	AsOf *time.Time `json:"as_of"`
+
+	// Cuts One cut per ownership class that has a pattern or a finding without a CWE, in the ownership registry's order, then the repositories no registered product ships (ownership null). At most one cut per class, and one null cut.
+	Cuts []InsecurePatternsInsightCut `json:"cuts"`
+}
+
+// InsecurePatternsInsightCount defines model for InsecurePatternsInsightCount.
+type InsecurePatternsInsightCount = int
+
+// InsecurePatternsInsightCut One ownership class's patterns, ranked on their own, never folded together.
+type InsecurePatternsInsightCut struct {
+	// Ownership The corpus ownership class; null for repositories no registered product ships.
+	Ownership *CensusInsightOwnership `json:"ownership"`
+
+	// Patterns Patterns by most repositories, then most occurrences, then CWE.
+	Patterns   []InsecurePatternsInsightPattern `json:"patterns"`
+	WithoutCwe InsecurePatternsInsightCount     `json:"without_cwe"`
+}
+
+// InsecurePatternsInsightExample defines model for InsecurePatternsInsightExample.
+type InsecurePatternsInsightExample struct {
+	// LineEnd The last line (1-based), raw; null when not given. A recorded location gives both lines or neither, but a finding claim's location may give either alone; when both are given, line_end is never before line_start (the claim's and the location table's rule; JSON Schema does not compare two fields).
+	LineEnd *int `json:"line_end"`
+
+	// LineStart The first line (1-based), raw; null when not given.
+	LineStart *int `json:"line_start"`
+
+	// Path The occurrence's first location path, raw; empty when the finding has no location.
+	Path string `json:"path"`
+
+	// RepositoryUrl Raw registered URL.
+	RepositoryUrl string `json:"repository_url"`
+
+	// Symbol Raw; null when not recorded.
+	Symbol *string `json:"symbol"`
+}
+
+// InsecurePatternsInsightPattern The findings sharing a primary CWE.
+type InsecurePatternsInsightPattern struct {
+	// Asvs The first ASVS label among the pattern's occurrences (by repository URL, then path), raw; null when none carries one.
+	Asvs *string `json:"asvs"`
+
+	// Cwe The primary CWE id as recorded, raw; the store refuses an empty identifier.
+	Cwe string `json:"cwe"`
+
+	// Examples Up to six occurrences, by repository URL, then path.
+	Examples []InsecurePatternsInsightExample `json:"examples"`
+
+	// Occurrences Distinct (repository, path) pairs; a re-report counts once, at its highest severity.
+	Occurrences int `json:"occurrences"`
+
+	// Repositories Distinct repositories.
+	Repositories int `json:"repositories"`
+
+	// Severities Counts by effective severity; unrated counts findings with no severity. Every key is always present.
+	Severities FindingsRollupInsightSeverityCounts `json:"severities"`
+}
+
 // InventoryExportInsight Ephemeral Insight ViewModel wrapping repository inventory rows with the legacy human-column labels. Raw strings are preserved as data; renderers are responsible for making them inert. No persisted artifact or mutation is implied.
 type InventoryExportInsight struct {
 	Rows []struct {
@@ -1485,6 +1546,67 @@ type PqcWorklistInsightScanState struct {
 	// Current Recorded scan currency; null is unknown, distinct from measured false and never inferred readiness.
 	Current         *bool              `json:"current"`
 	RepositoryRefId openapi_types.UUID `json:"repository_ref_id"`
+}
+
+// PrivilegesInsight Ephemeral derived Insight ViewModel from traust-core's privileges view: each repository's latest operator priv-profile as of as_of, as one row of declared-privilege posture (never finding counts), ranked by tier-2 surplus, then wildcard rules, then privileged workloads, then repository URL. Rows are Core's projection of the operator-priv-profile artifacts. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
+type PrivilegesInsight struct {
+	// AsOf The filter's point in time; null reads the latest profiles.
+	AsOf *time.Time `json:"as_of"`
+
+	// Rows One row per repository in scope with a completed priv-profile.
+	Rows []PrivilegesInsightRow `json:"rows"`
+}
+
+// PrivilegesInsightCount defines model for PrivilegesInsightCount.
+type PrivilegesInsightCount = int
+
+// PrivilegesInsightRow One repository's latest priv-profile as the least-privilege rollup reads it.
+type PrivilegesInsightRow struct {
+	// AssessmentId The priv-profile's assessment.
+	AssessmentId openapi_types.UUID `json:"assessment_id"`
+
+	// Containers Containers across the listed workloads; null when the profile lists no workloads.
+	Containers             *int                   `json:"containers"`
+	DistinctClusterTriples PrivilegesInsightCount `json:"distinct_cluster_triples"`
+	DistinctRuleTriples    PrivilegesInsightCount `json:"distinct_rule_triples"`
+
+	// Flags High-privilege rule pattern (raw) to how many rules match it; a pattern is present only when it matched.
+	Flags map[string]int `json:"flags"`
+
+	// InstallModes The names of the OperatorGroup install modes the profile marks supported (the artifact's install_modes object, its true entries), names raw.
+	InstallModes []string `json:"install_modes"`
+
+	// KubebuilderMarkers Kubebuilder RBAC markers in source, raw from the profile's tier-2 comparison; null when not derivable.
+	KubebuilderMarkers *int `json:"kubebuilder_markers"`
+
+	// Namespaces Namespaces the profile names, raw.
+	Namespaces []string `json:"namespaces"`
+
+	// NoSccRequestRecorded The profile's own flag: true when no SCC request was found, which is not the same as asking for none (an empty scc_requests list does not say which); null when the profile does not state it.
+	NoSccRequestRecorded *bool `json:"no_scc_request_recorded"`
+
+	// PrivilegedContainers Of those, the privileged ones; null with containers.
+	PrivilegedContainers *int `json:"privileged_containers"`
+
+	// PrivilegedWorkloads Workloads asking for privileged mode or a host namespace, the headline; null when the profile does not say.
+	PrivilegedWorkloads *int                   `json:"privileged_workloads"`
+	RbacRules           PrivilegesInsightCount `json:"rbac_rules"`
+
+	// Repository Raw registered URL.
+	Repository string `json:"repository"`
+
+	// RunAsNonRootContainers Of those, the ones running as non-root (a container unset inherits its pod's); null with containers.
+	RunAsNonRootContainers *int `json:"run_as_non_root_containers"`
+
+	// SccRequests Security context constraints the operator requests, raw names as the profile lists them (a name may repeat).
+	SccRequests []string `json:"scc_requests"`
+
+	// Surplus Privilege shipped with no marker asking for it (tier-2), raw from the profile; null when not derivable.
+	Surplus *int `json:"surplus"`
+
+	// WildcardRules Rules with a wildcard; null when the profile does not say.
+	WildcardRules *int                   `json:"wildcard_rules"`
+	Workloads     PrivilegesInsightCount `json:"workloads"`
 }
 
 // RemediationIndexInsight Ephemeral derived Insight ViewModel from traust-core's remediation-index view: every remediation work item of the scope's repositories (named products and teams, else every repository) as it stands now, grouped per product, with where its fix lives and its status, and the rows counted by status. There is no as_of: the index reads work items as they stand. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not arithmetic across fields.
