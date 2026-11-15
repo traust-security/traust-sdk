@@ -95,6 +95,9 @@ a typed validation problem.
 (URL, else repository ID, else order ID), asset and state. Normal sorts use the requested
 direction, then order ID, with nulls last. `sort_by=ids` preserves the supplied distinct ID
 sequence regardless of direction; `ids=null` is unrestricted and `ids=[]` matches nothing.
+Each ID selector accepts at most 500 values; oversized requests fail validation
+rather than silently dropping IDs. Live mutable sort/filter values can change
+between pages: these cursors are not transactional snapshots.
 Use these server-side queries rather than walking order history to filter or sort it.
 As a POST, `QueryOrders` is not automatically retried.
 
