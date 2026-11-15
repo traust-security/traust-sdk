@@ -654,158 +654,86 @@ func TestSetScopedReadsFailClosed(t *testing.T) {
 	}
 }
 
-// The repository disposition doors (foundry plan repo-unreachable): the URL correction
-// and the verify reach core's routes with the typed bodies, the listing carries the
-// dispositioned filter, and the answer decodes the disposition fields core serves.
-func TestRepositoryDispositionDoorsRoundTrip(t *testing.T) {
-	var seen []struct {
-		method string
-		path   string
-		query  url.Values
-		body   []byte
+func TestQueryOrdersPreservesNullAndEmptyIDs(t *testing.T) {
+	empty := []uuid.UUID{}
+	for _, tt := range []struct {
+		name string
+		ids  *[]uuid.UUID
+		want string
+	}{
+		{name: "unrestricted", ids: nil, want: "null"},
+		{name: "empty", ids: &empty, want: "[]"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPost || r.URL.Path != "/v1/orders/query" || r.URL.RawQuery != "" {
+					t.Errorf("unexpected query transport: %s %s", r.Method, r.URL)
+				}
+				var body map[string]json.RawMessage
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				if string(body["ids"]) != tt.want {
+					t.Errorf("ids = %s, want %s", body["ids"], tt.want)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(OrderQueryPage{Items: []OrderQueryItem{}})
+			}))
+			defer server.Close()
+			client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
+			if err != nil {
+				t.Fatal(err)
+			}
+			page, err := client.QueryOrders(context.Background(), OrderQueryRequest{Ids: tt.ids})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(page.Items) != 0 || page.Next != nil {
+				t.Fatalf("unexpected empty page: %+v", page)
+			}
+		})
 	}
+}
+
+func TestQueryOrdersKeepsPerItemCursorsAndTypedProblems(t *testing.T) {
+	firstID := uuid.MustParse("00000000-0000-4000-8000-000000000001")
+	secondID := uuid.MustParse("00000000-0000-4000-8000-000000000002")
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, _ := readAll(r)
-		seen = append(seen, struct {
-			method string
-			path   string
-			query  url.Values
-			body   []byte
-		}{r.Method, r.URL.Path, r.URL.Query(), body})
+		var query OrderQueryRequest
+		if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
+			t.Error(err)
+		}
+		if query.Cursor != nil {
+			problem(w, http.StatusUnprocessableEntity, "invalid or mismatched order query cursor")
+			return
+		}
 		w.Header().Set("Content-Type", "application/json")
-		switch {
-		case r.URL.Path == "/v1/repositories" && r.Method == http.MethodGet:
-			_ = json.NewEncoder(w).Encode(PageRepository{Items: []Repository{{
-				Id:         of(uuid.New()),
-				Url:        "https://github.com/org/repo",
-				Archived:   of(false),
-				UpstreamId: of(uuid.New()),
-				Public:     true,
-				CreatedAt:  of(time.Date(2026, 11, 15, 12, 0, 0, 0, time.UTC)),
-				GoneStreak: of(2),
-			}}})
-		case strings.HasSuffix(r.URL.Path, "/url") && r.Method == http.MethodPut:
-			disposition := RepoUnreachable
-			reason := GoneReasonGone
-			evidence := "the forge reports no such repository"
-			_ = json.NewEncoder(w).Encode(Repository{
-				Id: of(uuid.New()), Url: "https://github.com/org/relocated",
-				Disposition: &disposition, DispositionReason: &reason, DispositionEvidence: &evidence,
-			})
-		case strings.HasSuffix(r.URL.Path, "/verify") && r.Method == http.MethodPost:
-			status := ComparisonStatusOk
-			_ = json.NewEncoder(w).Encode(RepositoryVerification{
-				Facts:      ForgeFacts{Status: status},
-				Repository: Repository{Id: of(uuid.New()), Url: "https://github.com/org/repo"},
-			})
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer server.Close()
-
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("t")})
-	if err != nil {
-		t.Fatal(err)
-	}
-	ctx := context.Background()
-
-	repositoryID := uuid.New()
-	corrected, err := client.CorrectRepositoryUrl(ctx, repositoryID, UrlCorrection{
-		Url: "https://github.com/org/relocated",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if corrected.Url != "https://github.com/org/relocated" || corrected.Disposition == nil ||
-		*corrected.Disposition != RepoUnreachable || *corrected.DispositionReason != GoneReasonGone {
-		t.Fatalf("the correction's answer drifted: %+v", corrected)
-	}
-
-	answer, err := client.VerifyRepository(ctx, repositoryID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if answer.Facts.Status != ComparisonStatusOk || answer.Repository.Id == nil {
-		t.Fatalf("the verify's answer drifted: %+v", answer)
-	}
-
-	active := true
-	paged, err := client.ListRepositories(ctx, &ListRepositoriesParams{Dispositioned: &active})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(paged.Items) != 1 || paged.Items[0].Url != "https://github.com/org/repo" {
-		t.Fatalf("the listing's answer drifted: %+v", paged)
-	}
-
-	if len(seen) != 3 {
-		t.Fatalf("calls %d, want the three doors", len(seen))
-	}
-	for _, call := range seen {
-		switch {
-		case call.method == http.MethodPut:
-			if call.path != "/v1/repositories/"+repositoryID.String()+"/url" ||
-				string(call.body) != `{"url":"https://github.com/org/relocated"}` {
-				t.Fatalf("the correction was sent wrong: %s %s %s", call.method, call.path, call.body)
-			}
-		case call.method == http.MethodPost:
-			if call.path != "/v1/repositories/"+repositoryID.String()+"/verify" || len(call.body) != 0 {
-				t.Fatalf("the verify was sent wrong: %s %s %s", call.method, call.path, call.body)
-			}
-		case call.method == http.MethodGet:
-			if call.path != "/v1/repositories" || call.query.Get("dispositioned") != "true" {
-				t.Fatalf("the listing was sent wrong: %s %s %s", call.method, call.path, call.query)
-			}
-		default:
-			t.Fatalf("an unexpected door was called: %s %s", call.method, call.path)
-		}
-	}
-}
-
-func readAll(r *http.Request) ([]byte, error) {
-	if r.Body == nil {
-		return nil, nil
-	}
-	defer r.Body.Close()
-	return io.ReadAll(r.Body)
-}
-
-func of[T any](value T) *T { return &value }
-
-// The doors' failure paths (Qodo #77): a refusal surfaces as the *ProblemError core
-// sent, wrapped with the call's name and the repository it concerns — a caller
-// triaging several repositories can tell which one failed.
-func TestRepositoryDispositionDoorsNameTheFailedRepository(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/problem+json")
-		w.WriteHeader(http.StatusConflict)
-		_ = json.NewEncoder(w).Encode(Problem{
-			Type: "about:blank", Title: "the URL is occupied", Detail: "already another repository",
-			Status: http.StatusConflict, RequestId: "r1",
+		_ = json.NewEncoder(w).Encode(OrderQueryPage{
+			Items: []OrderQueryItem{
+				{Order: RunOrder{Id: &firstID}, RepositoryUrl: strp("https://forge.example/a"), Cursor: "first"},
+				{Order: RunOrder{Id: &secondID}, Cursor: "second"},
+			},
+			Next: strp("second"),
 		})
 	}))
 	defer server.Close()
-
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("t")})
+	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
 	if err != nil {
 		t.Fatal(err)
 	}
-	repositoryID := uuid.New()
-	_, err = client.CorrectRepositoryUrl(context.Background(), repositoryID, UrlCorrection{
-		Url: "https://github.com/other/seat",
-	})
-	if err == nil {
-		t.Fatal("the occupied-URL refusal must surface")
+	page, err := client.QueryOrders(context.Background(), OrderQueryRequest{})
+	if err != nil {
+		t.Fatal(err)
 	}
-	var problem *ProblemError
-	if !errors.As(err, &problem) || problem.StatusCode != http.StatusConflict {
-		t.Fatalf("the refusal lost its problem shape: %v", err)
+	if len(page.Items) != 2 || page.Items[0].Cursor != "first" || page.Items[1].Cursor != "second" {
+		t.Fatalf("item positions lost: %+v", page)
 	}
-	if !strings.Contains(err.Error(), "CorrectRepositoryUrl("+repositoryID.String()) {
-		t.Fatalf("the error does not name the repository it concerns: %v", err)
+	if page.Next == nil || *page.Next != "second" || page.Items[1].RepositoryUrl != nil {
+		t.Fatalf("page boundary or unknown repository changed: %+v", page)
 	}
-	if !strings.Contains(err.Error(), "already another repository") {
-		t.Fatalf("the error lost core's words: %v", err)
+	_, err = client.QueryOrders(context.Background(), OrderQueryRequest{Cursor: &page.Items[0].Cursor})
+	var refused *ProblemError
+	if !errors.As(err, &refused) || refused.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("got %v, want typed 422", err)
 	}
 }

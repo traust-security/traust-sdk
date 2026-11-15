@@ -1707,6 +1707,26 @@ func (c *Client) PrepareVerification(ctx context.Context, workItemId openapi_typ
 	return found, nil
 }
 
+// QueryOrders is POST /v1/orders/query: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) QueryOrders(ctx context.Context, body QueryOrdersJSONRequestBody) (*OrderQueryPage, error) {
+	raw, err := c.ClientInterface.QueryOrders(ctx, body)
+	if err != nil {
+		return nil, fmt.Errorf("QueryOrders: %w", err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("QueryOrders: %w", err)
+	}
+	response, err := ParseQueryOrdersResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("QueryOrders: %w", err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("QueryOrders: %w", err)
+	}
+	return found, nil
+}
+
 // ReadFeed is GET /v1/feed: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ReadFeed(ctx context.Context, params *ReadFeedParams) (*PageFeedEvent, error) {
 	raw, err := c.ClientInterface.ReadFeed(ctx, params)

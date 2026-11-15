@@ -379,14 +379,23 @@ const (
 	SourceScan     ImpactTier = "source_scan"
 )
 
-// Defines values for LivenessStatus.
+// Defines values for OrderSortBy.
 const (
-	Active   LivenessStatus = "active"
-	Archived LivenessStatus = "archived"
-	Disabled LivenessStatus = "disabled"
-	Missing  LivenessStatus = "missing"
-	Moved    LivenessStatus = "moved"
-	Unknown  LivenessStatus = "unknown"
+	OrderSortByAsset      OrderSortBy = "asset"
+	OrderSortByCreatedAt  OrderSortBy = "created_at"
+	OrderSortByFinishedAt OrderSortBy = "finished_at"
+	OrderSortById         OrderSortBy = "id"
+	OrderSortByIds        OrderSortBy = "ids"
+	OrderSortByReason     OrderSortBy = "reason"
+	OrderSortByRepository OrderSortBy = "repository"
+	OrderSortByStartedAt  OrderSortBy = "started_at"
+	OrderSortByState      OrderSortBy = "state"
+)
+
+// Defines values for OrderSortOrder.
+const (
+	Asc  OrderSortOrder = "asc"
+	Desc OrderSortOrder = "desc"
 )
 
 // Defines values for Outcome.
@@ -1251,11 +1260,9 @@ type FindingView struct {
 	EffectiveSeverity *Severity    `json:"effective_severity,omitempty"`
 
 	// Finding 3b · one weakness or vulnerability in a repository, identified by fingerprint.
-	Finding         Finding                       `json:"finding"`
-	FirstReportedAt *time.Time                    `json:"first_reported_at"`
-	Labels          *[]FindingLabel               `json:"labels,omitempty"`
-	LastReportedAt  *time.Time                    `json:"last_reported_at"`
-	Locations       *[]FindingView_Locations_Item `json:"locations,omitempty"`
+	Finding   Finding                       `json:"finding"`
+	Labels    *[]FindingLabel               `json:"labels,omitempty"`
+	Locations *[]FindingView_Locations_Item `json:"locations,omitempty"`
 
 	// Occurrence A finding as one assessment reported it.
 	Occurrence *Occurrence `json:"occurrence,omitempty"`
@@ -1613,7 +1620,7 @@ type OrderQueryPage struct {
 	Next  *string          `json:"next"`
 }
 
-// OrderQueryRequest Page all matching history; explicit ID selectors carry at most 500 entries each.
+// OrderQueryRequest defines model for OrderQueryRequest.
 type OrderQueryRequest struct {
 	Asset         *string               `json:"asset"`
 	Cursor        *string               `json:"cursor"`

@@ -82,6 +82,22 @@ html, err := client.GetInsightReport(ctx, traust.ExecutiveSummary,
 
 Formats are `ReportFormatMarkdown`, `ReportFormatHtml` and `ReportFormatCsv` (csv only for an insight with an export table).
 
+### Query orders
+
+`client.QueryOrders(ctx, traust.OrderQueryRequest{…})` posts filters, search, sort and bounded
+paging to `POST /v1/orders/query`. Each item contains the order, its repository URL (nullable)
+and an opaque cursor. Follow the page's `Next` for a whole page, or the last consumed item's
+`Cursor` when merging only part of a page with another source. Keep filters and sorting
+unchanged when resuming; the limit may change (1–1000). Malformed or mismatched cursors return
+a typed validation problem.
+
+`q` is a literal case-insensitive substring search across the displayed repository reference
+(URL, else repository ID, else order ID), asset and state. Normal sorts use the requested
+direction, then order ID, with nulls last. `sort_by=ids` preserves the supplied distinct ID
+sequence regardless of direction; `ids=null` is unrestricted and `ids=[]` matches nothing.
+Use these server-side queries rather than walking order history to filter or sort it.
+As a POST, `QueryOrders` is not automatically retried.
+
 ## Keep inventory current
 
 ```go
