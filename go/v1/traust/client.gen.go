@@ -1209,9 +1209,11 @@ type FindingView struct {
 	EffectiveSeverity *Severity    `json:"effective_severity,omitempty"`
 
 	// Finding 3b · one weakness or vulnerability in a repository, identified by fingerprint.
-	Finding   Finding                       `json:"finding"`
-	Labels    *[]FindingLabel               `json:"labels,omitempty"`
-	Locations *[]FindingView_Locations_Item `json:"locations,omitempty"`
+	Finding         Finding                       `json:"finding"`
+	FirstReportedAt *time.Time                    `json:"first_reported_at"`
+	Labels          *[]FindingLabel               `json:"labels,omitempty"`
+	LastReportedAt  *time.Time                    `json:"last_reported_at"`
+	Locations       *[]FindingView_Locations_Item `json:"locations,omitempty"`
 
 	// Occurrence A finding as one assessment reported it.
 	Occurrence *Occurrence `json:"occurrence,omitempty"`
