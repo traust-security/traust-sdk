@@ -652,3 +652,87 @@ func TestSetScopedReadsFailClosed(t *testing.T) {
 		})
 	}
 }
+
+func TestQueryOrdersPreservesNullAndEmptyIDs(t *testing.T) {
+	empty := []uuid.UUID{}
+	for _, tt := range []struct {
+		name string
+		ids  *[]uuid.UUID
+		want string
+	}{
+		{name: "unrestricted", ids: nil, want: "null"},
+		{name: "empty", ids: &empty, want: "[]"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+				if r.Method != http.MethodPost || r.URL.Path != "/v1/orders/query" || r.URL.RawQuery != "" {
+					t.Errorf("unexpected query transport: %s %s", r.Method, r.URL)
+				}
+				var body map[string]json.RawMessage
+				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
+					t.Error(err)
+				}
+				if string(body["ids"]) != tt.want {
+					t.Errorf("ids = %s, want %s", body["ids"], tt.want)
+				}
+				w.Header().Set("Content-Type", "application/json")
+				_ = json.NewEncoder(w).Encode(OrderQueryPage{Items: []OrderQueryItem{}})
+			}))
+			defer server.Close()
+			client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
+			if err != nil {
+				t.Fatal(err)
+			}
+			page, err := client.QueryOrders(context.Background(), OrderQueryRequest{Ids: tt.ids})
+			if err != nil {
+				t.Fatal(err)
+			}
+			if len(page.Items) != 0 || page.Next != nil {
+				t.Fatalf("unexpected empty page: %+v", page)
+			}
+		})
+	}
+}
+
+func TestQueryOrdersKeepsPerItemCursorsAndTypedProblems(t *testing.T) {
+	firstID := uuid.MustParse("00000000-0000-4000-8000-000000000001")
+	secondID := uuid.MustParse("00000000-0000-4000-8000-000000000002")
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		var query OrderQueryRequest
+		if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
+			t.Error(err)
+		}
+		if query.Cursor != nil {
+			problem(w, http.StatusUnprocessableEntity, "invalid or mismatched order query cursor")
+			return
+		}
+		w.Header().Set("Content-Type", "application/json")
+		_ = json.NewEncoder(w).Encode(OrderQueryPage{
+			Items: []OrderQueryItem{
+				{Order: RunOrder{Id: &firstID}, RepositoryUrl: strp("https://forge.example/a"), Cursor: "first"},
+				{Order: RunOrder{Id: &secondID}, Cursor: "second"},
+			},
+			Next: strp("second"),
+		})
+	}))
+	defer server.Close()
+	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	page, err := client.QueryOrders(context.Background(), OrderQueryRequest{})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if len(page.Items) != 2 || page.Items[0].Cursor != "first" || page.Items[1].Cursor != "second" {
+		t.Fatalf("item positions lost: %+v", page)
+	}
+	if page.Next == nil || *page.Next != "second" || page.Items[1].RepositoryUrl != nil {
+		t.Fatalf("page boundary or unknown repository changed: %+v", page)
+	}
+	_, err = client.QueryOrders(context.Background(), OrderQueryRequest{Cursor: &page.Items[0].Cursor})
+	var refused *ProblemError
+	if !errors.As(err, &refused) || refused.StatusCode != http.StatusUnprocessableEntity {
+		t.Fatalf("got %v, want typed 422", err)
+	}
+}

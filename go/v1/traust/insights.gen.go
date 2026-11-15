@@ -8,6 +8,8 @@ func (*BenchmarkScorecardsInsight) insightName() ViewName { return BenchmarkScor
 
 func (*CensusInsight) insightName() ViewName { return Census }
 
+func (*ComplianceInsight) insightName() ViewName { return Compliance }
+
 func (*CompliancePrecisionInsight) insightName() ViewName { return CompliancePrecision }
 
 func (*CoverageInsight) insightName() ViewName { return Coverage }

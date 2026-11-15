@@ -356,6 +356,25 @@ const (
 	SourceScan     ImpactTier = "source_scan"
 )
 
+// Defines values for OrderSortBy.
+const (
+	OrderSortByAsset      OrderSortBy = "asset"
+	OrderSortByCreatedAt  OrderSortBy = "created_at"
+	OrderSortByFinishedAt OrderSortBy = "finished_at"
+	OrderSortById         OrderSortBy = "id"
+	OrderSortByIds        OrderSortBy = "ids"
+	OrderSortByReason     OrderSortBy = "reason"
+	OrderSortByRepository OrderSortBy = "repository"
+	OrderSortByStartedAt  OrderSortBy = "started_at"
+	OrderSortByState      OrderSortBy = "state"
+)
+
+// Defines values for OrderSortOrder.
+const (
+	Asc  OrderSortOrder = "asc"
+	Desc OrderSortOrder = "desc"
+)
+
 // Defines values for Outcome.
 const (
 	OutcomeDegraded  Outcome = "degraded"
@@ -1209,11 +1228,9 @@ type FindingView struct {
 	EffectiveSeverity *Severity    `json:"effective_severity,omitempty"`
 
 	// Finding 3b · one weakness or vulnerability in a repository, identified by fingerprint.
-	Finding         Finding                       `json:"finding"`
-	FirstReportedAt *time.Time                    `json:"first_reported_at"`
-	Labels          *[]FindingLabel               `json:"labels,omitempty"`
-	LastReportedAt  *time.Time                    `json:"last_reported_at"`
-	Locations       *[]FindingView_Locations_Item `json:"locations,omitempty"`
+	Finding   Finding                       `json:"finding"`
+	Labels    *[]FindingLabel               `json:"labels,omitempty"`
+	Locations *[]FindingView_Locations_Item `json:"locations,omitempty"`
 
 	// Occurrence A finding as one assessment reported it.
 	Occurrence *Occurrence `json:"occurrence,omitempty"`
@@ -1509,6 +1526,37 @@ type OnboardingResult struct {
 // OrderManifest defines model for OrderManifest.
 type OrderManifest map[string]interface{}
 
+// OrderQueryItem defines model for OrderQueryItem.
+type OrderQueryItem struct {
+	Cursor string `json:"cursor"`
+
+	// Order 4a · one unit of work; queued, leased by a worker, finished with an outcome.
+	Order         RunOrder `json:"order"`
+	RepositoryUrl *string  `json:"repository_url"`
+}
+
+// OrderQueryPage defines model for OrderQueryPage.
+type OrderQueryPage struct {
+	Items []OrderQueryItem `json:"items"`
+	Next  *string          `json:"next"`
+}
+
+// OrderQueryRequest defines model for OrderQueryRequest.
+type OrderQueryRequest struct {
+	Asset         *string               `json:"asset"`
+	Cursor        *string               `json:"cursor"`
+	ExcludeIds    *[]openapi_types.UUID `json:"exclude_ids,omitempty"`
+	Ids           *[]openapi_types.UUID `json:"ids"`
+	Limit         *int                  `json:"limit,omitempty"`
+	Q             *string               `json:"q,omitempty"`
+	RepositoryId  *openapi_types.UUID   `json:"repository_id"`
+	RepositoryIds *[]openapi_types.UUID `json:"repository_ids,omitempty"`
+	RunBatchId    *openapi_types.UUID   `json:"run_batch_id"`
+	SortBy        *OrderSortBy          `json:"sort_by,omitempty"`
+	SortOrder     *OrderSortOrder       `json:"sort_order,omitempty"`
+	States        *[]RunOrderState      `json:"states,omitempty"`
+}
+
 // OrderRequest What admission puts on the queue: one asset for one partition, routed or not.
 type OrderRequest struct {
 	Asset        string              `json:"asset"`
@@ -1520,6 +1568,12 @@ type OrderRequest struct {
 	RunBatchId   *openapi_types.UUID `json:"run_batch_id"`
 	WorkItemId   *openapi_types.UUID `json:"work_item_id"`
 }
+
+// OrderSortBy defines model for OrderSortBy.
+type OrderSortBy string
+
+// OrderSortOrder defines model for OrderSortOrder.
+type OrderSortOrder string
 
 // Outcome defines model for Outcome.
 type Outcome string
@@ -2567,6 +2621,9 @@ type SubmitJSONRequestBody = SubmitRequest
 // ClaimJSONRequestBody defines body for Claim for application/json ContentType.
 type ClaimJSONRequestBody = ClaimRequest
 
+// QueryOrdersJSONRequestBody defines body for QueryOrders for application/json ContentType.
+type QueryOrdersJSONRequestBody = OrderQueryRequest
+
 // StartJSONRequestBody defines body for Start for application/json ContentType.
 type StartJSONRequestBody = StartRecordingRequest
 
@@ -3560,6 +3617,11 @@ type ClientInterface interface {
 
 	Claim(ctx context.Context, body ClaimJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// QueryOrdersWithBody request with any body
+	QueryOrdersWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	QueryOrders(ctx context.Context, body QueryOrdersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// StartWithBody request with any body
 	StartWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4298,6 +4360,30 @@ func (c *RawClient) ClaimWithBody(ctx context.Context, contentType string, body 
 
 func (c *RawClient) Claim(ctx context.Context, body ClaimJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewClaimRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) QueryOrdersWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewQueryOrdersRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) QueryOrders(ctx context.Context, body QueryOrdersJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewQueryOrdersRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7784,6 +7870,46 @@ func NewClaimRequestWithBody(server string, contentType string, body io.Reader) 
 	return req, nil
 }
 
+// NewQueryOrdersRequest calls the generic QueryOrders builder with application/json body
+func NewQueryOrdersRequest(server string, body QueryOrdersJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewQueryOrdersRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewQueryOrdersRequestWithBody generates requests for QueryOrders with any type of body
+func NewQueryOrdersRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/orders/query")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewStartRequest calls the generic Start builder with application/json body
 func NewStartRequest(server string, body StartJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -10539,6 +10665,11 @@ type ClientWithResponsesInterface interface {
 
 	ClaimWithResponse(ctx context.Context, body ClaimJSONRequestBody, reqEditors ...RequestEditorFn) (*ClaimResponse, error)
 
+	// QueryOrdersWithBodyWithResponse request with any body
+	QueryOrdersWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryOrdersResponse, error)
+
+	QueryOrdersWithResponse(ctx context.Context, body QueryOrdersJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryOrdersResponse, error)
+
 	// StartWithBodyWithResponse request with any body
 	StartWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*StartResponse, error)
 
@@ -11694,6 +11825,30 @@ func (r ClaimResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ClaimResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type QueryOrdersResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OrderQueryPage
+	JSON401      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r QueryOrdersResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r QueryOrdersResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -13355,6 +13510,23 @@ func (c *ClientWithResponses) ClaimWithResponse(ctx context.Context, body ClaimJ
 		return nil, err
 	}
 	return ParseClaimResponse(rsp)
+}
+
+// QueryOrdersWithBodyWithResponse request with arbitrary body returning *QueryOrdersResponse
+func (c *ClientWithResponses) QueryOrdersWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryOrdersResponse, error) {
+	rsp, err := c.QueryOrdersWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseQueryOrdersResponse(rsp)
+}
+
+func (c *ClientWithResponses) QueryOrdersWithResponse(ctx context.Context, body QueryOrdersJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryOrdersResponse, error) {
+	rsp, err := c.QueryOrders(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseQueryOrdersResponse(rsp)
 }
 
 // StartWithBodyWithResponse request with arbitrary body returning *StartResponse
@@ -15684,6 +15856,46 @@ func ParseClaimResponse(rsp *http.Response) (*ClaimResponse, error) {
 			return nil, err
 		}
 		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseQueryOrdersResponse parses an HTTP response from a QueryOrdersWithResponse call
+func ParseQueryOrdersResponse(rsp *http.Response) (*QueryOrdersResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &QueryOrdersResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OrderQueryPage
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest Problem

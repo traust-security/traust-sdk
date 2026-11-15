@@ -527,6 +527,44 @@ type CensusInsightSeverityCounts struct {
 	Unrated       CensusInsightCount `json:"unrated"`
 }
 
+// ComplianceInsight Ephemeral derived Insight ViewModel from traust-core's compliance view: compliance posture per framework and per boundary over every declared (boundary, framework) pair, each assessed by its newest recorded compliance assessment. It reads posture as it stands (the current declarations and newest assessments), so Core refuses an as_of rather than serve current posture as historical. Coverage is kept per framework, never blended into one number. Fleet-wide only: Core refuses a product or team scope. Not a persisted artifact or SQL projection. Every serialized field is present. JSON Schema checks structure and ranges, not arithmetic across fields.
+type ComplianceInsight struct {
+	// ByFramework One row per declared framework, by framework id.
+	ByFramework []ComplianceInsightRollup `json:"by_framework"`
+
+	// ByScope One row per declared boundary, by boundary name.
+	ByScope []ComplianceInsightRollup `json:"by_scope"`
+}
+
+// ComplianceInsightCount defines model for ComplianceInsightCount.
+type ComplianceInsightCount = int
+
+// ComplianceInsightCoverage A framework's coverage counts: the compliance assessment's own coverage block, summed over the group's pairs (a pair with no assessment adds zeros).
+type ComplianceInsightCoverage struct {
+	Deterministic  int `json:"deterministic"`
+	EvidenceReview int `json:"evidence_review"`
+	NotApplicable  int `json:"not_applicable"`
+	NotAssessed    int `json:"not_assessed"`
+	NotSatisfied   int `json:"not_satisfied"`
+	Organizational int `json:"organizational"`
+	Satisfied      int `json:"satisfied"`
+	TotalInScope   int `json:"total_in_scope"`
+}
+
+// ComplianceInsightRollup One group's declared (boundary, framework) pairs, how many are assessed, and the summed coverage of their newest assessments, per framework.
+type ComplianceInsightRollup struct {
+	Assessed ComplianceInsightCount `json:"assessed"`
+
+	// Coverage Each declared framework's summed coverage counts; a pair with no assessment adds zeros.
+	Coverage map[string]ComplianceInsightCoverage `json:"coverage"`
+
+	// Key The framework id (by_framework) or the boundary name, raw (by_scope); a declaration may name a boundary with the empty string, so a boundary key can be empty.
+	Key string `json:"key"`
+
+	// Pairs Declared (boundary, framework) pairs in the group.
+	Pairs int `json:"pairs"`
+}
+
 // CompliancePrecisionInsight Ephemeral Insight ViewModel wrapping DetectionQualityService.calibrate_compliance output. Review precision for recorded automatic compliance check firings and attributed human dismissals, not evaluator calibration, compliance coverage or a compliance score. Core derives counts, precision and inclusive precision <= gate flags; this schema validates their shape and ranges, not count arithmetic. No mutations or persisted artifact are implied.
 type CompliancePrecisionInsight struct {
 	Calibration struct {
