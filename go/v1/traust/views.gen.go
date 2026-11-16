@@ -308,6 +308,54 @@ const (
 	ThreatRegisterInsightThreatStatusUnmitigated        ThreatRegisterInsightThreatStatus = "unmitigated"
 )
 
+// Defines values for ValidationFuzzInsightCrasherCrashClass.
+const (
+	ValidationFuzzInsightCrasherCrashClassIndexOutOfRange    ValidationFuzzInsightCrasherCrashClass = "index_out_of_range"
+	ValidationFuzzInsightCrasherCrashClassIntegerOverflow    ValidationFuzzInsightCrasherCrashClass = "integer_overflow"
+	ValidationFuzzInsightCrasherCrashClassInvariantViolation ValidationFuzzInsightCrasherCrashClass = "invariant_violation"
+	ValidationFuzzInsightCrasherCrashClassMemoryCorruption   ValidationFuzzInsightCrasherCrashClass = "memory_corruption"
+	ValidationFuzzInsightCrasherCrashClassMemoryLeak         ValidationFuzzInsightCrasherCrashClass = "memory_leak"
+	ValidationFuzzInsightCrasherCrashClassNilDereference     ValidationFuzzInsightCrasherCrashClass = "nil_dereference"
+	ValidationFuzzInsightCrasherCrashClassOutOfMemory        ValidationFuzzInsightCrasherCrashClass = "out_of_memory"
+	ValidationFuzzInsightCrasherCrashClassPanic              ValidationFuzzInsightCrasherCrashClass = "panic"
+	ValidationFuzzInsightCrasherCrashClassProcessExit        ValidationFuzzInsightCrasherCrashClass = "process_exit"
+	ValidationFuzzInsightCrasherCrashClassTimeout            ValidationFuzzInsightCrasherCrashClass = "timeout"
+	ValidationFuzzInsightCrasherCrashClassUncaughtException  ValidationFuzzInsightCrasherCrashClass = "uncaught_exception"
+)
+
+// Defines values for ValidationFuzzInsightCrasherSeverity.
+const (
+	ValidationFuzzInsightCrasherSeverityCritical      ValidationFuzzInsightCrasherSeverity = "critical"
+	ValidationFuzzInsightCrasherSeverityHigh          ValidationFuzzInsightCrasherSeverity = "high"
+	ValidationFuzzInsightCrasherSeverityInformational ValidationFuzzInsightCrasherSeverity = "informational"
+	ValidationFuzzInsightCrasherSeverityLow           ValidationFuzzInsightCrasherSeverity = "low"
+	ValidationFuzzInsightCrasherSeverityMedium        ValidationFuzzInsightCrasherSeverity = "medium"
+)
+
+// Defines values for ValidationFuzzInsightGapReason.
+const (
+	ValidationFuzzInsightGapReasonBuildFailed          ValidationFuzzInsightGapReason = "build_failed"
+	ValidationFuzzInsightGapReasonFuzzedUpstream       ValidationFuzzInsightGapReason = "fuzzed_upstream"
+	ValidationFuzzInsightGapReasonHarnessDefect        ValidationFuzzInsightGapReason = "harness_defect"
+	ValidationFuzzInsightGapReasonHeavyDependencies    ValidationFuzzInsightGapReason = "heavy_dependencies"
+	ValidationFuzzInsightGapReasonNeedsLiveEnvironment ValidationFuzzInsightGapReason = "needs_live_environment"
+	ValidationFuzzInsightGapReasonNoHarness            ValidationFuzzInsightGapReason = "no_harness"
+	ValidationFuzzInsightGapReasonTrustedInput         ValidationFuzzInsightGapReason = "trusted_input"
+	ValidationFuzzInsightGapReasonUnsupportedLanguage  ValidationFuzzInsightGapReason = "unsupported_language"
+)
+
+// Defines values for ValidationFuzzInsightTargetEngines.
+const (
+	ValidationFuzzInsightTargetEnginesAflplusplus ValidationFuzzInsightTargetEngines = "aflplusplus"
+	ValidationFuzzInsightTargetEnginesAtheris     ValidationFuzzInsightTargetEngines = "atheris"
+	ValidationFuzzInsightTargetEnginesCargoFuzz   ValidationFuzzInsightTargetEngines = "cargo_fuzz"
+	ValidationFuzzInsightTargetEnginesGoNative    ValidationFuzzInsightTargetEngines = "go_native"
+	ValidationFuzzInsightTargetEnginesHonggfuzz   ValidationFuzzInsightTargetEngines = "honggfuzz"
+	ValidationFuzzInsightTargetEnginesJazzer      ValidationFuzzInsightTargetEngines = "jazzer"
+	ValidationFuzzInsightTargetEnginesJazzerJs    ValidationFuzzInsightTargetEngines = "jazzer_js"
+	ValidationFuzzInsightTargetEnginesLibfuzzer   ValidationFuzzInsightTargetEngines = "libfuzzer"
+)
+
 // AttackCoverageInsight Ephemeral derived Insight ViewModel from traust-core's attack-coverage view: the scope's MITRE ATT&CK coverage as of as_of against the pinned ATT&CK release. Modeled evidence (techniques the latest threat models cite) and weakness-derived candidates (finding categories through the pack's category map) are kept apart, never blended; observed coverage (confirmed validation chains) is not yet recorded. Includes an ATT&CK Navigator layer. Not a persisted artifact or SQL projection. Every serialized field is present. JSON Schema checks structure and ranges, not arithmetic across fields.
 type AttackCoverageInsight struct {
 	// AsOf The point in time the threat models and findings are read at: the filter's, else when the view was built.
@@ -725,6 +773,42 @@ type CriticalMissesInsight struct {
 
 // CriticalMissesInsightMissesReason missed denotes an actual miss; area_reported requires adjudication.
 type CriticalMissesInsightMissesReason string
+
+// DependencyReachInsight Ephemeral derived Insight ViewModel from traust-core's dependency-reach view: what the scope's latest default-branch manifest SBOMs hold, per ecosystem and by how many repositories share each package. It reads the latest manifests, so Core refuses an as_of. Not a persisted artifact or SQL projection. Every serialized field is present; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields nor that a field is unique across rows: one row per ecosystem and per package is Core's grouping, tested in Core.
+type DependencyReachInsight struct {
+	// Ecosystems One row per ecosystem the manifests hold (Core groups by ecosystem, so each appears once), most repositories first, then by ecosystem.
+	Ecosystems   []DependencyReachInsightEcosystem `json:"ecosystems"`
+	Repositories DependencyReachInsightCount       `json:"repositories"`
+
+	// Shared The 25 most shared packages, each (ecosystem, name) once (Core groups by that identity, the store's unique key), most repositories first, then by ecosystem and name.
+	Shared     []DependencyReachInsightPackage `json:"shared"`
+	Unmeasured DependencyReachInsightCount     `json:"unmeasured"`
+}
+
+// DependencyReachInsightCount defines model for DependencyReachInsightCount.
+type DependencyReachInsightCount = int
+
+// DependencyReachInsightEcosystem defines model for DependencyReachInsightEcosystem.
+type DependencyReachInsightEcosystem struct {
+	// Ecosystem The package ecosystem as stored (non-empty; intake classifies it with the ecosystem registry).
+	Ecosystem string `json:"ecosystem"`
+
+	// Packages Distinct packages of the ecosystem across the manifests.
+	Packages int `json:"packages"`
+
+	// Repositories Repositories whose manifests hold at least one of its packages.
+	Repositories int `json:"repositories"`
+}
+
+// DependencyReachInsightPackage A package and its blast radius: the repositories whose manifests hold it.
+type DependencyReachInsightPackage struct {
+	// Ecosystem The package ecosystem as stored (non-empty; intake classifies it with the ecosystem registry).
+	Ecosystem string `json:"ecosystem"`
+
+	// Name The package name as stored, raw (non-empty).
+	Name         string `json:"name"`
+	Repositories int    `json:"repositories"`
+}
 
 // ExecutiveSummaryInsight Ephemeral derived Insight ViewModel from traust-core's executive-summary view: the leadership roll-up of the scope as of the findings rollup's as_of. It is composed from the component view contracts by reference, never by copying their shapes: the findings rollup, and when the filter asks for them the ATT&CK, PQC, isolation (threat register) and IaC (census layer) panels; fleet-wide, the top advisory rows of dependency exposure. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null except exposure, which is null for a product or team scope. JSON Schema checks structure and ranges, not arithmetic across fields.
 type ExecutiveSummaryInsight struct {
@@ -1986,3 +2070,129 @@ type ThreatRegisterInsightThreatStatus string
 
 // ThreatRegisterInsightUuid defines model for ThreatRegisterInsightUuid.
 type ThreatRegisterInsightUuid = openapi_types.UUID
+
+// ValidationFuzzInsight Ephemeral derived Insight ViewModel from traust-core's validation-fuzz view: each target's latest recorded fuzz run as of as_of, its crashers ranked by CVSS then proposed severity, the surfaces it left unfuzzed, and each repository's validated findings by latest verdict. Fuzz fields are the fuzz-report artifact's own (Core parses each report against its schema), referenced rather than copied. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
+type ValidationFuzzInsight struct {
+	// AsOf The filter's point in time; null reads the latest runs and verdicts.
+	AsOf *time.Time `json:"as_of"`
+
+	// Crashers Every crasher of those runs, highest CVSS first (unscored after scored), then proposed severity, repository URL and crasher id.
+	Crashers []ValidationFuzzInsightCrasher `json:"crashers"`
+
+	// Gaps Every surface those runs left unfuzzed, by reason, then repository URL and surface.
+	Gaps []ValidationFuzzInsightGap `json:"gaps"`
+
+	// Targets One row per target's latest run, most crashers first, then repository URL and target.
+	Targets []ValidationFuzzInsightTarget `json:"targets"`
+
+	// Validation One row per repository with a validated finding (key: its URL), most confirmed first, then most findings, then URL.
+	Validation []ValidationFuzzInsightValidation `json:"validation"`
+}
+
+// ValidationFuzzInsightCount defines model for ValidationFuzzInsightCount.
+type ValidationFuzzInsightCount = int
+
+// ValidationFuzzInsightCrasher A crasher a target's latest run recorded, as the producer proposed it.
+type ValidationFuzzInsightCrasher struct {
+	// ConfirmsFindingId The recorded finding the crasher confirms; null when intake mints a new one.
+	ConfirmsFindingId *openapi_types.UUID `json:"confirms_finding_id"`
+
+	// CrashClass invariant_violation: a property the harness asserts failed (open redirect, integer wrap, path escape) without a crash. process_exit: the target exited the process (os.Exit, abort).
+	CrashClass ValidationFuzzInsightCrasherCrashClass `json:"crash_class"`
+
+	// Crasher The crasher's id in its report.
+	Crasher string `json:"crasher"`
+
+	// Cvss The proposed CVSS base score; null when unscored.
+	Cvss *float64 `json:"cvss"`
+
+	// Cwes Empty when not yet classified.
+	Cwes []string `json:"cwes"`
+
+	// Harness The harness that found it.
+	Harness string `json:"harness"`
+
+	// Repository Raw registered URL.
+	Repository string `json:"repository"`
+
+	// ReproducerSha256 Digest of the minimized crashing input's exact bytes.
+	ReproducerSha256 string `json:"reproducer_sha256"`
+
+	// Severity The producer's proposed severity; triage owns the severity.
+	Severity ValidationFuzzInsightCrasherSeverity `json:"severity"`
+	Target   string                               `json:"target"`
+	Title    string                               `json:"title"`
+}
+
+// ValidationFuzzInsightCrasherCrashClass invariant_violation: a property the harness asserts failed (open redirect, integer wrap, path escape) without a crash. process_exit: the target exited the process (os.Exit, abort).
+type ValidationFuzzInsightCrasherCrashClass string
+
+// ValidationFuzzInsightCrasherSeverity The producer's proposed severity; triage owns the severity.
+type ValidationFuzzInsightCrasherSeverity string
+
+// ValidationFuzzInsightGap A surface a target's latest run left unfuzzed, and why.
+type ValidationFuzzInsightGap struct {
+	// Harness The harness concerned; null when none is named.
+	Harness *string `json:"harness"`
+
+	// Note Raw; null when none.
+	Note *string `json:"note"`
+
+	// Reason no_harness: tracked without a fuzzer (static-confirmed or covered by another harness). fuzzed_upstream: already continuously fuzzed (e.g. OSS-Fuzz). trusted_input: input is not attacker-controlled. harness_defect: crashers came from the harness, not the target, so the surface is untested.
+	Reason ValidationFuzzInsightGapReason `json:"reason"`
+
+	// Repository Raw registered URL.
+	Repository string `json:"repository"`
+
+	// Surface Function, package or path left unfuzzed.
+	Surface string `json:"surface"`
+	Target  string `json:"target"`
+}
+
+// ValidationFuzzInsightGapReason no_harness: tracked without a fuzzer (static-confirmed or covered by another harness). fuzzed_upstream: already continuously fuzzed (e.g. OSS-Fuzz). trusted_input: input is not attacker-controlled. harness_defect: crashers came from the harness, not the target, so the surface is untested.
+type ValidationFuzzInsightGapReason string
+
+// ValidationFuzzInsightTarget One target's latest fuzz run.
+type ValidationFuzzInsightTarget struct {
+	AssessmentId openapi_types.UUID         `json:"assessment_id"`
+	Crashers     ValidationFuzzInsightCount `json:"crashers"`
+
+	// Engines The engines its harnesses ran, sorted; at least one, as a report has at least one harness.
+	Engines []ValidationFuzzInsightTargetEngines `json:"engines"`
+
+	// Execs Executions summed over the harnesses that reported them; null when none did.
+	Execs    *int                       `json:"execs"`
+	Gaps     ValidationFuzzInsightCount `json:"gaps"`
+	Language string                     `json:"language"`
+
+	// LinesCovered Lines the final corpus covered; null when coverage was not measured.
+	LinesCovered *int `json:"lines_covered"`
+
+	// LinesTotal Lines in scope for coverage; null with lines_covered.
+	LinesTotal *int `json:"lines_total"`
+
+	// OccurredAt When the run was recorded.
+	OccurredAt time.Time `json:"occurred_at"`
+
+	// Outcomes Harness outcome to how many harnesses had it; only outcomes seen appear, at least one (a report has at least one harness).
+	Outcomes map[string]int `json:"outcomes"`
+
+	// Repository Raw registered URL.
+	Repository string `json:"repository"`
+
+	// Target The campaign's target id.
+	Target string `json:"target"`
+}
+
+// ValidationFuzzInsightTargetEngines go_native: `go test -fuzz`. cargo_fuzz runs libFuzzer through cargo; jazzer_js is Jazzer.js.
+type ValidationFuzzInsightTargetEngines string
+
+// ValidationFuzzInsightValidation One repository's validated findings, each counted once at its latest verdict.
+type ValidationFuzzInsightValidation struct {
+	// ByVerdict Latest verdict to its findings; only verdicts seen appear.
+	ByVerdict map[string]int `json:"by_verdict"`
+	Findings  int            `json:"findings"`
+
+	// Key The repository's raw registered URL.
+	Key string `json:"key"`
+}

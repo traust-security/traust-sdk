@@ -16,6 +16,8 @@ func (*CoverageInsight) insightName() ViewName { return Coverage }
 
 func (*CriticalMissesInsight) insightName() ViewName { return CriticalMisses }
 
+func (*DependencyReachInsight) insightName() ViewName { return DependencyReach }
+
 func (*ExecutiveSummaryInsight) insightName() ViewName { return ExecutiveSummary }
 
 func (*ExposureInsight) insightName() ViewName { return Exposure }
@@ -39,3 +41,5 @@ func (*RemediationIndexInsight) insightName() ViewName { return RemediationIndex
 func (*SlaInsight) insightName() ViewName { return Sla }
 
 func (*ThreatRegisterInsight) insightName() ViewName { return ThreatRegister }
+
+func (*ValidationFuzzInsight) insightName() ViewName { return ValidationFuzz }
