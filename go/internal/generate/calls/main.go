@@ -33,6 +33,7 @@ type call struct {
 	Result             string // JSON200 type; empty for a raw-bytes response
 	Item, Cursor       string // set for a paged listing
 	PageParam          string
+	PageValue          bool
 	Empty              bool // core documents 204 No Content: the call returns nil, nil
 }
 
@@ -121,7 +122,11 @@ func (c call) PageArgs() string {
 	names := []string{"ctx"}
 	for _, p := range c.Params {
 		if p.Name == c.PageParam {
-			names = append(names, "&page")
+			if c.PageValue {
+				names = append(names, "page")
+			} else {
+				names = append(names, "&page")
+			}
 		} else {
 			names = append(names, p.Name)
 		}
@@ -193,10 +198,10 @@ func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 // {{.Name}}All iterates every item of {{.Name}}, following the cursor page by page; it stops at
 // the first error.
 func (c *Client) {{.Name}}All({{.Signature}}) iter.Seq2[{{.Item}}, error] {
-	var page {{.PageParamType}}
+	{{if .PageValue}}page := {{.PageParam}}{{else}}var page {{.PageParamType}}
 	if {{.PageParam}} != nil {
 		page = *{{.PageParam}}
-	}
+	}{{end}}
 	return pages(func(cursor *string) ([]{{.Item}}, *string, error) {
 		page.{{.Cursor}} = cursor
 		found, err := c.{{.Name}}({{.PageArgs}})
@@ -204,7 +209,7 @@ func (c *Client) {{.Name}}All({{.Signature}}) iter.Seq2[{{.Item}}, error] {
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.{{.Cursor}})
 }
 {{end}}{{end}}`))
 
@@ -320,6 +325,7 @@ func camel(id string) string {
 
 func index(file *ast.File) (map[string]*ast.StructType, map[string]*ast.FuncDecl) {
 	structs, requests := map[string]*ast.StructType{}, map[string]*ast.FuncDecl{}
+	aliases := map[string]string{}
 	for _, decl := range file.Decls {
 		switch d := decl.(type) {
 		case *ast.GenDecl:
@@ -327,6 +333,9 @@ func index(file *ast.File) (map[string]*ast.StructType, map[string]*ast.FuncDecl
 				if t, ok := spec.(*ast.TypeSpec); ok {
 					if s, ok := t.Type.(*ast.StructType); ok {
 						structs[t.Name.Name] = s
+					}
+					if target, ok := t.Type.(*ast.Ident); ok {
+						aliases[t.Name.Name] = target.Name
 					}
 				}
 			}
@@ -344,6 +353,19 @@ func index(file *ast.File) (map[string]*ast.StructType, map[string]*ast.FuncDecl
 			if _, seen := requests[name]; withBody || !seen {
 				requests[name] = d // the WithBody builder holds the route
 			}
+		}
+	}
+	for len(aliases) > 0 {
+		resolved := false
+		for name, target := range aliases {
+			if s := structs[target]; s != nil {
+				structs[name] = s
+				delete(aliases, name)
+				resolved = true
+			}
+		}
+		if !resolved {
+			break
 		}
 	}
 	return structs, requests
@@ -390,13 +412,21 @@ func build(fset *token.FileSet, source []byte, name string, fn *ast.FuncDecl, st
 		}
 	}
 	page := structs[c.Result]
-	if !strings.HasPrefix(c.Result, "Page") || page == nil {
+	if page == nil {
 		return c, nil
 	}
+	hasNext := false
 	for _, f := range page.Fields.List {
-		if len(f.Names) == 1 && f.Names[0].Name == "Items" {
+		if len(f.Names) == 1 && f.Names[0].Name == "Items" && strings.HasPrefix(render(fset, f.Type), "[]") {
 			c.Item = strings.TrimPrefix(render(fset, f.Type), "[]")
 		}
+		if len(f.Names) == 1 && f.Names[0].Name == "Next" && render(fset, f.Type) == "*string" {
+			hasNext = true
+		}
+	}
+	if c.Item == "" || !hasNext {
+		c.Item = ""
+		return c, nil
 	}
 	for _, p := range c.Params {
 		params := structs[strings.TrimPrefix(p.Type, "*")]
@@ -404,8 +434,9 @@ func build(fset *token.FileSet, source []byte, name string, fn *ast.FuncDecl, st
 			continue
 		}
 		for _, f := range params.Fields.List {
-			if len(f.Names) == 1 && (f.Names[0].Name == "Cursor" || f.Names[0].Name == "After") {
+			if len(f.Names) == 1 && (f.Names[0].Name == "Cursor" || f.Names[0].Name == "After") && render(fset, f.Type) == "*string" {
 				c.Cursor, c.PageParam = f.Names[0].Name, p.Name
+				c.PageValue = !strings.HasPrefix(p.Type, "*")
 			}
 		}
 	}

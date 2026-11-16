@@ -878,7 +878,7 @@ func (c *Client) ListAssessmentsAll(ctx context.Context, params *ListAssessments
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListDecisions is GET /v1/findings/{findingId}/decisions: the decoded body, or a *ProblemError when core refuses.
@@ -938,7 +938,7 @@ func (c *Client) ListEventsAll(ctx context.Context, layerId openapi_types.UUID, 
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListFindings is GET /v1/repositories/{repositoryId}/findings: the decoded body, or a *ProblemError when core refuses.
@@ -975,7 +975,7 @@ func (c *Client) ListFindingsAll(ctx context.Context, repositoryId openapi_types
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListFindingsIn is GET /v1/findings: the decoded body, or a *ProblemError when core refuses.
@@ -1012,7 +1012,7 @@ func (c *Client) ListFindingsInAll(ctx context.Context, params *ListFindingsInPa
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListImpacts is GET /v1/impacts: the decoded body, or a *ProblemError when core refuses.
@@ -1049,7 +1049,7 @@ func (c *Client) ListImpactsAll(ctx context.Context, params *ListImpactsParams) 
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListLayers is GET /v1/repositories/{repositoryId}/ledger/layers: the decoded body, or a *ProblemError when core refuses.
@@ -1132,7 +1132,7 @@ func (c *Client) ListOrdersAll(ctx context.Context, params *ListOrdersParams) it
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListOwnedRepositories is GET /v1/teams/{teamId}/repositories: the decoded body, or a *ProblemError when core refuses.
@@ -1238,7 +1238,7 @@ func (c *Client) ListProductsAll(ctx context.Context, params *ListProductsParams
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListProductsOf is GET /v1/repositories/{repositoryId}/products: the decoded body, or a *ProblemError when core refuses.
@@ -1344,7 +1344,7 @@ func (c *Client) ListRemediationsAll(ctx context.Context, params *ListRemediatio
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListRepositories is GET /v1/repositories: the decoded body, or a *ProblemError when core refuses.
@@ -1381,7 +1381,7 @@ func (c *Client) ListRepositoriesAll(ctx context.Context, params *ListRepositori
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListRepositoryAssessments is GET /v1/repositories/{repositoryId}/assessments: the decoded body, or a *ProblemError when core refuses.
@@ -1464,7 +1464,7 @@ func (c *Client) ListValidationAttemptsAll(ctx context.Context, params *ListVali
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListVerifications is GET /v1/repositories/{repositoryId}/verifications: the decoded body, or a *ProblemError when core refuses.
@@ -1501,7 +1501,7 @@ func (c *Client) ListVerificationsAll(ctx context.Context, repositoryId openapi_
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // ListWorkItems is GET /v1/repositories/{repositoryId}/work-items: the decoded body, or a *ProblemError when core refuses.
@@ -1538,7 +1538,7 @@ func (c *Client) ListWorkItemsAll(ctx context.Context, repositoryId openapi_type
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // Onboard is POST /v1/onboarding: the decoded body, or a *ProblemError when core refuses.
@@ -1727,6 +1727,20 @@ func (c *Client) QueryOrders(ctx context.Context, body QueryOrdersJSONRequestBod
 	return found, nil
 }
 
+// QueryOrdersAll iterates every item of QueryOrders, following the cursor page by page; it stops at
+// the first error.
+func (c *Client) QueryOrdersAll(ctx context.Context, body QueryOrdersJSONRequestBody) iter.Seq2[OrderQueryItem, error] {
+	page := body
+	return pages(func(cursor *string) ([]OrderQueryItem, *string, error) {
+		page.Cursor = cursor
+		found, err := c.QueryOrders(ctx, page)
+		if err != nil {
+			return nil, nil, err
+		}
+		return found.Items, found.Next, nil
+	}, page.Cursor)
+}
+
 // ReadFeed is GET /v1/feed: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ReadFeed(ctx context.Context, params *ReadFeedParams) (*PageFeedEvent, error) {
 	raw, err := c.ClientInterface.ReadFeed(ctx, params)
@@ -1761,7 +1775,7 @@ func (c *Client) ReadFeedAll(ctx context.Context, params *ReadFeedParams) iter.S
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.After)
 }
 
 // RecordAssessment is POST /v1/assessment-records: the decoded body, or a *ProblemError when core refuses.
@@ -1998,7 +2012,7 @@ func (c *Client) ReviewQueueAll(ctx context.Context, params *ReviewQueueParams) 
 			return nil, nil, err
 		}
 		return found.Items, found.Next, nil
-	})
+	}, page.Cursor)
 }
 
 // SetOwners is PUT /v1/repositories/{repositoryId}/owners: the decoded body, or a *ProblemError when core refuses.
