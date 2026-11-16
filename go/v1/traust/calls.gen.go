@@ -4,6 +4,7 @@ package traust
 
 import (
 	"context"
+	"fmt"
 	"iter"
 	"net/http"
 
@@ -19,18 +20,21 @@ var (
 func (c *Client) AdvisoriesFor(ctx context.Context, findingId openapi_types.UUID) ([]Advisory, error) {
 	raw, err := c.ClientInterface.AdvisoriesFor(ctx, findingId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("AdvisoriesFor(%s): %w", findingId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("AdvisoriesFor(%s): %w", findingId, err)
 	}
 	response, err := ParseAdvisoriesForResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("AdvisoriesFor(%s): %w", findingId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("AdvisoriesFor(%s): %w", findingId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -39,18 +43,21 @@ func (c *Client) AdvisoriesFor(ctx context.Context, findingId openapi_types.UUID
 func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([]AffectedDependency, error) {
 	raw, err := c.ClientInterface.Affected(ctx, advisoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Affected(%s): %w", advisoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Affected(%s): %w", advisoryId, err)
 	}
 	response, err := ParseAffectedResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Affected(%s): %w", advisoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("Affected(%s): %w", advisoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -59,32 +66,40 @@ func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([
 func (c *Client) Approve(ctx context.Context, orderId openapi_types.UUID) (*RunOrder, error) {
 	raw, err := c.ClientInterface.Approve(ctx, orderId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Approve(%s): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Approve(%s): %w", orderId, err)
 	}
 	response, err := ParseApproveResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Approve(%s): %w", orderId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Approve(%s): %w", orderId, err)
+	}
+	return found, nil
 }
 
 // Checkpoint is POST /v1/repositories/{repositoryId}/ledger/checkpoint: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Checkpoint(ctx context.Context, repositoryId openapi_types.UUID) (*Checkpoint, error) {
 	raw, err := c.ClientInterface.Checkpoint(ctx, repositoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Checkpoint(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Checkpoint(%s): %w", repositoryId, err)
 	}
 	response, err := ParseCheckpointResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Checkpoint(%s): %w", repositoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Checkpoint(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // Claim is POST /v1/orders/claim: the decoded body, or a *ProblemError when core refuses.
@@ -92,101 +107,144 @@ func (c *Client) Checkpoint(ctx context.Context, repositoryId openapi_types.UUID
 func (c *Client) Claim(ctx context.Context, body ClaimJSONRequestBody) (*RunOrder, error) {
 	raw, err := c.ClientInterface.Claim(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Claim: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Claim: %w", err)
 	}
 	response, err := ParseClaimResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Claim: %w", err)
 	}
 	if response.StatusCode() == http.StatusNoContent {
 		return nil, nil
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Claim: %w", err)
+	}
+	return found, nil
 }
 
 // Complete is POST /v1/orders/{orderId}/complete: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Complete(ctx context.Context, orderId openapi_types.UUID, body CompleteJSONRequestBody) (*RunOrder, error) {
 	raw, err := c.ClientInterface.Complete(ctx, orderId, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Complete(%s): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Complete(%s): %w", orderId, err)
 	}
 	response, err := ParseCompleteResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Complete(%s): %w", orderId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Complete(%s): %w", orderId, err)
+	}
+	return found, nil
+}
+
+// CorrectRepositoryUrl is PUT /v1/repositories/{repositoryId}/url: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) CorrectRepositoryUrl(ctx context.Context, repositoryId openapi_types.UUID, body CorrectRepositoryUrlJSONRequestBody) (*Repository, error) {
+	raw, err := c.ClientInterface.CorrectRepositoryUrl(ctx, repositoryId, body)
+	if err != nil {
+		return nil, fmt.Errorf("CorrectRepositoryUrl(%s): %w", repositoryId, err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("CorrectRepositoryUrl(%s): %w", repositoryId, err)
+	}
+	response, err := ParseCorrectRepositoryUrlResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("CorrectRepositoryUrl(%s): %w", repositoryId, err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("CorrectRepositoryUrl(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // CountFindingsIn is GET /v1/findings/count: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) CountFindingsIn(ctx context.Context, params *CountFindingsInParams) (*FindingCount, error) {
 	raw, err := c.ClientInterface.CountFindingsIn(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CountFindingsIn: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CountFindingsIn: %w", err)
 	}
 	response, err := ParseCountFindingsInResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CountFindingsIn: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("CountFindingsIn: %w", err)
+	}
+	return found, nil
 }
 
 // CreateRemediation is POST /v1/remediations: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) CreateRemediation(ctx context.Context, body CreateRemediationJSONRequestBody) (*ScheduledEffort, error) {
 	raw, err := c.ClientInterface.CreateRemediation(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CreateRemediation: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CreateRemediation: %w", err)
 	}
 	response, err := ParseCreateRemediationResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("CreateRemediation: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("CreateRemediation: %w", err)
+	}
+	return found, nil
 }
 
 // Decide is POST /v1/findings/{findingId}/decisions: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Decide(ctx context.Context, findingId openapi_types.UUID, body DecideJSONRequestBody) (*Decision, error) {
 	raw, err := c.ClientInterface.Decide(ctx, findingId, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Decide(%s): %w", findingId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Decide(%s): %w", findingId, err)
 	}
 	response, err := ParseDecideResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Decide(%s): %w", findingId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Decide(%s): %w", findingId, err)
+	}
+	return found, nil
 }
 
 // Dependencies is GET /v1/refs/{repositoryRefId}/dependencies: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Dependencies(ctx context.Context, repositoryRefId openapi_types.UUID) ([]RefDependency, error) {
 	raw, err := c.ClientInterface.Dependencies(ctx, repositoryRefId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Dependencies(%s): %w", repositoryRefId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Dependencies(%s): %w", repositoryRefId, err)
 	}
 	response, err := ParseDependenciesResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Dependencies(%s): %w", repositoryRefId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("Dependencies(%s): %w", repositoryRefId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -195,18 +253,21 @@ func (c *Client) Dependencies(ctx context.Context, repositoryRefId openapi_types
 func (c *Client) Dependents(ctx context.Context, packageId openapi_types.UUID, params *DependentsParams) ([]openapi_types.UUID, error) {
 	raw, err := c.ClientInterface.Dependents(ctx, packageId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Dependents(%s): %w", packageId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Dependents(%s): %w", packageId, err)
 	}
 	response, err := ParseDependentsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Dependents(%s): %w", packageId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("Dependents(%s): %w", packageId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -215,34 +276,41 @@ func (c *Client) Dependents(ctx context.Context, packageId openapi_types.UUID, p
 func (c *Client) ExportAdvisoryImpacts(ctx context.Context, advisoryId openapi_types.UUID) (*ImpactExport, error) {
 	raw, err := c.ClientInterface.ExportAdvisoryImpacts(ctx, advisoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ExportAdvisoryImpacts(%s): %w", advisoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ExportAdvisoryImpacts(%s): %w", advisoryId, err)
 	}
 	response, err := ParseExportAdvisoryImpactsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ExportAdvisoryImpacts(%s): %w", advisoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ExportAdvisoryImpacts(%s): %w", advisoryId, err)
+	}
+	return found, nil
 }
 
 // ExposureTimeline is GET /v1/exposure/timeline: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ExposureTimeline(ctx context.Context, params *ExposureTimelineParams) ([]ExposureSeriesPoint, error) {
 	raw, err := c.ClientInterface.ExposureTimeline(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ExposureTimeline: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ExposureTimeline: %w", err)
 	}
 	response, err := ParseExposureTimelineResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ExposureTimeline: %w", err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ExposureTimeline: %w", err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -251,18 +319,21 @@ func (c *Client) ExposureTimeline(ctx context.Context, params *ExposureTimelineP
 func (c *Client) FeedStatuses(ctx context.Context) ([]FeedStatus, error) {
 	raw, err := c.ClientInterface.FeedStatuses(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FeedStatuses: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FeedStatuses: %w", err)
 	}
 	response, err := ParseFeedStatusesResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FeedStatuses: %w", err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("FeedStatuses: %w", err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -271,50 +342,61 @@ func (c *Client) FeedStatuses(ctx context.Context) ([]FeedStatus, error) {
 func (c *Client) FindAdvisory(ctx context.Context, params *FindAdvisoryParams) (*AdvisoryRecord, error) {
 	raw, err := c.ClientInterface.FindAdvisory(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FindAdvisory: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FindAdvisory: %w", err)
 	}
 	response, err := ParseFindAdvisoryResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FindAdvisory: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("FindAdvisory: %w", err)
+	}
+	return found, nil
 }
 
 // FindPackage is GET /v1/packages: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FindPackage(ctx context.Context, params *FindPackageParams) (*Package, error) {
 	raw, err := c.ClientInterface.FindPackage(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FindPackage: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FindPackage: %w", err)
 	}
 	response, err := ParseFindPackageResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FindPackage: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("FindPackage: %w", err)
+	}
+	return found, nil
 }
 
 // FindingTimeline is GET /v1/repositories/{repositoryId}/findings/timeline: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FindingTimeline(ctx context.Context, repositoryId openapi_types.UUID, params *FindingTimelineParams) ([]FindingSeriesPoint, error) {
 	raw, err := c.ClientInterface.FindingTimeline(ctx, repositoryId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FindingTimeline(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FindingTimeline(%s): %w", repositoryId, err)
 	}
 	response, err := ParseFindingTimelineResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("FindingTimeline(%s): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("FindingTimeline(%s): %w", repositoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -323,46 +405,58 @@ func (c *Client) FindingTimeline(ctx context.Context, repositoryId openapi_types
 func (c *Client) GetAdvisory(ctx context.Context, advisoryId openapi_types.UUID) (*Advisory, error) {
 	raw, err := c.ClientInterface.GetAdvisory(ctx, advisoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAdvisory(%s): %w", advisoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAdvisory(%s): %w", advisoryId, err)
 	}
 	response, err := ParseGetAdvisoryResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAdvisory(%s): %w", advisoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetAdvisory(%s): %w", advisoryId, err)
+	}
+	return found, nil
 }
 
 // GetArtifact is GET /v1/artifacts/{artifactId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetArtifact(ctx context.Context, artifactId openapi_types.UUID) (*Artifact, error) {
 	raw, err := c.ClientInterface.GetArtifact(ctx, artifactId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetArtifact(%s): %w", artifactId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetArtifact(%s): %w", artifactId, err)
 	}
 	response, err := ParseGetArtifactResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetArtifact(%s): %w", artifactId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetArtifact(%s): %w", artifactId, err)
+	}
+	return found, nil
 }
 
 // GetArtifactContent is GET /v1/artifacts/{artifactId}/content: the exact stored bytes, or a *ProblemError.
 func (c *Client) GetArtifactContent(ctx context.Context, artifactId openapi_types.UUID) ([]byte, error) {
 	raw, err := c.ClientInterface.GetArtifactContent(ctx, artifactId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetArtifactContent(%s): %w", artifactId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetArtifactContent(%s): %w", artifactId, err)
 	}
 	response, err := ParseGetArtifactContentResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetArtifactContent(%s): %w", artifactId, err)
+	}
+	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
+	if response.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("GetArtifactContent(%s): traust-core: HTTP %d, want 200 with the file", artifactId, response.StatusCode())
 	}
 	return response.Body, nil
 }
@@ -371,288 +465,380 @@ func (c *Client) GetArtifactContent(ctx context.Context, artifactId openapi_type
 func (c *Client) GetAssessment(ctx context.Context, assessmentId openapi_types.UUID) (*Assessment, error) {
 	raw, err := c.ClientInterface.GetAssessment(ctx, assessmentId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAssessment(%s): %w", assessmentId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAssessment(%s): %w", assessmentId, err)
 	}
 	response, err := ParseGetAssessmentResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAssessment(%s): %w", assessmentId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetAssessment(%s): %w", assessmentId, err)
+	}
+	return found, nil
 }
 
 // GetAssessmentIntake is GET /v1/assessments/{assessmentId}/intake: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetAssessmentIntake(ctx context.Context, assessmentId openapi_types.UUID) (*AssessmentIntakeBindings, error) {
 	raw, err := c.ClientInterface.GetAssessmentIntake(ctx, assessmentId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAssessmentIntake(%s): %w", assessmentId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAssessmentIntake(%s): %w", assessmentId, err)
 	}
 	response, err := ParseGetAssessmentIntakeResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetAssessmentIntake(%s): %w", assessmentId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetAssessmentIntake(%s): %w", assessmentId, err)
+	}
+	return found, nil
 }
 
 // GetCurrentDefaultRef is GET /v1/repositories/{repositoryId}/refs/current-default: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetCurrentDefaultRef(ctx context.Context, repositoryId openapi_types.UUID) (*RepositoryRef, error) {
 	raw, err := c.ClientInterface.GetCurrentDefaultRef(ctx, repositoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetCurrentDefaultRef(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetCurrentDefaultRef(%s): %w", repositoryId, err)
 	}
 	response, err := ParseGetCurrentDefaultRefResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetCurrentDefaultRef(%s): %w", repositoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetCurrentDefaultRef(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // GetDecision is GET /v1/decisions/{decisionId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetDecision(ctx context.Context, decisionId openapi_types.UUID) (*Decision, error) {
 	raw, err := c.ClientInterface.GetDecision(ctx, decisionId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetDecision(%s): %w", decisionId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetDecision(%s): %w", decisionId, err)
 	}
 	response, err := ParseGetDecisionResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetDecision(%s): %w", decisionId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetDecision(%s): %w", decisionId, err)
+	}
+	return found, nil
 }
 
 // GetFinding is GET /v1/findings/{findingId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetFinding(ctx context.Context, findingId openapi_types.UUID) (*FindingView, error) {
 	raw, err := c.ClientInterface.GetFinding(ctx, findingId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetFinding(%s): %w", findingId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetFinding(%s): %w", findingId, err)
 	}
 	response, err := ParseGetFindingResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetFinding(%s): %w", findingId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetFinding(%s): %w", findingId, err)
+	}
+	return found, nil
 }
 
 // GetFindingByFingerprint is GET /v1/repositories/{repositoryId}/findings/by-fingerprint: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetFindingByFingerprint(ctx context.Context, repositoryId openapi_types.UUID, params *GetFindingByFingerprintParams) (*FindingView, error) {
 	raw, err := c.ClientInterface.GetFindingByFingerprint(ctx, repositoryId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetFindingByFingerprint(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetFindingByFingerprint(%s): %w", repositoryId, err)
 	}
 	response, err := ParseGetFindingByFingerprintResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetFindingByFingerprint(%s): %w", repositoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetFindingByFingerprint(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // GetInsight is GET /v1/insights/{name}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetInsight(ctx context.Context, name ViewName, params *GetInsightParams) (*ViewModel, error) {
 	raw, err := c.ClientInterface.GetInsight(ctx, name, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
 	}
 	response, err := ParseGetInsightResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
+	}
+	return found, nil
+}
+
+// GetInsightReport is GET /v1/insights/{name}/report: the exact stored bytes, or a *ProblemError.
+func (c *Client) GetInsightReport(ctx context.Context, name ViewName, params *GetInsightReportParams) ([]byte, error) {
+	raw, err := c.ClientInterface.GetInsightReport(ctx, name, params)
+	if err != nil {
+		return nil, fmt.Errorf("GetInsightReport(%s): %w", name, err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("GetInsightReport(%s): %w", name, err)
+	}
+	response, err := ParseGetInsightReportResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("GetInsightReport(%s): %w", name, err)
+	}
+	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
+	if response.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("GetInsightReport(%s): traust-core: HTTP %d, want 200 with the file", name, response.StatusCode())
+	}
+	return response.Body, nil
 }
 
 // GetLatestRecordedAssessment is GET /v1/repositories/{repositoryId}/assessments/latest: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetLatestRecordedAssessment(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams) (*Assessment, error) {
 	raw, err := c.ClientInterface.GetLatestRecordedAssessment(ctx, repositoryId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetLatestRecordedAssessment(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetLatestRecordedAssessment(%s): %w", repositoryId, err)
 	}
 	response, err := ParseGetLatestRecordedAssessmentResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetLatestRecordedAssessment(%s): %w", repositoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetLatestRecordedAssessment(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // GetLayer is GET /v1/ledger/layers/{layerId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetLayer(ctx context.Context, layerId openapi_types.UUID) (*Layer, error) {
 	raw, err := c.ClientInterface.GetLayer(ctx, layerId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetLayer(%s): %w", layerId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetLayer(%s): %w", layerId, err)
 	}
 	response, err := ParseGetLayerResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetLayer(%s): %w", layerId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetLayer(%s): %w", layerId, err)
+	}
+	return found, nil
 }
 
 // GetOrder is GET /v1/orders/{orderId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetOrder(ctx context.Context, orderId openapi_types.UUID) (*RunOrder, error) {
 	raw, err := c.ClientInterface.GetOrder(ctx, orderId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetOrder(%s): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetOrder(%s): %w", orderId, err)
 	}
 	response, err := ParseGetOrderResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetOrder(%s): %w", orderId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetOrder(%s): %w", orderId, err)
+	}
+	return found, nil
 }
 
 // GetOrderManifest is GET /v1/orders/{orderId}/manifest: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetOrderManifest(ctx context.Context, orderId openapi_types.UUID) (*OrderManifest, error) {
 	raw, err := c.ClientInterface.GetOrderManifest(ctx, orderId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetOrderManifest(%s): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetOrderManifest(%s): %w", orderId, err)
 	}
 	response, err := ParseGetOrderManifestResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetOrderManifest(%s): %w", orderId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetOrderManifest(%s): %w", orderId, err)
+	}
+	return found, nil
 }
 
 // GetProduct is GET /v1/products/{productId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetProduct(ctx context.Context, productId openapi_types.UUID) (*Product, error) {
 	raw, err := c.ClientInterface.GetProduct(ctx, productId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetProduct(%s): %w", productId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetProduct(%s): %w", productId, err)
 	}
 	response, err := ParseGetProductResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetProduct(%s): %w", productId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetProduct(%s): %w", productId, err)
+	}
+	return found, nil
 }
 
 // GetRef is GET /v1/refs/{repositoryRefId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetRef(ctx context.Context, repositoryRefId openapi_types.UUID) (*RepositoryRef, error) {
 	raw, err := c.ClientInterface.GetRef(ctx, repositoryRefId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetRef(%s): %w", repositoryRefId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetRef(%s): %w", repositoryRefId, err)
 	}
 	response, err := ParseGetRefResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetRef(%s): %w", repositoryRefId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetRef(%s): %w", repositoryRefId, err)
+	}
+	return found, nil
 }
 
 // GetRemediation is GET /v1/remediations/{workItemId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetRemediation(ctx context.Context, workItemId openapi_types.UUID) (*ScheduledEffort, error) {
 	raw, err := c.ClientInterface.GetRemediation(ctx, workItemId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetRemediation(%s): %w", workItemId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetRemediation(%s): %w", workItemId, err)
 	}
 	response, err := ParseGetRemediationResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetRemediation(%s): %w", workItemId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetRemediation(%s): %w", workItemId, err)
+	}
+	return found, nil
 }
 
 // GetRepository is GET /v1/repositories/{repositoryId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetRepository(ctx context.Context, repositoryId openapi_types.UUID) (*Repository, error) {
 	raw, err := c.ClientInterface.GetRepository(ctx, repositoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetRepository(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetRepository(%s): %w", repositoryId, err)
 	}
 	response, err := ParseGetRepositoryResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("GetRepository(%s): %w", repositoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetRepository(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // Healthz is GET /v1/healthz: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Healthz(ctx context.Context) (*Health, error) {
 	raw, err := c.ClientInterface.Healthz(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Healthz: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Healthz: %w", err)
 	}
 	response, err := ParseHealthzResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Healthz: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Healthz: %w", err)
+	}
+	return found, nil
 }
 
 // Heartbeat is POST /v1/orders/{orderId}/heartbeat: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Heartbeat(ctx context.Context, orderId openapi_types.UUID, body HeartbeatJSONRequestBody) (*RunOrder, error) {
 	raw, err := c.ClientInterface.Heartbeat(ctx, orderId, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Heartbeat(%s): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Heartbeat(%s): %w", orderId, err)
 	}
 	response, err := ParseHeartbeatResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Heartbeat(%s): %w", orderId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Heartbeat(%s): %w", orderId, err)
+	}
+	return found, nil
 }
 
 // ListAssessments is GET /v1/assessments: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListAssessments(ctx context.Context, params *ListAssessmentsParams) (*PageAssessment, error) {
 	raw, err := c.ClientInterface.ListAssessments(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListAssessments: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListAssessments: %w", err)
 	}
 	response, err := ParseListAssessmentsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListAssessments: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListAssessments: %w", err)
+	}
+	return found, nil
 }
 
 // ListAssessmentsAll iterates every item of ListAssessments, following the cursor page by page; it stops at
@@ -676,18 +862,21 @@ func (c *Client) ListAssessmentsAll(ctx context.Context, params *ListAssessments
 func (c *Client) ListDecisions(ctx context.Context, findingId openapi_types.UUID) ([]Decision, error) {
 	raw, err := c.ClientInterface.ListDecisions(ctx, findingId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListDecisions(%s): %w", findingId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListDecisions(%s): %w", findingId, err)
 	}
 	response, err := ParseListDecisionsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListDecisions(%s): %w", findingId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListDecisions(%s): %w", findingId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -696,16 +885,20 @@ func (c *Client) ListDecisions(ctx context.Context, findingId openapi_types.UUID
 func (c *Client) ListEvents(ctx context.Context, layerId openapi_types.UUID, params *ListEventsParams) (*PageEvent, error) {
 	raw, err := c.ClientInterface.ListEvents(ctx, layerId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListEvents(%s): %w", layerId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListEvents(%s): %w", layerId, err)
 	}
 	response, err := ParseListEventsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListEvents(%s): %w", layerId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListEvents(%s): %w", layerId, err)
+	}
+	return found, nil
 }
 
 // ListEventsAll iterates every item of ListEvents, following the cursor page by page; it stops at
@@ -729,16 +922,20 @@ func (c *Client) ListEventsAll(ctx context.Context, layerId openapi_types.UUID, 
 func (c *Client) ListFindings(ctx context.Context, repositoryId openapi_types.UUID, params *ListFindingsParams) (*PageFindingView, error) {
 	raw, err := c.ClientInterface.ListFindings(ctx, repositoryId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListFindings(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListFindings(%s): %w", repositoryId, err)
 	}
 	response, err := ParseListFindingsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListFindings(%s): %w", repositoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListFindings(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // ListFindingsAll iterates every item of ListFindings, following the cursor page by page; it stops at
@@ -762,16 +959,20 @@ func (c *Client) ListFindingsAll(ctx context.Context, repositoryId openapi_types
 func (c *Client) ListFindingsIn(ctx context.Context, params *ListFindingsInParams) (*PageFindingView, error) {
 	raw, err := c.ClientInterface.ListFindingsIn(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListFindingsIn: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListFindingsIn: %w", err)
 	}
 	response, err := ParseListFindingsInResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListFindingsIn: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListFindingsIn: %w", err)
+	}
+	return found, nil
 }
 
 // ListFindingsInAll iterates every item of ListFindingsIn, following the cursor page by page; it stops at
@@ -795,16 +996,20 @@ func (c *Client) ListFindingsInAll(ctx context.Context, params *ListFindingsInPa
 func (c *Client) ListImpacts(ctx context.Context, params *ListImpactsParams) (*PageImpactAnalysis, error) {
 	raw, err := c.ClientInterface.ListImpacts(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListImpacts: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListImpacts: %w", err)
 	}
 	response, err := ParseListImpactsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListImpacts: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListImpacts: %w", err)
+	}
+	return found, nil
 }
 
 // ListImpactsAll iterates every item of ListImpacts, following the cursor page by page; it stops at
@@ -828,18 +1033,21 @@ func (c *Client) ListImpactsAll(ctx context.Context, params *ListImpactsParams) 
 func (c *Client) ListLayers(ctx context.Context, repositoryId openapi_types.UUID) ([]Layer, error) {
 	raw, err := c.ClientInterface.ListLayers(ctx, repositoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListLayers(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListLayers(%s): %w", repositoryId, err)
 	}
 	response, err := ParseListLayersResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListLayers(%s): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListLayers(%s): %w", repositoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -848,18 +1056,21 @@ func (c *Client) ListLayers(ctx context.Context, repositoryId openapi_types.UUID
 func (c *Client) ListOrderAssessments(ctx context.Context, orderId openapi_types.UUID) ([]Assessment, error) {
 	raw, err := c.ClientInterface.ListOrderAssessments(ctx, orderId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOrderAssessments(%s): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOrderAssessments(%s): %w", orderId, err)
 	}
 	response, err := ParseListOrderAssessmentsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOrderAssessments(%s): %w", orderId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListOrderAssessments(%s): %w", orderId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -868,16 +1079,20 @@ func (c *Client) ListOrderAssessments(ctx context.Context, orderId openapi_types
 func (c *Client) ListOrders(ctx context.Context, params *ListOrdersParams) (*PageRunOrder, error) {
 	raw, err := c.ClientInterface.ListOrders(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOrders: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOrders: %w", err)
 	}
 	response, err := ParseListOrdersResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOrders: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListOrders: %w", err)
+	}
+	return found, nil
 }
 
 // ListOrdersAll iterates every item of ListOrders, following the cursor page by page; it stops at
@@ -901,18 +1116,21 @@ func (c *Client) ListOrdersAll(ctx context.Context, params *ListOrdersParams) it
 func (c *Client) ListOwnedRepositories(ctx context.Context, teamId openapi_types.UUID, params *ListOwnedRepositoriesParams) ([]openapi_types.UUID, error) {
 	raw, err := c.ClientInterface.ListOwnedRepositories(ctx, teamId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOwnedRepositories(%s): %w", teamId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOwnedRepositories(%s): %w", teamId, err)
 	}
 	response, err := ParseListOwnedRepositoriesResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOwnedRepositories(%s): %w", teamId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListOwnedRepositories(%s): %w", teamId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -921,18 +1139,21 @@ func (c *Client) ListOwnedRepositories(ctx context.Context, teamId openapi_types
 func (c *Client) ListOwners(ctx context.Context, repositoryId openapi_types.UUID) ([]Team, error) {
 	raw, err := c.ClientInterface.ListOwners(ctx, repositoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOwners(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOwners(%s): %w", repositoryId, err)
 	}
 	response, err := ParseListOwnersResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListOwners(%s): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListOwners(%s): %w", repositoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -941,18 +1162,21 @@ func (c *Client) ListOwners(ctx context.Context, repositoryId openapi_types.UUID
 func (c *Client) ListProductRefs(ctx context.Context, productId openapi_types.UUID) ([]RepositoryRef, error) {
 	raw, err := c.ClientInterface.ListProductRefs(ctx, productId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListProductRefs(%s): %w", productId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListProductRefs(%s): %w", productId, err)
 	}
 	response, err := ParseListProductRefsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListProductRefs(%s): %w", productId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListProductRefs(%s): %w", productId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -961,16 +1185,20 @@ func (c *Client) ListProductRefs(ctx context.Context, productId openapi_types.UU
 func (c *Client) ListProducts(ctx context.Context, params *ListProductsParams) (*PageProduct, error) {
 	raw, err := c.ClientInterface.ListProducts(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListProducts: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListProducts: %w", err)
 	}
 	response, err := ParseListProductsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListProducts: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListProducts: %w", err)
+	}
+	return found, nil
 }
 
 // ListProductsAll iterates every item of ListProducts, following the cursor page by page; it stops at
@@ -994,18 +1222,21 @@ func (c *Client) ListProductsAll(ctx context.Context, params *ListProductsParams
 func (c *Client) ListProductsOf(ctx context.Context, repositoryId openapi_types.UUID) ([]Product, error) {
 	raw, err := c.ClientInterface.ListProductsOf(ctx, repositoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListProductsOf(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListProductsOf(%s): %w", repositoryId, err)
 	}
 	response, err := ParseListProductsOfResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListProductsOf(%s): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListProductsOf(%s): %w", repositoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -1014,18 +1245,21 @@ func (c *Client) ListProductsOf(ctx context.Context, repositoryId openapi_types.
 func (c *Client) ListRefs(ctx context.Context, repositoryId openapi_types.UUID, params *ListRefsParams) ([]RepositoryRef, error) {
 	raw, err := c.ClientInterface.ListRefs(ctx, repositoryId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRefs(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRefs(%s): %w", repositoryId, err)
 	}
 	response, err := ParseListRefsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRefs(%s): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListRefs(%s): %w", repositoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -1034,18 +1268,21 @@ func (c *Client) ListRefs(ctx context.Context, repositoryId openapi_types.UUID, 
 func (c *Client) ListRefsForRepositories(ctx context.Context, params *ListRefsForRepositoriesParams) ([]RepositoryRef, error) {
 	raw, err := c.ClientInterface.ListRefsForRepositories(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRefsForRepositories: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRefsForRepositories: %w", err)
 	}
 	response, err := ParseListRefsForRepositoriesResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRefsForRepositories: %w", err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListRefsForRepositories: %w", err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -1054,16 +1291,20 @@ func (c *Client) ListRefsForRepositories(ctx context.Context, params *ListRefsFo
 func (c *Client) ListRemediations(ctx context.Context, params *ListRemediationsParams) (*PageScheduledEffort, error) {
 	raw, err := c.ClientInterface.ListRemediations(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRemediations: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRemediations: %w", err)
 	}
 	response, err := ParseListRemediationsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRemediations: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListRemediations: %w", err)
+	}
+	return found, nil
 }
 
 // ListRemediationsAll iterates every item of ListRemediations, following the cursor page by page; it stops at
@@ -1087,16 +1328,20 @@ func (c *Client) ListRemediationsAll(ctx context.Context, params *ListRemediatio
 func (c *Client) ListRepositories(ctx context.Context, params *ListRepositoriesParams) (*PageRepository, error) {
 	raw, err := c.ClientInterface.ListRepositories(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRepositories: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRepositories: %w", err)
 	}
 	response, err := ParseListRepositoriesResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRepositories: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListRepositories: %w", err)
+	}
+	return found, nil
 }
 
 // ListRepositoriesAll iterates every item of ListRepositories, following the cursor page by page; it stops at
@@ -1120,18 +1365,21 @@ func (c *Client) ListRepositoriesAll(ctx context.Context, params *ListRepositori
 func (c *Client) ListRepositoryAssessments(ctx context.Context, repositoryId openapi_types.UUID, params *ListRepositoryAssessmentsParams) ([]Assessment, error) {
 	raw, err := c.ClientInterface.ListRepositoryAssessments(ctx, repositoryId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRepositoryAssessments(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRepositoryAssessments(%s): %w", repositoryId, err)
 	}
 	response, err := ParseListRepositoryAssessmentsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRepositoryAssessments(%s): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListRepositoryAssessments(%s): %w", repositoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -1140,18 +1388,21 @@ func (c *Client) ListRepositoryAssessments(ctx context.Context, repositoryId ope
 func (c *Client) ListRepositoryDecisions(ctx context.Context, repositoryId openapi_types.UUID) ([]Decision, error) {
 	raw, err := c.ClientInterface.ListRepositoryDecisions(ctx, repositoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRepositoryDecisions(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRepositoryDecisions(%s): %w", repositoryId, err)
 	}
 	response, err := ParseListRepositoryDecisionsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListRepositoryDecisions(%s): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("ListRepositoryDecisions(%s): %w", repositoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -1160,16 +1411,20 @@ func (c *Client) ListRepositoryDecisions(ctx context.Context, repositoryId opena
 func (c *Client) ListValidationAttempts(ctx context.Context, params *ListValidationAttemptsParams) (*PageValidationAttempt, error) {
 	raw, err := c.ClientInterface.ListValidationAttempts(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListValidationAttempts: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListValidationAttempts: %w", err)
 	}
 	response, err := ParseListValidationAttemptsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListValidationAttempts: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListValidationAttempts: %w", err)
+	}
+	return found, nil
 }
 
 // ListValidationAttemptsAll iterates every item of ListValidationAttempts, following the cursor page by page; it stops at
@@ -1193,16 +1448,20 @@ func (c *Client) ListValidationAttemptsAll(ctx context.Context, params *ListVali
 func (c *Client) ListVerifications(ctx context.Context, repositoryId openapi_types.UUID, params *ListVerificationsParams) (*PageVerification, error) {
 	raw, err := c.ClientInterface.ListVerifications(ctx, repositoryId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListVerifications(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListVerifications(%s): %w", repositoryId, err)
 	}
 	response, err := ParseListVerificationsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListVerifications(%s): %w", repositoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListVerifications(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // ListVerificationsAll iterates every item of ListVerifications, following the cursor page by page; it stops at
@@ -1226,16 +1485,20 @@ func (c *Client) ListVerificationsAll(ctx context.Context, repositoryId openapi_
 func (c *Client) ListWorkItems(ctx context.Context, repositoryId openapi_types.UUID, params *ListWorkItemsParams) (*PageWorkItem, error) {
 	raw, err := c.ClientInterface.ListWorkItems(ctx, repositoryId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListWorkItems(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListWorkItems(%s): %w", repositoryId, err)
 	}
 	response, err := ParseListWorkItemsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ListWorkItems(%s): %w", repositoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListWorkItems(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // ListWorkItemsAll iterates every item of ListWorkItems, following the cursor page by page; it stops at
@@ -1259,34 +1522,41 @@ func (c *Client) ListWorkItemsAll(ctx context.Context, repositoryId openapi_type
 func (c *Client) Onboard(ctx context.Context, body OnboardJSONRequestBody) (*OnboardingResult, error) {
 	raw, err := c.ClientInterface.Onboard(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Onboard: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Onboard: %w", err)
 	}
 	response, err := ParseOnboardResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Onboard: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Onboard: %w", err)
+	}
+	return found, nil
 }
 
 // PackagesAffected is GET /v1/advisories/{advisoryId}/packages: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PackagesAffected(ctx context.Context, advisoryId openapi_types.UUID) ([]AdvisoryPackage, error) {
 	raw, err := c.ClientInterface.PackagesAffected(ctx, advisoryId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PackagesAffected(%s): %w", advisoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PackagesAffected(%s): %w", advisoryId, err)
 	}
 	response, err := ParsePackagesAffectedResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PackagesAffected(%s): %w", advisoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("PackagesAffected(%s): %w", advisoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -1295,50 +1565,61 @@ func (c *Client) PackagesAffected(ctx context.Context, advisoryId openapi_types.
 func (c *Client) PlanOnboarding(ctx context.Context, body PlanOnboardingJSONRequestBody) (*OnboardingPlan, error) {
 	raw, err := c.ClientInterface.PlanOnboarding(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PlanOnboarding: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PlanOnboarding: %w", err)
 	}
 	response, err := ParsePlanOnboardingResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PlanOnboarding: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("PlanOnboarding: %w", err)
+	}
+	return found, nil
 }
 
 // Preflight is POST /v1/preflight: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Preflight(ctx context.Context, body PreflightJSONRequestBody) (*PreflightResult, error) {
 	raw, err := c.ClientInterface.Preflight(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Preflight: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Preflight: %w", err)
 	}
 	response, err := ParsePreflightResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Preflight: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Preflight: %w", err)
+	}
+	return found, nil
 }
 
 // PrepareAdvisoryImpacts is GET /v1/advisories/{advisoryId}/impact-inputs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareAdvisoryImpacts(ctx context.Context, advisoryId openapi_types.UUID, params *PrepareAdvisoryImpactsParams) ([]ImpactInput, error) {
 	raw, err := c.ClientInterface.PrepareAdvisoryImpacts(ctx, advisoryId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%s): %w", advisoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%s): %w", advisoryId, err)
 	}
 	response, err := ParsePrepareAdvisoryImpactsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%s): %w", advisoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%s): %w", advisoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -1347,64 +1628,80 @@ func (c *Client) PrepareAdvisoryImpacts(ctx context.Context, advisoryId openapi_
 func (c *Client) PrepareRemediation(ctx context.Context, workItemId openapi_types.UUID) (*RemediationInput, error) {
 	raw, err := c.ClientInterface.PrepareRemediation(ctx, workItemId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareRemediation(%s): %w", workItemId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareRemediation(%s): %w", workItemId, err)
 	}
 	response, err := ParsePrepareRemediationResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareRemediation(%s): %w", workItemId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("PrepareRemediation(%s): %w", workItemId, err)
+	}
+	return found, nil
 }
 
 // PrepareTriage is GET /v1/assessments/{assessmentId}/triage-input: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareTriage(ctx context.Context, assessmentId openapi_types.UUID) (*TriageInput, error) {
 	raw, err := c.ClientInterface.PrepareTriage(ctx, assessmentId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareTriage(%s): %w", assessmentId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareTriage(%s): %w", assessmentId, err)
 	}
 	response, err := ParsePrepareTriageResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareTriage(%s): %w", assessmentId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("PrepareTriage(%s): %w", assessmentId, err)
+	}
+	return found, nil
 }
 
 // PrepareVerification is GET /v1/work-items/{workItemId}/verification-input: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareVerification(ctx context.Context, workItemId openapi_types.UUID) (*VerificationInput, error) {
 	raw, err := c.ClientInterface.PrepareVerification(ctx, workItemId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareVerification(%s): %w", workItemId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareVerification(%s): %w", workItemId, err)
 	}
 	response, err := ParsePrepareVerificationResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("PrepareVerification(%s): %w", workItemId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("PrepareVerification(%s): %w", workItemId, err)
+	}
+	return found, nil
 }
 
 // ReadFeed is GET /v1/feed: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ReadFeed(ctx context.Context, params *ReadFeedParams) (*PageFeedEvent, error) {
 	raw, err := c.ClientInterface.ReadFeed(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ReadFeed: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ReadFeed: %w", err)
 	}
 	response, err := ParseReadFeedResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ReadFeed: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ReadFeed: %w", err)
+	}
+	return found, nil
 }
 
 // ReadFeedAll iterates every item of ReadFeed, following the cursor page by page; it stops at
@@ -1428,176 +1725,220 @@ func (c *Client) ReadFeedAll(ctx context.Context, params *ReadFeedParams) iter.S
 func (c *Client) RecordAssessment(ctx context.Context, body RecordAssessmentJSONRequestBody) (*AssessmentRecordResult, error) {
 	raw, err := c.ClientInterface.RecordAssessment(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordAssessment: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordAssessment: %w", err)
 	}
 	response, err := ParseRecordAssessmentResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordAssessment: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("RecordAssessment: %w", err)
+	}
+	return found, nil
 }
 
 // RecordRemediation is POST /v1/remediation-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordRemediation(ctx context.Context, body RecordRemediationJSONRequestBody) (*WorkItem, error) {
 	raw, err := c.ClientInterface.RecordRemediation(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordRemediation: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordRemediation: %w", err)
 	}
 	response, err := ParseRecordRemediationResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordRemediation: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("RecordRemediation: %w", err)
+	}
+	return found, nil
 }
 
 // RecordRemediationProgress is POST /v1/remediations/{workItemId}/progress: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordRemediationProgress(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationProgressJSONRequestBody) (*WorkItem, error) {
 	raw, err := c.ClientInterface.RecordRemediationProgress(ctx, workItemId, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordRemediationProgress(%s): %w", workItemId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordRemediationProgress(%s): %w", workItemId, err)
 	}
 	response, err := ParseRecordRemediationProgressResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordRemediationProgress(%s): %w", workItemId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("RecordRemediationProgress(%s): %w", workItemId, err)
+	}
+	return found, nil
 }
 
 // RecordRemediationPullRequest is POST /v1/remediations/{workItemId}/pull-request: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordRemediationPullRequest(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationPullRequestJSONRequestBody) (*WorkItem, error) {
 	raw, err := c.ClientInterface.RecordRemediationPullRequest(ctx, workItemId, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordRemediationPullRequest(%s): %w", workItemId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordRemediationPullRequest(%s): %w", workItemId, err)
 	}
 	response, err := ParseRecordRemediationPullRequestResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordRemediationPullRequest(%s): %w", workItemId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("RecordRemediationPullRequest(%s): %w", workItemId, err)
+	}
+	return found, nil
 }
 
 // RecordTriage is POST /v1/assessments/{assessmentId}/triage-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordTriage(ctx context.Context, assessmentId openapi_types.UUID, body RecordTriageJSONRequestBody) (*TriageRecordResult, error) {
 	raw, err := c.ClientInterface.RecordTriage(ctx, assessmentId, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordTriage(%s): %w", assessmentId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordTriage(%s): %w", assessmentId, err)
 	}
 	response, err := ParseRecordTriageResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordTriage(%s): %w", assessmentId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("RecordTriage(%s): %w", assessmentId, err)
+	}
+	return found, nil
 }
 
 // RecordValidation is POST /v1/validation-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordValidation(ctx context.Context, body RecordValidationJSONRequestBody) (*ValidationRecordResult, error) {
 	raw, err := c.ClientInterface.RecordValidation(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordValidation: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordValidation: %w", err)
 	}
 	response, err := ParseRecordValidationResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordValidation: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("RecordValidation: %w", err)
+	}
+	return found, nil
 }
 
 // RecordVerification is POST /v1/verification-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordVerification(ctx context.Context, body RecordVerificationJSONRequestBody) (*Verification, error) {
 	raw, err := c.ClientInterface.RecordVerification(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordVerification: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordVerification: %w", err)
 	}
 	response, err := ParseRecordVerificationResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RecordVerification: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("RecordVerification: %w", err)
+	}
+	return found, nil
 }
 
 // RegisterRef is POST /v1/repositories/{repositoryId}/refs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RegisterRef(ctx context.Context, repositoryId openapi_types.UUID, body RegisterRefJSONRequestBody) (*RepositoryRef, error) {
 	raw, err := c.ClientInterface.RegisterRef(ctx, repositoryId, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RegisterRef(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RegisterRef(%s): %w", repositoryId, err)
 	}
 	response, err := ParseRegisterRefResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("RegisterRef(%s): %w", repositoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("RegisterRef(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // ResolveRole is GET /v1/registry/resolve: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ResolveRole(ctx context.Context, params *ResolveRoleParams) (*RoleRouting, error) {
 	raw, err := c.ClientInterface.ResolveRole(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ResolveRole: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ResolveRole: %w", err)
 	}
 	response, err := ParseResolveRoleResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ResolveRole: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ResolveRole: %w", err)
+	}
+	return found, nil
 }
 
 // Restate is POST /v1/decisions/{decisionId}/restatement: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Restate(ctx context.Context, decisionId openapi_types.UUID, body RestateJSONRequestBody) (*Decision, error) {
 	raw, err := c.ClientInterface.Restate(ctx, decisionId, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Restate(%s): %w", decisionId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Restate(%s): %w", decisionId, err)
 	}
 	response, err := ParseRestateResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Restate(%s): %w", decisionId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Restate(%s): %w", decisionId, err)
+	}
+	return found, nil
 }
 
 // ReviewQueue is GET /v1/findings/review-queue: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ReviewQueue(ctx context.Context, params *ReviewQueueParams) (*PageReviewCase, error) {
 	raw, err := c.ClientInterface.ReviewQueue(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ReviewQueue: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ReviewQueue: %w", err)
 	}
 	response, err := ParseReviewQueueResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("ReviewQueue: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ReviewQueue: %w", err)
+	}
+	return found, nil
 }
 
 // ReviewQueueAll iterates every item of ReviewQueue, following the cursor page by page; it stops at
@@ -1621,66 +1962,81 @@ func (c *Client) ReviewQueueAll(ctx context.Context, params *ReviewQueueParams) 
 func (c *Client) SetOwners(ctx context.Context, repositoryId openapi_types.UUID, body SetOwnersJSONRequestBody) (*SyncReport, error) {
 	raw, err := c.ClientInterface.SetOwners(ctx, repositoryId, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SetOwners(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SetOwners(%s): %w", repositoryId, err)
 	}
 	response, err := ParseSetOwnersResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SetOwners(%s): %w", repositoryId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("SetOwners(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // Start is POST /v1/orders/start: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Start(ctx context.Context, body StartJSONRequestBody) (*RunOrder, error) {
 	raw, err := c.ClientInterface.Start(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Start: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Start: %w", err)
 	}
 	response, err := ParseStartResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Start: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Start: %w", err)
+	}
+	return found, nil
 }
 
 // Submit is POST /v1/orders: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Submit(ctx context.Context, body SubmitJSONRequestBody) (*RunOrder, error) {
 	raw, err := c.ClientInterface.Submit(ctx, body)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Submit: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Submit: %w", err)
 	}
 	response, err := ParseSubmitResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Submit: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Submit: %w", err)
+	}
+	return found, nil
 }
 
 // SummarizeExposure is GET /v1/exposure/summary: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) SummarizeExposure(ctx context.Context, params *SummarizeExposureParams) ([]ExposureRollup, error) {
 	raw, err := c.ClientInterface.SummarizeExposure(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SummarizeExposure: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SummarizeExposure: %w", err)
 	}
 	response, err := ParseSummarizeExposureResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SummarizeExposure: %w", err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("SummarizeExposure: %w", err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -1689,18 +2045,21 @@ func (c *Client) SummarizeExposure(ctx context.Context, params *SummarizeExposur
 func (c *Client) SummarizeFindings(ctx context.Context, repositoryId openapi_types.UUID, params *SummarizeFindingsParams) ([]FindingRollup, error) {
 	raw, err := c.ClientInterface.SummarizeFindings(ctx, repositoryId, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SummarizeFindings(%s): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SummarizeFindings(%s): %w", repositoryId, err)
 	}
 	response, err := ParseSummarizeFindingsResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SummarizeFindings(%s): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("SummarizeFindings(%s): %w", repositoryId, err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -1709,18 +2068,21 @@ func (c *Client) SummarizeFindings(ctx context.Context, repositoryId openapi_typ
 func (c *Client) SummarizeFindingsIn(ctx context.Context, params *SummarizeFindingsInParams) ([]FindingRollup, error) {
 	raw, err := c.ClientInterface.SummarizeFindingsIn(ctx, params)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SummarizeFindingsIn: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SummarizeFindingsIn: %w", err)
 	}
 	response, err := ParseSummarizeFindingsInResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("SummarizeFindingsIn: %w", err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil || found == nil {
-		return nil, err
+	if err != nil {
+		return nil, fmt.Errorf("SummarizeFindingsIn: %w", err)
+	}
+	if found == nil {
+		return nil, nil
 	}
 	return *found, nil
 }
@@ -1729,30 +2091,58 @@ func (c *Client) SummarizeFindingsIn(ctx context.Context, params *SummarizeFindi
 func (c *Client) VerifyLayer(ctx context.Context, layerId openapi_types.UUID) (*VerifyResult, error) {
 	raw, err := c.ClientInterface.VerifyLayer(ctx, layerId)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("VerifyLayer(%s): %w", layerId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("VerifyLayer(%s): %w", layerId, err)
 	}
 	response, err := ParseVerifyLayerResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("VerifyLayer(%s): %w", layerId, err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("VerifyLayer(%s): %w", layerId, err)
+	}
+	return found, nil
+}
+
+// VerifyRepository is POST /v1/repositories/{repositoryId}/verify: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) VerifyRepository(ctx context.Context, repositoryId openapi_types.UUID) (*RepositoryVerification, error) {
+	raw, err := c.ClientInterface.VerifyRepository(ctx, repositoryId)
+	if err != nil {
+		return nil, fmt.Errorf("VerifyRepository(%s): %w", repositoryId, err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("VerifyRepository(%s): %w", repositoryId, err)
+	}
+	response, err := ParseVerifyRepositoryResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("VerifyRepository(%s): %w", repositoryId, err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("VerifyRepository(%s): %w", repositoryId, err)
+	}
+	return found, nil
 }
 
 // Whoami is GET /v1/whoami: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Whoami(ctx context.Context) (*Principal, error) {
 	raw, err := c.ClientInterface.Whoami(ctx)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Whoami: %w", err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Whoami: %w", err)
 	}
 	response, err := ParseWhoamiResponse(raw)
 	if err != nil {
-		return nil, err
+		return nil, fmt.Errorf("Whoami: %w", err)
 	}
-	return Decode(response.HTTPResponse, response.Body, response.JSON200)
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("Whoami: %w", err)
+	}
+	return found, nil
 }

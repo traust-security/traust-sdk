@@ -64,6 +64,21 @@ const (
 	AssessmentKindVulnScan1        AssessmentKind = "vuln_scan"
 )
 
+// Defines values for ComparisonStatus.
+const (
+	ComparisonStatusBanSuspected    ComparisonStatus = "ban-suspected"
+	ComparisonStatusError           ComparisonStatus = "error"
+	ComparisonStatusNetworkSkipped  ComparisonStatus = "network-skipped"
+	ComparisonStatusNeverAudited    ComparisonStatus = "never-audited"
+	ComparisonStatusNoCredentials   ComparisonStatus = "no-credentials"
+	ComparisonStatusNoPinnedSha     ComparisonStatus = "no-pinned-sha"
+	ComparisonStatusNoRepoUrl       ComparisonStatus = "no-repo-url"
+	ComparisonStatusOk              ComparisonStatus = "ok"
+	ComparisonStatusQuotaDeferred   ComparisonStatus = "quota-deferred"
+	ComparisonStatusUnreachable     ComparisonStatus = "unreachable"
+	ComparisonStatusUnsupportedHost ComparisonStatus = "unsupported-host"
+)
+
 // Defines values for ComplianceFramework.
 const (
 	FedrampHigh     ComplianceFramework = "fedramp-high"
@@ -123,6 +138,7 @@ const (
 	ReviewRequired      DenyCode = "review_required"
 	RoleDenied          DenyCode = "role_denied"
 	SubjectUnknown      DenyCode = "subject_unknown"
+	SubjectUnreachable  DenyCode = "subject_unreachable"
 )
 
 // Defines values for DependencyEvidenceLevel.
@@ -175,6 +191,14 @@ const (
 	E1 EvidenceGrade = "E1"
 	E2 EvidenceGrade = "E2"
 	E3 EvidenceGrade = "E3"
+)
+
+// Defines values for ExecutivePanel.
+const (
+	ExecutivePanelAttack    ExecutivePanel = "attack"
+	ExecutivePanelIac       ExecutivePanel = "iac"
+	ExecutivePanelIsolation ExecutivePanel = "isolation"
+	ExecutivePanelPqc       ExecutivePanel = "pqc"
 )
 
 // Defines values for ExposureDimension.
@@ -250,6 +274,13 @@ const (
 	Internal ForkVisibility = "internal"
 	Private  ForkVisibility = "private"
 	Public   ForkVisibility = "public"
+)
+
+// Defines values for GoneReason.
+const (
+	GoneReasonEmpty       GoneReason = "empty"
+	GoneReasonGone        GoneReason = "gone"
+	GoneReasonUnreachable GoneReason = "unreachable"
 )
 
 // Defines values for Harness.
@@ -348,6 +379,16 @@ const (
 	SourceScan     ImpactTier = "source_scan"
 )
 
+// Defines values for LivenessStatus.
+const (
+	Active   LivenessStatus = "active"
+	Archived LivenessStatus = "archived"
+	Disabled LivenessStatus = "disabled"
+	Missing  LivenessStatus = "missing"
+	Moved    LivenessStatus = "moved"
+	Unknown  LivenessStatus = "unknown"
+)
+
 // Defines values for Outcome.
 const (
 	OutcomeDegraded  Outcome = "degraded"
@@ -397,6 +438,18 @@ const (
 	PrOpened                   RemediationStatus = "pr_opened"
 	RevalidatedFixed           RemediationStatus = "revalidated_fixed"
 	RevalidatedStillVulnerable RemediationStatus = "revalidated_still_vulnerable"
+)
+
+// Defines values for ReportFormat.
+const (
+	ReportFormatCsv      ReportFormat = "csv"
+	ReportFormatHtml     ReportFormat = "html"
+	ReportFormatMarkdown ReportFormat = "markdown"
+)
+
+// Defines values for RepositoryDisposition.
+const (
+	RepoUnreachable RepositoryDisposition = "repo_unreachable"
 )
 
 // Defines values for RestatementReason.
@@ -823,6 +876,9 @@ type CodeHash struct {
 	Digest    string `json:"digest"`
 }
 
+// ComparisonStatus defines model for ComparisonStatus.
+type ComparisonStatus string
+
 // CompleteRequest defines model for CompleteRequest.
 type CompleteRequest struct {
 	Result JobResult `json:"result"`
@@ -1037,6 +1093,9 @@ type EvidenceItem struct {
 	Tool               *string           `json:"tool"`
 }
 
+// ExecutivePanel defines model for ExecutivePanel.
+type ExecutivePanel string
+
 // ExposureDimension defines model for ExposureDimension.
 type ExposureDimension string
 
@@ -1191,9 +1250,11 @@ type FindingView struct {
 	EffectiveSeverity *Severity    `json:"effective_severity,omitempty"`
 
 	// Finding 3b · one weakness or vulnerability in a repository, identified by fingerprint.
-	Finding   Finding                       `json:"finding"`
-	Labels    *[]FindingLabel               `json:"labels,omitempty"`
-	Locations *[]FindingView_Locations_Item `json:"locations,omitempty"`
+	Finding         Finding                       `json:"finding"`
+	FirstReportedAt *time.Time                    `json:"first_reported_at"`
+	Labels          *[]FindingLabel               `json:"labels,omitempty"`
+	LastReportedAt  *time.Time                    `json:"last_reported_at"`
+	Locations       *[]FindingView_Locations_Item `json:"locations,omitempty"`
 
 	// Occurrence A finding as one assessment reported it.
 	Occurrence *Occurrence `json:"occurrence,omitempty"`
@@ -1207,6 +1268,45 @@ type FindingView_Locations_Item struct {
 
 // FixStrategy defines model for FixStrategy.
 type FixStrategy string
+
+// ForgeFacts defines model for ForgeFacts.
+type ForgeFacts struct {
+	AheadBy             *int    `json:"ahead_by"`
+	Archived            *bool   `json:"archived"`
+	AuditDate           *string `json:"audit_date"`
+	AuditedSha          *string `json:"audited_sha"`
+	AvailabilityQueried *bool   `json:"availability_queried,omitempty"`
+	CanonicalUrl        *string `json:"canonical_url"`
+	ChangedLines        *int    `json:"changed_lines"`
+	CompareTruncated    *bool   `json:"compare_truncated"`
+	DefaultBranch       *string `json:"default_branch"`
+	DepsOnly            *bool   `json:"deps_only"`
+	Error               *string `json:"error"`
+	FirstPartyFiles     *int    `json:"first_party_files"`
+	Fork                *bool   `json:"fork"`
+
+	// GoneReason Why a repository left: the gone-class taxonomy. The remediation differs - update the
+	// URL (gone), wait (empty), check the network or token (unreachable) - so the UI carries
+	// the reason, not just the disposition.
+	GoneReason          *GoneReason        `json:"gone_reason,omitempty"`
+	HasAudit            bool               `json:"has_audit"`
+	Head                *string            `json:"head"`
+	IacFiles            *int               `json:"iac_files"`
+	LivenessStatus      *LivenessStatus    `json:"liveness_status,omitempty"`
+	ObservedAt          time.Time          `json:"observed_at"`
+	Parent              *string            `json:"parent"`
+	PushedAt            *string            `json:"pushed_at"`
+	Repo                *string            `json:"repo"`
+	RepoUrl             *string            `json:"repo_url"`
+	RepositoryId        openapi_types.UUID `json:"repository_id"`
+	SecretHits          *int               `json:"secret_hits"`
+	SensitiveChanged    *bool              `json:"sensitive_changed"`
+	SensitiveLines      *int               `json:"sensitive_lines"`
+	Status              ComparisonStatus   `json:"status"`
+	ThreatModelFiles    *int               `json:"threat_model_files"`
+	TreeFirstPartyFiles *int               `json:"tree_first_party_files"`
+	Visibility          *string            `json:"visibility"`
+}
 
 // Fork Where a fix is pushed: a private mirror of the upstream, or the repository itself.
 type Fork struct {
@@ -1227,6 +1327,11 @@ type Gap struct {
 	Reason  string `json:"reason"`
 	Subject string `json:"subject"`
 }
+
+// GoneReason Why a repository left: the gone-class taxonomy. The remediation differs - update the
+// URL (gone), wait (empty), check the network or token (unreachable) - so the UI carries
+// the reason, not just the disposition.
+type GoneReason string
 
 // Harness The harness a gateway connection fronts its wire with.
 type Harness string
@@ -1420,6 +1525,9 @@ type Layer struct {
 type LeaseRequest struct {
 	LeaseSeconds int `json:"lease_seconds"`
 }
+
+// LivenessStatus defines model for LivenessStatus.
+type LivenessStatus string
 
 // Location The location table: where an occurrence was reported, relative to its commit.
 type Location struct {
@@ -1786,16 +1894,38 @@ type RemediationRequest struct {
 // RemediationStatus defines model for RemediationStatus.
 type RemediationStatus string
 
+// ReportFormat A rendered report's format: markdown and html for every insight, csv for one with an
+// export table. Each format carries its media type and file suffix.
+type ReportFormat string
+
 // Repository defines model for Repository.
 type Repository struct {
-	Archived   *bool               `json:"archived"`
-	CreatedAt  *time.Time          `json:"created_at"`
-	Id         *openapi_types.UUID `json:"id"`
-	Public     bool                `json:"public"`
-	UpdatedAt  *time.Time          `json:"updated_at"`
-	UpstreamId *openapi_types.UUID `json:"upstream_id"`
-	Url        string              `json:"url"`
+	Archived  *bool      `json:"archived"`
+	CreatedAt *time.Time `json:"created_at"`
+
+	// Disposition A repository's standing in the planner's universe. The unreachable disposition is
+	// user-removable only: no automatic recovery, ever - the re-verification is a deliberate
+	// act (the verify door, the operator's record path).
+	Disposition         *RepositoryDisposition `json:"disposition,omitempty"`
+	DispositionAt       *time.Time             `json:"disposition_at"`
+	DispositionEvidence *string                `json:"disposition_evidence"`
+
+	// DispositionReason Why a repository left: the gone-class taxonomy. The remediation differs - update the
+	// URL (gone), wait (empty), check the network or token (unreachable) - so the UI carries
+	// the reason, not just the disposition.
+	DispositionReason *GoneReason         `json:"disposition_reason,omitempty"`
+	GoneStreak        *int                `json:"gone_streak,omitempty"`
+	Id                *openapi_types.UUID `json:"id"`
+	Public            bool                `json:"public"`
+	UpdatedAt         *time.Time          `json:"updated_at"`
+	UpstreamId        *openapi_types.UUID `json:"upstream_id"`
+	Url               string              `json:"url"`
 }
+
+// RepositoryDisposition A repository's standing in the planner's universe. The unreachable disposition is
+// user-removable only: no automatic recovery, ever - the re-verification is a deliberate
+// act (the verify door, the operator's record path).
+type RepositoryDisposition string
 
 // RepositoryRef A commit, optionally on a named branch or tag; a line is (repository_id, name).
 type RepositoryRef struct {
@@ -1817,6 +1947,15 @@ type RepositorySpec struct {
 	Refs *[]string `json:"refs,omitempty"`
 	Team *string   `json:"team"`
 	Url  string    `json:"url"`
+}
+
+// RepositoryVerification One deliberate observation of a repository and the disposition it left behind: the
+// console's verify button renders the outcome (the facts' status and error) beside the
+// repository's disposition — cleared on success, held with the new evidence on a
+// gone-class failure, untouched on a transient one.
+type RepositoryVerification struct {
+	Facts      ForgeFacts `json:"facts"`
+	Repository Repository `json:"repository"`
 }
 
 // RestatementBody An administrator's correction; the decision is the path, never the body.
@@ -2081,6 +2220,11 @@ type TriageRecordResult struct {
 	Decisions    []Decision         `json:"decisions"`
 }
 
+// UrlCorrection defines model for UrlCorrection.
+type UrlCorrection struct {
+	Url string `json:"url"`
+}
+
 // ValidationAttempt One recorded validation run's outcome for one finding, as `record` stored it.
 type ValidationAttempt struct {
 	ArtifactId         openapi_types.UUID  `json:"artifact_id"`
@@ -2341,6 +2485,8 @@ type ListImpactsParams struct {
 
 // GetInsightParams defines parameters for GetInsight.
 type GetInsightParams struct {
+	// Refresh Fold the view on demand, ignoring any stored census build.
+	Refresh         *bool                 `form:"refresh,omitempty" json:"refresh,omitempty"`
 	ProductId       *[]openapi_types.UUID `form:"product_id,omitempty" json:"product_id,omitempty"`
 	TeamId          *[]openapi_types.UUID `form:"team_id,omitempty" json:"team_id,omitempty"`
 	AsOf            *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
@@ -2355,8 +2501,30 @@ type GetInsightParams struct {
 	Framework       *ComplianceFramework  `form:"framework,omitempty" json:"framework,omitempty"`
 	PrecisionGate   *float32              `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
 
-	// Refresh Fold the view on demand, ignoring any stored census build.
-	Refresh *bool `form:"refresh,omitempty" json:"refresh,omitempty"`
+	// ExecutivePanel executive-summary only: its optional panels (repeatable).
+	ExecutivePanel *[]ExecutivePanel `form:"executive_panel,omitempty" json:"executive_panel,omitempty"`
+}
+
+// GetInsightReportParams defines parameters for GetInsightReport.
+type GetInsightReportParams struct {
+	// Format markdown or html for every insight; csv for one with an export table.
+	Format          *ReportFormat         `form:"format,omitempty" json:"format,omitempty"`
+	ProductId       *[]openapi_types.UUID `form:"product_id,omitempty" json:"product_id,omitempty"`
+	TeamId          *[]openapi_types.UUID `form:"team_id,omitempty" json:"team_id,omitempty"`
+	AsOf            *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
+	Bucket          *TimeBucket           `form:"bucket,omitempty" json:"bucket,omitempty"`
+	ArtifactId      *openapi_types.UUID   `form:"artifact_id,omitempty" json:"artifact_id,omitempty"`
+	RepositoryId    *openapi_types.UUID   `form:"repository_id,omitempty" json:"repository_id,omitempty"`
+	Category        *[]string             `form:"category,omitempty" json:"category,omitempty"`
+	WindowStart     *time.Time            `form:"window_start,omitempty" json:"window_start,omitempty"`
+	WindowEnd       *time.Time            `form:"window_end,omitempty" json:"window_end,omitempty"`
+	RepositoryRefId *[]openapi_types.UUID `form:"repository_ref_id,omitempty" json:"repository_ref_id,omitempty"`
+	Chokepoint      *[]string             `form:"chokepoint,omitempty" json:"chokepoint,omitempty"`
+	Framework       *ComplianceFramework  `form:"framework,omitempty" json:"framework,omitempty"`
+	PrecisionGate   *float32              `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
+
+	// ExecutivePanel executive-summary only: its optional panels (repeatable).
+	ExecutivePanel *[]ExecutivePanel `form:"executive_panel,omitempty" json:"executive_panel,omitempty"`
 }
 
 // ListEventsParams defines parameters for ListEvents.
@@ -2415,9 +2583,10 @@ type ListRemediationsParams struct {
 
 // ListRepositoriesParams defines parameters for ListRepositories.
 type ListRepositoriesParams struct {
-	Url    *string `form:"url,omitempty" json:"url,omitempty"`
-	Limit  *int    `form:"limit,omitempty" json:"limit,omitempty"`
-	Cursor *string `form:"cursor,omitempty" json:"cursor,omitempty"`
+	Url           *string `form:"url,omitempty" json:"url,omitempty"`
+	Dispositioned *bool   `form:"dispositioned,omitempty" json:"dispositioned,omitempty"`
+	Limit         *int    `form:"limit,omitempty" json:"limit,omitempty"`
+	Cursor        *string `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
 // ListRepositoryAssessmentsParams defines parameters for ListRepositoryAssessments.
@@ -2548,6 +2717,9 @@ type SetOwnersJSONRequestBody = Owners
 
 // RegisterRefJSONRequestBody defines body for RegisterRef for application/json ContentType.
 type RegisterRefJSONRequestBody = RefRegistration
+
+// CorrectRepositoryUrlJSONRequestBody defines body for CorrectRepositoryUrl for application/json ContentType.
+type CorrectRepositoryUrlJSONRequestBody = UrlCorrection
 
 // RecordValidationJSONRequestBody defines body for RecordValidation for application/json ContentType.
 type RecordValidationJSONRequestBody = RecordValidation
@@ -3477,6 +3649,9 @@ type ClientInterface interface {
 	// GetInsight request
 	GetInsight(ctx context.Context, name ViewName, params *GetInsightParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// GetInsightReport request
+	GetInsightReport(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetLayer request
 	GetLayer(ctx context.Context, layerId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3649,8 +3824,16 @@ type ClientInterface interface {
 	// GetCurrentDefaultRef request
 	GetCurrentDefaultRef(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// CorrectRepositoryUrlWithBody request with any body
+	CorrectRepositoryUrlWithBody(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	CorrectRepositoryUrl(ctx context.Context, repositoryId openapi_types.UUID, body CorrectRepositoryUrlJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// ListVerifications request
 	ListVerifications(ctx context.Context, repositoryId openapi_types.UUID, params *ListVerificationsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// VerifyRepository request
+	VerifyRepository(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListWorkItems request
 	ListWorkItems(ctx context.Context, repositoryId openapi_types.UUID, params *ListWorkItemsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4091,6 +4274,18 @@ func (c *RawClient) ListImpacts(ctx context.Context, params *ListImpactsParams, 
 
 func (c *RawClient) GetInsight(ctx context.Context, name ViewName, params *GetInsightParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetInsightRequest(c.Server, name, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) GetInsightReport(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetInsightReportRequest(c.Server, name, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4845,8 +5040,44 @@ func (c *RawClient) GetCurrentDefaultRef(ctx context.Context, repositoryId opena
 	return c.Client.Do(req)
 }
 
+func (c *RawClient) CorrectRepositoryUrlWithBody(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCorrectRepositoryUrlRequestWithBody(c.Server, repositoryId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) CorrectRepositoryUrl(ctx context.Context, repositoryId openapi_types.UUID, body CorrectRepositoryUrlJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewCorrectRepositoryUrlRequest(c.Server, repositoryId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *RawClient) ListVerifications(ctx context.Context, repositoryId openapi_types.UUID, params *ListVerificationsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListVerificationsRequest(c.Server, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) VerifyRepository(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewVerifyRepositoryRequest(c.Server, repositoryId)
 	if err != nil {
 		return nil, err
 	}
@@ -6761,6 +6992,22 @@ func NewGetInsightRequest(server string, name ViewName, params *GetInsightParams
 	if params != nil {
 		queryValues := queryURL.Query()
 
+		if params.Refresh != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "refresh", runtime.ParamLocationQuery, *params.Refresh); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
 		if params.ProductId != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "product_id", runtime.ParamLocationQuery, *params.ProductId); err != nil {
@@ -6969,9 +7216,289 @@ func NewGetInsightRequest(server string, name ViewName, params *GetInsightParams
 
 		}
 
-		if params.Refresh != nil {
+		if params.ExecutivePanel != nil {
 
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "refresh", runtime.ParamLocationQuery, *params.Refresh); err != nil {
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "executive_panel", runtime.ParamLocationQuery, *params.ExecutivePanel); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetInsightReportRequest generates requests for GetInsightReport
+func NewGetInsightReportRequest(server string, name ViewName, params *GetInsightReportParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/insights/%s/report", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Format != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "format", runtime.ParamLocationQuery, *params.Format); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ProductId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "product_id", runtime.ParamLocationQuery, *params.ProductId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.TeamId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "team_id", runtime.ParamLocationQuery, *params.TeamId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.AsOf != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "as_of", runtime.ParamLocationQuery, *params.AsOf); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Bucket != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "bucket", runtime.ParamLocationQuery, *params.Bucket); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ArtifactId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "artifact_id", runtime.ParamLocationQuery, *params.ArtifactId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RepositoryId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_id", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Category != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "category", runtime.ParamLocationQuery, *params.Category); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.WindowStart != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "window_start", runtime.ParamLocationQuery, *params.WindowStart); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.WindowEnd != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "window_end", runtime.ParamLocationQuery, *params.WindowEnd); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.RepositoryRefId != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ref_id", runtime.ParamLocationQuery, *params.RepositoryRefId); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Chokepoint != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "chokepoint", runtime.ParamLocationQuery, *params.Chokepoint); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.Framework != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "framework", runtime.ParamLocationQuery, *params.Framework); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.PrecisionGate != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "precision_gate", runtime.ParamLocationQuery, *params.PrecisionGate); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.ExecutivePanel != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "executive_panel", runtime.ParamLocationQuery, *params.ExecutivePanel); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -8534,6 +9061,22 @@ func NewListRepositoriesRequest(server string, params *ListRepositoriesParams) (
 
 		}
 
+		if params.Dispositioned != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "dispositioned", runtime.ParamLocationQuery, *params.Dispositioned); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
 		if params.Limit != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "limit", runtime.ParamLocationQuery, *params.Limit); err != nil {
@@ -9465,6 +10008,53 @@ func NewGetCurrentDefaultRefRequest(server string, repositoryId openapi_types.UU
 	return req, nil
 }
 
+// NewCorrectRepositoryUrlRequest calls the generic CorrectRepositoryUrl builder with application/json body
+func NewCorrectRepositoryUrlRequest(server string, repositoryId openapi_types.UUID, body CorrectRepositoryUrlJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewCorrectRepositoryUrlRequestWithBody(server, repositoryId, "application/json", bodyReader)
+}
+
+// NewCorrectRepositoryUrlRequestWithBody generates requests for CorrectRepositoryUrl with any type of body
+func NewCorrectRepositoryUrlRequestWithBody(server string, repositoryId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "repository_id", runtime.ParamLocationPath, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/repositories/%s/url", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("PUT", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewListVerificationsRequest generates requests for ListVerifications
 func NewListVerificationsRequest(server string, repositoryId openapi_types.UUID, params *ListVerificationsParams) (*http.Request, error) {
 	var err error
@@ -9546,6 +10136,40 @@ func NewListVerificationsRequest(server string, repositoryId openapi_types.UUID,
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewVerifyRepositoryRequest generates requests for VerifyRepository
+func NewVerifyRepositoryRequest(server string, repositoryId openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "repository_id", runtime.ParamLocationPath, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/repositories/%s/verify", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), nil)
 	if err != nil {
 		return nil, err
 	}
@@ -10145,6 +10769,9 @@ type ClientWithResponsesInterface interface {
 	// GetInsightWithResponse request
 	GetInsightWithResponse(ctx context.Context, name ViewName, params *GetInsightParams, reqEditors ...RequestEditorFn) (*GetInsightResponse, error)
 
+	// GetInsightReportWithResponse request
+	GetInsightReportWithResponse(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*GetInsightReportResponse, error)
+
 	// GetLayerWithResponse request
 	GetLayerWithResponse(ctx context.Context, layerId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetLayerResponse, error)
 
@@ -10317,8 +10944,16 @@ type ClientWithResponsesInterface interface {
 	// GetCurrentDefaultRefWithResponse request
 	GetCurrentDefaultRefWithResponse(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetCurrentDefaultRefResponse, error)
 
+	// CorrectRepositoryUrlWithBodyWithResponse request with any body
+	CorrectRepositoryUrlWithBodyWithResponse(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CorrectRepositoryUrlResponse, error)
+
+	CorrectRepositoryUrlWithResponse(ctx context.Context, repositoryId openapi_types.UUID, body CorrectRepositoryUrlJSONRequestBody, reqEditors ...RequestEditorFn) (*CorrectRepositoryUrlResponse, error)
+
 	// ListVerificationsWithResponse request
 	ListVerificationsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *ListVerificationsParams, reqEditors ...RequestEditorFn) (*ListVerificationsResponse, error)
+
+	// VerifyRepositoryWithResponse request
+	VerifyRepositoryWithResponse(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*VerifyRepositoryResponse, error)
 
 	// ListWorkItemsWithResponse request
 	ListWorkItemsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *ListWorkItemsParams, reqEditors ...RequestEditorFn) (*ListWorkItemsResponse, error)
@@ -11111,6 +11746,30 @@ func (r GetInsightResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetInsightResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetInsightReportResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r GetInsightReportResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetInsightReportResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -12322,6 +12981,33 @@ func (r GetCurrentDefaultRefResponse) StatusCode() int {
 	return 0
 }
 
+type CorrectRepositoryUrlResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Repository
+	JSON401      *Problem
+	JSON403      *Problem
+	JSON404      *Problem
+	JSON409      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r CorrectRepositoryUrlResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r CorrectRepositoryUrlResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type ListVerificationsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -12340,6 +13026,32 @@ func (r ListVerificationsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListVerificationsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type VerifyRepositoryResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RepositoryVerification
+	JSON401      *Problem
+	JSON403      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r VerifyRepositoryResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r VerifyRepositoryResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -12856,6 +13568,15 @@ func (c *ClientWithResponses) GetInsightWithResponse(ctx context.Context, name V
 		return nil, err
 	}
 	return ParseGetInsightResponse(rsp)
+}
+
+// GetInsightReportWithResponse request returning *GetInsightReportResponse
+func (c *ClientWithResponses) GetInsightReportWithResponse(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*GetInsightReportResponse, error) {
+	rsp, err := c.GetInsightReport(ctx, name, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetInsightReportResponse(rsp)
 }
 
 // GetLayerWithResponse request returning *GetLayerResponse
@@ -13402,6 +14123,23 @@ func (c *ClientWithResponses) GetCurrentDefaultRefWithResponse(ctx context.Conte
 	return ParseGetCurrentDefaultRefResponse(rsp)
 }
 
+// CorrectRepositoryUrlWithBodyWithResponse request with arbitrary body returning *CorrectRepositoryUrlResponse
+func (c *ClientWithResponses) CorrectRepositoryUrlWithBodyWithResponse(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CorrectRepositoryUrlResponse, error) {
+	rsp, err := c.CorrectRepositoryUrlWithBody(ctx, repositoryId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCorrectRepositoryUrlResponse(rsp)
+}
+
+func (c *ClientWithResponses) CorrectRepositoryUrlWithResponse(ctx context.Context, repositoryId openapi_types.UUID, body CorrectRepositoryUrlJSONRequestBody, reqEditors ...RequestEditorFn) (*CorrectRepositoryUrlResponse, error) {
+	rsp, err := c.CorrectRepositoryUrl(ctx, repositoryId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseCorrectRepositoryUrlResponse(rsp)
+}
+
 // ListVerificationsWithResponse request returning *ListVerificationsResponse
 func (c *ClientWithResponses) ListVerificationsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *ListVerificationsParams, reqEditors ...RequestEditorFn) (*ListVerificationsResponse, error) {
 	rsp, err := c.ListVerifications(ctx, repositoryId, params, reqEditors...)
@@ -13409,6 +14147,15 @@ func (c *ClientWithResponses) ListVerificationsWithResponse(ctx context.Context,
 		return nil, err
 	}
 	return ParseListVerificationsResponse(rsp)
+}
+
+// VerifyRepositoryWithResponse request returning *VerifyRepositoryResponse
+func (c *ClientWithResponses) VerifyRepositoryWithResponse(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*VerifyRepositoryResponse, error) {
+	rsp, err := c.VerifyRepository(ctx, repositoryId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseVerifyRepositoryResponse(rsp)
 }
 
 // ListWorkItemsWithResponse request returning *ListWorkItemsResponse
@@ -14881,6 +15628,46 @@ func ParseGetInsightResponse(rsp *http.Response) (*GetInsightResponse, error) {
 		}
 		response.JSON200 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetInsightReportResponse parses an HTTP response from a GetInsightReportWithResponse call
+func ParseGetInsightReportResponse(rsp *http.Response) (*GetInsightReportResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetInsightReportResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -17198,6 +17985,67 @@ func ParseGetCurrentDefaultRefResponse(rsp *http.Response) (*GetCurrentDefaultRe
 	return response, nil
 }
 
+// ParseCorrectRepositoryUrlResponse parses an HTTP response from a CorrectRepositoryUrlWithResponse call
+func ParseCorrectRepositoryUrlResponse(rsp *http.Response) (*CorrectRepositoryUrlResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &CorrectRepositoryUrlResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Repository
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseListVerificationsResponse parses an HTTP response from a ListVerificationsWithResponse call
 func ParseListVerificationsResponse(rsp *http.Response) (*ListVerificationsResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -17225,6 +18073,60 @@ func ParseListVerificationsResponse(rsp *http.Response) (*ListVerificationsRespo
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseVerifyRepositoryResponse parses an HTTP response from a VerifyRepositoryWithResponse call
+func ParseVerifyRepositoryResponse(rsp *http.Response) (*VerifyRepositoryResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &VerifyRepositoryResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RepositoryVerification
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest Problem
