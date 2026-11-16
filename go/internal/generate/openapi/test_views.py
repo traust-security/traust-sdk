@@ -119,6 +119,13 @@ class ViewComponentTest(unittest.TestCase):
         self.assertEqual(shared_components({"v": {}}, load), {})
         self.assertEqual(views.SHARED, set())
 
+    def test_a_view_contract_with_no_view_name_is_never_taken_for_shared(self):
+        base = "https://example.com/traust-contracts/views_schema/v1/"
+        view = {"properties": {"a": {"$ref": base + "newer-view.schema.json#/$defs/row"}}}
+        newer = {"type": "object", "properties": {}, "$defs": {"row": {"type": "string"}}}
+        with self.assertRaisesRegex(SystemExit, "newer-view: referenced like a view"):
+            shared_components({"v": view}, {"newer-view": newer}.__getitem__)
+
     def test_refs_lists_every_reference(self):
         node = {"properties": {"a": {"$ref": "#/x/A"}, "b": {"items": {"$ref": "#/x/B"}}}}
         self.assertEqual(sorted(refs(node)), ["#/x/A", "#/x/B"])
