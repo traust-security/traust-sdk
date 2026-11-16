@@ -228,7 +228,13 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
             schemas[view.value] = inline_external(*[contracts.view_schema(view.value)] * 2)
         except ConfigError:
             continue  # no contract yet: GetInsight still returns it untyped
-    found.update(shared_components(schemas, lambda n: inline_external(*[contracts.view_schema(n)] * 2)))
+    def load(name: str) -> Json:
+        try:
+            return inline_external(*[contracts.view_schema(name)] * 2)
+        except ConfigError:
+            raise SystemExit(f"{name}: referenced, but traust-contracts has no such schema") from None
+
+    found.update(shared_components(schemas, load))
     for name, schema in schemas.items():
         prefix = pascal(name) + "Insight"
         found[prefix] = openapi(schema, prefix)
@@ -240,9 +246,13 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
     return reachable(found, views), views
 
 
+# a schema with any of these at its root has a shape of its own: a view, not shared definitions
+_ROOT_SHAPE = {"type", "properties", "items", "$ref", "oneOf", "anyOf", "allOf", "enum", "const"}
+
+
 def shared_components(views: dict[str, Json], load: Callable[[str], Json]) -> dict[str, Json]:
-    """The components of every shared schema the views reach: a views_schema file that is no
-    view. Every one is found first (they may reference each other), then each is converted, so
+    """The components of every shared schema the views reach: a views_schema file holding only
+    $defs (a schema with a root shape is a view, and stops the generator if it is not one). Every one is found first (they may reference each other), then each is converted, so
     a reference between them already names a shared component; SHARED starts from none."""
     SHARED.clear()
     shared: dict[str, Json] = {}
@@ -251,8 +261,15 @@ def shared_components(views: dict[str, Json], load: Callable[[str], Json]) -> di
         target = view_reference(pending.pop())
         if target is None or target[0] in views or target[0] in shared:
             continue
-        shared[target[0]] = load(target[0])
-        pending += refs(shared[target[0]])
+        loaded = load(target[0])
+        if set(loaded) & _ROOT_SHAPE:
+            # a view contract with no ViewName (or one core could not load), never shared
+            raise SystemExit(
+                f"{target[0]}: referenced like a view, but Core has no view contract by that "
+                "name; a shared schema holds only $defs"
+            )
+        shared[target[0]] = loaded
+        pending += refs(loaded)
     SHARED.update(shared)
     return {
         pascal(name) + pascal(key): openapi(definition, pascal(name))
