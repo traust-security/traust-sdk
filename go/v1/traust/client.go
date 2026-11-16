@@ -227,9 +227,9 @@ func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 }
 
 // pages iterates a cursor-paged listing, one fetch per page, until core returns no next cursor.
-func pages[T any](fetch func(cursor *string) ([]T, *string, error)) iter.Seq2[T, error] {
+func pages[T any](fetch func(cursor *string) ([]T, *string, error), start *string) iter.Seq2[T, error] {
 	return func(yield func(T, error) bool) {
-		var cursor *string
+		cursor := start
 		for {
 			items, next, err := fetch(cursor)
 			if err != nil {
