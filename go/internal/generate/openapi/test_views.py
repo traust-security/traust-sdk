@@ -1,7 +1,7 @@
 import unittest
 
 import views
-from views import openapi, pascal, reachable, refs, shared_components, view_component
+from views import openapi, pascal, reachable, refs, shared_components, shared_reader, view_component
 
 
 class ViewComponentTest(unittest.TestCase):
@@ -125,6 +125,17 @@ class ViewComponentTest(unittest.TestCase):
         newer = {"type": "object", "properties": {}, "$defs": {"row": {"type": "string"}}}
         with self.assertRaisesRegex(SystemExit, "newer-view: referenced like a view"):
             shared_components({"v": view}, {"newer-view": newer}.__getitem__)
+
+    def test_a_schema_traust_contracts_lacks_stops_the_generator_cleanly(self):
+        class Missing(Exception):
+            pass
+
+        def read(name):
+            raise Missing(name)
+
+        with self.assertRaisesRegex(SystemExit, "gone: referenced, but traust-contracts has no"):
+            shared_reader(read, Missing)("gone")
+        self.assertEqual(shared_reader(lambda name: {"$defs": {}}, Missing)("here"), {"$defs": {}})
 
     def test_refs_lists_every_reference(self):
         node = {"properties": {"a": {"$ref": "#/x/A"}, "b": {"items": {"$ref": "#/x/B"}}}}
