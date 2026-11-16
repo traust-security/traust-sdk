@@ -260,3 +260,30 @@ func TestTheExecutiveSummaryDecodesIntoItsComponentViews(t *testing.T) {
 		t.Fatalf("exposure = %+v", rows)
 	}
 }
+
+// Container findings embed the shared finding records: they decode, strictly, into the
+// FindingRecords types every view shares (testdata is valid against the contracts), a
+// claim's location included.
+func TestContainerFindingsDecodeIntoTheSharedFindingRecords(t *testing.T) {
+	body, err := os.ReadFile("testdata/container-findings.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	core := traustest.New(t)
+	core.Handle("GET /v1/insights/container-findings", traustest.JSON(http.StatusOK, json.RawMessage(body)))
+	found, err := traust.GetInsightAs[traust.ContainerFindingsInsight](context.Background(), core.Client(), nil)
+	if err != nil {
+		t.Fatalf("GetInsightAs: %v", err)
+	}
+	row := found.Findings[0]
+	view := is[traust.FindingRecordsFindingView](row.View)
+	occurrences := is[[]traust.FindingRecordsOccurrence](row.Occurrences)
+	history := is[[]traust.FindingRecordsDecision](row.History)
+	if view.Finding.Title != "openssl in the base image" || len(occurrences) != 1 || len(history) != 1 {
+		t.Fatalf("row = %+v", row)
+	}
+	claim := view.Locations[1]
+	if claim.Path != "Dockerfile" || claim.Id != nil || claim.LineStart != nil || *claim.LineEnd != 3 {
+		t.Fatalf("claim location = %+v", claim)
+	}
+}
