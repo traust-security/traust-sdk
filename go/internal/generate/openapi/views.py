@@ -225,16 +225,13 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
     schemas: dict[str, Json] = {}
     for view in ViewName:
         try:
-            schemas[view.value] = inline_external(*[contracts.view_schema(view.value)] * 2)
+            schema = contracts.view_schema(view.value)
         except ConfigError:
             continue  # no contract yet: GetInsight still returns it untyped
-    def load(name: str) -> Json:
-        try:
-            return inline_external(*[contracts.view_schema(name)] * 2)
-        except ConfigError:
-            raise SystemExit(f"{name}: referenced, but traust-contracts has no such schema") from None
-
-    found.update(shared_components(schemas, load))
+        # outside the skip: a view whose references cannot load stops the generator
+        schemas[view.value] = inline_external(schema, schema)
+    read = shared_reader(contracts.view_schema, ConfigError)
+    found.update(shared_components(schemas, lambda name: inline_external(*[read(name)] * 2)))
     for name, schema in schemas.items():
         prefix = pascal(name) + "Insight"
         found[prefix] = openapi(schema, prefix)
@@ -244,6 +241,21 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
         )
         views[prefix] = name
     return reachable(found, views), views
+
+
+def shared_reader(
+    read: Callable[[str], Json], missing: type[Exception]
+) -> Callable[[str], Json]:
+    """`read`, stopping the generator cleanly when traust-contracts has no such schema (`read`
+    raises `missing`) rather than with a traceback."""
+
+    def reader(name: str) -> Json:
+        try:
+            return read(name)
+        except missing:
+            raise SystemExit(f"{name}: referenced, but traust-contracts has no such schema") from None
+
+    return reader
 
 
 # a schema with any of these at its root has a shape of its own: a view, not shared definitions
