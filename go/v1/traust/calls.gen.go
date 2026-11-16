@@ -20,18 +20,18 @@ var (
 func (c *Client) AdvisoriesFor(ctx context.Context, findingId openapi_types.UUID) ([]Advisory, error) {
 	raw, err := c.ClientInterface.AdvisoriesFor(ctx, findingId)
 	if err != nil {
-		return nil, fmt.Errorf("AdvisoriesFor(%s): %w", findingId, err)
+		return nil, fmt.Errorf("AdvisoriesFor(%v): %w", findingId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("AdvisoriesFor(%s): %w", findingId, err)
+		return nil, fmt.Errorf("AdvisoriesFor(%v): %w", findingId, err)
 	}
 	response, err := ParseAdvisoriesForResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("AdvisoriesFor(%s): %w", findingId, err)
+		return nil, fmt.Errorf("AdvisoriesFor(%v): %w", findingId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("AdvisoriesFor(%s): %w", findingId, err)
+		return nil, fmt.Errorf("AdvisoriesFor(%v): %w", findingId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -43,18 +43,18 @@ func (c *Client) AdvisoriesFor(ctx context.Context, findingId openapi_types.UUID
 func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([]AffectedDependency, error) {
 	raw, err := c.ClientInterface.Affected(ctx, advisoryId)
 	if err != nil {
-		return nil, fmt.Errorf("Affected(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("Affected(%v): %w", advisoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("Affected(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("Affected(%v): %w", advisoryId, err)
 	}
 	response, err := ParseAffectedResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("Affected(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("Affected(%v): %w", advisoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("Affected(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("Affected(%v): %w", advisoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -66,18 +66,18 @@ func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([
 func (c *Client) Approve(ctx context.Context, orderId openapi_types.UUID) (*RunOrder, error) {
 	raw, err := c.ClientInterface.Approve(ctx, orderId)
 	if err != nil {
-		return nil, fmt.Errorf("Approve(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Approve(%v): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("Approve(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Approve(%v): %w", orderId, err)
 	}
 	response, err := ParseApproveResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("Approve(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Approve(%v): %w", orderId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("Approve(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Approve(%v): %w", orderId, err)
 	}
 	return found, nil
 }
@@ -86,18 +86,18 @@ func (c *Client) Approve(ctx context.Context, orderId openapi_types.UUID) (*RunO
 func (c *Client) Checkpoint(ctx context.Context, repositoryId openapi_types.UUID) (*Checkpoint, error) {
 	raw, err := c.ClientInterface.Checkpoint(ctx, repositoryId)
 	if err != nil {
-		return nil, fmt.Errorf("Checkpoint(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("Checkpoint(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("Checkpoint(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("Checkpoint(%v): %w", repositoryId, err)
 	}
 	response, err := ParseCheckpointResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("Checkpoint(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("Checkpoint(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("Checkpoint(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("Checkpoint(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -130,18 +130,18 @@ func (c *Client) Claim(ctx context.Context, body ClaimJSONRequestBody) (*RunOrde
 func (c *Client) Complete(ctx context.Context, orderId openapi_types.UUID, body CompleteJSONRequestBody) (*RunOrder, error) {
 	raw, err := c.ClientInterface.Complete(ctx, orderId, body)
 	if err != nil {
-		return nil, fmt.Errorf("Complete(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Complete(%v): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("Complete(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Complete(%v): %w", orderId, err)
 	}
 	response, err := ParseCompleteResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("Complete(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Complete(%v): %w", orderId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("Complete(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Complete(%v): %w", orderId, err)
 	}
 	return found, nil
 }
@@ -150,38 +150,18 @@ func (c *Client) Complete(ctx context.Context, orderId openapi_types.UUID, body 
 func (c *Client) CorrectRepositoryUrl(ctx context.Context, repositoryId openapi_types.UUID, body CorrectRepositoryUrlJSONRequestBody) (*Repository, error) {
 	raw, err := c.ClientInterface.CorrectRepositoryUrl(ctx, repositoryId, body)
 	if err != nil {
-		return nil, fmt.Errorf("CorrectRepositoryUrl(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("CorrectRepositoryUrl(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("CorrectRepositoryUrl(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("CorrectRepositoryUrl(%v): %w", repositoryId, err)
 	}
 	response, err := ParseCorrectRepositoryUrlResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("CorrectRepositoryUrl(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("CorrectRepositoryUrl(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("CorrectRepositoryUrl(%s): %w", repositoryId, err)
-	}
-	return found, nil
-}
-
-// CorrectRepositoryUrl is PUT /v1/repositories/{repositoryId}/url: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) CorrectRepositoryUrl(ctx context.Context, repositoryId openapi_types.UUID, body CorrectRepositoryUrlJSONRequestBody) (*Repository, error) {
-	raw, err := c.ClientInterface.CorrectRepositoryUrl(ctx, repositoryId, body)
-	if err != nil {
-		return nil, fmt.Errorf("CorrectRepositoryUrl: %w", err)
-	}
-	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("CorrectRepositoryUrl: %w", err)
-	}
-	response, err := ParseCorrectRepositoryUrlResponse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("CorrectRepositoryUrl: %w", err)
-	}
-	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil {
-		return nil, fmt.Errorf("CorrectRepositoryUrl: %w", err)
+		return nil, fmt.Errorf("CorrectRepositoryUrl(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -230,18 +210,18 @@ func (c *Client) CreateRemediation(ctx context.Context, body CreateRemediationJS
 func (c *Client) Decide(ctx context.Context, findingId openapi_types.UUID, body DecideJSONRequestBody) (*Decision, error) {
 	raw, err := c.ClientInterface.Decide(ctx, findingId, body)
 	if err != nil {
-		return nil, fmt.Errorf("Decide(%s): %w", findingId, err)
+		return nil, fmt.Errorf("Decide(%v): %w", findingId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("Decide(%s): %w", findingId, err)
+		return nil, fmt.Errorf("Decide(%v): %w", findingId, err)
 	}
 	response, err := ParseDecideResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("Decide(%s): %w", findingId, err)
+		return nil, fmt.Errorf("Decide(%v): %w", findingId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("Decide(%s): %w", findingId, err)
+		return nil, fmt.Errorf("Decide(%v): %w", findingId, err)
 	}
 	return found, nil
 }
@@ -250,18 +230,18 @@ func (c *Client) Decide(ctx context.Context, findingId openapi_types.UUID, body 
 func (c *Client) Dependencies(ctx context.Context, repositoryRefId openapi_types.UUID) ([]RefDependency, error) {
 	raw, err := c.ClientInterface.Dependencies(ctx, repositoryRefId)
 	if err != nil {
-		return nil, fmt.Errorf("Dependencies(%s): %w", repositoryRefId, err)
+		return nil, fmt.Errorf("Dependencies(%v): %w", repositoryRefId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("Dependencies(%s): %w", repositoryRefId, err)
+		return nil, fmt.Errorf("Dependencies(%v): %w", repositoryRefId, err)
 	}
 	response, err := ParseDependenciesResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("Dependencies(%s): %w", repositoryRefId, err)
+		return nil, fmt.Errorf("Dependencies(%v): %w", repositoryRefId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("Dependencies(%s): %w", repositoryRefId, err)
+		return nil, fmt.Errorf("Dependencies(%v): %w", repositoryRefId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -273,18 +253,18 @@ func (c *Client) Dependencies(ctx context.Context, repositoryRefId openapi_types
 func (c *Client) Dependents(ctx context.Context, packageId openapi_types.UUID, params *DependentsParams) ([]openapi_types.UUID, error) {
 	raw, err := c.ClientInterface.Dependents(ctx, packageId, params)
 	if err != nil {
-		return nil, fmt.Errorf("Dependents(%s): %w", packageId, err)
+		return nil, fmt.Errorf("Dependents(%v): %w", packageId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("Dependents(%s): %w", packageId, err)
+		return nil, fmt.Errorf("Dependents(%v): %w", packageId, err)
 	}
 	response, err := ParseDependentsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("Dependents(%s): %w", packageId, err)
+		return nil, fmt.Errorf("Dependents(%v): %w", packageId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("Dependents(%s): %w", packageId, err)
+		return nil, fmt.Errorf("Dependents(%v): %w", packageId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -296,18 +276,18 @@ func (c *Client) Dependents(ctx context.Context, packageId openapi_types.UUID, p
 func (c *Client) ExportAdvisoryImpacts(ctx context.Context, advisoryId openapi_types.UUID) (*ImpactExport, error) {
 	raw, err := c.ClientInterface.ExportAdvisoryImpacts(ctx, advisoryId)
 	if err != nil {
-		return nil, fmt.Errorf("ExportAdvisoryImpacts(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("ExportAdvisoryImpacts(%v): %w", advisoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ExportAdvisoryImpacts(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("ExportAdvisoryImpacts(%v): %w", advisoryId, err)
 	}
 	response, err := ParseExportAdvisoryImpactsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ExportAdvisoryImpacts(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("ExportAdvisoryImpacts(%v): %w", advisoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ExportAdvisoryImpacts(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("ExportAdvisoryImpacts(%v): %w", advisoryId, err)
 	}
 	return found, nil
 }
@@ -402,18 +382,18 @@ func (c *Client) FindPackage(ctx context.Context, params *FindPackageParams) (*P
 func (c *Client) FindingTimeline(ctx context.Context, repositoryId openapi_types.UUID, params *FindingTimelineParams) ([]FindingSeriesPoint, error) {
 	raw, err := c.ClientInterface.FindingTimeline(ctx, repositoryId, params)
 	if err != nil {
-		return nil, fmt.Errorf("FindingTimeline(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("FindingTimeline(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("FindingTimeline(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("FindingTimeline(%v): %w", repositoryId, err)
 	}
 	response, err := ParseFindingTimelineResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("FindingTimeline(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("FindingTimeline(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("FindingTimeline(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("FindingTimeline(%v): %w", repositoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -425,18 +405,18 @@ func (c *Client) FindingTimeline(ctx context.Context, repositoryId openapi_types
 func (c *Client) GetAdvisory(ctx context.Context, advisoryId openapi_types.UUID) (*Advisory, error) {
 	raw, err := c.ClientInterface.GetAdvisory(ctx, advisoryId)
 	if err != nil {
-		return nil, fmt.Errorf("GetAdvisory(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("GetAdvisory(%v): %w", advisoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetAdvisory(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("GetAdvisory(%v): %w", advisoryId, err)
 	}
 	response, err := ParseGetAdvisoryResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetAdvisory(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("GetAdvisory(%v): %w", advisoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetAdvisory(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("GetAdvisory(%v): %w", advisoryId, err)
 	}
 	return found, nil
 }
@@ -445,18 +425,18 @@ func (c *Client) GetAdvisory(ctx context.Context, advisoryId openapi_types.UUID)
 func (c *Client) GetArtifact(ctx context.Context, artifactId openapi_types.UUID) (*Artifact, error) {
 	raw, err := c.ClientInterface.GetArtifact(ctx, artifactId)
 	if err != nil {
-		return nil, fmt.Errorf("GetArtifact(%s): %w", artifactId, err)
+		return nil, fmt.Errorf("GetArtifact(%v): %w", artifactId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetArtifact(%s): %w", artifactId, err)
+		return nil, fmt.Errorf("GetArtifact(%v): %w", artifactId, err)
 	}
 	response, err := ParseGetArtifactResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetArtifact(%s): %w", artifactId, err)
+		return nil, fmt.Errorf("GetArtifact(%v): %w", artifactId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetArtifact(%s): %w", artifactId, err)
+		return nil, fmt.Errorf("GetArtifact(%v): %w", artifactId, err)
 	}
 	return found, nil
 }
@@ -465,18 +445,18 @@ func (c *Client) GetArtifact(ctx context.Context, artifactId openapi_types.UUID)
 func (c *Client) GetArtifactContent(ctx context.Context, artifactId openapi_types.UUID) ([]byte, error) {
 	raw, err := c.ClientInterface.GetArtifactContent(ctx, artifactId)
 	if err != nil {
-		return nil, fmt.Errorf("GetArtifactContent(%s): %w", artifactId, err)
+		return nil, fmt.Errorf("GetArtifactContent(%v): %w", artifactId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetArtifactContent(%s): %w", artifactId, err)
+		return nil, fmt.Errorf("GetArtifactContent(%v): %w", artifactId, err)
 	}
 	response, err := ParseGetArtifactContentResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetArtifactContent(%s): %w", artifactId, err)
+		return nil, fmt.Errorf("GetArtifactContent(%v): %w", artifactId, err)
 	}
 	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
 	if response.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("GetArtifactContent(%s): traust-core: HTTP %d, want 200 with the file", artifactId, response.StatusCode())
+		return nil, fmt.Errorf("GetArtifactContent(%v): %w", artifactId, fmt.Errorf("traust-core: HTTP %d, want 200 with the file", response.StatusCode()))
 	}
 	return response.Body, nil
 }
@@ -485,18 +465,18 @@ func (c *Client) GetArtifactContent(ctx context.Context, artifactId openapi_type
 func (c *Client) GetAssessment(ctx context.Context, assessmentId openapi_types.UUID) (*Assessment, error) {
 	raw, err := c.ClientInterface.GetAssessment(ctx, assessmentId)
 	if err != nil {
-		return nil, fmt.Errorf("GetAssessment(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("GetAssessment(%v): %w", assessmentId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetAssessment(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("GetAssessment(%v): %w", assessmentId, err)
 	}
 	response, err := ParseGetAssessmentResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetAssessment(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("GetAssessment(%v): %w", assessmentId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetAssessment(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("GetAssessment(%v): %w", assessmentId, err)
 	}
 	return found, nil
 }
@@ -505,18 +485,18 @@ func (c *Client) GetAssessment(ctx context.Context, assessmentId openapi_types.U
 func (c *Client) GetAssessmentIntake(ctx context.Context, assessmentId openapi_types.UUID) (*AssessmentIntakeBindings, error) {
 	raw, err := c.ClientInterface.GetAssessmentIntake(ctx, assessmentId)
 	if err != nil {
-		return nil, fmt.Errorf("GetAssessmentIntake(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("GetAssessmentIntake(%v): %w", assessmentId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetAssessmentIntake(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("GetAssessmentIntake(%v): %w", assessmentId, err)
 	}
 	response, err := ParseGetAssessmentIntakeResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetAssessmentIntake(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("GetAssessmentIntake(%v): %w", assessmentId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetAssessmentIntake(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("GetAssessmentIntake(%v): %w", assessmentId, err)
 	}
 	return found, nil
 }
@@ -525,18 +505,18 @@ func (c *Client) GetAssessmentIntake(ctx context.Context, assessmentId openapi_t
 func (c *Client) GetCurrentDefaultRef(ctx context.Context, repositoryId openapi_types.UUID) (*RepositoryRef, error) {
 	raw, err := c.ClientInterface.GetCurrentDefaultRef(ctx, repositoryId)
 	if err != nil {
-		return nil, fmt.Errorf("GetCurrentDefaultRef(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetCurrentDefaultRef(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetCurrentDefaultRef(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetCurrentDefaultRef(%v): %w", repositoryId, err)
 	}
 	response, err := ParseGetCurrentDefaultRefResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetCurrentDefaultRef(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetCurrentDefaultRef(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetCurrentDefaultRef(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetCurrentDefaultRef(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -545,18 +525,18 @@ func (c *Client) GetCurrentDefaultRef(ctx context.Context, repositoryId openapi_
 func (c *Client) GetDecision(ctx context.Context, decisionId openapi_types.UUID) (*Decision, error) {
 	raw, err := c.ClientInterface.GetDecision(ctx, decisionId)
 	if err != nil {
-		return nil, fmt.Errorf("GetDecision(%s): %w", decisionId, err)
+		return nil, fmt.Errorf("GetDecision(%v): %w", decisionId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetDecision(%s): %w", decisionId, err)
+		return nil, fmt.Errorf("GetDecision(%v): %w", decisionId, err)
 	}
 	response, err := ParseGetDecisionResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetDecision(%s): %w", decisionId, err)
+		return nil, fmt.Errorf("GetDecision(%v): %w", decisionId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetDecision(%s): %w", decisionId, err)
+		return nil, fmt.Errorf("GetDecision(%v): %w", decisionId, err)
 	}
 	return found, nil
 }
@@ -565,18 +545,18 @@ func (c *Client) GetDecision(ctx context.Context, decisionId openapi_types.UUID)
 func (c *Client) GetFinding(ctx context.Context, findingId openapi_types.UUID) (*FindingView, error) {
 	raw, err := c.ClientInterface.GetFinding(ctx, findingId)
 	if err != nil {
-		return nil, fmt.Errorf("GetFinding(%s): %w", findingId, err)
+		return nil, fmt.Errorf("GetFinding(%v): %w", findingId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetFinding(%s): %w", findingId, err)
+		return nil, fmt.Errorf("GetFinding(%v): %w", findingId, err)
 	}
 	response, err := ParseGetFindingResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetFinding(%s): %w", findingId, err)
+		return nil, fmt.Errorf("GetFinding(%v): %w", findingId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetFinding(%s): %w", findingId, err)
+		return nil, fmt.Errorf("GetFinding(%v): %w", findingId, err)
 	}
 	return found, nil
 }
@@ -585,18 +565,18 @@ func (c *Client) GetFinding(ctx context.Context, findingId openapi_types.UUID) (
 func (c *Client) GetFindingByFingerprint(ctx context.Context, repositoryId openapi_types.UUID, params *GetFindingByFingerprintParams) (*FindingView, error) {
 	raw, err := c.ClientInterface.GetFindingByFingerprint(ctx, repositoryId, params)
 	if err != nil {
-		return nil, fmt.Errorf("GetFindingByFingerprint(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetFindingByFingerprint(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetFindingByFingerprint(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetFindingByFingerprint(%v): %w", repositoryId, err)
 	}
 	response, err := ParseGetFindingByFingerprintResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetFindingByFingerprint(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetFindingByFingerprint(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetFindingByFingerprint(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetFindingByFingerprint(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -605,18 +585,18 @@ func (c *Client) GetFindingByFingerprint(ctx context.Context, repositoryId opena
 func (c *Client) GetInsight(ctx context.Context, name ViewName, params *GetInsightParams) (*ViewModel, error) {
 	raw, err := c.ClientInterface.GetInsight(ctx, name, params)
 	if err != nil {
-		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
+		return nil, fmt.Errorf("GetInsight(%v): %w", name, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
+		return nil, fmt.Errorf("GetInsight(%v): %w", name, err)
 	}
 	response, err := ParseGetInsightResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
+		return nil, fmt.Errorf("GetInsight(%v): %w", name, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
+		return nil, fmt.Errorf("GetInsight(%v): %w", name, err)
 	}
 	return found, nil
 }
@@ -625,18 +605,18 @@ func (c *Client) GetInsight(ctx context.Context, name ViewName, params *GetInsig
 func (c *Client) GetInsightReport(ctx context.Context, name ViewName, params *GetInsightReportParams) ([]byte, error) {
 	raw, err := c.ClientInterface.GetInsightReport(ctx, name, params)
 	if err != nil {
-		return nil, fmt.Errorf("GetInsightReport(%s): %w", name, err)
+		return nil, fmt.Errorf("GetInsightReport(%v): %w", name, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetInsightReport(%s): %w", name, err)
+		return nil, fmt.Errorf("GetInsightReport(%v): %w", name, err)
 	}
 	response, err := ParseGetInsightReportResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetInsightReport(%s): %w", name, err)
+		return nil, fmt.Errorf("GetInsightReport(%v): %w", name, err)
 	}
 	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
 	if response.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("GetInsightReport(%s): traust-core: HTTP %d, want 200 with the file", name, response.StatusCode())
+		return nil, fmt.Errorf("GetInsightReport(%v): %w", name, fmt.Errorf("traust-core: HTTP %d, want 200 with the file", response.StatusCode()))
 	}
 	return response.Body, nil
 }
@@ -645,18 +625,18 @@ func (c *Client) GetInsightReport(ctx context.Context, name ViewName, params *Ge
 func (c *Client) GetLatestRecordedAssessment(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams) (*Assessment, error) {
 	raw, err := c.ClientInterface.GetLatestRecordedAssessment(ctx, repositoryId, params)
 	if err != nil {
-		return nil, fmt.Errorf("GetLatestRecordedAssessment(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetLatestRecordedAssessment(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetLatestRecordedAssessment(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetLatestRecordedAssessment(%v): %w", repositoryId, err)
 	}
 	response, err := ParseGetLatestRecordedAssessmentResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetLatestRecordedAssessment(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetLatestRecordedAssessment(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetLatestRecordedAssessment(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetLatestRecordedAssessment(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -665,18 +645,18 @@ func (c *Client) GetLatestRecordedAssessment(ctx context.Context, repositoryId o
 func (c *Client) GetLayer(ctx context.Context, layerId openapi_types.UUID) (*Layer, error) {
 	raw, err := c.ClientInterface.GetLayer(ctx, layerId)
 	if err != nil {
-		return nil, fmt.Errorf("GetLayer(%s): %w", layerId, err)
+		return nil, fmt.Errorf("GetLayer(%v): %w", layerId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetLayer(%s): %w", layerId, err)
+		return nil, fmt.Errorf("GetLayer(%v): %w", layerId, err)
 	}
 	response, err := ParseGetLayerResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetLayer(%s): %w", layerId, err)
+		return nil, fmt.Errorf("GetLayer(%v): %w", layerId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetLayer(%s): %w", layerId, err)
+		return nil, fmt.Errorf("GetLayer(%v): %w", layerId, err)
 	}
 	return found, nil
 }
@@ -685,18 +665,18 @@ func (c *Client) GetLayer(ctx context.Context, layerId openapi_types.UUID) (*Lay
 func (c *Client) GetOrder(ctx context.Context, orderId openapi_types.UUID) (*RunOrder, error) {
 	raw, err := c.ClientInterface.GetOrder(ctx, orderId)
 	if err != nil {
-		return nil, fmt.Errorf("GetOrder(%s): %w", orderId, err)
+		return nil, fmt.Errorf("GetOrder(%v): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetOrder(%s): %w", orderId, err)
+		return nil, fmt.Errorf("GetOrder(%v): %w", orderId, err)
 	}
 	response, err := ParseGetOrderResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetOrder(%s): %w", orderId, err)
+		return nil, fmt.Errorf("GetOrder(%v): %w", orderId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetOrder(%s): %w", orderId, err)
+		return nil, fmt.Errorf("GetOrder(%v): %w", orderId, err)
 	}
 	return found, nil
 }
@@ -705,18 +685,18 @@ func (c *Client) GetOrder(ctx context.Context, orderId openapi_types.UUID) (*Run
 func (c *Client) GetOrderManifest(ctx context.Context, orderId openapi_types.UUID) (*OrderManifest, error) {
 	raw, err := c.ClientInterface.GetOrderManifest(ctx, orderId)
 	if err != nil {
-		return nil, fmt.Errorf("GetOrderManifest(%s): %w", orderId, err)
+		return nil, fmt.Errorf("GetOrderManifest(%v): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetOrderManifest(%s): %w", orderId, err)
+		return nil, fmt.Errorf("GetOrderManifest(%v): %w", orderId, err)
 	}
 	response, err := ParseGetOrderManifestResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetOrderManifest(%s): %w", orderId, err)
+		return nil, fmt.Errorf("GetOrderManifest(%v): %w", orderId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetOrderManifest(%s): %w", orderId, err)
+		return nil, fmt.Errorf("GetOrderManifest(%v): %w", orderId, err)
 	}
 	return found, nil
 }
@@ -725,18 +705,18 @@ func (c *Client) GetOrderManifest(ctx context.Context, orderId openapi_types.UUI
 func (c *Client) GetProduct(ctx context.Context, productId openapi_types.UUID) (*Product, error) {
 	raw, err := c.ClientInterface.GetProduct(ctx, productId)
 	if err != nil {
-		return nil, fmt.Errorf("GetProduct(%s): %w", productId, err)
+		return nil, fmt.Errorf("GetProduct(%v): %w", productId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetProduct(%s): %w", productId, err)
+		return nil, fmt.Errorf("GetProduct(%v): %w", productId, err)
 	}
 	response, err := ParseGetProductResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetProduct(%s): %w", productId, err)
+		return nil, fmt.Errorf("GetProduct(%v): %w", productId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetProduct(%s): %w", productId, err)
+		return nil, fmt.Errorf("GetProduct(%v): %w", productId, err)
 	}
 	return found, nil
 }
@@ -745,18 +725,18 @@ func (c *Client) GetProduct(ctx context.Context, productId openapi_types.UUID) (
 func (c *Client) GetRef(ctx context.Context, repositoryRefId openapi_types.UUID) (*RepositoryRef, error) {
 	raw, err := c.ClientInterface.GetRef(ctx, repositoryRefId)
 	if err != nil {
-		return nil, fmt.Errorf("GetRef(%s): %w", repositoryRefId, err)
+		return nil, fmt.Errorf("GetRef(%v): %w", repositoryRefId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetRef(%s): %w", repositoryRefId, err)
+		return nil, fmt.Errorf("GetRef(%v): %w", repositoryRefId, err)
 	}
 	response, err := ParseGetRefResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetRef(%s): %w", repositoryRefId, err)
+		return nil, fmt.Errorf("GetRef(%v): %w", repositoryRefId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetRef(%s): %w", repositoryRefId, err)
+		return nil, fmt.Errorf("GetRef(%v): %w", repositoryRefId, err)
 	}
 	return found, nil
 }
@@ -765,18 +745,18 @@ func (c *Client) GetRef(ctx context.Context, repositoryRefId openapi_types.UUID)
 func (c *Client) GetRemediation(ctx context.Context, workItemId openapi_types.UUID) (*ScheduledEffort, error) {
 	raw, err := c.ClientInterface.GetRemediation(ctx, workItemId)
 	if err != nil {
-		return nil, fmt.Errorf("GetRemediation(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("GetRemediation(%v): %w", workItemId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetRemediation(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("GetRemediation(%v): %w", workItemId, err)
 	}
 	response, err := ParseGetRemediationResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetRemediation(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("GetRemediation(%v): %w", workItemId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetRemediation(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("GetRemediation(%v): %w", workItemId, err)
 	}
 	return found, nil
 }
@@ -785,18 +765,18 @@ func (c *Client) GetRemediation(ctx context.Context, workItemId openapi_types.UU
 func (c *Client) GetRepository(ctx context.Context, repositoryId openapi_types.UUID) (*Repository, error) {
 	raw, err := c.ClientInterface.GetRepository(ctx, repositoryId)
 	if err != nil {
-		return nil, fmt.Errorf("GetRepository(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetRepository(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetRepository(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetRepository(%v): %w", repositoryId, err)
 	}
 	response, err := ParseGetRepositoryResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("GetRepository(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetRepository(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("GetRepository(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("GetRepository(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -825,18 +805,18 @@ func (c *Client) Healthz(ctx context.Context) (*Health, error) {
 func (c *Client) Heartbeat(ctx context.Context, orderId openapi_types.UUID, body HeartbeatJSONRequestBody) (*RunOrder, error) {
 	raw, err := c.ClientInterface.Heartbeat(ctx, orderId, body)
 	if err != nil {
-		return nil, fmt.Errorf("Heartbeat(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Heartbeat(%v): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("Heartbeat(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Heartbeat(%v): %w", orderId, err)
 	}
 	response, err := ParseHeartbeatResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("Heartbeat(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Heartbeat(%v): %w", orderId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("Heartbeat(%s): %w", orderId, err)
+		return nil, fmt.Errorf("Heartbeat(%v): %w", orderId, err)
 	}
 	return found, nil
 }
@@ -905,18 +885,18 @@ func (c *Client) ListAssessmentsAll(ctx context.Context, params *ListAssessments
 func (c *Client) ListDecisions(ctx context.Context, findingId openapi_types.UUID) ([]Decision, error) {
 	raw, err := c.ClientInterface.ListDecisions(ctx, findingId)
 	if err != nil {
-		return nil, fmt.Errorf("ListDecisions(%s): %w", findingId, err)
+		return nil, fmt.Errorf("ListDecisions(%v): %w", findingId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListDecisions(%s): %w", findingId, err)
+		return nil, fmt.Errorf("ListDecisions(%v): %w", findingId, err)
 	}
 	response, err := ParseListDecisionsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListDecisions(%s): %w", findingId, err)
+		return nil, fmt.Errorf("ListDecisions(%v): %w", findingId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListDecisions(%s): %w", findingId, err)
+		return nil, fmt.Errorf("ListDecisions(%v): %w", findingId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -928,18 +908,18 @@ func (c *Client) ListDecisions(ctx context.Context, findingId openapi_types.UUID
 func (c *Client) ListEvents(ctx context.Context, layerId openapi_types.UUID, params *ListEventsParams) (*PageEvent, error) {
 	raw, err := c.ClientInterface.ListEvents(ctx, layerId, params)
 	if err != nil {
-		return nil, fmt.Errorf("ListEvents(%s): %w", layerId, err)
+		return nil, fmt.Errorf("ListEvents(%v): %w", layerId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListEvents(%s): %w", layerId, err)
+		return nil, fmt.Errorf("ListEvents(%v): %w", layerId, err)
 	}
 	response, err := ParseListEventsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListEvents(%s): %w", layerId, err)
+		return nil, fmt.Errorf("ListEvents(%v): %w", layerId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListEvents(%s): %w", layerId, err)
+		return nil, fmt.Errorf("ListEvents(%v): %w", layerId, err)
 	}
 	return found, nil
 }
@@ -965,18 +945,18 @@ func (c *Client) ListEventsAll(ctx context.Context, layerId openapi_types.UUID, 
 func (c *Client) ListFindings(ctx context.Context, repositoryId openapi_types.UUID, params *ListFindingsParams) (*PageFindingView, error) {
 	raw, err := c.ClientInterface.ListFindings(ctx, repositoryId, params)
 	if err != nil {
-		return nil, fmt.Errorf("ListFindings(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListFindings(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListFindings(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListFindings(%v): %w", repositoryId, err)
 	}
 	response, err := ParseListFindingsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListFindings(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListFindings(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListFindings(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListFindings(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -1076,18 +1056,18 @@ func (c *Client) ListImpactsAll(ctx context.Context, params *ListImpactsParams) 
 func (c *Client) ListLayers(ctx context.Context, repositoryId openapi_types.UUID) ([]Layer, error) {
 	raw, err := c.ClientInterface.ListLayers(ctx, repositoryId)
 	if err != nil {
-		return nil, fmt.Errorf("ListLayers(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListLayers(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListLayers(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListLayers(%v): %w", repositoryId, err)
 	}
 	response, err := ParseListLayersResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListLayers(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListLayers(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListLayers(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListLayers(%v): %w", repositoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1099,18 +1079,18 @@ func (c *Client) ListLayers(ctx context.Context, repositoryId openapi_types.UUID
 func (c *Client) ListOrderAssessments(ctx context.Context, orderId openapi_types.UUID) ([]Assessment, error) {
 	raw, err := c.ClientInterface.ListOrderAssessments(ctx, orderId)
 	if err != nil {
-		return nil, fmt.Errorf("ListOrderAssessments(%s): %w", orderId, err)
+		return nil, fmt.Errorf("ListOrderAssessments(%v): %w", orderId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListOrderAssessments(%s): %w", orderId, err)
+		return nil, fmt.Errorf("ListOrderAssessments(%v): %w", orderId, err)
 	}
 	response, err := ParseListOrderAssessmentsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListOrderAssessments(%s): %w", orderId, err)
+		return nil, fmt.Errorf("ListOrderAssessments(%v): %w", orderId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListOrderAssessments(%s): %w", orderId, err)
+		return nil, fmt.Errorf("ListOrderAssessments(%v): %w", orderId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1159,18 +1139,18 @@ func (c *Client) ListOrdersAll(ctx context.Context, params *ListOrdersParams) it
 func (c *Client) ListOwnedRepositories(ctx context.Context, teamId openapi_types.UUID, params *ListOwnedRepositoriesParams) ([]openapi_types.UUID, error) {
 	raw, err := c.ClientInterface.ListOwnedRepositories(ctx, teamId, params)
 	if err != nil {
-		return nil, fmt.Errorf("ListOwnedRepositories(%s): %w", teamId, err)
+		return nil, fmt.Errorf("ListOwnedRepositories(%v): %w", teamId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListOwnedRepositories(%s): %w", teamId, err)
+		return nil, fmt.Errorf("ListOwnedRepositories(%v): %w", teamId, err)
 	}
 	response, err := ParseListOwnedRepositoriesResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListOwnedRepositories(%s): %w", teamId, err)
+		return nil, fmt.Errorf("ListOwnedRepositories(%v): %w", teamId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListOwnedRepositories(%s): %w", teamId, err)
+		return nil, fmt.Errorf("ListOwnedRepositories(%v): %w", teamId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1182,18 +1162,18 @@ func (c *Client) ListOwnedRepositories(ctx context.Context, teamId openapi_types
 func (c *Client) ListOwners(ctx context.Context, repositoryId openapi_types.UUID) ([]Team, error) {
 	raw, err := c.ClientInterface.ListOwners(ctx, repositoryId)
 	if err != nil {
-		return nil, fmt.Errorf("ListOwners(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListOwners(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListOwners(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListOwners(%v): %w", repositoryId, err)
 	}
 	response, err := ParseListOwnersResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListOwners(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListOwners(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListOwners(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListOwners(%v): %w", repositoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1205,18 +1185,18 @@ func (c *Client) ListOwners(ctx context.Context, repositoryId openapi_types.UUID
 func (c *Client) ListProductRefs(ctx context.Context, productId openapi_types.UUID) ([]RepositoryRef, error) {
 	raw, err := c.ClientInterface.ListProductRefs(ctx, productId)
 	if err != nil {
-		return nil, fmt.Errorf("ListProductRefs(%s): %w", productId, err)
+		return nil, fmt.Errorf("ListProductRefs(%v): %w", productId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListProductRefs(%s): %w", productId, err)
+		return nil, fmt.Errorf("ListProductRefs(%v): %w", productId, err)
 	}
 	response, err := ParseListProductRefsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListProductRefs(%s): %w", productId, err)
+		return nil, fmt.Errorf("ListProductRefs(%v): %w", productId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListProductRefs(%s): %w", productId, err)
+		return nil, fmt.Errorf("ListProductRefs(%v): %w", productId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1265,18 +1245,18 @@ func (c *Client) ListProductsAll(ctx context.Context, params *ListProductsParams
 func (c *Client) ListProductsOf(ctx context.Context, repositoryId openapi_types.UUID) ([]Product, error) {
 	raw, err := c.ClientInterface.ListProductsOf(ctx, repositoryId)
 	if err != nil {
-		return nil, fmt.Errorf("ListProductsOf(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListProductsOf(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListProductsOf(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListProductsOf(%v): %w", repositoryId, err)
 	}
 	response, err := ParseListProductsOfResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListProductsOf(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListProductsOf(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListProductsOf(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListProductsOf(%v): %w", repositoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1288,18 +1268,18 @@ func (c *Client) ListProductsOf(ctx context.Context, repositoryId openapi_types.
 func (c *Client) ListRefs(ctx context.Context, repositoryId openapi_types.UUID, params *ListRefsParams) ([]RepositoryRef, error) {
 	raw, err := c.ClientInterface.ListRefs(ctx, repositoryId, params)
 	if err != nil {
-		return nil, fmt.Errorf("ListRefs(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRefs(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListRefs(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRefs(%v): %w", repositoryId, err)
 	}
 	response, err := ParseListRefsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListRefs(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRefs(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListRefs(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRefs(%v): %w", repositoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1408,18 +1388,18 @@ func (c *Client) ListRepositoriesAll(ctx context.Context, params *ListRepositori
 func (c *Client) ListRepositoryAssessments(ctx context.Context, repositoryId openapi_types.UUID, params *ListRepositoryAssessmentsParams) ([]Assessment, error) {
 	raw, err := c.ClientInterface.ListRepositoryAssessments(ctx, repositoryId, params)
 	if err != nil {
-		return nil, fmt.Errorf("ListRepositoryAssessments(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRepositoryAssessments(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListRepositoryAssessments(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRepositoryAssessments(%v): %w", repositoryId, err)
 	}
 	response, err := ParseListRepositoryAssessmentsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListRepositoryAssessments(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRepositoryAssessments(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListRepositoryAssessments(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRepositoryAssessments(%v): %w", repositoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1431,18 +1411,18 @@ func (c *Client) ListRepositoryAssessments(ctx context.Context, repositoryId ope
 func (c *Client) ListRepositoryDecisions(ctx context.Context, repositoryId openapi_types.UUID) ([]Decision, error) {
 	raw, err := c.ClientInterface.ListRepositoryDecisions(ctx, repositoryId)
 	if err != nil {
-		return nil, fmt.Errorf("ListRepositoryDecisions(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRepositoryDecisions(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListRepositoryDecisions(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRepositoryDecisions(%v): %w", repositoryId, err)
 	}
 	response, err := ParseListRepositoryDecisionsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListRepositoryDecisions(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRepositoryDecisions(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListRepositoryDecisions(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListRepositoryDecisions(%v): %w", repositoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1491,18 +1471,18 @@ func (c *Client) ListValidationAttemptsAll(ctx context.Context, params *ListVali
 func (c *Client) ListVerifications(ctx context.Context, repositoryId openapi_types.UUID, params *ListVerificationsParams) (*PageVerification, error) {
 	raw, err := c.ClientInterface.ListVerifications(ctx, repositoryId, params)
 	if err != nil {
-		return nil, fmt.Errorf("ListVerifications(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListVerifications(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListVerifications(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListVerifications(%v): %w", repositoryId, err)
 	}
 	response, err := ParseListVerificationsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListVerifications(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListVerifications(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListVerifications(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListVerifications(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -1528,18 +1508,18 @@ func (c *Client) ListVerificationsAll(ctx context.Context, repositoryId openapi_
 func (c *Client) ListWorkItems(ctx context.Context, repositoryId openapi_types.UUID, params *ListWorkItemsParams) (*PageWorkItem, error) {
 	raw, err := c.ClientInterface.ListWorkItems(ctx, repositoryId, params)
 	if err != nil {
-		return nil, fmt.Errorf("ListWorkItems(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListWorkItems(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("ListWorkItems(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListWorkItems(%v): %w", repositoryId, err)
 	}
 	response, err := ParseListWorkItemsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("ListWorkItems(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListWorkItems(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("ListWorkItems(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("ListWorkItems(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -1585,18 +1565,18 @@ func (c *Client) Onboard(ctx context.Context, body OnboardJSONRequestBody) (*Onb
 func (c *Client) PackagesAffected(ctx context.Context, advisoryId openapi_types.UUID) ([]AdvisoryPackage, error) {
 	raw, err := c.ClientInterface.PackagesAffected(ctx, advisoryId)
 	if err != nil {
-		return nil, fmt.Errorf("PackagesAffected(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("PackagesAffected(%v): %w", advisoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("PackagesAffected(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("PackagesAffected(%v): %w", advisoryId, err)
 	}
 	response, err := ParsePackagesAffectedResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("PackagesAffected(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("PackagesAffected(%v): %w", advisoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("PackagesAffected(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("PackagesAffected(%v): %w", advisoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1648,18 +1628,18 @@ func (c *Client) Preflight(ctx context.Context, body PreflightJSONRequestBody) (
 func (c *Client) PrepareAdvisoryImpacts(ctx context.Context, advisoryId openapi_types.UUID, params *PrepareAdvisoryImpactsParams) ([]ImpactInput, error) {
 	raw, err := c.ClientInterface.PrepareAdvisoryImpacts(ctx, advisoryId, params)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%v): %w", advisoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%v): %w", advisoryId, err)
 	}
 	response, err := ParsePrepareAdvisoryImpactsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%v): %w", advisoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%s): %w", advisoryId, err)
+		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%v): %w", advisoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -1671,18 +1651,18 @@ func (c *Client) PrepareAdvisoryImpacts(ctx context.Context, advisoryId openapi_
 func (c *Client) PrepareRemediation(ctx context.Context, workItemId openapi_types.UUID) (*RemediationInput, error) {
 	raw, err := c.ClientInterface.PrepareRemediation(ctx, workItemId)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareRemediation(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("PrepareRemediation(%v): %w", workItemId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("PrepareRemediation(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("PrepareRemediation(%v): %w", workItemId, err)
 	}
 	response, err := ParsePrepareRemediationResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareRemediation(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("PrepareRemediation(%v): %w", workItemId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareRemediation(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("PrepareRemediation(%v): %w", workItemId, err)
 	}
 	return found, nil
 }
@@ -1691,18 +1671,18 @@ func (c *Client) PrepareRemediation(ctx context.Context, workItemId openapi_type
 func (c *Client) PrepareTriage(ctx context.Context, assessmentId openapi_types.UUID) (*TriageInput, error) {
 	raw, err := c.ClientInterface.PrepareTriage(ctx, assessmentId)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareTriage(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("PrepareTriage(%v): %w", assessmentId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("PrepareTriage(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("PrepareTriage(%v): %w", assessmentId, err)
 	}
 	response, err := ParsePrepareTriageResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareTriage(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("PrepareTriage(%v): %w", assessmentId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareTriage(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("PrepareTriage(%v): %w", assessmentId, err)
 	}
 	return found, nil
 }
@@ -1711,38 +1691,18 @@ func (c *Client) PrepareTriage(ctx context.Context, assessmentId openapi_types.U
 func (c *Client) PrepareVerification(ctx context.Context, workItemId openapi_types.UUID) (*VerificationInput, error) {
 	raw, err := c.ClientInterface.PrepareVerification(ctx, workItemId)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareVerification(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("PrepareVerification(%v): %w", workItemId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("PrepareVerification(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("PrepareVerification(%v): %w", workItemId, err)
 	}
 	response, err := ParsePrepareVerificationResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareVerification(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("PrepareVerification(%v): %w", workItemId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("PrepareVerification(%s): %w", workItemId, err)
-	}
-	return found, nil
-}
-
-// QueryOrders is POST /v1/orders/query: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) QueryOrders(ctx context.Context, body QueryOrdersJSONRequestBody) (*OrderQueryPage, error) {
-	raw, err := c.ClientInterface.QueryOrders(ctx, body)
-	if err != nil {
-		return nil, fmt.Errorf("QueryOrders: %w", err)
-	}
-	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("QueryOrders: %w", err)
-	}
-	response, err := ParseQueryOrdersResponse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("QueryOrders: %w", err)
-	}
-	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil {
-		return nil, fmt.Errorf("QueryOrders: %w", err)
+		return nil, fmt.Errorf("PrepareVerification(%v): %w", workItemId, err)
 	}
 	return found, nil
 }
@@ -1828,18 +1788,18 @@ func (c *Client) RecordRemediation(ctx context.Context, body RecordRemediationJS
 func (c *Client) RecordRemediationProgress(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationProgressJSONRequestBody) (*WorkItem, error) {
 	raw, err := c.ClientInterface.RecordRemediationProgress(ctx, workItemId, body)
 	if err != nil {
-		return nil, fmt.Errorf("RecordRemediationProgress(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("RecordRemediationProgress(%v): %w", workItemId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("RecordRemediationProgress(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("RecordRemediationProgress(%v): %w", workItemId, err)
 	}
 	response, err := ParseRecordRemediationProgressResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("RecordRemediationProgress(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("RecordRemediationProgress(%v): %w", workItemId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("RecordRemediationProgress(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("RecordRemediationProgress(%v): %w", workItemId, err)
 	}
 	return found, nil
 }
@@ -1848,18 +1808,18 @@ func (c *Client) RecordRemediationProgress(ctx context.Context, workItemId opena
 func (c *Client) RecordRemediationPullRequest(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationPullRequestJSONRequestBody) (*WorkItem, error) {
 	raw, err := c.ClientInterface.RecordRemediationPullRequest(ctx, workItemId, body)
 	if err != nil {
-		return nil, fmt.Errorf("RecordRemediationPullRequest(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("RecordRemediationPullRequest(%v): %w", workItemId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("RecordRemediationPullRequest(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("RecordRemediationPullRequest(%v): %w", workItemId, err)
 	}
 	response, err := ParseRecordRemediationPullRequestResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("RecordRemediationPullRequest(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("RecordRemediationPullRequest(%v): %w", workItemId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("RecordRemediationPullRequest(%s): %w", workItemId, err)
+		return nil, fmt.Errorf("RecordRemediationPullRequest(%v): %w", workItemId, err)
 	}
 	return found, nil
 }
@@ -1868,18 +1828,18 @@ func (c *Client) RecordRemediationPullRequest(ctx context.Context, workItemId op
 func (c *Client) RecordTriage(ctx context.Context, assessmentId openapi_types.UUID, body RecordTriageJSONRequestBody) (*TriageRecordResult, error) {
 	raw, err := c.ClientInterface.RecordTriage(ctx, assessmentId, body)
 	if err != nil {
-		return nil, fmt.Errorf("RecordTriage(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("RecordTriage(%v): %w", assessmentId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("RecordTriage(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("RecordTriage(%v): %w", assessmentId, err)
 	}
 	response, err := ParseRecordTriageResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("RecordTriage(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("RecordTriage(%v): %w", assessmentId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("RecordTriage(%s): %w", assessmentId, err)
+		return nil, fmt.Errorf("RecordTriage(%v): %w", assessmentId, err)
 	}
 	return found, nil
 }
@@ -1928,18 +1888,18 @@ func (c *Client) RecordVerification(ctx context.Context, body RecordVerification
 func (c *Client) RegisterRef(ctx context.Context, repositoryId openapi_types.UUID, body RegisterRefJSONRequestBody) (*RepositoryRef, error) {
 	raw, err := c.ClientInterface.RegisterRef(ctx, repositoryId, body)
 	if err != nil {
-		return nil, fmt.Errorf("RegisterRef(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("RegisterRef(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("RegisterRef(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("RegisterRef(%v): %w", repositoryId, err)
 	}
 	response, err := ParseRegisterRefResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("RegisterRef(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("RegisterRef(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("RegisterRef(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("RegisterRef(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -1968,18 +1928,18 @@ func (c *Client) ResolveRole(ctx context.Context, params *ResolveRoleParams) (*R
 func (c *Client) Restate(ctx context.Context, decisionId openapi_types.UUID, body RestateJSONRequestBody) (*Decision, error) {
 	raw, err := c.ClientInterface.Restate(ctx, decisionId, body)
 	if err != nil {
-		return nil, fmt.Errorf("Restate(%s): %w", decisionId, err)
+		return nil, fmt.Errorf("Restate(%v): %w", decisionId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("Restate(%s): %w", decisionId, err)
+		return nil, fmt.Errorf("Restate(%v): %w", decisionId, err)
 	}
 	response, err := ParseRestateResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("Restate(%s): %w", decisionId, err)
+		return nil, fmt.Errorf("Restate(%v): %w", decisionId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("Restate(%s): %w", decisionId, err)
+		return nil, fmt.Errorf("Restate(%v): %w", decisionId, err)
 	}
 	return found, nil
 }
@@ -2025,18 +1985,18 @@ func (c *Client) ReviewQueueAll(ctx context.Context, params *ReviewQueueParams) 
 func (c *Client) SetOwners(ctx context.Context, repositoryId openapi_types.UUID, body SetOwnersJSONRequestBody) (*SyncReport, error) {
 	raw, err := c.ClientInterface.SetOwners(ctx, repositoryId, body)
 	if err != nil {
-		return nil, fmt.Errorf("SetOwners(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("SetOwners(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("SetOwners(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("SetOwners(%v): %w", repositoryId, err)
 	}
 	response, err := ParseSetOwnersResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("SetOwners(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("SetOwners(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("SetOwners(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("SetOwners(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }
@@ -2108,18 +2068,18 @@ func (c *Client) SummarizeExposure(ctx context.Context, params *SummarizeExposur
 func (c *Client) SummarizeFindings(ctx context.Context, repositoryId openapi_types.UUID, params *SummarizeFindingsParams) ([]FindingRollup, error) {
 	raw, err := c.ClientInterface.SummarizeFindings(ctx, repositoryId, params)
 	if err != nil {
-		return nil, fmt.Errorf("SummarizeFindings(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("SummarizeFindings(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("SummarizeFindings(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("SummarizeFindings(%v): %w", repositoryId, err)
 	}
 	response, err := ParseSummarizeFindingsResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("SummarizeFindings(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("SummarizeFindings(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("SummarizeFindings(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("SummarizeFindings(%v): %w", repositoryId, err)
 	}
 	if found == nil {
 		return nil, nil
@@ -2154,18 +2114,18 @@ func (c *Client) SummarizeFindingsIn(ctx context.Context, params *SummarizeFindi
 func (c *Client) VerifyLayer(ctx context.Context, layerId openapi_types.UUID) (*VerifyResult, error) {
 	raw, err := c.ClientInterface.VerifyLayer(ctx, layerId)
 	if err != nil {
-		return nil, fmt.Errorf("VerifyLayer(%s): %w", layerId, err)
+		return nil, fmt.Errorf("VerifyLayer(%v): %w", layerId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("VerifyLayer(%s): %w", layerId, err)
+		return nil, fmt.Errorf("VerifyLayer(%v): %w", layerId, err)
 	}
 	response, err := ParseVerifyLayerResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("VerifyLayer(%s): %w", layerId, err)
+		return nil, fmt.Errorf("VerifyLayer(%v): %w", layerId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("VerifyLayer(%s): %w", layerId, err)
+		return nil, fmt.Errorf("VerifyLayer(%v): %w", layerId, err)
 	}
 	return found, nil
 }
@@ -2174,38 +2134,18 @@ func (c *Client) VerifyLayer(ctx context.Context, layerId openapi_types.UUID) (*
 func (c *Client) VerifyRepository(ctx context.Context, repositoryId openapi_types.UUID) (*RepositoryVerification, error) {
 	raw, err := c.ClientInterface.VerifyRepository(ctx, repositoryId)
 	if err != nil {
-		return nil, fmt.Errorf("VerifyRepository(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("VerifyRepository(%v): %w", repositoryId, err)
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("VerifyRepository(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("VerifyRepository(%v): %w", repositoryId, err)
 	}
 	response, err := ParseVerifyRepositoryResponse(raw)
 	if err != nil {
-		return nil, fmt.Errorf("VerifyRepository(%s): %w", repositoryId, err)
+		return nil, fmt.Errorf("VerifyRepository(%v): %w", repositoryId, err)
 	}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("VerifyRepository(%s): %w", repositoryId, err)
-	}
-	return found, nil
-}
-
-// VerifyRepository is POST /v1/repositories/{repositoryId}/verify: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) VerifyRepository(ctx context.Context, repositoryId openapi_types.UUID) (*RepositoryVerification, error) {
-	raw, err := c.ClientInterface.VerifyRepository(ctx, repositoryId)
-	if err != nil {
-		return nil, fmt.Errorf("VerifyRepository: %w", err)
-	}
-	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("VerifyRepository: %w", err)
-	}
-	response, err := ParseVerifyRepositoryResponse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("VerifyRepository: %w", err)
-	}
-	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil {
-		return nil, fmt.Errorf("VerifyRepository: %w", err)
+		return nil, fmt.Errorf("VerifyRepository(%v): %w", repositoryId, err)
 	}
 	return found, nil
 }

@@ -1,7 +1,7 @@
 import unittest
 
 import views
-from views import openapi, pascal, reachable, refs, view_component
+from views import openapi, pascal, reachable, refs, shared_components, view_component
 
 
 class ViewComponentTest(unittest.TestCase):
@@ -97,6 +97,27 @@ class ViewComponentTest(unittest.TestCase):
                 openapi({"$ref": base}, "E")
         finally:
             views.SHARED.discard("finding-records")
+
+    def test_shared_schemas_that_reference_each_other_name_each_others_components(self):
+        base = "https://example.com/traust-contracts/views_schema/v1/"
+        view = {"properties": {"a": {"$ref": base + "first.schema.json#/$defs/row"}}}
+        first = {"$defs": {"row": {"properties": {"b": {"$ref": base + "second.schema.json#/$defs/cell"}}}}}
+        second = {"$defs": {"cell": {"type": "string"}}}
+        found = shared_components({"the-view": view}, {"first": first, "second": second}.__getitem__)
+        self.assertEqual(sorted(found), ["FirstRow", "SecondCell"])
+        self.assertEqual(
+            found["FirstRow"]["properties"]["b"], {"$ref": "#/components/schemas/SecondCell"}
+        )
+        self.assertEqual(views.SHARED, {"first", "second"})
+
+    def test_each_run_starts_from_no_shared_schema(self):
+        base = "https://example.com/traust-contracts/views_schema/v1/"
+        view = {"properties": {"a": {"$ref": base + "first.schema.json#/$defs/row"}}}
+        load = {"first": {"$defs": {"row": {"type": "string"}}}}.__getitem__
+        self.assertEqual(sorted(shared_components({"v": view}, load)), ["FirstRow"])
+        self.assertEqual(sorted(shared_components({"v": view}, load)), ["FirstRow"])
+        self.assertEqual(shared_components({"v": {}}, load), {})
+        self.assertEqual(views.SHARED, set())
 
     def test_refs_lists_every_reference(self):
         node = {"properties": {"a": {"$ref": "#/x/A"}, "b": {"items": {"$ref": "#/x/B"}}}}

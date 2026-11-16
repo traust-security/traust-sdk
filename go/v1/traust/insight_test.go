@@ -263,7 +263,7 @@ func TestTheExecutiveSummaryDecodesIntoItsComponentViews(t *testing.T) {
 
 // Container findings embed the shared finding records: they decode, strictly, into the
 // FindingRecords types every view shares (testdata is valid against the contracts), a
-// claim's location included.
+// claim's four-field location as well as a whole recorded one.
 func TestContainerFindingsDecodeIntoTheSharedFindingRecords(t *testing.T) {
 	body, err := os.ReadFile("testdata/container-findings.json")
 	if err != nil {
@@ -275,15 +275,41 @@ func TestContainerFindingsDecodeIntoTheSharedFindingRecords(t *testing.T) {
 	if err != nil {
 		t.Fatalf("GetInsightAs: %v", err)
 	}
+	if len(found.Findings) != 1 {
+		t.Fatalf("findings = %d, want 1", len(found.Findings))
+	}
 	row := found.Findings[0]
 	view := is[traust.FindingRecordsFindingView](row.View)
-	occurrences := is[[]traust.FindingRecordsOccurrence](row.Occurrences)
-	history := is[[]traust.FindingRecordsDecision](row.History)
-	if view.Finding.Title != "openssl in the base image" || len(occurrences) != 1 || len(history) != 1 {
+	if view.Finding.Title != "openssl in the base image" || len(is[[]traust.FindingRecordsOccurrence](row.Occurrences)) != 1 ||
+		len(is[[]traust.FindingRecordsDecision](row.History)) != 1 {
 		t.Fatalf("row = %+v", row)
 	}
-	claim := view.Locations[1]
-	if claim.Path != "Dockerfile" || claim.Id != nil || claim.LineStart != nil || *claim.LineEnd != 3 {
-		t.Fatalf("claim location = %+v", claim)
+	for _, tt := range []struct {
+		name      string
+		index     int
+		path      string
+		recorded  bool
+		lineStart *int
+		lineEnd   *int
+	}{
+		{name: "recorded location", index: 0, path: "usr/lib/libssl.so.3", recorded: true},
+		{name: "claim location", index: 1, path: "Dockerfile", lineEnd: ptr(3)},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if len(view.Locations) <= tt.index {
+				t.Fatalf("locations = %d, want more than %d", len(view.Locations), tt.index)
+			}
+			got := view.Locations[tt.index]
+			if got.Path != tt.path || (got.Id != nil) != tt.recorded || (got.OccurrenceId != nil) != tt.recorded {
+				t.Fatalf("location = %+v", got)
+			}
+			if !sameInt(got.LineStart, tt.lineStart) || !sameInt(got.LineEnd, tt.lineEnd) {
+				t.Fatalf("lines = %v-%v, want %v-%v", got.LineStart, got.LineEnd, tt.lineStart, tt.lineEnd)
+			}
+		})
 	}
 }
+
+func ptr(v int) *int { return &v }
+
+func sameInt(a, b *int) bool { return (a == nil) == (b == nil) && (a == nil || *a == *b) }

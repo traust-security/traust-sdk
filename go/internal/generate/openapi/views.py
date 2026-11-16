@@ -23,7 +23,7 @@ from __future__ import annotations
 import copy
 import json
 import sys
-from collections.abc import Iterable
+from collections.abc import Callable, Iterable
 from typing import TypeAlias
 
 # a JSON Schema tree as json.load returns it
@@ -228,19 +228,7 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
             schemas[view.value] = inline_external(*[contracts.view_schema(view.value)] * 2)
         except ConfigError:
             continue  # no contract yet: GetInsight still returns it untyped
-    # a views_schema file the views reference that is no view is shared definitions
-    pending = [r for schema in schemas.values() for r in refs(schema)]
-    while pending:
-        target = view_reference(pending.pop())
-        if target is None or target[0] in schemas or target[0] in SHARED:
-            continue
-        SHARED.add(target[0])
-        shared = inline_external(*[contracts.view_schema(target[0])] * 2)
-        found.update(
-            (pascal(target[0]) + pascal(name), openapi(definition, pascal(target[0])))
-            for name, definition in shared.get("$defs", {}).items()
-        )
-        pending += refs(shared)
+    found.update(shared_components(schemas, lambda n: inline_external(*[contracts.view_schema(n)] * 2)))
     for name, schema in schemas.items():
         prefix = pascal(name) + "Insight"
         found[prefix] = openapi(schema, prefix)
@@ -250,6 +238,27 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
         )
         views[prefix] = name
     return reachable(found, views), views
+
+
+def shared_components(views: dict[str, Json], load: Callable[[str], Json]) -> dict[str, Json]:
+    """The components of every shared schema the views reach: a views_schema file that is no
+    view. Every one is found first (they may reference each other), then each is converted, so
+    a reference between them already names a shared component; SHARED starts from none."""
+    SHARED.clear()
+    shared: dict[str, Json] = {}
+    pending = [r for schema in views.values() for r in refs(schema)]
+    while pending:
+        target = view_reference(pending.pop())
+        if target is None or target[0] in views or target[0] in shared:
+            continue
+        shared[target[0]] = load(target[0])
+        pending += refs(shared[target[0]])
+    SHARED.update(shared)
+    return {
+        pascal(name) + pascal(key): openapi(definition, pascal(name))
+        for name, schema in shared.items()
+        for key, definition in schema.get("$defs", {}).items()
+    }
 
 
 def reachable(found: dict[str, Json], roots: Iterable[str]) -> dict[str, Json]:

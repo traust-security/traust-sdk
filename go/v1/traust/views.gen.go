@@ -1136,14 +1136,18 @@ type FindingRecordsDecision struct {
 	ArtifactId     *openapi_types.UUID `json:"artifact_id"`
 	AssessmentId   *openapi_types.UUID `json:"assessment_id"`
 	AutoAcceptTier bool                `json:"auto_accept_tier"`
-	CreatedAt      *time.Time          `json:"created_at"`
+
+	// CreatedAt The stored record's (never null: the column is NOT NULL).
+	CreatedAt time.Time `json:"created_at"`
 
 	// EvidenceGrade As recorded, raw; null when none.
 	EvidenceGrade        *string             `json:"evidence_grade"`
 	FindingId            openapi_types.UUID  `json:"finding_id"`
 	FixedRepositoryRefId *openapi_types.UUID `json:"fixed_repository_ref_id"`
-	Id                   *openapi_types.UUID `json:"id"`
-	OccurredAt           time.Time           `json:"occurred_at"`
+
+	// Id The stored record's (never null: the column is NOT NULL).
+	Id         openapi_types.UUID `json:"id"`
+	OccurredAt time.Time          `json:"occurred_at"`
 
 	// Rationale Raw untrusted text; null when none.
 	Rationale *string `json:"rationale"`
@@ -1211,19 +1215,25 @@ type FindingRecordsFinding struct {
 	AdvisoryId *openapi_types.UUID `json:"advisory_id"`
 
 	// AdvisoryMatch How the finding matched its advisory, raw; null when none.
-	AdvisoryMatch   *string             `json:"advisory_match"`
-	CreatedAt       *time.Time          `json:"created_at"`
-	Fingerprint     string              `json:"fingerprint"`
-	FingerprintAlgo string              `json:"fingerprint_algo"`
-	Id              *openapi_types.UUID `json:"id"`
+	AdvisoryMatch *string `json:"advisory_match"`
+
+	// CreatedAt The stored record's (never null: the column is NOT NULL).
+	CreatedAt       time.Time `json:"created_at"`
+	Fingerprint     string    `json:"fingerprint"`
+	FingerprintAlgo string    `json:"fingerprint_algo"`
+
+	// Id The stored record's (never null: the column is NOT NULL).
+	Id openapi_types.UUID `json:"id"`
 
 	// Kind The finding kind as recorded (vulnerability, weakness, or a historical value), raw; null when unset.
 	Kind         *string            `json:"kind"`
 	RepositoryId openapi_types.UUID `json:"repository_id"`
 
 	// Title Raw untrusted finding title.
-	Title     string     `json:"title"`
-	UpdatedAt *time.Time `json:"updated_at"`
+	Title string `json:"title"`
+
+	// UpdatedAt The stored record's (never null: the column is NOT NULL).
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // FindingRecordsFindingView A finding as Core serves it: the record, its selected occurrence and disposition, effective severity and SLA.
@@ -1250,18 +1260,23 @@ type FindingRecordsFindingViewEffectiveSeverity string
 
 // FindingRecordsLabel defines model for FindingRecordsLabel.
 type FindingRecordsLabel struct {
-	CreatedAt *time.Time          `json:"created_at"`
-	FindingId openapi_types.UUID  `json:"finding_id"`
-	Id        *openapi_types.UUID `json:"id"`
-	Label     string              `json:"label"`
-	Taxonomy  string              `json:"taxonomy"`
-	UpdatedAt *time.Time          `json:"updated_at"`
+	// CreatedAt The stored record's (never null: the column is NOT NULL).
+	CreatedAt time.Time          `json:"created_at"`
+	FindingId openapi_types.UUID `json:"finding_id"`
+
+	// Id The stored record's (never null: the column is NOT NULL).
+	Id       openapi_types.UUID `json:"id"`
+	Label    string             `json:"label"`
+	Taxonomy string             `json:"taxonomy"`
+
+	// UpdatedAt The stored record's (never null: the column is NOT NULL).
+	UpdatedAt time.Time `json:"updated_at"`
 }
 
 // FindingRecordsLocation Where a finding was located: a recorded location (all eight fields) or a finding claim's location (path, lines and symbol only).
 type FindingRecordsLocation struct {
-	CreatedAt *time.Time          `json:"created_at"`
-	Id        *openapi_types.UUID `json:"id"`
+	CreatedAt *time.Time          `json:"created_at,omitempty"`
+	Id        *openapi_types.UUID `json:"id,omitempty"`
 
 	// Language Raw; null when unknown.
 	Language     *string             `json:"language"`
@@ -1277,15 +1292,19 @@ type FindingRecordsLocation struct {
 // FindingRecordsOccurrence A finding as one assessment reported it.
 type FindingRecordsOccurrence struct {
 	AssessmentId openapi_types.UUID `json:"assessment_id"`
-	CreatedAt    *time.Time         `json:"created_at"`
 
-	// CvssScore The stored decimal as Core serializes it (any decimal form, e.g. 9.8, 9.80 or 0E-10 from SQLite; compare as decimals); null when unscored.
+	// CreatedAt The stored record's (never null: the column is NOT NULL).
+	CreatedAt time.Time `json:"created_at"`
+
+	// CvssScore The CVSS base score, 0 to 10, as Core's canonical exact decimal string (shortest fixed-point form, the same from every backend); null when unscored.
 	CvssScore *string `json:"cvss_score"`
 
 	// CvssVector Raw; null when unscored.
-	CvssVector *string             `json:"cvss_vector"`
-	FindingId  openapi_types.UUID  `json:"finding_id"`
-	Id         *openapi_types.UUID `json:"id"`
+	CvssVector *string            `json:"cvss_vector"`
+	FindingId  openapi_types.UUID `json:"finding_id"`
+
+	// Id The stored record's (never null: the column is NOT NULL).
+	Id openapi_types.UUID `json:"id"`
 
 	// Rule The scanner rule, raw; null when none.
 	Rule *string `json:"rule"`
