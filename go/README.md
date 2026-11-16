@@ -97,6 +97,12 @@ between pages: these cursors are not transactional snapshots.
 Use these server-side queries rather than walking order history to filter or sort it.
 As a POST, `QueryOrders` is not automatically retried.
 
+`client.QueryOrdersAll(ctx, request)` iterates the remaining matching items
+from `request.Cursor`, following page boundaries and yielding the first error.
+It stops fetching when the consumer stops. Use it for intentional full-history
+processing; interactive tables and mixed-source merges should keep using
+bounded `QueryOrders` pages rather than draining this iterator before rendering.
+
 ## Keep inventory current
 
 ```go
