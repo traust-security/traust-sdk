@@ -166,6 +166,26 @@ func (c *Client) CorrectRepositoryUrl(ctx context.Context, repositoryId openapi_
 	return found, nil
 }
 
+// CorrectRepositoryUrl is PUT /v1/repositories/{repositoryId}/url: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) CorrectRepositoryUrl(ctx context.Context, repositoryId openapi_types.UUID, body CorrectRepositoryUrlJSONRequestBody) (*Repository, error) {
+	raw, err := c.ClientInterface.CorrectRepositoryUrl(ctx, repositoryId, body)
+	if err != nil {
+		return nil, fmt.Errorf("CorrectRepositoryUrl: %w", err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("CorrectRepositoryUrl: %w", err)
+	}
+	response, err := ParseCorrectRepositoryUrlResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("CorrectRepositoryUrl: %w", err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("CorrectRepositoryUrl: %w", err)
+	}
+	return found, nil
+}
+
 // CountFindingsIn is GET /v1/findings/count: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) CountFindingsIn(ctx context.Context, params *CountFindingsInParams) (*FindingCount, error) {
 	raw, err := c.ClientInterface.CountFindingsIn(ctx, params)
@@ -2166,6 +2186,26 @@ func (c *Client) VerifyRepository(ctx context.Context, repositoryId openapi_type
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
 		return nil, fmt.Errorf("VerifyRepository(%s): %w", repositoryId, err)
+	}
+	return found, nil
+}
+
+// VerifyRepository is POST /v1/repositories/{repositoryId}/verify: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) VerifyRepository(ctx context.Context, repositoryId openapi_types.UUID) (*RepositoryVerification, error) {
+	raw, err := c.ClientInterface.VerifyRepository(ctx, repositoryId)
+	if err != nil {
+		return nil, fmt.Errorf("VerifyRepository: %w", err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("VerifyRepository: %w", err)
+	}
+	response, err := ParseVerifyRepositoryResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("VerifyRepository: %w", err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("VerifyRepository: %w", err)
 	}
 	return found, nil
 }

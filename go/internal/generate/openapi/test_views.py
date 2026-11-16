@@ -1,6 +1,7 @@
 import unittest
 
-from views import openapi, pascal, reachable, referenced_contracts, refs, view_component
+import views
+from views import openapi, pascal, reachable, refs, view_component
 
 
 class ViewComponentTest(unittest.TestCase):
@@ -83,6 +84,19 @@ class ViewComponentTest(unittest.TestCase):
         found = {"AInsight": {"$ref": "#/components/schemas/MissingInsight"}}
         with self.assertRaisesRegex(SystemExit, "MissingInsight: referenced, but no view"):
             reachable(found, ["AInsight"])
+
+    def test_a_shared_definition_is_its_schemas_component_without_insight(self):
+        base = "https://example.com/traust-contracts/views_schema/v1/finding-records.schema.json"
+        views.SHARED.add("finding-records")
+        try:
+            self.assertEqual(
+                openapi({"$ref": base + "#/$defs/finding_view"}, "E"),
+                {"$ref": "#/components/schemas/FindingRecordsFindingView"},
+            )
+            with self.assertRaisesRegex(SystemExit, "referenced by its \\$defs only"):
+                openapi({"$ref": base}, "E")
+        finally:
+            views.SHARED.discard("finding-records")
 
     def test_refs_lists_every_reference(self):
         node = {"properties": {"a": {"$ref": "#/x/A"}, "b": {"items": {"$ref": "#/x/B"}}}}

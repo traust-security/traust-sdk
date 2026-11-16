@@ -3,7 +3,8 @@
 
 Runs in core's environment at CORE_REF (`$(CORE_PYTHON)`), so the view schemas are the
 `views_schema/v1` contracts core validates its views with: no second contracts pin. Each
-view becomes `<View>Insight` and each of its `$defs` `<View>Insight<Def>`; references into
+view becomes `<View>Insight` and each of its `$defs` `<View>Insight<Def>`; a views_schema file
+that is no view (finding-records) is shared definitions, each `<Name><Def>`; references into
 artifact schemas are inlined. A view composed from others (the executive summary) references
 their contracts: a reference to another view, or to one of its `$defs`, becomes that view's
 component, so a shape is generated once; a reference deeper into another view is inlined.
@@ -66,16 +67,27 @@ def view_reference(ref: str) -> tuple[str, str] | None:
     return target.rsplit("/", 1)[-1].removesuffix(".schema.json"), path
 
 
+# views_schema files that are shared definitions, not views (finding-records): components()
+# fills it from the references the views make; their `$defs` are `<Name><Def>`, no Insight
+SHARED: set[str] = set()
+
+
 def view_component(ref: str) -> str | None:
-    """The component a reference to another view (or one of its `$defs`) names, else None."""
+    """The component a reference to another view (or one of its `$defs`) names, else None; a
+    shared schema's definition is `<Name><Def>`, and a shared schema has no root component."""
     found = view_reference(ref)
     if found is None:
         return None
     view, path = found
     parts = [p for p in path.split("/") if p]
+    defined = len(parts) == 2 and parts[0] == "$defs"
+    if view in SHARED:
+        if not defined:
+            raise SystemExit(f"{ref}: a shared schema is referenced by its $defs only")
+        return pascal(view) + pascal(parts[1])
     if not parts:
         return pascal(view) + "Insight"
-    if len(parts) == 2 and parts[0] == "$defs":
+    if defined:
         return pascal(view) + "Insight" + pascal(parts[1])
     return None
 
@@ -210,31 +222,33 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
     served = {view.value for view in ViewName}
     found: dict[str, Json] = {}
     views: dict[str, str] = {}
-    # A served view's contract may reference one that is not a view (finding-records:
-    # definitions shared across views, no GetInsight route): its `$defs` generate as
-    # components under its own name — a shape generates once — reached through the views
-    # that reference it. Only a ViewName lists in x-traust-insights.
-    pending = [view.value for view in ViewName]
-    seen: set[str] = set()
-    while pending:
-        name = pending.pop()
-        if name in seen:
-            continue
-        seen.add(name)
+    schemas: dict[str, Json] = {}
+    for view in ViewName:
         try:
-            schema = contracts.view_schema(name)
+            schemas[view.value] = inline_external(*[contracts.view_schema(view.value)] * 2)
         except ConfigError:
             continue  # no contract yet: GetInsight still returns it untyped
-        schema = inline_external(schema, schema)
+    # a views_schema file the views reference that is no view is shared definitions
+    pending = [r for schema in schemas.values() for r in refs(schema)]
+    while pending:
+        target = view_reference(pending.pop())
+        if target is None or target[0] in schemas or target[0] in SHARED:
+            continue
+        SHARED.add(target[0])
+        shared = inline_external(*[contracts.view_schema(target[0])] * 2)
+        found.update(
+            (pascal(target[0]) + pascal(name), openapi(definition, pascal(target[0])))
+            for name, definition in shared.get("$defs", {}).items()
+        )
+        pending += refs(shared)
+    for name, schema in schemas.items():
         prefix = pascal(name) + "Insight"
         found[prefix] = openapi(schema, prefix)
         found.update(
-            (prefix + pascal(defn), openapi(definition, prefix))
-            for defn, definition in schema.get("$defs", {}).items()
+            (prefix + pascal(key), openapi(definition, prefix))
+            for key, definition in schema.get("$defs", {}).items()
         )
-        if name in served:
-            views[prefix] = name
-        pending += referenced_contracts(schema)
+        views[prefix] = name
     return reachable(found, views), views
 
 
