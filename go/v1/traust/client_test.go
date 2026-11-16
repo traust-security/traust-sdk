@@ -772,3 +772,40 @@ func readAll(r *http.Request) ([]byte, error) {
 }
 
 func of[T any](value T) *T { return &value }
+
+// The doors' failure paths (Qodo #77): a refusal surfaces as the *ProblemError core
+// sent, wrapped with the call's name and the repository it concerns — a caller
+// triaging several repositories can tell which one failed.
+func TestRepositoryDispositionDoorsNameTheFailedRepository(t *testing.T) {
+	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(http.StatusConflict)
+		_ = json.NewEncoder(w).Encode(Problem{
+			Type: "about:blank", Title: "the URL is occupied", Detail: "already another repository",
+			Status: http.StatusConflict, RequestId: "r1",
+		})
+	}))
+	defer server.Close()
+
+	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("t")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	repositoryID := uuid.New()
+	_, err = client.CorrectRepositoryUrl(context.Background(), repositoryID, UrlCorrection{
+		Url: "https://github.com/other/seat",
+	})
+	if err == nil {
+		t.Fatal("the occupied-URL refusal must surface")
+	}
+	var problem *ProblemError
+	if !errors.As(err, &problem) || problem.StatusCode != http.StatusConflict {
+		t.Fatalf("the refusal lost its problem shape: %v", err)
+	}
+	if !strings.Contains(err.Error(), "CorrectRepositoryUrl("+repositoryID.String()) {
+		t.Fatalf("the error does not name the repository it concerns: %v", err)
+	}
+	if !strings.Contains(err.Error(), "already another repository") {
+		t.Fatalf("the error lost core's words: %v", err)
+	}
+}

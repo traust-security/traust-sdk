@@ -44,6 +44,49 @@ func (c call) Signature() string {
 	return strings.Join(parts, ", ")
 }
 
+// PathArgs renders the call's path parameters for an error message: the resource a
+// failed call concerns, so "CorrectRepositoryUrl(3f2a...)" names the repository. Empty
+// when the operation addresses no path parameter.
+func (c call) PathArgs() string {
+	var names []string
+	for _, p := range c.Params {
+		if strings.HasPrefix(p.Type, "*") || strings.Contains(p.Type, "Body") {
+			continue
+		}
+		if !strings.Contains(c.Path, "{"+p.Name+"}") {
+			continue
+		}
+		names = append(names, "%s")
+	}
+	if len(names) == 0 {
+		return ""
+	}
+	return "(" + strings.Join(names, ", ") + ")"
+}
+
+// WrapFormat is the error wrap's format string: the call's name with the path
+// parameters it concerns ("CorrectRepositoryUrl(%s): %w"), so a failed call names
+// the resource it was for (Qodo #77).
+func (c call) WrapFormat() string {
+	return c.Name + c.PathArgs() + ": %w"
+}
+
+// WrapArgs renders the wrap's format arguments with `last` (the error) last:
+// "repositoryId, err" - the format names the resource before the %w cause.
+func (c call) WrapArgs(last string) string {
+	names := []string{}
+	for _, p := range c.Params {
+		if strings.HasPrefix(p.Type, "*") || strings.Contains(p.Type, "Body") {
+			continue
+		}
+		if !strings.Contains(c.Path, "{"+p.Name+"}") {
+			continue
+		}
+		names = append(names, p.Name)
+	}
+	return strings.Join(append(names, last), ", ")
+}
+
 func (c call) Args() string {
 	names := []string{"ctx"}
 	for _, p := range c.Params {
@@ -87,14 +130,14 @@ var (
 func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 	raw, err := c.ClientInterface.{{.Name}}({{.Args}})
 	if err != nil {
-		return nil, fmt.Errorf("{{.Name}}: %w", err)
+		return nil, fmt.Errorf("{{.WrapFormat}}", {{.WrapArgs "err"}})
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("{{.Name}}: %w", err)
+		return nil, fmt.Errorf("{{.WrapFormat}}", {{.WrapArgs "err"}})
 	}
 	response, err := Parse{{.Name}}Response(raw)
 	if err != nil {
-		return nil, fmt.Errorf("{{.Name}}: %w", err)
+		return nil, fmt.Errorf("{{.WrapFormat}}", {{.WrapArgs "err"}})
 	}
 {{- if .Empty}}
 	if response.StatusCode() == http.StatusNoContent {
@@ -104,7 +147,7 @@ func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 {{- if .List}}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("{{.Name}}: %w", err)
+		return nil, fmt.Errorf("{{.WrapFormat}}", {{.WrapArgs "err"}})
 	}
 	if found == nil {
 		return nil, nil
@@ -113,7 +156,7 @@ func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 {{- else if .Result}}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("{{.Name}}: %w", err)
+		return nil, fmt.Errorf("{{.WrapFormat}}", {{.WrapArgs "err"}})
 	}
 	return found, nil
 {{- else}}
