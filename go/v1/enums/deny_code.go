@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
+// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
 
 package enums
 
@@ -7,6 +7,7 @@ type DenyCode string
 
 const (
 	DenyCodeSubjectUnknown      DenyCode = "subject_unknown"
+	DenyCodeSubjectUnreachable  DenyCode = "subject_unreachable"
 	DenyCodeRoleDenied          DenyCode = "role_denied"
 	DenyCodeOrderingViolated    DenyCode = "ordering_violated"
 	DenyCodeBudgetExhausted     DenyCode = "budget_exhausted"
@@ -19,6 +20,7 @@ const (
 func DenyCodeValues() []DenyCode {
 	return []DenyCode{
 		DenyCodeSubjectUnknown,
+		DenyCodeSubjectUnreachable,
 		DenyCodeRoleDenied,
 		DenyCodeOrderingViolated,
 		DenyCodeBudgetExhausted,
