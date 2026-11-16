@@ -64,11 +64,16 @@ func (c call) PathArgs() string {
 	return "(" + strings.Join(names, ", ") + ")"
 }
 
-// WrapFormat is the error wrap's format string: the call's name with the path
-// parameters it concerns ("CorrectRepositoryUrl(%s): %w"), so a failed call names
-// the resource it was for (Qodo #77).
+// CallPrefix is the call's name with the path parameters it concerns
+// ("CorrectRepositoryUrl(%s)"), so a failed call names the resource it was for
+// (Qodo #77).
+func (c call) CallPrefix() string {
+	return c.Name + c.PathArgs()
+}
+
+// WrapFormat is the error wrap's format string: CallPrefix with the %w cause.
 func (c call) WrapFormat() string {
-	return c.Name + c.PathArgs() + ": %w"
+	return c.CallPrefix() + ": %w"
 }
 
 // WrapArgs renders the wrap's format arguments with `last` (the error) last:
@@ -162,7 +167,7 @@ func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 {{- else}}
 	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
 	if response.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("{{.Name}}: traust-core: HTTP %d, want 200 with the file", response.StatusCode())
+		return nil, fmt.Errorf("{{.CallPrefix}}: traust-core: HTTP %d, want 200 with the file", {{.WrapArgs "response.StatusCode()"}})
 	}
 	return response.Body, nil
 {{- end}}

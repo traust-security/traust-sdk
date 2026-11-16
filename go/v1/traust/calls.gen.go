@@ -456,7 +456,7 @@ func (c *Client) GetArtifactContent(ctx context.Context, artifactId openapi_type
 	}
 	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
 	if response.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("GetArtifactContent: traust-core: HTTP %d, want 200 with the file", response.StatusCode())
+		return nil, fmt.Errorf("GetArtifactContent(%s): traust-core: HTTP %d, want 200 with the file", artifactId, response.StatusCode())
 	}
 	return response.Body, nil
 }
@@ -616,7 +616,7 @@ func (c *Client) GetInsightReport(ctx context.Context, name ViewName, params *Ge
 	}
 	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
 	if response.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("GetInsightReport: traust-core: HTTP %d, want 200 with the file", response.StatusCode())
+		return nil, fmt.Errorf("GetInsightReport(%s): traust-core: HTTP %d, want 200 with the file", name, response.StatusCode())
 	}
 	return response.Body, nil
 }
