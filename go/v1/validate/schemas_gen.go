@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 83d90e75a562532845eaf4d13636e95f51c69134. DO NOT EDIT.
+// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
 
 package validate
 
@@ -3321,6 +3321,44 @@ var Schemas = map[string]string{
           "description": "Module version found in the shipped image SBOM."
         }
       }
+    }
+  }
+}
+`,
+	"insight-builds": `{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://example.com/traust-contracts/artifacts_schema/v1/insight-builds.schema.json",
+  "title": "Stored insight builds",
+  "description": "One GLOBAL census observation, with no product, team or permission scope. The producer stamps built_at on each completed cadence build so unchanged views and watermark do not reuse an older publication. The artifact row's created_at remains the authoritative publication time and serving-age bound. folded_after is a separate pre-fold decision watermark, not the observation or publication time. Core validates each view and owns freshness checks; callers apply their authorization after serving.",
+  "type": "object",
+  "required": [
+    "built_at",
+    "folded_after",
+    "views"
+  ],
+  "additionalProperties": false,
+  "properties": {
+    "built_at": {
+      "type": "string",
+      "format": "date-time",
+      "description": "When this cadence observation completed. The producer supplies a fresh value on each build, including unchanged or returning view content. Not the database publication time or the decision watermark."
+    },
+    "folded_after": {
+      "type": ["string", "null"],
+      "format": "date-time",
+      "description": "The newest qualifying actor statement's database recording time sampled before folding; null when none existed. Qualifying statements have an actor other than the canonical machine: namespace, conservatively including legacy or unknown actor spellings without granting them human authority.",
+      "$comment": "Null carries the semantics of the watermark, not a missing value; the artifact row's created_at is the publication moment."
+    },
+    "views": {
+      "type": "object",
+      "minProperties": 1,
+      "propertyNames": {
+        "pattern": "^[a-z][a-z0-9-]*$"
+      },
+      "additionalProperties": {
+        "type": "object"
+      },
+      "description": "The census view models by view name (findings-rollup, coverage, remediation-index, findings-trend, ...). Every value is the model that view's build would return for an unscoped read."
     }
   }
 }
@@ -6677,7 +6715,9 @@ var Schemas = map[string]string{
         },
         "retrieved": {
           "type": "string",
-          "pattern": "^\\d{4}-\\d{2}-\\d{2}$"
+          "format": "date",
+          "pattern": "^\\d{4}-\\d{2}-\\d{2}$",
+          "description": "A real calendar date (YYYY-MM-DD): traust-core reads it as a date, so 2026-02-30 is refused at recording, not when a view is built."
         },
         "note": {
           "type": "string"
