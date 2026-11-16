@@ -52,6 +52,23 @@ func (c call) Args() string {
 	return strings.Join(names, ", ")
 }
 
+// Wrap is the call's error wrapper: its name and, when it has any, the path parameters it was
+// called with (the repository or view a refusal concerns), so a caller logging failures across
+// many items can tell which one failed; %w keeps errors.As finding the *ProblemError.
+func (c call) Wrap(err string) string {
+	var names []string
+	for _, p := range c.Params {
+		if p.Name != "params" && p.Name != "body" {
+			names = append(names, p.Name)
+		}
+	}
+	if len(names) == 0 {
+		return fmt.Sprintf("fmt.Errorf(%q, %s)", c.Name+": %w", err)
+	}
+	verbs := strings.TrimSuffix(strings.Repeat("%v, ", len(names)), ", ")
+	return fmt.Sprintf("fmt.Errorf(%q, %s, %s)", c.Name+"("+verbs+"): %w", strings.Join(names, ", "), err)
+}
+
 func (c call) PageArgs() string {
 	names := []string{"ctx"}
 	for _, p := range c.Params {
@@ -87,14 +104,14 @@ var (
 func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 	raw, err := c.ClientInterface.{{.Name}}({{.Args}})
 	if err != nil {
-		return nil, fmt.Errorf("{{.Name}}: %w", err)
+		return nil, {{.Wrap "err"}}
 	}
 	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("{{.Name}}: %w", err)
+		return nil, {{.Wrap "err"}}
 	}
 	response, err := Parse{{.Name}}Response(raw)
 	if err != nil {
-		return nil, fmt.Errorf("{{.Name}}: %w", err)
+		return nil, {{.Wrap "err"}}
 	}
 {{- if .Empty}}
 	if response.StatusCode() == http.StatusNoContent {
@@ -104,7 +121,7 @@ func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 {{- if .List}}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("{{.Name}}: %w", err)
+		return nil, {{.Wrap "err"}}
 	}
 	if found == nil {
 		return nil, nil
@@ -113,13 +130,13 @@ func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 {{- else if .Result}}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
-		return nil, fmt.Errorf("{{.Name}}: %w", err)
+		return nil, {{.Wrap "err"}}
 	}
 	return found, nil
 {{- else}}
 	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
 	if response.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("{{.Name}}: traust-core: HTTP %d, want 200 with the file", response.StatusCode())
+		return nil, {{.Wrap "fmt.Errorf(\"traust-core: HTTP %d, want 200 with the file\", response.StatusCode())"}}
 	}
 	return response.Body, nil
 {{- end}}
