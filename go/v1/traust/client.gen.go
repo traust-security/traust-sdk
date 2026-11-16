@@ -398,6 +398,25 @@ const (
 	Desc OrderSortOrder = "desc"
 )
 
+// Defines values for OrderSortBy.
+const (
+	OrderSortByAsset      OrderSortBy = "asset"
+	OrderSortByCreatedAt  OrderSortBy = "created_at"
+	OrderSortByFinishedAt OrderSortBy = "finished_at"
+	OrderSortById         OrderSortBy = "id"
+	OrderSortByIds        OrderSortBy = "ids"
+	OrderSortByReason     OrderSortBy = "reason"
+	OrderSortByRepository OrderSortBy = "repository"
+	OrderSortByStartedAt  OrderSortBy = "started_at"
+	OrderSortByState      OrderSortBy = "state"
+)
+
+// Defines values for OrderSortOrder.
+const (
+	Asc  OrderSortOrder = "asc"
+	Desc OrderSortOrder = "desc"
+)
+
 // Defines values for Outcome.
 const (
 	OutcomeDegraded  Outcome = "degraded"
