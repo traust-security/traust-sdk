@@ -56,61 +56,61 @@ const (
 	ExecutiveSummaryInsightIsolationReviewPostureWeak        ExecutiveSummaryInsightIsolationReviewPosture = "weak"
 )
 
-// Defines values for FindingRecordsDispositionAssurance.
+// Defines values for FindingRecordsInsightDispositionAssurance.
 const (
-	FindingRecordsDispositionAssuranceClaimed         FindingRecordsDispositionAssurance = "claimed"
-	FindingRecordsDispositionAssuranceExecutionProven FindingRecordsDispositionAssurance = "execution_proven"
-	FindingRecordsDispositionAssuranceHumanReviewed   FindingRecordsDispositionAssurance = "human_reviewed"
-	FindingRecordsDispositionAssuranceMachineVerified FindingRecordsDispositionAssurance = "machine_verified"
+	FindingRecordsInsightDispositionAssuranceClaimed         FindingRecordsInsightDispositionAssurance = "claimed"
+	FindingRecordsInsightDispositionAssuranceExecutionProven FindingRecordsInsightDispositionAssurance = "execution_proven"
+	FindingRecordsInsightDispositionAssuranceHumanReviewed   FindingRecordsInsightDispositionAssurance = "human_reviewed"
+	FindingRecordsInsightDispositionAssuranceMachineVerified FindingRecordsInsightDispositionAssurance = "machine_verified"
 )
 
-// Defines values for FindingRecordsDispositionResolution.
+// Defines values for FindingRecordsInsightDispositionResolution.
 const (
-	FindingRecordsDispositionResolutionFixInProgress        FindingRecordsDispositionResolution = "fix_in_progress"
-	FindingRecordsDispositionResolutionOpen                 FindingRecordsDispositionResolution = "open"
-	FindingRecordsDispositionResolutionPartiallyResolved    FindingRecordsDispositionResolution = "partially_resolved"
-	FindingRecordsDispositionResolutionRegressionIntroduced FindingRecordsDispositionResolution = "regression_introduced"
-	FindingRecordsDispositionResolutionResolved             FindingRecordsDispositionResolution = "resolved"
-	FindingRecordsDispositionResolutionRiskAccepted         FindingRecordsDispositionResolution = "risk_accepted"
+	FindingRecordsInsightDispositionResolutionFixInProgress        FindingRecordsInsightDispositionResolution = "fix_in_progress"
+	FindingRecordsInsightDispositionResolutionOpen                 FindingRecordsInsightDispositionResolution = "open"
+	FindingRecordsInsightDispositionResolutionPartiallyResolved    FindingRecordsInsightDispositionResolution = "partially_resolved"
+	FindingRecordsInsightDispositionResolutionRegressionIntroduced FindingRecordsInsightDispositionResolution = "regression_introduced"
+	FindingRecordsInsightDispositionResolutionResolved             FindingRecordsInsightDispositionResolution = "resolved"
+	FindingRecordsInsightDispositionResolutionRiskAccepted         FindingRecordsInsightDispositionResolution = "risk_accepted"
 )
 
-// Defines values for FindingRecordsDispositionSeverity.
+// Defines values for FindingRecordsInsightDispositionSeverity.
 const (
-	FindingRecordsDispositionSeverityCritical      FindingRecordsDispositionSeverity = "critical"
-	FindingRecordsDispositionSeverityHigh          FindingRecordsDispositionSeverity = "high"
-	FindingRecordsDispositionSeverityInformational FindingRecordsDispositionSeverity = "informational"
-	FindingRecordsDispositionSeverityLow           FindingRecordsDispositionSeverity = "low"
-	FindingRecordsDispositionSeverityMedium        FindingRecordsDispositionSeverity = "medium"
+	FindingRecordsInsightDispositionSeverityCritical      FindingRecordsInsightDispositionSeverity = "critical"
+	FindingRecordsInsightDispositionSeverityHigh          FindingRecordsInsightDispositionSeverity = "high"
+	FindingRecordsInsightDispositionSeverityInformational FindingRecordsInsightDispositionSeverity = "informational"
+	FindingRecordsInsightDispositionSeverityLow           FindingRecordsInsightDispositionSeverity = "low"
+	FindingRecordsInsightDispositionSeverityMedium        FindingRecordsInsightDispositionSeverity = "medium"
 )
 
-// Defines values for FindingRecordsDispositionValidity.
+// Defines values for FindingRecordsInsightDispositionValidity.
 const (
-	FindingRecordsDispositionValidityConfirmed     FindingRecordsDispositionValidity = "confirmed"
-	FindingRecordsDispositionValidityCorrected     FindingRecordsDispositionValidity = "corrected"
-	FindingRecordsDispositionValidityFalsePositive FindingRecordsDispositionValidity = "false_positive"
-	FindingRecordsDispositionValidityHardening     FindingRecordsDispositionValidity = "hardening"
-	FindingRecordsDispositionValidityNotAffected   FindingRecordsDispositionValidity = "not_affected"
-	FindingRecordsDispositionValidityNotVerified   FindingRecordsDispositionValidity = "not_verified"
-	FindingRecordsDispositionValidityTruePositive  FindingRecordsDispositionValidity = "true_positive"
+	FindingRecordsInsightDispositionValidityConfirmed     FindingRecordsInsightDispositionValidity = "confirmed"
+	FindingRecordsInsightDispositionValidityCorrected     FindingRecordsInsightDispositionValidity = "corrected"
+	FindingRecordsInsightDispositionValidityFalsePositive FindingRecordsInsightDispositionValidity = "false_positive"
+	FindingRecordsInsightDispositionValidityHardening     FindingRecordsInsightDispositionValidity = "hardening"
+	FindingRecordsInsightDispositionValidityNotAffected   FindingRecordsInsightDispositionValidity = "not_affected"
+	FindingRecordsInsightDispositionValidityNotVerified   FindingRecordsInsightDispositionValidity = "not_verified"
+	FindingRecordsInsightDispositionValidityTruePositive  FindingRecordsInsightDispositionValidity = "true_positive"
 )
 
-// Defines values for FindingRecordsFindingViewEffectiveSeverity.
+// Defines values for FindingRecordsInsightFindingViewEffectiveSeverity.
 const (
-	FindingRecordsFindingViewEffectiveSeverityCritical      FindingRecordsFindingViewEffectiveSeverity = "critical"
-	FindingRecordsFindingViewEffectiveSeverityHigh          FindingRecordsFindingViewEffectiveSeverity = "high"
-	FindingRecordsFindingViewEffectiveSeverityInformational FindingRecordsFindingViewEffectiveSeverity = "informational"
-	FindingRecordsFindingViewEffectiveSeverityLow           FindingRecordsFindingViewEffectiveSeverity = "low"
-	FindingRecordsFindingViewEffectiveSeverityMedium        FindingRecordsFindingViewEffectiveSeverity = "medium"
+	FindingRecordsInsightFindingViewEffectiveSeverityCritical      FindingRecordsInsightFindingViewEffectiveSeverity = "critical"
+	FindingRecordsInsightFindingViewEffectiveSeverityHigh          FindingRecordsInsightFindingViewEffectiveSeverity = "high"
+	FindingRecordsInsightFindingViewEffectiveSeverityInformational FindingRecordsInsightFindingViewEffectiveSeverity = "informational"
+	FindingRecordsInsightFindingViewEffectiveSeverityLow           FindingRecordsInsightFindingViewEffectiveSeverity = "low"
+	FindingRecordsInsightFindingViewEffectiveSeverityMedium        FindingRecordsInsightFindingViewEffectiveSeverity = "medium"
 )
 
-// Defines values for FindingRecordsOccurrenceSeverity.
+// Defines values for FindingRecordsInsightOccurrenceSeverity.
 const (
-	FindingRecordsOccurrenceSeverityCritical      FindingRecordsOccurrenceSeverity = "critical"
-	FindingRecordsOccurrenceSeverityHigh          FindingRecordsOccurrenceSeverity = "high"
-	FindingRecordsOccurrenceSeverityInformational FindingRecordsOccurrenceSeverity = "informational"
-	FindingRecordsOccurrenceSeverityLow           FindingRecordsOccurrenceSeverity = "low"
-	FindingRecordsOccurrenceSeverityMedium        FindingRecordsOccurrenceSeverity = "medium"
-	FindingRecordsOccurrenceSeverityUnrated       FindingRecordsOccurrenceSeverity = "unrated"
+	FindingRecordsInsightOccurrenceSeverityCritical      FindingRecordsInsightOccurrenceSeverity = "critical"
+	FindingRecordsInsightOccurrenceSeverityHigh          FindingRecordsInsightOccurrenceSeverity = "high"
+	FindingRecordsInsightOccurrenceSeverityInformational FindingRecordsInsightOccurrenceSeverity = "informational"
+	FindingRecordsInsightOccurrenceSeverityLow           FindingRecordsInsightOccurrenceSeverity = "low"
+	FindingRecordsInsightOccurrenceSeverityMedium        FindingRecordsInsightOccurrenceSeverity = "medium"
+	FindingRecordsInsightOccurrenceSeverityUnrated       FindingRecordsInsightOccurrenceSeverity = "unrated"
 )
 
 // Defines values for FindingsRollupInsightTopFindingSeverity.
@@ -755,11 +755,11 @@ type ContainerFindingsInsight struct {
 
 // ContainerFindingsInsightFinding A finding the family reported: as Core serves it at its latest occurrence, every occurrence in the family, and its decisions up to as_of.
 type ContainerFindingsInsightFinding struct {
-	History     []FindingRecordsDecision   `json:"history"`
-	Occurrences []FindingRecordsOccurrence `json:"occurrences"`
+	History     []FindingRecordsInsightDecision   `json:"history"`
+	Occurrences []FindingRecordsInsightOccurrence `json:"occurrences"`
 
 	// View A finding as Core serves it: the record, its selected occurrence and disposition, effective severity and SLA.
-	View FindingRecordsFindingView `json:"view"`
+	View FindingRecordsInsightFindingView `json:"view"`
 }
 
 // ContainerFindingsInsightReport defines model for ContainerFindingsInsightReport.
@@ -1129,8 +1129,8 @@ type ExposureInsightRollup struct {
 	Key *string `json:"key"`
 }
 
-// FindingRecordsDecision One judgement on a finding; corrections are new decisions.
-type FindingRecordsDecision struct {
+// FindingRecordsInsightDecision One judgement on a finding; corrections are new decisions.
+type FindingRecordsInsightDecision struct {
 	// Actor Raw; null when unattributed.
 	Actor          *string             `json:"actor"`
 	ArtifactId     *openapi_types.UUID `json:"artifact_id"`
@@ -1174,44 +1174,44 @@ type FindingRecordsDecision struct {
 	Validity *string `json:"validity"`
 }
 
-// FindingRecordsDisposition A finding's folded disposition: its decisions resolved to one answer.
-type FindingRecordsDisposition struct {
+// FindingRecordsInsightDisposition A finding's folded disposition: its decisions resolved to one answer.
+type FindingRecordsInsightDisposition struct {
 	// Assurance The disposition-assurance registry's assurance.
-	Assurance            FindingRecordsDispositionAssurance `json:"assurance"`
-	AwaitingSignoff      bool                               `json:"awaiting_signoff"`
-	Conflict             bool                               `json:"conflict"`
-	FindingId            openapi_types.UUID                 `json:"finding_id"`
-	FpOverridden         bool                               `json:"fp_overridden"`
-	FpReassertionBlocked bool                               `json:"fp_reassertion_blocked"`
-	LastDecisionAt       *time.Time                         `json:"last_decision_at"`
+	Assurance            FindingRecordsInsightDispositionAssurance `json:"assurance"`
+	AwaitingSignoff      bool                                      `json:"awaiting_signoff"`
+	Conflict             bool                                      `json:"conflict"`
+	FindingId            openapi_types.UUID                        `json:"finding_id"`
+	FpOverridden         bool                                      `json:"fp_overridden"`
+	FpReassertionBlocked bool                                      `json:"fp_reassertion_blocked"`
+	LastDecisionAt       *time.Time                                `json:"last_decision_at"`
 
 	// Line The line the merged judgement was taken for, raw; null when unset.
 	Line *string `json:"line"`
 
 	// Resolution The disposition-resolution registry's folded resolution; null when undecided.
-	Resolution *FindingRecordsDispositionResolution `json:"resolution"`
+	Resolution *FindingRecordsInsightDispositionResolution `json:"resolution"`
 
 	// Severity A decided severity override; null when none.
-	Severity *FindingRecordsDispositionSeverity `json:"severity"`
+	Severity *FindingRecordsInsightDispositionSeverity `json:"severity"`
 
 	// Validity The validity registry's folded validity; null when undecided.
-	Validity *FindingRecordsDispositionValidity `json:"validity"`
+	Validity *FindingRecordsInsightDispositionValidity `json:"validity"`
 }
 
-// FindingRecordsDispositionAssurance The disposition-assurance registry's assurance.
-type FindingRecordsDispositionAssurance string
+// FindingRecordsInsightDispositionAssurance The disposition-assurance registry's assurance.
+type FindingRecordsInsightDispositionAssurance string
 
-// FindingRecordsDispositionResolution The disposition-resolution registry's folded resolution; null when undecided.
-type FindingRecordsDispositionResolution string
+// FindingRecordsInsightDispositionResolution The disposition-resolution registry's folded resolution; null when undecided.
+type FindingRecordsInsightDispositionResolution string
 
-// FindingRecordsDispositionSeverity A decided severity override; null when none.
-type FindingRecordsDispositionSeverity string
+// FindingRecordsInsightDispositionSeverity A decided severity override; null when none.
+type FindingRecordsInsightDispositionSeverity string
 
-// FindingRecordsDispositionValidity The validity registry's folded validity; null when undecided.
-type FindingRecordsDispositionValidity string
+// FindingRecordsInsightDispositionValidity The validity registry's folded validity; null when undecided.
+type FindingRecordsInsightDispositionValidity string
 
-// FindingRecordsFinding A finding: one weakness or vulnerability in one repository, by fingerprint.
-type FindingRecordsFinding struct {
+// FindingRecordsInsightFinding A finding: one weakness or vulnerability in one repository, by fingerprint.
+type FindingRecordsInsightFinding struct {
 	AdvisoryId *openapi_types.UUID `json:"advisory_id"`
 
 	// AdvisoryMatch How the finding matched its advisory, raw; null when none.
@@ -1236,30 +1236,33 @@ type FindingRecordsFinding struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// FindingRecordsFindingView A finding as Core serves it: the record, its selected occurrence and disposition, effective severity and SLA.
-type FindingRecordsFindingView struct {
+// FindingRecordsInsightFindingView A finding as Core serves it: the record, its selected occurrence and disposition, effective severity and SLA.
+type FindingRecordsInsightFindingView struct {
 	// Cwes CWE ids as recorded, raw.
-	Cwes        []string                   `json:"cwes"`
-	Disposition *FindingRecordsDisposition `json:"disposition"`
+	Cwes []string `json:"cwes"`
+
+	// Description The accepted claim's description, as Core's view fold serves it; null when no claim was accepted.
+	Description *string                           `json:"description"`
+	Disposition *FindingRecordsInsightDisposition `json:"disposition"`
 
 	// EffectiveSeverity The severity it counts at; null when unrated.
-	EffectiveSeverity *FindingRecordsFindingViewEffectiveSeverity `json:"effective_severity"`
+	EffectiveSeverity *FindingRecordsInsightFindingViewEffectiveSeverity `json:"effective_severity"`
 
 	// Finding A finding: one weakness or vulnerability in one repository, by fingerprint.
-	Finding         FindingRecordsFinding     `json:"finding"`
-	FirstReportedAt *time.Time                `json:"first_reported_at"`
-	Labels          []FindingRecordsLabel     `json:"labels"`
-	LastReportedAt  *time.Time                `json:"last_reported_at"`
-	Locations       []FindingRecordsLocation  `json:"locations"`
-	Occurrence      *FindingRecordsOccurrence `json:"occurrence"`
-	SlaDue          *time.Time                `json:"sla_due"`
+	Finding         FindingRecordsInsightFinding     `json:"finding"`
+	FirstReportedAt *time.Time                       `json:"first_reported_at"`
+	Labels          []FindingRecordsInsightLabel     `json:"labels"`
+	LastReportedAt  *time.Time                       `json:"last_reported_at"`
+	Locations       []FindingRecordsInsightLocation  `json:"locations"`
+	Occurrence      *FindingRecordsInsightOccurrence `json:"occurrence"`
+	SlaDue          *time.Time                       `json:"sla_due"`
 }
 
-// FindingRecordsFindingViewEffectiveSeverity The severity it counts at; null when unrated.
-type FindingRecordsFindingViewEffectiveSeverity string
+// FindingRecordsInsightFindingViewEffectiveSeverity The severity it counts at; null when unrated.
+type FindingRecordsInsightFindingViewEffectiveSeverity string
 
-// FindingRecordsLabel defines model for FindingRecordsLabel.
-type FindingRecordsLabel struct {
+// FindingRecordsInsightLabel defines model for FindingRecordsInsightLabel.
+type FindingRecordsInsightLabel struct {
 	// CreatedAt The stored record's (never null: the column is NOT NULL).
 	CreatedAt time.Time          `json:"created_at"`
 	FindingId openapi_types.UUID `json:"finding_id"`
@@ -1273,8 +1276,8 @@ type FindingRecordsLabel struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// FindingRecordsLocation Where a finding was located: a recorded location (all eight fields) or a finding claim's location (path, lines and symbol only).
-type FindingRecordsLocation struct {
+// FindingRecordsInsightLocation Where a finding was located: a recorded location (all eight fields) or a finding claim's location (path, lines and symbol only).
+type FindingRecordsInsightLocation struct {
 	CreatedAt *time.Time          `json:"created_at,omitempty"`
 	Id        *openapi_types.UUID `json:"id,omitempty"`
 
@@ -1289,8 +1292,8 @@ type FindingRecordsLocation struct {
 	Symbol *string `json:"symbol"`
 }
 
-// FindingRecordsOccurrence A finding as one assessment reported it.
-type FindingRecordsOccurrence struct {
+// FindingRecordsInsightOccurrence A finding as one assessment reported it.
+type FindingRecordsInsightOccurrence struct {
 	AssessmentId openapi_types.UUID `json:"assessment_id"`
 
 	// CreatedAt The stored record's (never null: the column is NOT NULL).
@@ -1310,11 +1313,11 @@ type FindingRecordsOccurrence struct {
 	Rule *string `json:"rule"`
 
 	// Severity The scanner-severity registry's reported severity.
-	Severity FindingRecordsOccurrenceSeverity `json:"severity"`
+	Severity FindingRecordsInsightOccurrenceSeverity `json:"severity"`
 }
 
-// FindingRecordsOccurrenceSeverity The scanner-severity registry's reported severity.
-type FindingRecordsOccurrenceSeverity string
+// FindingRecordsInsightOccurrenceSeverity The scanner-severity registry's reported severity.
+type FindingRecordsInsightOccurrenceSeverity string
 
 // FindingsRollupInsight Ephemeral derived Insight ViewModel from traust-core's findings-rollup view: disposition-aware finding counts for a scope (named products and teams, else every repository) at a point in time, per product, per repository and per category label, with the open critical and high findings listed. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not count arithmetic.
 type FindingsRollupInsight struct {
