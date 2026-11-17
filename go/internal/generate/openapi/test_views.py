@@ -1,7 +1,6 @@
 import unittest
 
-import views
-from views import openapi, pascal, reachable, refs, shared_components, shared_reader, view_component
+from views import openapi, pascal, reachable, referenced_contracts, refs, view_component
 
 
 class ViewComponentTest(unittest.TestCase):

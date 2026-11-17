@@ -222,24 +222,31 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
     served = {view.value for view in ViewName}
     found: dict[str, Json] = {}
     views: dict[str, str] = {}
-    schemas: dict[str, Json] = {}
-    for view in ViewName:
+    # A served view's contract may reference one that is not a view (finding-records:
+    # definitions shared across views, no GetInsight route): its `$defs` generate as
+    # components under its own name — a shape generates once — reached through the views
+    # that reference it. Only a ViewName lists in x-traust-insights.
+    pending = [view.value for view in ViewName]
+    seen: set[str] = set()
+    while pending:
+        name = pending.pop()
+        if name in seen:
+            continue
+        seen.add(name)
         try:
-            schema = contracts.view_schema(view.value)
+            schema = contracts.view_schema(name)
         except ConfigError:
             continue  # no contract yet: GetInsight still returns it untyped
-        # outside the skip: a view whose references cannot load stops the generator
-        schemas[view.value] = inline_external(schema, schema)
-    read = shared_reader(contracts.view_schema, ConfigError)
-    found.update(shared_components(schemas, lambda name: inline_external(*[read(name)] * 2)))
-    for name, schema in schemas.items():
+        schema = inline_external(schema, schema)
         prefix = pascal(name) + "Insight"
         found[prefix] = openapi(schema, prefix)
         found.update(
-            (prefix + pascal(key), openapi(definition, prefix))
-            for key, definition in schema.get("$defs", {}).items()
+            (prefix + pascal(defn), openapi(definition, prefix))
+            for defn, definition in schema.get("$defs", {}).items()
         )
-        views[prefix] = name
+        if name in served:
+            views[prefix] = name
+        pending += referenced_contracts(schema)
     return reachable(found, views), views
 
 
