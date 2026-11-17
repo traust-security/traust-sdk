@@ -56,61 +56,61 @@ const (
 	ExecutiveSummaryInsightIsolationReviewPostureWeak        ExecutiveSummaryInsightIsolationReviewPosture = "weak"
 )
 
-// Defines values for FindingRecordsDispositionAssurance.
+// Defines values for FindingRecordsInsightDispositionAssurance.
 const (
-	FindingRecordsDispositionAssuranceClaimed         FindingRecordsDispositionAssurance = "claimed"
-	FindingRecordsDispositionAssuranceExecutionProven FindingRecordsDispositionAssurance = "execution_proven"
-	FindingRecordsDispositionAssuranceHumanReviewed   FindingRecordsDispositionAssurance = "human_reviewed"
-	FindingRecordsDispositionAssuranceMachineVerified FindingRecordsDispositionAssurance = "machine_verified"
+	FindingRecordsInsightDispositionAssuranceClaimed         FindingRecordsInsightDispositionAssurance = "claimed"
+	FindingRecordsInsightDispositionAssuranceExecutionProven FindingRecordsInsightDispositionAssurance = "execution_proven"
+	FindingRecordsInsightDispositionAssuranceHumanReviewed   FindingRecordsInsightDispositionAssurance = "human_reviewed"
+	FindingRecordsInsightDispositionAssuranceMachineVerified FindingRecordsInsightDispositionAssurance = "machine_verified"
 )
 
-// Defines values for FindingRecordsDispositionResolution.
+// Defines values for FindingRecordsInsightDispositionResolution.
 const (
-	FindingRecordsDispositionResolutionFixInProgress        FindingRecordsDispositionResolution = "fix_in_progress"
-	FindingRecordsDispositionResolutionOpen                 FindingRecordsDispositionResolution = "open"
-	FindingRecordsDispositionResolutionPartiallyResolved    FindingRecordsDispositionResolution = "partially_resolved"
-	FindingRecordsDispositionResolutionRegressionIntroduced FindingRecordsDispositionResolution = "regression_introduced"
-	FindingRecordsDispositionResolutionResolved             FindingRecordsDispositionResolution = "resolved"
-	FindingRecordsDispositionResolutionRiskAccepted         FindingRecordsDispositionResolution = "risk_accepted"
+	FindingRecordsInsightDispositionResolutionFixInProgress        FindingRecordsInsightDispositionResolution = "fix_in_progress"
+	FindingRecordsInsightDispositionResolutionOpen                 FindingRecordsInsightDispositionResolution = "open"
+	FindingRecordsInsightDispositionResolutionPartiallyResolved    FindingRecordsInsightDispositionResolution = "partially_resolved"
+	FindingRecordsInsightDispositionResolutionRegressionIntroduced FindingRecordsInsightDispositionResolution = "regression_introduced"
+	FindingRecordsInsightDispositionResolutionResolved             FindingRecordsInsightDispositionResolution = "resolved"
+	FindingRecordsInsightDispositionResolutionRiskAccepted         FindingRecordsInsightDispositionResolution = "risk_accepted"
 )
 
-// Defines values for FindingRecordsDispositionSeverity.
+// Defines values for FindingRecordsInsightDispositionSeverity.
 const (
-	FindingRecordsDispositionSeverityCritical      FindingRecordsDispositionSeverity = "critical"
-	FindingRecordsDispositionSeverityHigh          FindingRecordsDispositionSeverity = "high"
-	FindingRecordsDispositionSeverityInformational FindingRecordsDispositionSeverity = "informational"
-	FindingRecordsDispositionSeverityLow           FindingRecordsDispositionSeverity = "low"
-	FindingRecordsDispositionSeverityMedium        FindingRecordsDispositionSeverity = "medium"
+	FindingRecordsInsightDispositionSeverityCritical      FindingRecordsInsightDispositionSeverity = "critical"
+	FindingRecordsInsightDispositionSeverityHigh          FindingRecordsInsightDispositionSeverity = "high"
+	FindingRecordsInsightDispositionSeverityInformational FindingRecordsInsightDispositionSeverity = "informational"
+	FindingRecordsInsightDispositionSeverityLow           FindingRecordsInsightDispositionSeverity = "low"
+	FindingRecordsInsightDispositionSeverityMedium        FindingRecordsInsightDispositionSeverity = "medium"
 )
 
-// Defines values for FindingRecordsDispositionValidity.
+// Defines values for FindingRecordsInsightDispositionValidity.
 const (
-	FindingRecordsDispositionValidityConfirmed     FindingRecordsDispositionValidity = "confirmed"
-	FindingRecordsDispositionValidityCorrected     FindingRecordsDispositionValidity = "corrected"
-	FindingRecordsDispositionValidityFalsePositive FindingRecordsDispositionValidity = "false_positive"
-	FindingRecordsDispositionValidityHardening     FindingRecordsDispositionValidity = "hardening"
-	FindingRecordsDispositionValidityNotAffected   FindingRecordsDispositionValidity = "not_affected"
-	FindingRecordsDispositionValidityNotVerified   FindingRecordsDispositionValidity = "not_verified"
-	FindingRecordsDispositionValidityTruePositive  FindingRecordsDispositionValidity = "true_positive"
+	FindingRecordsInsightDispositionValidityConfirmed     FindingRecordsInsightDispositionValidity = "confirmed"
+	FindingRecordsInsightDispositionValidityCorrected     FindingRecordsInsightDispositionValidity = "corrected"
+	FindingRecordsInsightDispositionValidityFalsePositive FindingRecordsInsightDispositionValidity = "false_positive"
+	FindingRecordsInsightDispositionValidityHardening     FindingRecordsInsightDispositionValidity = "hardening"
+	FindingRecordsInsightDispositionValidityNotAffected   FindingRecordsInsightDispositionValidity = "not_affected"
+	FindingRecordsInsightDispositionValidityNotVerified   FindingRecordsInsightDispositionValidity = "not_verified"
+	FindingRecordsInsightDispositionValidityTruePositive  FindingRecordsInsightDispositionValidity = "true_positive"
 )
 
-// Defines values for FindingRecordsFindingViewEffectiveSeverity.
+// Defines values for FindingRecordsInsightFindingViewEffectiveSeverity.
 const (
-	FindingRecordsFindingViewEffectiveSeverityCritical      FindingRecordsFindingViewEffectiveSeverity = "critical"
-	FindingRecordsFindingViewEffectiveSeverityHigh          FindingRecordsFindingViewEffectiveSeverity = "high"
-	FindingRecordsFindingViewEffectiveSeverityInformational FindingRecordsFindingViewEffectiveSeverity = "informational"
-	FindingRecordsFindingViewEffectiveSeverityLow           FindingRecordsFindingViewEffectiveSeverity = "low"
-	FindingRecordsFindingViewEffectiveSeverityMedium        FindingRecordsFindingViewEffectiveSeverity = "medium"
+	FindingRecordsInsightFindingViewEffectiveSeverityCritical      FindingRecordsInsightFindingViewEffectiveSeverity = "critical"
+	FindingRecordsInsightFindingViewEffectiveSeverityHigh          FindingRecordsInsightFindingViewEffectiveSeverity = "high"
+	FindingRecordsInsightFindingViewEffectiveSeverityInformational FindingRecordsInsightFindingViewEffectiveSeverity = "informational"
+	FindingRecordsInsightFindingViewEffectiveSeverityLow           FindingRecordsInsightFindingViewEffectiveSeverity = "low"
+	FindingRecordsInsightFindingViewEffectiveSeverityMedium        FindingRecordsInsightFindingViewEffectiveSeverity = "medium"
 )
 
-// Defines values for FindingRecordsOccurrenceSeverity.
+// Defines values for FindingRecordsInsightOccurrenceSeverity.
 const (
-	FindingRecordsOccurrenceSeverityCritical      FindingRecordsOccurrenceSeverity = "critical"
-	FindingRecordsOccurrenceSeverityHigh          FindingRecordsOccurrenceSeverity = "high"
-	FindingRecordsOccurrenceSeverityInformational FindingRecordsOccurrenceSeverity = "informational"
-	FindingRecordsOccurrenceSeverityLow           FindingRecordsOccurrenceSeverity = "low"
-	FindingRecordsOccurrenceSeverityMedium        FindingRecordsOccurrenceSeverity = "medium"
-	FindingRecordsOccurrenceSeverityUnrated       FindingRecordsOccurrenceSeverity = "unrated"
+	FindingRecordsInsightOccurrenceSeverityCritical      FindingRecordsInsightOccurrenceSeverity = "critical"
+	FindingRecordsInsightOccurrenceSeverityHigh          FindingRecordsInsightOccurrenceSeverity = "high"
+	FindingRecordsInsightOccurrenceSeverityInformational FindingRecordsInsightOccurrenceSeverity = "informational"
+	FindingRecordsInsightOccurrenceSeverityLow           FindingRecordsInsightOccurrenceSeverity = "low"
+	FindingRecordsInsightOccurrenceSeverityMedium        FindingRecordsInsightOccurrenceSeverity = "medium"
+	FindingRecordsInsightOccurrenceSeverityUnrated       FindingRecordsInsightOccurrenceSeverity = "unrated"
 )
 
 // Defines values for FindingsRollupInsightTopFindingSeverity.
@@ -141,6 +141,14 @@ const (
 	FindingsTrendInsightDirectionMetricRegressions       FindingsTrendInsightDirectionMetric = "regressions"
 	FindingsTrendInsightDirectionMetricRiskIndex         FindingsTrendInsightDirectionMetric = "risk_index"
 	FindingsTrendInsightDirectionMetricVelocity          FindingsTrendInsightDirectionMetric = "velocity"
+)
+
+// Defines values for FreshnessInsightStatus.
+const (
+	FreshnessInsightStatusFresh       FreshnessInsightStatus = "fresh"
+	FreshnessInsightStatusPending     FreshnessInsightStatus = "pending"
+	FreshnessInsightStatusStale       FreshnessInsightStatus = "stale"
+	FreshnessInsightStatusUnavailable FreshnessInsightStatus = "unavailable"
 )
 
 // Defines values for PqcPortfolioInsightEffort.
@@ -214,6 +222,40 @@ const (
 	PqcPortfolioInsightSiteRowSiteKindToolchain PqcPortfolioInsightSiteRowSiteKind = "toolchain"
 )
 
+// Defines values for PqcVendorsInsightClaimClass.
+const (
+	PqcVendorsInsightClaimClassEcosystem PqcVendorsInsightClaimClass = "ecosystem"
+	PqcVendorsInsightClaimClassInternal  PqcVendorsInsightClaimClass = "internal"
+	PqcVendorsInsightClaimClassLibrary   PqcVendorsInsightClaimClass = "library"
+	PqcVendorsInsightClaimClassProvider  PqcVendorsInsightClaimClass = "provider"
+	PqcVendorsInsightClaimClassService   PqcVendorsInsightClaimClass = "service"
+)
+
+// Defines values for PqcVendorsInsightClaimStatus.
+const (
+	PqcVendorsInsightClaimStatusAvailable  PqcVendorsInsightClaimStatus = "available"
+	PqcVendorsInsightClaimStatusInProgress PqcVendorsInsightClaimStatus = "in_progress"
+	PqcVendorsInsightClaimStatusNone       PqcVendorsInsightClaimStatus = "none"
+	PqcVendorsInsightClaimStatusPartial    PqcVendorsInsightClaimStatus = "partial"
+)
+
+// Defines values for PqcVendorsInsightPackageEcosystem.
+const (
+	PqcVendorsInsightPackageEcosystemActions PqcVendorsInsightPackageEcosystem = "actions"
+	PqcVendorsInsightPackageEcosystemApk     PqcVendorsInsightPackageEcosystem = "apk"
+	PqcVendorsInsightPackageEcosystemCargo   PqcVendorsInsightPackageEcosystem = "cargo"
+	PqcVendorsInsightPackageEcosystemDeb     PqcVendorsInsightPackageEcosystem = "deb"
+	PqcVendorsInsightPackageEcosystemDocker  PqcVendorsInsightPackageEcosystem = "docker"
+	PqcVendorsInsightPackageEcosystemGo      PqcVendorsInsightPackageEcosystem = "go"
+	PqcVendorsInsightPackageEcosystemHelm    PqcVendorsInsightPackageEcosystem = "helm"
+	PqcVendorsInsightPackageEcosystemMaven   PqcVendorsInsightPackageEcosystem = "maven"
+	PqcVendorsInsightPackageEcosystemNpm     PqcVendorsInsightPackageEcosystem = "npm"
+	PqcVendorsInsightPackageEcosystemNuget   PqcVendorsInsightPackageEcosystem = "nuget"
+	PqcVendorsInsightPackageEcosystemPypi    PqcVendorsInsightPackageEcosystem = "pypi"
+	PqcVendorsInsightPackageEcosystemRpm     PqcVendorsInsightPackageEcosystem = "rpm"
+	PqcVendorsInsightPackageEcosystemRuby    PqcVendorsInsightPackageEcosystem = "ruby"
+)
+
 // Defines values for PqcWorklistInsightEntryPriorityTier.
 const (
 	PqcWorklistInsightEntryPriorityTierChokepoint PqcWorklistInsightEntryPriorityTier = "chokepoint"
@@ -236,6 +278,13 @@ const (
 	PqcWorklistInsightLivenessStatusMissing  PqcWorklistInsightLivenessStatus = "missing"
 	PqcWorklistInsightLivenessStatusMoved    PqcWorklistInsightLivenessStatus = "moved"
 	PqcWorklistInsightLivenessStatusUnknown  PqcWorklistInsightLivenessStatus = "unknown"
+)
+
+// Defines values for ProgramInsightBucket.
+const (
+	ProgramInsightBucketDay   ProgramInsightBucket = "day"
+	ProgramInsightBucketMonth ProgramInsightBucket = "month"
+	ProgramInsightBucketWeek  ProgramInsightBucket = "week"
 )
 
 // Defines values for RemediationIndexInsightStatus.
@@ -721,11 +770,11 @@ type ContainerFindingsInsight struct {
 
 // ContainerFindingsInsightFinding A finding the family reported: as Core serves it at its latest occurrence, every occurrence in the family, and its decisions up to as_of.
 type ContainerFindingsInsightFinding struct {
-	History     []FindingRecordsDecision   `json:"history"`
-	Occurrences []FindingRecordsOccurrence `json:"occurrences"`
+	History     []FindingRecordsInsightDecision   `json:"history"`
+	Occurrences []FindingRecordsInsightOccurrence `json:"occurrences"`
 
 	// View A finding as Core serves it: the record, its selected occurrence and disposition, effective severity and SLA.
-	View FindingRecordsFindingView `json:"view"`
+	View FindingRecordsInsightFindingView `json:"view"`
 }
 
 // ContainerFindingsInsightReport defines model for ContainerFindingsInsightReport.
@@ -1095,8 +1144,8 @@ type ExposureInsightRollup struct {
 	Key *string `json:"key"`
 }
 
-// FindingRecordsDecision One judgement on a finding; corrections are new decisions.
-type FindingRecordsDecision struct {
+// FindingRecordsInsightDecision One judgement on a finding; corrections are new decisions.
+type FindingRecordsInsightDecision struct {
 	// Actor Raw; null when unattributed.
 	Actor          *string             `json:"actor"`
 	ArtifactId     *openapi_types.UUID `json:"artifact_id"`
@@ -1140,44 +1189,44 @@ type FindingRecordsDecision struct {
 	Validity *string `json:"validity"`
 }
 
-// FindingRecordsDisposition A finding's folded disposition: its decisions resolved to one answer.
-type FindingRecordsDisposition struct {
+// FindingRecordsInsightDisposition A finding's folded disposition: its decisions resolved to one answer.
+type FindingRecordsInsightDisposition struct {
 	// Assurance The disposition-assurance registry's assurance.
-	Assurance            FindingRecordsDispositionAssurance `json:"assurance"`
-	AwaitingSignoff      bool                               `json:"awaiting_signoff"`
-	Conflict             bool                               `json:"conflict"`
-	FindingId            openapi_types.UUID                 `json:"finding_id"`
-	FpOverridden         bool                               `json:"fp_overridden"`
-	FpReassertionBlocked bool                               `json:"fp_reassertion_blocked"`
-	LastDecisionAt       *time.Time                         `json:"last_decision_at"`
+	Assurance            FindingRecordsInsightDispositionAssurance `json:"assurance"`
+	AwaitingSignoff      bool                                      `json:"awaiting_signoff"`
+	Conflict             bool                                      `json:"conflict"`
+	FindingId            openapi_types.UUID                        `json:"finding_id"`
+	FpOverridden         bool                                      `json:"fp_overridden"`
+	FpReassertionBlocked bool                                      `json:"fp_reassertion_blocked"`
+	LastDecisionAt       *time.Time                                `json:"last_decision_at"`
 
 	// Line The line the merged judgement was taken for, raw; null when unset.
 	Line *string `json:"line"`
 
 	// Resolution The disposition-resolution registry's folded resolution; null when undecided.
-	Resolution *FindingRecordsDispositionResolution `json:"resolution"`
+	Resolution *FindingRecordsInsightDispositionResolution `json:"resolution"`
 
 	// Severity A decided severity override; null when none.
-	Severity *FindingRecordsDispositionSeverity `json:"severity"`
+	Severity *FindingRecordsInsightDispositionSeverity `json:"severity"`
 
 	// Validity The validity registry's folded validity; null when undecided.
-	Validity *FindingRecordsDispositionValidity `json:"validity"`
+	Validity *FindingRecordsInsightDispositionValidity `json:"validity"`
 }
 
-// FindingRecordsDispositionAssurance The disposition-assurance registry's assurance.
-type FindingRecordsDispositionAssurance string
+// FindingRecordsInsightDispositionAssurance The disposition-assurance registry's assurance.
+type FindingRecordsInsightDispositionAssurance string
 
-// FindingRecordsDispositionResolution The disposition-resolution registry's folded resolution; null when undecided.
-type FindingRecordsDispositionResolution string
+// FindingRecordsInsightDispositionResolution The disposition-resolution registry's folded resolution; null when undecided.
+type FindingRecordsInsightDispositionResolution string
 
-// FindingRecordsDispositionSeverity A decided severity override; null when none.
-type FindingRecordsDispositionSeverity string
+// FindingRecordsInsightDispositionSeverity A decided severity override; null when none.
+type FindingRecordsInsightDispositionSeverity string
 
-// FindingRecordsDispositionValidity The validity registry's folded validity; null when undecided.
-type FindingRecordsDispositionValidity string
+// FindingRecordsInsightDispositionValidity The validity registry's folded validity; null when undecided.
+type FindingRecordsInsightDispositionValidity string
 
-// FindingRecordsFinding A finding: one weakness or vulnerability in one repository, by fingerprint.
-type FindingRecordsFinding struct {
+// FindingRecordsInsightFinding A finding: one weakness or vulnerability in one repository, by fingerprint.
+type FindingRecordsInsightFinding struct {
 	AdvisoryId *openapi_types.UUID `json:"advisory_id"`
 
 	// AdvisoryMatch How the finding matched its advisory, raw; null when none.
@@ -1202,30 +1251,33 @@ type FindingRecordsFinding struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// FindingRecordsFindingView A finding as Core serves it: the record, its selected occurrence and disposition, effective severity and SLA.
-type FindingRecordsFindingView struct {
+// FindingRecordsInsightFindingView A finding as Core serves it: the record, its selected occurrence and disposition, effective severity and SLA.
+type FindingRecordsInsightFindingView struct {
 	// Cwes CWE ids as recorded, raw.
-	Cwes        []string                   `json:"cwes"`
-	Disposition *FindingRecordsDisposition `json:"disposition"`
+	Cwes []string `json:"cwes"`
+
+	// Description The accepted claim's description, as Core's view fold serves it; null when no claim was accepted.
+	Description *string                           `json:"description"`
+	Disposition *FindingRecordsInsightDisposition `json:"disposition"`
 
 	// EffectiveSeverity The severity it counts at; null when unrated.
-	EffectiveSeverity *FindingRecordsFindingViewEffectiveSeverity `json:"effective_severity"`
+	EffectiveSeverity *FindingRecordsInsightFindingViewEffectiveSeverity `json:"effective_severity"`
 
 	// Finding A finding: one weakness or vulnerability in one repository, by fingerprint.
-	Finding         FindingRecordsFinding     `json:"finding"`
-	FirstReportedAt *time.Time                `json:"first_reported_at"`
-	Labels          []FindingRecordsLabel     `json:"labels"`
-	LastReportedAt  *time.Time                `json:"last_reported_at"`
-	Locations       []FindingRecordsLocation  `json:"locations"`
-	Occurrence      *FindingRecordsOccurrence `json:"occurrence"`
-	SlaDue          *time.Time                `json:"sla_due"`
+	Finding         FindingRecordsInsightFinding     `json:"finding"`
+	FirstReportedAt *time.Time                       `json:"first_reported_at"`
+	Labels          []FindingRecordsInsightLabel     `json:"labels"`
+	LastReportedAt  *time.Time                       `json:"last_reported_at"`
+	Locations       []FindingRecordsInsightLocation  `json:"locations"`
+	Occurrence      *FindingRecordsInsightOccurrence `json:"occurrence"`
+	SlaDue          *time.Time                       `json:"sla_due"`
 }
 
-// FindingRecordsFindingViewEffectiveSeverity The severity it counts at; null when unrated.
-type FindingRecordsFindingViewEffectiveSeverity string
+// FindingRecordsInsightFindingViewEffectiveSeverity The severity it counts at; null when unrated.
+type FindingRecordsInsightFindingViewEffectiveSeverity string
 
-// FindingRecordsLabel defines model for FindingRecordsLabel.
-type FindingRecordsLabel struct {
+// FindingRecordsInsightLabel defines model for FindingRecordsInsightLabel.
+type FindingRecordsInsightLabel struct {
 	// CreatedAt The stored record's (never null: the column is NOT NULL).
 	CreatedAt time.Time          `json:"created_at"`
 	FindingId openapi_types.UUID `json:"finding_id"`
@@ -1239,8 +1291,8 @@ type FindingRecordsLabel struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
-// FindingRecordsLocation Where a finding was located: a recorded location (all eight fields) or a finding claim's location (path, lines and symbol only).
-type FindingRecordsLocation struct {
+// FindingRecordsInsightLocation Where a finding was located: a recorded location (all eight fields) or a finding claim's location (path, lines and symbol only).
+type FindingRecordsInsightLocation struct {
 	CreatedAt *time.Time          `json:"created_at,omitempty"`
 	Id        *openapi_types.UUID `json:"id,omitempty"`
 
@@ -1255,8 +1307,8 @@ type FindingRecordsLocation struct {
 	Symbol *string `json:"symbol"`
 }
 
-// FindingRecordsOccurrence A finding as one assessment reported it.
-type FindingRecordsOccurrence struct {
+// FindingRecordsInsightOccurrence A finding as one assessment reported it.
+type FindingRecordsInsightOccurrence struct {
 	AssessmentId openapi_types.UUID `json:"assessment_id"`
 
 	// CreatedAt The stored record's (never null: the column is NOT NULL).
@@ -1276,11 +1328,11 @@ type FindingRecordsOccurrence struct {
 	Rule *string `json:"rule"`
 
 	// Severity The scanner-severity registry's reported severity.
-	Severity FindingRecordsOccurrenceSeverity `json:"severity"`
+	Severity FindingRecordsInsightOccurrenceSeverity `json:"severity"`
 }
 
-// FindingRecordsOccurrenceSeverity The scanner-severity registry's reported severity.
-type FindingRecordsOccurrenceSeverity string
+// FindingRecordsInsightOccurrenceSeverity The scanner-severity registry's reported severity.
+type FindingRecordsInsightOccurrenceSeverity string
 
 // FindingsRollupInsight Ephemeral derived Insight ViewModel from traust-core's findings-rollup view: disposition-aware finding counts for a scope (named products and teams, else every repository) at a point in time, per product, per repository and per category label, with the open critical and high findings listed. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not count arithmetic.
 type FindingsRollupInsight struct {
@@ -1538,6 +1590,64 @@ type FindingsTrendInsightPoint struct {
 	RiskIndex *FindingsTrendInsightIndex `json:"risk_index"`
 }
 
+// FreshnessInsight Ephemeral derived Insight ViewModel from traust-core's freshness view (drift-watch): every checked input and assessment cadence, worst status first, the toolchain that would run, and what the scope's latest audits could not examine, derived now (Core refuses an `as_of`). It routes attention, never concludes. Coverage is the coverage view's own definition, referenced by $id. Not a persisted artifact or SQL projection. Every serialized field is required, nullable ones included. Item names, details, refresh hints, versions and paths are raw text.
+type FreshnessInsight struct {
+	// Coverage What the scope's latest default-line secure-code audits say they could not examine. Read from the latest audits as currently recorded, not as of population.as_of.
+	Coverage CoverageInsightCoverage `json:"coverage"`
+
+	// Items Feeds, providers, tool databases, the secure-code audit and threat-model cadences (always present) and, when it cannot be read, the toolchain; worst status first (stale, unavailable, pending, fresh), then item.
+	Items []FreshnessInsightItem `json:"items"`
+
+	// Toolchain What would run; null when it could not be read (an unavailable toolchain item says why).
+	Toolchain *FreshnessInsightToolchain `json:"toolchain"`
+}
+
+// FreshnessInsightDatabase A tool's local vulnerability database: present, when built, how old it may get.
+type FreshnessInsightDatabase struct {
+	BuiltAt *time.Time `json:"built_at"`
+	Exists  bool       `json:"exists"`
+
+	// MaxAge An ISO 8601 duration (`P5DT1H`); null when unbounded.
+	MaxAge        *string `json:"max_age"`
+	Path          *string `json:"path"`
+	SchemaVersion *string `json:"schema_version"`
+	Tool          string  `json:"tool"`
+}
+
+// FreshnessInsightItem One checked input.
+type FreshnessInsightItem struct {
+	// Detail Why, as text; may be empty.
+	Detail string `json:"detail"`
+
+	// Item What was checked, e.g. `feeds:<name>`, `database:<tool>`, `<kind>:<name>` for a provider, `assessments:secure-code`.
+	Item string `json:"item"`
+
+	// Refresh What would refresh it; null when nothing to do.
+	Refresh *string `json:"refresh"`
+
+	// Status Worst first. stale: past its threshold; unavailable: not checkable; pending: never produced yet; fresh: within its threshold.
+	Status FreshnessInsightStatus `json:"status"`
+}
+
+// FreshnessInsightStatus Worst first. stale: past its threshold; unavailable: not checkable; pending: never produced yet; fresh: within its threshold.
+type FreshnessInsightStatus string
+
+// FreshnessInsightTool defines model for FreshnessInsightTool.
+type FreshnessInsightTool struct {
+	// Database Its local vulnerability database; null for a tool without one.
+	Database *FreshnessInsightDatabase `json:"database"`
+	Tool     string                    `json:"tool"`
+
+	// Version Null when it could not be read.
+	Version *string `json:"version"`
+}
+
+// FreshnessInsightToolchain traust-core's version and each registered tool's version and database.
+type FreshnessInsightToolchain struct {
+	CoreVersion string                 `json:"core_version"`
+	Tools       []FreshnessInsightTool `json:"tools"`
+}
+
 // InsecurePatternsInsight Ephemeral derived Insight ViewModel from traust-core's insecure-patterns view: the scope's findings as of as_of (false positives dropped) grouped by primary CWE within each corpus ownership class, ranked by distinct repositories, then occurrences. An occurrence is one (repository, path) pair; a repository several ownership classes ship counts in each. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
 type InsecurePatternsInsight struct {
 	// AsOf The filter's point in time; null reads the current recorded state.
@@ -1611,6 +1721,136 @@ type InventoryExportInsight struct {
 		Repository          string   `json:"Repository"`
 		URL                 string   `json:"URL"`
 	} `json:"rows"`
+}
+
+// LocInsight Ephemeral derived Insight ViewModel from traust-core's loc view: the lines of code the scope's repositories hold at their observed default-branch commit as of `as_of`, by language and by repository, largest first, with an optional comparison to an earlier moment and an optional first-party estimate from an explicitly supplied divisor. `code` excludes documentation languages; `total` includes them. Per-repository language counts are the code-facts artifact's language counts, referenced by $id. Decimals are Python decimal strings (exponent form allowed: `1E+2`). Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null.
+type LocInsight struct {
+	// AsOf The moment measured: the filter's, else the clock's.
+	AsOf time.Time       `json:"as_of"`
+	Code LocInsightCount `json:"code"`
+
+	// Comparison The baseline at the earlier moment asked for; null when none was.
+	Comparison    *LocInsightComparison `json:"comparison"`
+	Dispositioned LocInsightCount       `json:"dispositioned"`
+
+	// FirstPartyDivisor The explicitly supplied divisor; null when none was.
+	FirstPartyDivisor *LocInsightPositiveDecimal `json:"first_party_divisor"`
+
+	// FirstPartyEstimate Measured code over the divisor: an estimate, not a measurement; null without a divisor or with nothing measured.
+	FirstPartyEstimate *LocInsightDecimal `json:"first_party_estimate"`
+
+	// Languages One row per language measured in the scope, most code lines first, then name.
+	Languages []LocInsightLanguageTotal `json:"languages"`
+	Reported  LocInsightCount           `json:"reported"`
+
+	// Repositories One row per repository in scope: measured ones most code lines first, then unmeasured ones, then URL.
+	Repositories []LocInsightRepository `json:"repositories"`
+	Total        LocInsightCount        `json:"total"`
+}
+
+// LocInsightComparison The scope measured at the earlier moment, and the change across repositories measured at both.
+type LocInsightComparison struct {
+	// AsOf The earlier moment; it precedes the view's as_of.
+	AsOf                   time.Time       `json:"as_of"`
+	Code                   LocInsightCount `json:"code"`
+	CodeDelta              int             `json:"code_delta"`
+	ComparableRepositories LocInsightCount `json:"comparable_repositories"`
+	MeasuredRepositories   LocInsightCount `json:"measured_repositories"`
+	Total                  LocInsightCount `json:"total"`
+	TotalDelta             int             `json:"total_delta"`
+}
+
+// LocInsightCount defines model for LocInsightCount.
+type LocInsightCount = int
+
+// LocInsightDecimal A non-negative Python decimal string. No whitespace: a pattern's $ would otherwise accept a trailing newline.
+type LocInsightDecimal = string
+
+// LocInsightLanguageTotal defines model for LocInsightLanguageTotal.
+type LocInsightLanguageTotal struct {
+	Code LocInsightCount `json:"code"`
+
+	// Documentation A documentation language: counted in total, not in code.
+	Documentation bool   `json:"documentation"`
+	Name          string `json:"name"`
+
+	// Repositories Measured repositories holding the language.
+	Repositories int `json:"repositories"`
+}
+
+// LocInsightPositiveDecimal A non-negative Python decimal string. No whitespace: a pattern's $ would otherwise accept a trailing newline.
+type LocInsightPositiveDecimal = LocInsightDecimal
+
+// LocInsightRepository A repository's measured lines at its default-branch commit; `unmeasured` says why not.
+type LocInsightRepository struct {
+	Code *int `json:"code"`
+
+	// CodeDelta Code-line change since the comparison; null when not measured at both moments.
+	CodeDelta *int `json:"code_delta"`
+
+	// Languages Measured languages, most lines first, then name.
+	Languages []struct {
+		Blanks   *int   `json:"blanks"`
+		Code     int    `json:"code"`
+		Comments *int   `json:"comments"`
+		Files    *int   `json:"files"`
+		Name     string `json:"name"`
+	} `json:"languages"`
+
+	// Primary The language with the most lines; null when none was measured.
+	Primary      *string            `json:"primary"`
+	RepositoryId openapi_types.UUID `json:"repository_id"`
+
+	// RepositoryRefId The default-branch commit measured; null when no head was observed.
+	RepositoryRefId *openapi_types.UUID `json:"repository_ref_id"`
+
+	// RepositoryUrl The raw recorded URL.
+	RepositoryUrl string `json:"repository_url"`
+	Total         *int   `json:"total"`
+	TotalDelta    *int   `json:"total_delta"`
+
+	// Unmeasured Why the repository was not measured; null when it was.
+	Unmeasured *string `json:"unmeasured"`
+}
+
+// PqcInsight Ephemeral derived Insight ViewModel from traust-core's pqc view: the latest PQC readiness of each commit, per named product (else every commit), rolled up by readiness bucket and by dominant provenance. It reads readiness as it stands, so Core refuses an as_of, and a team scope. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
+type PqcInsight struct {
+	// Scopes One scope per product the filter names, in the filter's order; one scope with product_id null when none is named.
+	Scopes []PqcInsightScope `json:"scopes"`
+}
+
+// PqcInsightCount defines model for PqcInsightCount.
+type PqcInsightCount = int
+
+// PqcInsightRollup One group of commits' latest readiness: how many, how ready, and what is left to do.
+type PqcInsightRollup struct {
+	Blocked      PqcInsightCount `json:"blocked"`
+	Clock2030    PqcInsightCount `json:"clock_2030"`
+	HndlPriority PqcInsightCount `json:"hndl_priority"`
+
+	// Key The group: a pqc-readiness-bucket value or unbucketed (by_bucket), a pqc-dominant-provenance value (by_provenance).
+	Key string `json:"key"`
+
+	// MeanOverall Their mean overall score (0-100), to one decimal.
+	MeanOverall float64 `json:"mean_overall"`
+
+	// Remediations Remediation category to how many remediations the group's readiness lists; only categories seen appear.
+	Remediations map[string]int `json:"remediations"`
+
+	// Repositories Commits in the group, each at its latest readiness.
+	Repositories int `json:"repositories"`
+}
+
+// PqcInsightScope defines model for PqcInsightScope.
+type PqcInsightScope struct {
+	// ByBucket One row per readiness bucket the commits fall in (unbucketed for readiness that predates buckets), by key.
+	ByBucket []PqcInsightRollup `json:"by_bucket"`
+
+	// ByProvenance One row per dominant provenance, by key.
+	ByProvenance []PqcInsightRollup `json:"by_provenance"`
+
+	// ProductId The scoped product; null for every commit.
+	ProductId *openapi_types.UUID `json:"product_id"`
 }
 
 // PqcPortfolioInsight Ephemeral derived Insight ViewModel from traust-core's pqc-portfolio view: post-quantum readiness worklists as recorded now (there is no as_of), one scope per named product (else one scope over every assessed commit), and, when no product is named, a product index worst first. Readiness records are Core's projection of the pqc-readiness reports, not the report documents. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null (empty when the report has none). JSON Schema checks structure and ranges, not arithmetic across fields.
@@ -1854,6 +2094,88 @@ type PqcPortfolioInsightUuid = openapi_types.UUID
 // PqcPortfolioInsightYear A NIST IR 8547 clock year; null when none applies.
 type PqcPortfolioInsightYear = int
 
+// PqcVendorsInsight Ephemeral derived Insight ViewModel from traust-core's pqc-vendors view: the latest recorded pqc-vendor-claims, worst status first, each claim with the count of repositories whose latest default-branch manifest SBOM holds its packages, and the repositories whose newest readiness is blocked-external. Claims are Core's projection of the pqc-vendor-claims artifact (every optional field present, null when absent); each field references that artifact's own definition. It reads the latest claims and manifests, so Core refuses an as_of, and a product or team scope. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null.
+type PqcVendorsInsight struct {
+	// BlockedExternal The raw URLs of repositories whose newest-assessed commit reads blocked-external, sorted (one entry per repository; Core does not constrain URLs unique).
+	BlockedExternal []string `json:"blocked_external"`
+
+	// ClaimsArtifactId The recorded pqc-vendor-claims artifact the claims are from.
+	ClaimsArtifactId openapi_types.UUID     `json:"claims_artifact_id"`
+	Repositories     PqcVendorsInsightCount `json:"repositories"`
+	Unmeasured       PqcVendorsInsightCount `json:"unmeasured"`
+	Updated          openapi_types.Date     `json:"updated"`
+
+	// Vendors One row per vendor claim, worst status first (none, in_progress, partial, available), then most repositories, then id. Never empty: one row per claim of the recorded artifact, which holds at least one.
+	Vendors []PqcVendorsInsightRow `json:"vendors"`
+
+	// Version Increases with each published successor.
+	Version int `json:"version"`
+}
+
+// PqcVendorsInsightClaim One vendor's dated, sourced PQC claim, as reviewed.
+type PqcVendorsInsightClaim struct {
+	// Claim What the vendor ships or has announced, as reviewed.
+	Claim string `json:"claim"`
+
+	// Class provider: a crypto provider or toolchain (OpenSSL, Go, JDK). library: a crypto library packages depend on. ecosystem: a signing or identity ecosystem (Sigstore, GnuPG, Kerberos). service: a hosted service the fleet calls. internal: the organization's own shared services.
+	Class PqcVendorsInsightClaimClass `json:"class"`
+
+	// Id Unique within the document (the recording service checks).
+	Id           string             `json:"id"`
+	LastReviewed openapi_types.Date `json:"last_reviewed"`
+	Name         string             `json:"name"`
+
+	// Packages Dependencies carrying the vendor's crypto into the fleet; empty when reached only through a provider, toolchain or service.
+	Packages []PqcVendorsInsightPackage `json:"packages"`
+
+	// Reviewer Who reviewed the claim (team or role).
+	Reviewer string                    `json:"reviewer"`
+	Sources  []PqcVendorsInsightSource `json:"sources"`
+
+	// Status available: PQC algorithms shipped and usable. partial: some (e.g. key exchange but not signatures). in_progress: announced or in preview. none: no public roadmap.
+	Status PqcVendorsInsightClaimStatus `json:"status"`
+
+	// Watch The signal that would move the status.
+	Watch *string `json:"watch"`
+}
+
+// PqcVendorsInsightClaimClass provider: a crypto provider or toolchain (OpenSSL, Go, JDK). library: a crypto library packages depend on. ecosystem: a signing or identity ecosystem (Sigstore, GnuPG, Kerberos). service: a hosted service the fleet calls. internal: the organization's own shared services.
+type PqcVendorsInsightClaimClass string
+
+// PqcVendorsInsightClaimStatus available: PQC algorithms shipped and usable. partial: some (e.g. key exchange but not signatures). in_progress: announced or in preview. none: no public roadmap.
+type PqcVendorsInsightClaimStatus string
+
+// PqcVendorsInsightCount defines model for PqcVendorsInsightCount.
+type PqcVendorsInsightCount = int
+
+// PqcVendorsInsightPackage defines model for PqcVendorsInsightPackage.
+type PqcVendorsInsightPackage struct {
+	// Ecosystem Package ecosystem of the affected module; the same vocabulary as report.schema.json finding.dependency.ecosystem (enums/v1/ecosystem.json). actions/docker/helm are manifest-level dependency surfaces (no reachability tier); rpm/deb/apk are distro ecosystems for C/C++ packages (no reachability tier). Optional (defaults to go semantics when absent) and non-breaking.
+	Ecosystem *PqcVendorsInsightPackageEcosystem `json:"ecosystem"`
+	Name      string                             `json:"name"`
+}
+
+// PqcVendorsInsightPackageEcosystem Package ecosystem of the affected module; the same vocabulary as report.schema.json finding.dependency.ecosystem (enums/v1/ecosystem.json). actions/docker/helm are manifest-level dependency surfaces (no reachability tier); rpm/deb/apk are distro ecosystems for C/C++ packages (no reachability tier). Optional (defaults to go semantics when absent) and non-breaking.
+type PqcVendorsInsightPackageEcosystem string
+
+// PqcVendorsInsightRow A vendor's latest claim and the repositories whose manifests hold its packages.
+type PqcVendorsInsightRow struct {
+	// Claim One vendor's dated, sourced PQC claim, as reviewed.
+	Claim PqcVendorsInsightClaim `json:"claim"`
+
+	// Repositories Repositories holding any of its packages; null when the claim names no package (reached through a provider, toolchain or service).
+	Repositories *int `json:"repositories"`
+}
+
+// PqcVendorsInsightSource defines model for PqcVendorsInsightSource.
+type PqcVendorsInsightSource struct {
+	Retrieved openapi_types.Date `json:"retrieved"`
+
+	// Title Null when the source names none.
+	Title *string `json:"title"`
+	Url   string  `json:"url"`
+}
+
 // PqcWorklistInsight Ephemeral derived Insight ViewModel from PqcService.worklist, using recorded repository liveness and scan state. Not a persisted artifact or SQL projection. Scope selection, ranking and routing belong to Core; unknown state does not establish readiness.
 type PqcWorklistInsight struct {
 	// Chokepoints Caller-supplied repository URL fragments, not persisted configuration. Strings remain raw untrusted data, not authored Markdown or HTML.
@@ -1982,6 +2304,64 @@ type PrivilegesInsightRow struct {
 	Workloads     PrivilegesInsightCount `json:"workloads"`
 }
 
+// ProgramInsight Ephemeral derived Insight ViewModel from traust-core's program view: what the program spent and ran over an explicit window, derived from spend events and run orders, never a stored snapshot. Spend splits into what run orders claim and what no order claims, and rolls up by month, model, lane and skill (rollups are the shared spend-records definitions); throughput counts each registered asset's finished run orders per bucket, by outcome. Core needs the window and does not order its bounds. Not a persisted artifact or SQL projection. Every serialized field is required; lists are never null. Keys, models, lanes, skills and asset names are raw recorded text.
+type ProgramInsight struct {
+	// Bucket The throughput bucket: a UTC day, ISO week (from Monday) or calendar month.
+	Bucket ProgramInsightBucket `json:"bucket"`
+
+	// ByLane Per work lane, by key; spend without a lane last (null key).
+	ByLane []SpendRecordsInsightRollup `json:"by_lane"`
+
+	// ByModel Per model, by key.
+	ByModel []SpendRecordsInsightRollup `json:"by_model"`
+
+	// ByMonth Per UTC calendar month (key YYYY-MM), oldest first.
+	ByMonth []SpendRecordsInsightRollup `json:"by_month"`
+
+	// BySkill Per skill, by key; spend without a skill last (null key).
+	BySkill []SpendRecordsInsightRollup `json:"by_skill"`
+
+	// Spend The window's spend split by whether a run order claims it; the two sum to the total.
+	Spend struct {
+		// AttributedUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+		AttributedUsd SpendRecordsInsightUsd `json:"attributed_usd"`
+
+		// UnattributedUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+		UnattributedUsd SpendRecordsInsightUsd `json:"unattributed_usd"`
+		Window          struct {
+			// End Exclusive.
+			End   time.Time `json:"end"`
+			Start time.Time `json:"start"`
+		} `json:"window"`
+	} `json:"spend"`
+
+	// Throughput Per registered asset (by name, sorted; never empty), its finished run orders in every bucket of the window, oldest first, zero-filled: an idle asset has a point per bucket with every count 0. A series is empty only when the window is (Core does not order its bounds).
+	Throughput map[string][]ProgramInsightPoint `json:"throughput"`
+
+	// Window The explicit timezone-aware window, start inclusive, end exclusive.
+	Window struct {
+		// End Exclusive.
+		End   time.Time `json:"end"`
+		Start time.Time `json:"start"`
+	} `json:"window"`
+}
+
+// ProgramInsightBucket The throughput bucket: a UTC day, ISO week (from Monday) or calendar month.
+type ProgramInsightBucket string
+
+// ProgramInsightPoint Run orders finished within one bucket, by outcome: every finished outcome, zero-filled.
+type ProgramInsightPoint struct {
+	// Bucket The bucket's start.
+	Bucket   time.Time `json:"bucket"`
+	Finished struct {
+		Degraded  int `json:"degraded"`
+		Failed    int `json:"failed"`
+		Refused   int `json:"refused"`
+		Succeeded int `json:"succeeded"`
+		Withheld  int `json:"withheld"`
+	} `json:"finished"`
+}
+
 // RemediationIndexInsight Ephemeral derived Insight ViewModel from traust-core's remediation-index view: every remediation work item of the scope's repositories (named products and teams, else every repository) as it stands now, grouped per product, with where its fix lives and its status, and the rows counted by status. There is no as_of: the index reads work items as they stand. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not arithmetic across fields.
 type RemediationIndexInsight struct {
 	// ByStatus Rows per status; only statuses with at least one row appear. Counts rows, so a work item listed under several products counts once per product.
@@ -2018,6 +2398,39 @@ type RemediationIndexInsightRow struct {
 
 // RemediationIndexInsightStatus Where the work item stands, from the remediation-status registry.
 type RemediationIndexInsightStatus string
+
+// ScoreboardInsight Ephemeral derived Insight ViewModel from traust-core's scoreboard view: the leadership scoreboard's headline numbers read off the executive summary, findings trend and threat register as of `as_of`, plus the findings filed in Jira; it authors none. Open severities, risk themes and the trend point reference those views' own definitions. Not a persisted artifact or SQL projection. Every serialized field is required, nullable ones included. JSON Schema checks counts and shapes, not sums across fields.
+type ScoreboardInsight struct {
+	// AsOf The moment read: the filter's, else the clock's.
+	AsOf            time.Time              `json:"as_of"`
+	CredentialLeaks ScoreboardInsightCount `json:"credential_leaks"`
+	Dispositioned   ScoreboardInsightCount `json:"dispositioned"`
+	ExecutionProven ScoreboardInsightCount `json:"execution_proven"`
+	FalsePositives  ScoreboardInsightCount `json:"false_positives"`
+	Filed           ScoreboardInsightCount `json:"filed"`
+	Hardening       ScoreboardInsightCount `json:"hardening"`
+
+	// Open Counts by effective severity; unrated counts findings with no severity. Every key is always present.
+	Open                     FindingsRollupInsightSeverityCounts `json:"open"`
+	OpenThreats              ScoreboardInsightCount              `json:"open_threats"`
+	Reported                 ScoreboardInsightCount              `json:"reported"`
+	Repositories             ScoreboardInsightCount              `json:"repositories"`
+	RepositoriesWithCritical ScoreboardInsightCount              `json:"repositories_with_critical"`
+	RepositoriesWithHigh     ScoreboardInsightCount              `json:"repositories_with_high"`
+	Resolved                 ScoreboardInsightCount              `json:"resolved"`
+	RiskAccepted             ScoreboardInsightCount              `json:"risk_accepted"`
+
+	// Themes Risk theme (raw label) to the findings carrying it; only themes seen appear.
+	Themes       ExecutiveSummaryInsightThemeCounts `json:"themes"`
+	ThreatModels ScoreboardInsightCount             `json:"threat_models"`
+	Threats      ScoreboardInsightCount             `json:"threats"`
+
+	// Trend The findings trend's latest bucket; null when it has none.
+	Trend *FindingsTrendInsightPoint `json:"trend"`
+}
+
+// ScoreboardInsightCount defines model for ScoreboardInsightCount.
+type ScoreboardInsightCount = int
 
 // SlaInsight Ephemeral derived Insight ViewModel from traust-core's sla view: owner-response SLA clocks over the scope's findings (named products and teams, else every repository; false positives and hardening excluded) as of as_of, one block per profile of the deployment's SLA policy. Profiles are different clocks over the same findings. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not arithmetic across fields.
 type SlaInsight struct {
@@ -2138,6 +2551,124 @@ type SlaInsightTeam struct {
 	Team      string          `json:"team"`
 	WorstDays SlaInsightCount `json:"worst_days"`
 }
+
+// SpendInsight Ephemeral derived Insight ViewModel from traust-core's spend view (financial-tracking): list-priced spend per UTC calendar month the window touches, split by skill, lane, model and business unit (run order, repository, product, corpus registry), with the estimate's limits named: models whose rate the registry does not confirm, models it does not know, invoices reconciled, and one month's unit economics. Spend no business unit claims stays unattributed (a null key), never redistributed. Rollups are the shared spend-records definitions. Core needs the window, is fleet-wide (it refuses a product or team scope) and does not order the window's bounds. Not a persisted artifact or SQL projection. Every serialized field is required, nullable ones included; lists are never null. Keys, models and notes are raw recorded text.
+type SpendInsight struct {
+	// Invoices The months with a recorded invoice, oldest first.
+	Invoices []SpendInsightInvoice `json:"invoices"`
+
+	// Months Each UTC calendar month the window touches, oldest first, clipped to the window; empty only over an empty window.
+	Months []SpendInsightMonth `json:"months"`
+
+	// UnitEconomics The latest month with spend, over all-time counts; null when no month has spend.
+	UnitEconomics *SpendInsightUnitEconomics `json:"unit_economics"`
+
+	// UnregisteredModels Models spent on that the registry does not know, sorted.
+	UnregisteredModels []string `json:"unregistered_models"`
+
+	// UnverifiedModels Models spent on whose list price the registry does not confirm, sorted.
+	UnverifiedModels []string `json:"unverified_models"`
+
+	// UnverifiedUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	UnverifiedUsd SpendRecordsInsightUsd `json:"unverified_usd"`
+
+	// Window The explicit timezone-aware window.
+	Window struct {
+		// End Exclusive.
+		End   time.Time `json:"end"`
+		Start time.Time `json:"start"`
+	} `json:"window"`
+}
+
+// SpendInsightCoverage A share of the month's cost, 0-100, rounded to one decimal, as a Python decimal string.
+type SpendInsightCoverage = string
+
+// SpendInsightInvoice A month's billed amount against its list-priced estimate.
+type SpendInsightInvoice struct {
+	// EstimateUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	EstimateUsd SpendRecordsInsightUsd `json:"estimate_usd"`
+
+	// InvoicedUsd A US-dollar amount that may be negative, as a Python decimal string.
+	InvoicedUsd SpendInsightSignedUsd `json:"invoiced_usd"`
+
+	// Note As recorded; may be empty.
+	Note string `json:"note"`
+
+	// Period The month, YYYY-MM.
+	Period string `json:"period"`
+
+	// VariancePct The variance as a share (%) of the estimate; null when the estimate is zero.
+	VariancePct *SpendInsightPercent `json:"variance_pct"`
+
+	// VarianceUsd A US-dollar amount that may be negative, as a Python decimal string.
+	VarianceUsd SpendInsightSignedUsd `json:"variance_usd"`
+}
+
+// SpendInsightMonth One month's spend, split by skill, lane, model and business unit; each split's null-key row is what nothing in that dimension claims.
+type SpendInsightMonth struct {
+	// BusinessUnitCoverage The share (%) of the month's cost that resolves to a business unit; null when the month cost nothing.
+	BusinessUnitCoverage *SpendInsightCoverage       `json:"business_unit_coverage"`
+	ByBusinessUnit       []SpendRecordsInsightRollup `json:"by_business_unit"`
+	ByLane               []SpendRecordsInsightRollup `json:"by_lane"`
+	ByModel              []SpendRecordsInsightRollup `json:"by_model"`
+	BySkill              []SpendRecordsInsightRollup `json:"by_skill"`
+
+	// Month The UTC calendar month, YYYY-MM.
+	Month string `json:"month"`
+
+	// SkillUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	SkillUsd SpendRecordsInsightUsd `json:"skill_usd"`
+
+	// Total The month's spend over every event (every event names its model); zero counts when the month had none.
+	Total SpendInsightTotal `json:"total"`
+}
+
+// SpendInsightPercent A percentage rounded to one decimal, as a Python decimal string.
+type SpendInsightPercent = string
+
+// SpendInsightSignedUsd A US-dollar amount that may be negative, as a Python decimal string.
+type SpendInsightSignedUsd = string
+
+// SpendInsightTotal The month's spend over every event (every event names its model); zero counts when the month had none.
+type SpendInsightTotal struct {
+	// CostUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	CostUsd   SpendRecordsInsightUsd `json:"cost_usd"`
+	Events    int                    `json:"events"`
+	Key       interface{}            `json:"key"`
+	TokensIn  int                    `json:"tokens_in"`
+	TokensOut int                    `json:"tokens_out"`
+}
+
+// SpendInsightUnitEconomics One month's skill spend over the all-time counts as of the view's point in time: internal cost ratios, not coverage claims.
+type SpendInsightUnitEconomics struct {
+	// CriticalHigh Open and remediated critical and high findings.
+	CriticalHigh int `json:"critical_high"`
+
+	// Findings Tracked findings that are not false positives.
+	Findings     int    `json:"findings"`
+	Month        string `json:"month"`
+	Repositories int    `json:"repositories"`
+
+	// SpendUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	SpendUsd SpendRecordsInsightUsd `json:"spend_usd"`
+}
+
+// SpendRecordsInsightRollup Spend summed over one group. Its key is the group's value, null for spend without that dimension (no lane, no skill).
+type SpendRecordsInsightRollup struct {
+	// CostUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	CostUsd SpendRecordsInsightUsd `json:"cost_usd"`
+
+	// Events Spend events in the group: a group is never empty.
+	Events int `json:"events"`
+
+	// Key Raw recorded text.
+	Key       *string `json:"key"`
+	TokensIn  int     `json:"tokens_in"`
+	TokensOut int     `json:"tokens_out"`
+}
+
+// SpendRecordsInsightUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+type SpendRecordsInsightUsd = string
 
 // ThreatRegisterInsight Ephemeral derived Insight ViewModel from traust-core's threat-register view: the scope's standing threats from each repository's latest completed threat model as of as_of, ranked, with class-closing quick wins, tenant boundaries weakest first and the open doc variances. Threats, mitigations and boundaries are Core's projections of the threat-model documents, not the documents. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
 type ThreatRegisterInsight struct {

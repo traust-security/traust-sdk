@@ -3,11 +3,14 @@
 
 Runs in core's environment at CORE_REF (`$(CORE_PYTHON)`), so the view schemas are the
 `views_schema/v1` contracts core validates its views with: no second contracts pin. Each
-view becomes `<View>Insight` and each of its `$defs` `<View>Insight<Def>`; a views_schema file
-that is no view (finding-records) is shared definitions, each `<Name><Def>`; references into
+view becomes `<View>Insight` and each of its `$defs` `<View>Insight<Def>`; references into
 artifact schemas are inlined. A view composed from others (the executive summary) references
 their contracts: a reference to another view, or to one of its `$defs`, becomes that view's
-component, so a shape is generated once; a reference deeper into another view is inlined. Validation-only keywords (if/then/else, contains, not,
+component, so a shape is generated once; a reference deeper into another view is inlined.
+A contract of shared definitions a view references (finding-records) is no view itself: its
+`$defs` become components under its own name the same way, reached through the views that
+reference them, and it never lists in x-traust-insights (only a ViewName is askable).
+Validation-only keywords (if/then/else, contains, not,
 propertyNames, const) are dropped: the structs carry the shape, core enforces the rest.
 Numbers are doubles so a measured value round-trips exactly.
 
@@ -19,7 +22,7 @@ from __future__ import annotations
 import copy
 import json
 import sys
-from collections.abc import Callable, Iterable
+from collections.abc import Iterable
 from typing import TypeAlias
 
 # a JSON Schema tree as json.load returns it
@@ -63,29 +66,34 @@ def view_reference(ref: str) -> tuple[str, str] | None:
     return target.rsplit("/", 1)[-1].removesuffix(".schema.json"), path
 
 
-# views_schema files that are shared definitions, not views (finding-records): components()
-# fills it from the references the views make; their `$defs` are `<Name><Def>`, no Insight
-SHARED: set[str] = set()
-
-
 def view_component(ref: str) -> str | None:
-    """The component a reference to another view (or one of its `$defs`) names, else None; a
-    shared schema's definition is `<Name><Def>`, and a shared schema has no root component."""
+    """The component a reference to another view (or one of its `$defs`) names, else None."""
     found = view_reference(ref)
     if found is None:
         return None
     view, path = found
     parts = [p for p in path.split("/") if p]
-    defined = len(parts) == 2 and parts[0] == "$defs"
-    if view in SHARED:
-        if not defined:
-            raise SystemExit(f"{ref}: a shared schema is referenced by its $defs only")
-        return pascal(view) + pascal(parts[1])
     if not parts:
         return pascal(view) + "Insight"
-    if defined:
+    if len(parts) == 2 and parts[0] == "$defs":
         return pascal(view) + "Insight" + pascal(parts[1])
     return None
+
+
+def referenced_contracts(node: Json) -> list[str]:
+    """The view contracts an inlined tree still references by name: the references kept
+    as components (another view's, a shared contract's), never the inlined rest."""
+    if isinstance(node, list):
+        return [name for item in node for name in referenced_contracts(item)]
+    if not isinstance(node, dict):
+        return []
+    own: list[str] = []
+    ref = node.get("$ref")
+    if isinstance(ref, str) and not ref.startswith("#"):
+        found = view_reference(ref)
+        if found is not None:
+            own.append(found[0])
+    return own + [name for value in node.values() for name in referenced_contracts(value)]
 
 
 def inline_external(node: Json, document: Json) -> Json:
@@ -152,7 +160,11 @@ def openapi(node: Json, prefix: str) -> Json:
             continue
         out[key] = openapi(value, prefix)
     kinds = out.get("type")
-    if isinstance(kinds, list):
+    if kinds in ("null", ["null"]):
+        # always null (a summed row's key, say): 3.0 has no null type, so no type, nullable
+        del out["type"]
+        out["nullable"] = True
+    elif isinstance(kinds, list):
         concrete = [k for k in kinds if k != "null"]
         if len(concrete) != 1:
             raise SystemExit(f"{prefix}: a type list needs one non-null type: {kinds}")
@@ -167,7 +179,8 @@ def openapi(node: Json, prefix: str) -> Json:
     branches = out.get("oneOf") or out.get("anyOf")
     if isinstance(branches, list):
         key = "oneOf" if "oneOf" in out else "anyOf"
-        kept = [b for b in branches if b != {"type": "null"}]
+        # a null branch, already converted to an untyped nullable on the way down
+        kept = [b for b in branches if b not in ({"type": "null"}, {"nullable": True})]
         if len(kept) != len(branches):
             out["nullable"] = True
             if len(kept) == 1:
@@ -199,74 +212,35 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
     from traust_core.v1.errors import ConfigError
     from traust_core.v1.models.insight import ViewName
 
+    served = {view.value for view in ViewName}
     found: dict[str, Json] = {}
     views: dict[str, str] = {}
-    schemas: dict[str, Json] = {}
-    for view in ViewName:
+    # A served view's contract may reference one that is not a view (finding-records:
+    # definitions shared across views, no GetInsight route): its `$defs` generate as
+    # components under its own name — a shape generates once — reached through the views
+    # that reference it. Only a ViewName lists in x-traust-insights.
+    pending = [view.value for view in ViewName]
+    seen: set[str] = set()
+    while pending:
+        name = pending.pop()
+        if name in seen:
+            continue
+        seen.add(name)
         try:
-            schema = contracts.view_schema(view.value)
+            schema = contracts.view_schema(name)
         except ConfigError:
             continue  # no contract yet: GetInsight still returns it untyped
-        # outside the skip: a view whose references cannot load stops the generator
-        schemas[view.value] = inline_external(schema, schema)
-    read = shared_reader(contracts.view_schema, ConfigError)
-    found.update(shared_components(schemas, lambda name: inline_external(*[read(name)] * 2)))
-    for name, schema in schemas.items():
+        schema = inline_external(schema, schema)
         prefix = pascal(name) + "Insight"
         found[prefix] = openapi(schema, prefix)
         found.update(
-            (prefix + pascal(key), openapi(definition, prefix))
-            for key, definition in schema.get("$defs", {}).items()
+            (prefix + pascal(defn), openapi(definition, prefix))
+            for defn, definition in schema.get("$defs", {}).items()
         )
-        views[prefix] = name
+        if name in served:
+            views[prefix] = name
+        pending += referenced_contracts(schema)
     return reachable(found, views), views
-
-
-def shared_reader(
-    read: Callable[[str], Json], missing: type[Exception]
-) -> Callable[[str], Json]:
-    """`read`, stopping the generator cleanly when traust-contracts has no such schema (`read`
-    raises `missing`) rather than with a traceback."""
-
-    def reader(name: str) -> Json:
-        try:
-            return read(name)
-        except missing:
-            raise SystemExit(f"{name}: referenced, but traust-contracts has no such schema") from None
-
-    return reader
-
-
-# a schema with any of these at its root has a shape of its own: a view, not shared definitions
-_ROOT_SHAPE = {"type", "properties", "items", "$ref", "oneOf", "anyOf", "allOf", "enum", "const"}
-
-
-def shared_components(views: dict[str, Json], load: Callable[[str], Json]) -> dict[str, Json]:
-    """The components of every shared schema the views reach: a views_schema file holding only
-    $defs (a schema with a root shape is a view, and stops the generator if it is not one). Every one is found first (they may reference each other), then each is converted, so
-    a reference between them already names a shared component; SHARED starts from none."""
-    SHARED.clear()
-    shared: dict[str, Json] = {}
-    pending = [r for schema in views.values() for r in refs(schema)]
-    while pending:
-        target = view_reference(pending.pop())
-        if target is None or target[0] in views or target[0] in shared:
-            continue
-        loaded = load(target[0])
-        if set(loaded) & _ROOT_SHAPE:
-            # a view contract with no ViewName (or one core could not load), never shared
-            raise SystemExit(
-                f"{target[0]}: referenced like a view, but Core has no view contract by that "
-                "name; a shared schema holds only $defs"
-            )
-        shared[target[0]] = loaded
-        pending += refs(loaded)
-    SHARED.update(shared)
-    return {
-        pascal(name) + pascal(key): openapi(definition, pascal(name))
-        for name, schema in shared.items()
-        for key, definition in schema.get("$defs", {}).items()
-    }
 
 
 def reachable(found: dict[str, Json], roots: Iterable[str]) -> dict[str, Json]:

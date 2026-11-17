@@ -279,9 +279,9 @@ func TestContainerFindingsDecodeIntoTheSharedFindingRecords(t *testing.T) {
 		t.Fatalf("findings = %d, want 1", len(found.Findings))
 	}
 	row := found.Findings[0]
-	view := is[traust.FindingRecordsFindingView](row.View)
-	if view.Finding.Title != "openssl in the base image" || len(is[[]traust.FindingRecordsOccurrence](row.Occurrences)) != 1 ||
-		len(is[[]traust.FindingRecordsDecision](row.History)) != 1 {
+	view := is[traust.FindingRecordsInsightFindingView](row.View)
+	if view.Finding.Title != "openssl in the base image" || len(is[[]traust.FindingRecordsInsightOccurrence](row.Occurrences)) != 1 ||
+		len(is[[]traust.FindingRecordsInsightDecision](row.History)) != 1 {
 		t.Fatalf("row = %+v", row)
 	}
 	for _, tt := range []struct {
