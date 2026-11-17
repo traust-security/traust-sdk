@@ -12,6 +12,8 @@ func (*ComplianceInsight) insightName() ViewName { return Compliance }
 
 func (*CompliancePrecisionInsight) insightName() ViewName { return CompliancePrecision }
 
+func (*ContainerFindingsInsight) insightName() ViewName { return ContainerFindings }
+
 func (*CoverageInsight) insightName() ViewName { return Coverage }
 
 func (*CriticalMissesInsight) insightName() ViewName { return CriticalMisses }
@@ -30,7 +32,11 @@ func (*InsecurePatternsInsight) insightName() ViewName { return InsecurePatterns
 
 func (*InventoryExportInsight) insightName() ViewName { return InventoryExport }
 
+func (*PqcInsight) insightName() ViewName { return Pqc }
+
 func (*PqcPortfolioInsight) insightName() ViewName { return PqcPortfolio }
+
+func (*PqcVendorsInsight) insightName() ViewName { return PqcVendors }
 
 func (*PqcWorklistInsight) insightName() ViewName { return PqcWorklist }
 
