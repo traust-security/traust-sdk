@@ -8,11 +8,17 @@ func (*BenchmarkScorecardsInsight) insightName() ViewName { return BenchmarkScor
 
 func (*CensusInsight) insightName() ViewName { return Census }
 
+func (*ComplianceInsight) insightName() ViewName { return Compliance }
+
 func (*CompliancePrecisionInsight) insightName() ViewName { return CompliancePrecision }
+
+func (*ContainerFindingsInsight) insightName() ViewName { return ContainerFindings }
 
 func (*CoverageInsight) insightName() ViewName { return Coverage }
 
 func (*CriticalMissesInsight) insightName() ViewName { return CriticalMisses }
+
+func (*DependencyReachInsight) insightName() ViewName { return DependencyReach }
 
 func (*ExecutiveSummaryInsight) insightName() ViewName { return ExecutiveSummary }
 
@@ -22,14 +28,24 @@ func (*FindingsRollupInsight) insightName() ViewName { return FindingsRollup }
 
 func (*FindingsTrendInsight) insightName() ViewName { return FindingsTrend }
 
+func (*InsecurePatternsInsight) insightName() ViewName { return InsecurePatterns }
+
 func (*InventoryExportInsight) insightName() ViewName { return InventoryExport }
+
+func (*PqcInsight) insightName() ViewName { return Pqc }
 
 func (*PqcPortfolioInsight) insightName() ViewName { return PqcPortfolio }
 
+func (*PqcVendorsInsight) insightName() ViewName { return PqcVendors }
+
 func (*PqcWorklistInsight) insightName() ViewName { return PqcWorklist }
+
+func (*PrivilegesInsight) insightName() ViewName { return Privileges }
 
 func (*RemediationIndexInsight) insightName() ViewName { return RemediationIndex }
 
 func (*SlaInsight) insightName() ViewName { return Sla }
 
 func (*ThreatRegisterInsight) insightName() ViewName { return ThreatRegister }
+
+func (*ValidationFuzzInsight) insightName() ViewName { return ValidationFuzz }
