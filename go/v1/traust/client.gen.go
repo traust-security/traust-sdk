@@ -1262,7 +1262,8 @@ type FindingVerdict struct {
 
 // FindingView defines model for FindingView.
 type FindingView struct {
-	Cwes *[]string `json:"cwes,omitempty"`
+	Cwes        *[]string `json:"cwes,omitempty"`
+	Description *string   `json:"description"`
 
 	// Disposition A finding's merged judgement, ordered only by explicit E0-E3 evidence strength.
 	Disposition       *Disposition `json:"disposition,omitempty"`

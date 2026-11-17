@@ -1,6 +1,6 @@
 import unittest
 
-from views import openapi, pascal, reachable, refs, view_component
+from views import openapi, pascal, reachable, referenced_contracts, refs, view_component
 
 
 class ViewComponentTest(unittest.TestCase):
@@ -87,6 +87,26 @@ class ViewComponentTest(unittest.TestCase):
     def test_refs_lists_every_reference(self):
         node = {"properties": {"a": {"$ref": "#/x/A"}, "b": {"items": {"$ref": "#/x/B"}}}}
         self.assertEqual(sorted(refs(node)), ["#/x/A", "#/x/B"])
+
+    def test_referenced_contracts_names_the_kept_contracts(self):
+        base = "https://example.com/traust-contracts/views_schema/v1/"
+        node = {
+            "properties": {
+                "row": {"$ref": base + "finding-records.schema.json#/$defs/decision"},
+                "panel": {"$ref": base + "findings-rollup.schema.json"},
+                "inlined": {"type": "string"},
+            }
+        }
+        self.assertEqual(
+            sorted(referenced_contracts(node)), ["finding-records", "findings-rollup"]
+        )
+        self.assertEqual(referenced_contracts({"$ref": "#/x/A"}), [])
+        self.assertEqual(
+            referenced_contracts(
+                {"$ref": "https://example.com/traust-contracts/artifacts_schema/v1/x.schema.json"}
+            ),
+            [],
+        )
 
 
 if __name__ == "__main__":

@@ -6,7 +6,11 @@ Runs in core's environment at CORE_REF (`$(CORE_PYTHON)`), so the view schemas a
 view becomes `<View>Insight` and each of its `$defs` `<View>Insight<Def>`; references into
 artifact schemas are inlined. A view composed from others (the executive summary) references
 their contracts: a reference to another view, or to one of its `$defs`, becomes that view's
-component, so a shape is generated once; a reference deeper into another view is inlined. Validation-only keywords (if/then/else, contains, not,
+component, so a shape is generated once; a reference deeper into another view is inlined.
+A contract of shared definitions a view references (finding-records) is no view itself: its
+`$defs` become components under its own name the same way, reached through the views that
+reference them, and it never lists in x-traust-insights (only a ViewName is askable).
+Validation-only keywords (if/then/else, contains, not,
 propertyNames, const) are dropped: the structs carry the shape, core enforces the rest.
 Numbers are doubles so a measured value round-trips exactly.
 
@@ -74,6 +78,22 @@ def view_component(ref: str) -> str | None:
     if len(parts) == 2 and parts[0] == "$defs":
         return pascal(view) + "Insight" + pascal(parts[1])
     return None
+
+
+def referenced_contracts(node: Json) -> list[str]:
+    """The view contracts an inlined tree still references by name: the references kept
+    as components (another view's, a shared contract's), never the inlined rest."""
+    if isinstance(node, list):
+        return [name for item in node for name in referenced_contracts(item)]
+    if not isinstance(node, dict):
+        return []
+    own: list[str] = []
+    ref = node.get("$ref")
+    if isinstance(ref, str) and not ref.startswith("#"):
+        found = view_reference(ref)
+        if found is not None:
+            own.append(found[0])
+    return own + [name for value in node.values() for name in referenced_contracts(value)]
 
 
 def inline_external(node: Json, document: Json) -> Json:
@@ -187,21 +207,34 @@ def components() -> tuple[dict[str, Json], dict[str, str]]:
     from traust_core.v1.errors import ConfigError
     from traust_core.v1.models.insight import ViewName
 
+    served = {view.value for view in ViewName}
     found: dict[str, Json] = {}
     views: dict[str, str] = {}
-    for view in ViewName:
+    # A served view's contract may reference one that is not a view (finding-records:
+    # definitions shared across views, no GetInsight route): its `$defs` generate as
+    # components under its own name — a shape generates once — reached through the views
+    # that reference it. Only a ViewName lists in x-traust-insights.
+    pending = [view.value for view in ViewName]
+    seen: set[str] = set()
+    while pending:
+        name = pending.pop()
+        if name in seen:
+            continue
+        seen.add(name)
         try:
-            schema = contracts.view_schema(view.value)
+            schema = contracts.view_schema(name)
         except ConfigError:
             continue  # no contract yet: GetInsight still returns it untyped
         schema = inline_external(schema, schema)
-        prefix = pascal(view.value) + "Insight"
+        prefix = pascal(name) + "Insight"
         found[prefix] = openapi(schema, prefix)
         found.update(
-            (prefix + pascal(name), openapi(definition, prefix))
-            for name, definition in schema.get("$defs", {}).items()
+            (prefix + pascal(defn), openapi(definition, prefix))
+            for defn, definition in schema.get("$defs", {}).items()
         )
-        views[prefix] = view.value
+        if name in served:
+            views[prefix] = name
+        pending += referenced_contracts(schema)
     return reachable(found, views), views
 
 
