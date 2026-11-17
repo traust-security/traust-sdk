@@ -160,7 +160,11 @@ def openapi(node: Json, prefix: str) -> Json:
             continue
         out[key] = openapi(value, prefix)
     kinds = out.get("type")
-    if isinstance(kinds, list):
+    if kinds in ("null", ["null"]):
+        # always null (a summed row's key, say): 3.0 has no null type, so no type, nullable
+        del out["type"]
+        out["nullable"] = True
+    elif isinstance(kinds, list):
         concrete = [k for k in kinds if k != "null"]
         if len(concrete) != 1:
             raise SystemExit(f"{prefix}: a type list needs one non-null type: {kinds}")
@@ -175,7 +179,8 @@ def openapi(node: Json, prefix: str) -> Json:
     branches = out.get("oneOf") or out.get("anyOf")
     if isinstance(branches, list):
         key = "oneOf" if "oneOf" in out else "anyOf"
-        kept = [b for b in branches if b != {"type": "null"}]
+        # a null branch, already converted to an untyped nullable on the way down
+        kept = [b for b in branches if b not in ({"type": "null"}, {"nullable": True})]
         if len(kept) != len(branches):
             out["nullable"] = True
             if len(kept) == 1:

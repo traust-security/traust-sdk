@@ -14,6 +14,13 @@ class ViewComponentTest(unittest.TestCase):
             {"type": "string", "format": "date-time", "nullable": True},
         )
 
+    def test_an_always_null_type_becomes_an_untyped_nullable(self):
+        for kinds in ("null", ["null"]):
+            self.assertEqual(
+                openapi({"type": kinds, "description": "d"}, "P"),
+                {"description": "d", "nullable": True},
+            )
+
     def test_a_null_enum_member_becomes_nullability(self):
         out = openapi({"type": ["string", "null"], "enum": ["high", None]}, "P")
         self.assertEqual(out, {"type": "string", "enum": ["high"], "nullable": True})

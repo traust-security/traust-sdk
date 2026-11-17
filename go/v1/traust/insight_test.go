@@ -260,3 +260,56 @@ func TestTheExecutiveSummaryDecodesIntoItsComponentViews(t *testing.T) {
 		t.Fatalf("exposure = %+v", rows)
 	}
 }
+
+// Container findings embed the shared finding records: they decode, strictly, into the
+// FindingRecords types every view shares (testdata is valid against the contracts), a
+// claim's four-field location as well as a whole recorded one.
+func TestContainerFindingsDecodeIntoTheSharedFindingRecords(t *testing.T) {
+	body, err := os.ReadFile("testdata/container-findings.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	core := traustest.New(t)
+	core.Handle("GET /v1/insights/container-findings", traustest.JSON(http.StatusOK, json.RawMessage(body)))
+	found, err := traust.GetInsightAs[traust.ContainerFindingsInsight](context.Background(), core.Client(), nil)
+	if err != nil {
+		t.Fatalf("GetInsightAs: %v", err)
+	}
+	if len(found.Findings) != 1 {
+		t.Fatalf("findings = %d, want 1", len(found.Findings))
+	}
+	row := found.Findings[0]
+	view := is[traust.FindingRecordsInsightFindingView](row.View)
+	if view.Finding.Title != "openssl in the base image" || len(is[[]traust.FindingRecordsInsightOccurrence](row.Occurrences)) != 1 ||
+		len(is[[]traust.FindingRecordsInsightDecision](row.History)) != 1 {
+		t.Fatalf("row = %+v", row)
+	}
+	for _, tt := range []struct {
+		name      string
+		index     int
+		path      string
+		recorded  bool
+		lineStart *int
+		lineEnd   *int
+	}{
+		{name: "recorded location", index: 0, path: "usr/lib/libssl.so.3", recorded: true},
+		{name: "claim location", index: 1, path: "Dockerfile", lineEnd: ptr(3)},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if len(view.Locations) <= tt.index {
+				t.Fatalf("locations = %d, want more than %d", len(view.Locations), tt.index)
+			}
+			got := view.Locations[tt.index]
+			if got.Path != tt.path || (got.Id != nil) != tt.recorded || (got.OccurrenceId != nil) != tt.recorded {
+				t.Fatalf("location = %+v", got)
+			}
+			if !sameInt(got.LineStart, tt.lineStart) || !sameInt(got.LineEnd, tt.lineEnd) {
+				t.Fatalf("lines = %v-%v, want %v-%v", got.LineStart, got.LineEnd, tt.lineStart, tt.lineEnd)
+			}
+		})
+	}
+}
+
+func ptr(v int) *int { return &v }
+
+func sameInt(a, b *int) bool { return (a == nil) == (b == nil) && (a == nil || *a == *b) }

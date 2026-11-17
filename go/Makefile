@@ -8,7 +8,7 @@ SCHEMAS_DIR := $(CONTRACTS_SOURCE)/artifacts_schema/v1
 # db/v1 restructure dropped. Regenerating it is the G6 layout adaptation (plan 28), and plan 05
 # retires the package; until then v1/storage/ is hand-maintained and checked by drift.
 CORE_REPO := https://github.com/traust-security/traust-core.git
-CORE_REF := ed96434499c7ef0f29073d6aa29a315003a96271
+CORE_REF := a5005b43f7b2c2fd31dd2df8d5ec3d6f81536917
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
 CORE_PYTHON := cd "$(CORE_SOURCE)" && uv run --quiet python
 OPENAPI_DIR := ./internal/generate/openapi

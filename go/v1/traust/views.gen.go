@@ -143,6 +143,14 @@ const (
 	FindingsTrendInsightDirectionMetricVelocity          FindingsTrendInsightDirectionMetric = "velocity"
 )
 
+// Defines values for FreshnessInsightStatus.
+const (
+	FreshnessInsightStatusFresh       FreshnessInsightStatus = "fresh"
+	FreshnessInsightStatusPending     FreshnessInsightStatus = "pending"
+	FreshnessInsightStatusStale       FreshnessInsightStatus = "stale"
+	FreshnessInsightStatusUnavailable FreshnessInsightStatus = "unavailable"
+)
+
 // Defines values for PqcPortfolioInsightEffort.
 const (
 	PqcPortfolioInsightEffortBlockedExternal PqcPortfolioInsightEffort = "blocked-external"
@@ -270,6 +278,13 @@ const (
 	PqcWorklistInsightLivenessStatusMissing  PqcWorklistInsightLivenessStatus = "missing"
 	PqcWorklistInsightLivenessStatusMoved    PqcWorklistInsightLivenessStatus = "moved"
 	PqcWorklistInsightLivenessStatusUnknown  PqcWorklistInsightLivenessStatus = "unknown"
+)
+
+// Defines values for ProgramInsightBucket.
+const (
+	ProgramInsightBucketDay   ProgramInsightBucket = "day"
+	ProgramInsightBucketMonth ProgramInsightBucket = "month"
+	ProgramInsightBucketWeek  ProgramInsightBucket = "week"
 )
 
 // Defines values for RemediationIndexInsightStatus.
@@ -1575,6 +1590,64 @@ type FindingsTrendInsightPoint struct {
 	RiskIndex *FindingsTrendInsightIndex `json:"risk_index"`
 }
 
+// FreshnessInsight Ephemeral derived Insight ViewModel from traust-core's freshness view (drift-watch): every checked input and assessment cadence, worst status first, the toolchain that would run, and what the scope's latest audits could not examine, derived now (Core refuses an `as_of`). It routes attention, never concludes. Coverage is the coverage view's own definition, referenced by $id. Not a persisted artifact or SQL projection. Every serialized field is required, nullable ones included. Item names, details, refresh hints, versions and paths are raw text.
+type FreshnessInsight struct {
+	// Coverage What the scope's latest default-line secure-code audits say they could not examine. Read from the latest audits as currently recorded, not as of population.as_of.
+	Coverage CoverageInsightCoverage `json:"coverage"`
+
+	// Items Feeds, providers, tool databases, the secure-code audit and threat-model cadences (always present) and, when it cannot be read, the toolchain; worst status first (stale, unavailable, pending, fresh), then item.
+	Items []FreshnessInsightItem `json:"items"`
+
+	// Toolchain What would run; null when it could not be read (an unavailable toolchain item says why).
+	Toolchain *FreshnessInsightToolchain `json:"toolchain"`
+}
+
+// FreshnessInsightDatabase A tool's local vulnerability database: present, when built, how old it may get.
+type FreshnessInsightDatabase struct {
+	BuiltAt *time.Time `json:"built_at"`
+	Exists  bool       `json:"exists"`
+
+	// MaxAge An ISO 8601 duration (`P5DT1H`); null when unbounded.
+	MaxAge        *string `json:"max_age"`
+	Path          *string `json:"path"`
+	SchemaVersion *string `json:"schema_version"`
+	Tool          string  `json:"tool"`
+}
+
+// FreshnessInsightItem One checked input.
+type FreshnessInsightItem struct {
+	// Detail Why, as text; may be empty.
+	Detail string `json:"detail"`
+
+	// Item What was checked, e.g. `feeds:<name>`, `database:<tool>`, `<kind>:<name>` for a provider, `assessments:secure-code`.
+	Item string `json:"item"`
+
+	// Refresh What would refresh it; null when nothing to do.
+	Refresh *string `json:"refresh"`
+
+	// Status Worst first. stale: past its threshold; unavailable: not checkable; pending: never produced yet; fresh: within its threshold.
+	Status FreshnessInsightStatus `json:"status"`
+}
+
+// FreshnessInsightStatus Worst first. stale: past its threshold; unavailable: not checkable; pending: never produced yet; fresh: within its threshold.
+type FreshnessInsightStatus string
+
+// FreshnessInsightTool defines model for FreshnessInsightTool.
+type FreshnessInsightTool struct {
+	// Database Its local vulnerability database; null for a tool without one.
+	Database *FreshnessInsightDatabase `json:"database"`
+	Tool     string                    `json:"tool"`
+
+	// Version Null when it could not be read.
+	Version *string `json:"version"`
+}
+
+// FreshnessInsightToolchain traust-core's version and each registered tool's version and database.
+type FreshnessInsightToolchain struct {
+	CoreVersion string                 `json:"core_version"`
+	Tools       []FreshnessInsightTool `json:"tools"`
+}
+
 // InsecurePatternsInsight Ephemeral derived Insight ViewModel from traust-core's insecure-patterns view: the scope's findings as of as_of (false positives dropped) grouped by primary CWE within each corpus ownership class, ranked by distinct repositories, then occurrences. An occurrence is one (repository, path) pair; a repository several ownership classes ship counts in each. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
 type InsecurePatternsInsight struct {
 	// AsOf The filter's point in time; null reads the current recorded state.
@@ -1648,6 +1721,96 @@ type InventoryExportInsight struct {
 		Repository          string   `json:"Repository"`
 		URL                 string   `json:"URL"`
 	} `json:"rows"`
+}
+
+// LocInsight Ephemeral derived Insight ViewModel from traust-core's loc view: the lines of code the scope's repositories hold at their observed default-branch commit as of `as_of`, by language and by repository, largest first, with an optional comparison to an earlier moment and an optional first-party estimate from an explicitly supplied divisor. `code` excludes documentation languages; `total` includes them. Per-repository language counts are the code-facts artifact's language counts, referenced by $id. Decimals are Python decimal strings (exponent form allowed: `1E+2`). Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null.
+type LocInsight struct {
+	// AsOf The moment measured: the filter's, else the clock's.
+	AsOf time.Time       `json:"as_of"`
+	Code LocInsightCount `json:"code"`
+
+	// Comparison The baseline at the earlier moment asked for; null when none was.
+	Comparison    *LocInsightComparison `json:"comparison"`
+	Dispositioned LocInsightCount       `json:"dispositioned"`
+
+	// FirstPartyDivisor The explicitly supplied divisor; null when none was.
+	FirstPartyDivisor *LocInsightPositiveDecimal `json:"first_party_divisor"`
+
+	// FirstPartyEstimate Measured code over the divisor: an estimate, not a measurement; null without a divisor or with nothing measured.
+	FirstPartyEstimate *LocInsightDecimal `json:"first_party_estimate"`
+
+	// Languages One row per language measured in the scope, most code lines first, then name.
+	Languages []LocInsightLanguageTotal `json:"languages"`
+	Reported  LocInsightCount           `json:"reported"`
+
+	// Repositories One row per repository in scope: measured ones most code lines first, then unmeasured ones, then URL.
+	Repositories []LocInsightRepository `json:"repositories"`
+	Total        LocInsightCount        `json:"total"`
+}
+
+// LocInsightComparison The scope measured at the earlier moment, and the change across repositories measured at both.
+type LocInsightComparison struct {
+	// AsOf The earlier moment; it precedes the view's as_of.
+	AsOf                   time.Time       `json:"as_of"`
+	Code                   LocInsightCount `json:"code"`
+	CodeDelta              int             `json:"code_delta"`
+	ComparableRepositories LocInsightCount `json:"comparable_repositories"`
+	MeasuredRepositories   LocInsightCount `json:"measured_repositories"`
+	Total                  LocInsightCount `json:"total"`
+	TotalDelta             int             `json:"total_delta"`
+}
+
+// LocInsightCount defines model for LocInsightCount.
+type LocInsightCount = int
+
+// LocInsightDecimal A non-negative Python decimal string. No whitespace: a pattern's $ would otherwise accept a trailing newline.
+type LocInsightDecimal = string
+
+// LocInsightLanguageTotal defines model for LocInsightLanguageTotal.
+type LocInsightLanguageTotal struct {
+	Code LocInsightCount `json:"code"`
+
+	// Documentation A documentation language: counted in total, not in code.
+	Documentation bool   `json:"documentation"`
+	Name          string `json:"name"`
+
+	// Repositories Measured repositories holding the language.
+	Repositories int `json:"repositories"`
+}
+
+// LocInsightPositiveDecimal A non-negative Python decimal string. No whitespace: a pattern's $ would otherwise accept a trailing newline.
+type LocInsightPositiveDecimal = LocInsightDecimal
+
+// LocInsightRepository A repository's measured lines at its default-branch commit; `unmeasured` says why not.
+type LocInsightRepository struct {
+	Code *int `json:"code"`
+
+	// CodeDelta Code-line change since the comparison; null when not measured at both moments.
+	CodeDelta *int `json:"code_delta"`
+
+	// Languages Measured languages, most lines first, then name.
+	Languages []struct {
+		Blanks   *int   `json:"blanks"`
+		Code     int    `json:"code"`
+		Comments *int   `json:"comments"`
+		Files    *int   `json:"files"`
+		Name     string `json:"name"`
+	} `json:"languages"`
+
+	// Primary The language with the most lines; null when none was measured.
+	Primary      *string            `json:"primary"`
+	RepositoryId openapi_types.UUID `json:"repository_id"`
+
+	// RepositoryRefId The default-branch commit measured; null when no head was observed.
+	RepositoryRefId *openapi_types.UUID `json:"repository_ref_id"`
+
+	// RepositoryUrl The raw recorded URL.
+	RepositoryUrl string `json:"repository_url"`
+	Total         *int   `json:"total"`
+	TotalDelta    *int   `json:"total_delta"`
+
+	// Unmeasured Why the repository was not measured; null when it was.
+	Unmeasured *string `json:"unmeasured"`
 }
 
 // PqcInsight Ephemeral derived Insight ViewModel from traust-core's pqc view: the latest PQC readiness of each commit, per named product (else every commit), rolled up by readiness bucket and by dominant provenance. It reads readiness as it stands, so Core refuses an as_of, and a team scope. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
@@ -2141,6 +2304,64 @@ type PrivilegesInsightRow struct {
 	Workloads     PrivilegesInsightCount `json:"workloads"`
 }
 
+// ProgramInsight Ephemeral derived Insight ViewModel from traust-core's program view: what the program spent and ran over an explicit window, derived from spend events and run orders, never a stored snapshot. Spend splits into what run orders claim and what no order claims, and rolls up by month, model, lane and skill (rollups are the shared spend-records definitions); throughput counts each registered asset's finished run orders per bucket, by outcome. Core needs the window and does not order its bounds. Not a persisted artifact or SQL projection. Every serialized field is required; lists are never null. Keys, models, lanes, skills and asset names are raw recorded text.
+type ProgramInsight struct {
+	// Bucket The throughput bucket: a UTC day, ISO week (from Monday) or calendar month.
+	Bucket ProgramInsightBucket `json:"bucket"`
+
+	// ByLane Per work lane, by key; spend without a lane last (null key).
+	ByLane []SpendRecordsInsightRollup `json:"by_lane"`
+
+	// ByModel Per model, by key.
+	ByModel []SpendRecordsInsightRollup `json:"by_model"`
+
+	// ByMonth Per UTC calendar month (key YYYY-MM), oldest first.
+	ByMonth []SpendRecordsInsightRollup `json:"by_month"`
+
+	// BySkill Per skill, by key; spend without a skill last (null key).
+	BySkill []SpendRecordsInsightRollup `json:"by_skill"`
+
+	// Spend The window's spend split by whether a run order claims it; the two sum to the total.
+	Spend struct {
+		// AttributedUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+		AttributedUsd SpendRecordsInsightUsd `json:"attributed_usd"`
+
+		// UnattributedUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+		UnattributedUsd SpendRecordsInsightUsd `json:"unattributed_usd"`
+		Window          struct {
+			// End Exclusive.
+			End   time.Time `json:"end"`
+			Start time.Time `json:"start"`
+		} `json:"window"`
+	} `json:"spend"`
+
+	// Throughput Per registered asset (by name, sorted; never empty), its finished run orders in every bucket of the window, oldest first, zero-filled: an idle asset has a point per bucket with every count 0. A series is empty only when the window is (Core does not order its bounds).
+	Throughput map[string][]ProgramInsightPoint `json:"throughput"`
+
+	// Window The explicit timezone-aware window, start inclusive, end exclusive.
+	Window struct {
+		// End Exclusive.
+		End   time.Time `json:"end"`
+		Start time.Time `json:"start"`
+	} `json:"window"`
+}
+
+// ProgramInsightBucket The throughput bucket: a UTC day, ISO week (from Monday) or calendar month.
+type ProgramInsightBucket string
+
+// ProgramInsightPoint Run orders finished within one bucket, by outcome: every finished outcome, zero-filled.
+type ProgramInsightPoint struct {
+	// Bucket The bucket's start.
+	Bucket   time.Time `json:"bucket"`
+	Finished struct {
+		Degraded  int `json:"degraded"`
+		Failed    int `json:"failed"`
+		Refused   int `json:"refused"`
+		Succeeded int `json:"succeeded"`
+		Withheld  int `json:"withheld"`
+	} `json:"finished"`
+}
+
 // RemediationIndexInsight Ephemeral derived Insight ViewModel from traust-core's remediation-index view: every remediation work item of the scope's repositories (named products and teams, else every repository) as it stands now, grouped per product, with where its fix lives and its status, and the rows counted by status. There is no as_of: the index reads work items as they stand. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not arithmetic across fields.
 type RemediationIndexInsight struct {
 	// ByStatus Rows per status; only statuses with at least one row appear. Counts rows, so a work item listed under several products counts once per product.
@@ -2177,6 +2398,39 @@ type RemediationIndexInsightRow struct {
 
 // RemediationIndexInsightStatus Where the work item stands, from the remediation-status registry.
 type RemediationIndexInsightStatus string
+
+// ScoreboardInsight Ephemeral derived Insight ViewModel from traust-core's scoreboard view: the leadership scoreboard's headline numbers read off the executive summary, findings trend and threat register as of `as_of`, plus the findings filed in Jira; it authors none. Open severities, risk themes and the trend point reference those views' own definitions. Not a persisted artifact or SQL projection. Every serialized field is required, nullable ones included. JSON Schema checks counts and shapes, not sums across fields.
+type ScoreboardInsight struct {
+	// AsOf The moment read: the filter's, else the clock's.
+	AsOf            time.Time              `json:"as_of"`
+	CredentialLeaks ScoreboardInsightCount `json:"credential_leaks"`
+	Dispositioned   ScoreboardInsightCount `json:"dispositioned"`
+	ExecutionProven ScoreboardInsightCount `json:"execution_proven"`
+	FalsePositives  ScoreboardInsightCount `json:"false_positives"`
+	Filed           ScoreboardInsightCount `json:"filed"`
+	Hardening       ScoreboardInsightCount `json:"hardening"`
+
+	// Open Counts by effective severity; unrated counts findings with no severity. Every key is always present.
+	Open                     FindingsRollupInsightSeverityCounts `json:"open"`
+	OpenThreats              ScoreboardInsightCount              `json:"open_threats"`
+	Reported                 ScoreboardInsightCount              `json:"reported"`
+	Repositories             ScoreboardInsightCount              `json:"repositories"`
+	RepositoriesWithCritical ScoreboardInsightCount              `json:"repositories_with_critical"`
+	RepositoriesWithHigh     ScoreboardInsightCount              `json:"repositories_with_high"`
+	Resolved                 ScoreboardInsightCount              `json:"resolved"`
+	RiskAccepted             ScoreboardInsightCount              `json:"risk_accepted"`
+
+	// Themes Risk theme (raw label) to the findings carrying it; only themes seen appear.
+	Themes       ExecutiveSummaryInsightThemeCounts `json:"themes"`
+	ThreatModels ScoreboardInsightCount             `json:"threat_models"`
+	Threats      ScoreboardInsightCount             `json:"threats"`
+
+	// Trend The findings trend's latest bucket; null when it has none.
+	Trend *FindingsTrendInsightPoint `json:"trend"`
+}
+
+// ScoreboardInsightCount defines model for ScoreboardInsightCount.
+type ScoreboardInsightCount = int
 
 // SlaInsight Ephemeral derived Insight ViewModel from traust-core's sla view: owner-response SLA clocks over the scope's findings (named products and teams, else every repository; false positives and hardening excluded) as of as_of, one block per profile of the deployment's SLA policy. Profiles are different clocks over the same findings. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not arithmetic across fields.
 type SlaInsight struct {
@@ -2297,6 +2551,124 @@ type SlaInsightTeam struct {
 	Team      string          `json:"team"`
 	WorstDays SlaInsightCount `json:"worst_days"`
 }
+
+// SpendInsight Ephemeral derived Insight ViewModel from traust-core's spend view (financial-tracking): list-priced spend per UTC calendar month the window touches, split by skill, lane, model and business unit (run order, repository, product, corpus registry), with the estimate's limits named: models whose rate the registry does not confirm, models it does not know, invoices reconciled, and one month's unit economics. Spend no business unit claims stays unattributed (a null key), never redistributed. Rollups are the shared spend-records definitions. Core needs the window, is fleet-wide (it refuses a product or team scope) and does not order the window's bounds. Not a persisted artifact or SQL projection. Every serialized field is required, nullable ones included; lists are never null. Keys, models and notes are raw recorded text.
+type SpendInsight struct {
+	// Invoices The months with a recorded invoice, oldest first.
+	Invoices []SpendInsightInvoice `json:"invoices"`
+
+	// Months Each UTC calendar month the window touches, oldest first, clipped to the window; empty only over an empty window.
+	Months []SpendInsightMonth `json:"months"`
+
+	// UnitEconomics The latest month with spend, over all-time counts; null when no month has spend.
+	UnitEconomics *SpendInsightUnitEconomics `json:"unit_economics"`
+
+	// UnregisteredModels Models spent on that the registry does not know, sorted.
+	UnregisteredModels []string `json:"unregistered_models"`
+
+	// UnverifiedModels Models spent on whose list price the registry does not confirm, sorted.
+	UnverifiedModels []string `json:"unverified_models"`
+
+	// UnverifiedUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	UnverifiedUsd SpendRecordsInsightUsd `json:"unverified_usd"`
+
+	// Window The explicit timezone-aware window.
+	Window struct {
+		// End Exclusive.
+		End   time.Time `json:"end"`
+		Start time.Time `json:"start"`
+	} `json:"window"`
+}
+
+// SpendInsightCoverage A share of the month's cost, 0-100, rounded to one decimal, as a Python decimal string.
+type SpendInsightCoverage = string
+
+// SpendInsightInvoice A month's billed amount against its list-priced estimate.
+type SpendInsightInvoice struct {
+	// EstimateUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	EstimateUsd SpendRecordsInsightUsd `json:"estimate_usd"`
+
+	// InvoicedUsd A US-dollar amount that may be negative, as a Python decimal string.
+	InvoicedUsd SpendInsightSignedUsd `json:"invoiced_usd"`
+
+	// Note As recorded; may be empty.
+	Note string `json:"note"`
+
+	// Period The month, YYYY-MM.
+	Period string `json:"period"`
+
+	// VariancePct The variance as a share (%) of the estimate; null when the estimate is zero.
+	VariancePct *SpendInsightPercent `json:"variance_pct"`
+
+	// VarianceUsd A US-dollar amount that may be negative, as a Python decimal string.
+	VarianceUsd SpendInsightSignedUsd `json:"variance_usd"`
+}
+
+// SpendInsightMonth One month's spend, split by skill, lane, model and business unit; each split's null-key row is what nothing in that dimension claims.
+type SpendInsightMonth struct {
+	// BusinessUnitCoverage The share (%) of the month's cost that resolves to a business unit; null when the month cost nothing.
+	BusinessUnitCoverage *SpendInsightCoverage       `json:"business_unit_coverage"`
+	ByBusinessUnit       []SpendRecordsInsightRollup `json:"by_business_unit"`
+	ByLane               []SpendRecordsInsightRollup `json:"by_lane"`
+	ByModel              []SpendRecordsInsightRollup `json:"by_model"`
+	BySkill              []SpendRecordsInsightRollup `json:"by_skill"`
+
+	// Month The UTC calendar month, YYYY-MM.
+	Month string `json:"month"`
+
+	// SkillUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	SkillUsd SpendRecordsInsightUsd `json:"skill_usd"`
+
+	// Total The month's spend over every event (every event names its model); zero counts when the month had none.
+	Total SpendInsightTotal `json:"total"`
+}
+
+// SpendInsightPercent A percentage rounded to one decimal, as a Python decimal string.
+type SpendInsightPercent = string
+
+// SpendInsightSignedUsd A US-dollar amount that may be negative, as a Python decimal string.
+type SpendInsightSignedUsd = string
+
+// SpendInsightTotal The month's spend over every event (every event names its model); zero counts when the month had none.
+type SpendInsightTotal struct {
+	// CostUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	CostUsd   SpendRecordsInsightUsd `json:"cost_usd"`
+	Events    int                    `json:"events"`
+	Key       interface{}            `json:"key"`
+	TokensIn  int                    `json:"tokens_in"`
+	TokensOut int                    `json:"tokens_out"`
+}
+
+// SpendInsightUnitEconomics One month's skill spend over the all-time counts as of the view's point in time: internal cost ratios, not coverage claims.
+type SpendInsightUnitEconomics struct {
+	// CriticalHigh Open and remediated critical and high findings.
+	CriticalHigh int `json:"critical_high"`
+
+	// Findings Tracked findings that are not false positives.
+	Findings     int    `json:"findings"`
+	Month        string `json:"month"`
+	Repositories int    `json:"repositories"`
+
+	// SpendUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	SpendUsd SpendRecordsInsightUsd `json:"spend_usd"`
+}
+
+// SpendRecordsInsightRollup Spend summed over one group. Its key is the group's value, null for spend without that dimension (no lane, no skill).
+type SpendRecordsInsightRollup struct {
+	// CostUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+	CostUsd SpendRecordsInsightUsd `json:"cost_usd"`
+
+	// Events Spend events in the group: a group is never empty.
+	Events int `json:"events"`
+
+	// Key Raw recorded text.
+	Key       *string `json:"key"`
+	TokensIn  int     `json:"tokens_in"`
+	TokensOut int     `json:"tokens_out"`
+}
+
+// SpendRecordsInsightUsd A non-negative US-dollar amount as a Python decimal string (exponent form allowed: `1E-9`). No whitespace: a pattern's $ would otherwise accept a trailing newline.
+type SpendRecordsInsightUsd = string
 
 // ThreatRegisterInsight Ephemeral derived Insight ViewModel from traust-core's threat-register view: the scope's standing threats from each repository's latest completed threat model as of as_of, ranked, with class-closing quick wins, tenant boundaries weakest first and the open doc variances. Threats, mitigations and boundaries are Core's projections of the threat-model documents, not the documents. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included; lists are never null. JSON Schema checks structure and ranges, not arithmetic across fields.
 type ThreatRegisterInsight struct {
