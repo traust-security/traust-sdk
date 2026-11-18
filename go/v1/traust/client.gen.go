@@ -2471,6 +2471,11 @@ type ListAssessmentsParams struct {
 	Cursor          *string               `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
+// ListAssessmentArtifactsParams defines parameters for ListAssessmentArtifacts.
+type ListAssessmentArtifactsParams struct {
+	Kind *string `form:"kind,omitempty" json:"kind,omitempty"`
+}
+
 // SummarizeExposureParams defines parameters for SummarizeExposure.
 type SummarizeExposureParams struct {
 	GroupBy    ExposureDimension   `form:"group_by" json:"group_by"`
@@ -3643,6 +3648,9 @@ type ClientInterface interface {
 	// GetAssessment request
 	GetAssessment(ctx context.Context, assessmentId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// ListAssessmentArtifacts request
+	ListAssessmentArtifacts(ctx context.Context, assessmentId openapi_types.UUID, params *ListAssessmentArtifactsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetAssessmentIntake request
 	GetAssessmentIntake(ctx context.Context, assessmentId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -4063,6 +4071,18 @@ func (c *RawClient) ListAssessments(ctx context.Context, params *ListAssessments
 
 func (c *RawClient) GetAssessment(ctx context.Context, assessmentId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetAssessmentRequest(c.Server, assessmentId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) ListAssessmentArtifacts(ctx context.Context, assessmentId openapi_types.UUID, params *ListAssessmentArtifactsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewListAssessmentArtifactsRequest(c.Server, assessmentId, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5791,6 +5811,62 @@ func NewGetAssessmentRequest(server string, assessmentId openapi_types.UUID) (*h
 	queryURL, err := serverURL.Parse(operationPath)
 	if err != nil {
 		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewListAssessmentArtifactsRequest generates requests for ListAssessmentArtifacts
+func NewListAssessmentArtifactsRequest(server string, assessmentId openapi_types.UUID, params *ListAssessmentArtifactsParams) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "assessment_id", runtime.ParamLocationPath, assessmentId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/assessments/%s/artifacts", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	if params != nil {
+		queryValues := queryURL.Query()
+
+		if params.Kind != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "kind", runtime.ParamLocationQuery, *params.Kind); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		queryURL.RawQuery = queryValues.Encode()
 	}
 
 	req, err := http.NewRequest("GET", queryURL.String(), nil)
@@ -10832,6 +10908,9 @@ type ClientWithResponsesInterface interface {
 	// GetAssessmentWithResponse request
 	GetAssessmentWithResponse(ctx context.Context, assessmentId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetAssessmentResponse, error)
 
+	// ListAssessmentArtifactsWithResponse request
+	ListAssessmentArtifactsWithResponse(ctx context.Context, assessmentId openapi_types.UUID, params *ListAssessmentArtifactsParams, reqEditors ...RequestEditorFn) (*ListAssessmentArtifactsResponse, error)
+
 	// GetAssessmentIntakeWithResponse request
 	GetAssessmentIntakeWithResponse(ctx context.Context, assessmentId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetAssessmentIntakeResponse, error)
 
@@ -11386,6 +11465,31 @@ func (r GetAssessmentResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r GetAssessmentResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ListAssessmentArtifactsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]Artifact
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r ListAssessmentArtifactsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ListAssessmentArtifactsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -13524,6 +13628,15 @@ func (c *ClientWithResponses) GetAssessmentWithResponse(ctx context.Context, ass
 	return ParseGetAssessmentResponse(rsp)
 }
 
+// ListAssessmentArtifactsWithResponse request returning *ListAssessmentArtifactsResponse
+func (c *ClientWithResponses) ListAssessmentArtifactsWithResponse(ctx context.Context, assessmentId openapi_types.UUID, params *ListAssessmentArtifactsParams, reqEditors ...RequestEditorFn) (*ListAssessmentArtifactsResponse, error) {
+	rsp, err := c.ListAssessmentArtifacts(ctx, assessmentId, params, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseListAssessmentArtifactsResponse(rsp)
+}
+
 // GetAssessmentIntakeWithResponse request returning *GetAssessmentIntakeResponse
 func (c *ClientWithResponses) GetAssessmentIntakeWithResponse(ctx context.Context, assessmentId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetAssessmentIntakeResponse, error) {
 	rsp, err := c.GetAssessmentIntake(ctx, assessmentId, reqEditors...)
@@ -14900,6 +15013,53 @@ func ParseGetAssessmentResponse(rsp *http.Response) (*GetAssessmentResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest Assessment
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseListAssessmentArtifactsResponse parses an HTTP response from a ListAssessmentArtifactsWithResponse call
+func ParseListAssessmentArtifactsResponse(rsp *http.Response) (*ListAssessmentArtifactsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ListAssessmentArtifactsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []Artifact
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

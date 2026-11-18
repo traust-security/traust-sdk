@@ -821,6 +821,29 @@ func (c *Client) Heartbeat(ctx context.Context, orderId openapi_types.UUID, body
 	return found, nil
 }
 
+// ListAssessmentArtifacts is GET /v1/assessments/{assessmentId}/artifacts: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) ListAssessmentArtifacts(ctx context.Context, assessmentId openapi_types.UUID, params *ListAssessmentArtifactsParams) ([]Artifact, error) {
+	raw, err := c.ClientInterface.ListAssessmentArtifacts(ctx, assessmentId, params)
+	if err != nil {
+		return nil, fmt.Errorf("ListAssessmentArtifacts(%s): %w", assessmentId, err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("ListAssessmentArtifacts(%s): %w", assessmentId, err)
+	}
+	response, err := ParseListAssessmentArtifactsResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("ListAssessmentArtifacts(%s): %w", assessmentId, err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ListAssessmentArtifacts(%s): %w", assessmentId, err)
+	}
+	if found == nil {
+		return nil, nil
+	}
+	return *found, nil
+}
+
 // ListAssessments is GET /v1/assessments: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListAssessments(ctx context.Context, params *ListAssessmentsParams) (*PageAssessment, error) {
 	raw, err := c.ClientInterface.ListAssessments(ctx, params)
