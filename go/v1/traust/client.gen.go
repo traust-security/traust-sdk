@@ -1604,10 +1604,9 @@ type Occurrence struct {
 	Severity     ScannerSeverity     `json:"severity"`
 }
 
-// OccurrenceClaimInput A CVSS claim one occurrence's report stated, declared for recording: the finding by
-// its fingerprint (the identity both sides share), the assessment whose report stated
-// the claim, and the claim itself — the vector and the score, both present, the way a
-// contracts report states them (a present score block carries its vector).
+// OccurrenceClaimInput A CVSS claim one occurrence's report stated, declared for recording: the finding
+// by its fingerprint, the assessment whose report stated the claim, and the claim
+// itself — the vector and the score, both present.
 type OccurrenceClaimInput struct {
 	AssessmentId    openapi_types.UUID             `json:"assessment_id"`
 	CvssScore       OccurrenceClaimInput_CvssScore `json:"cvss_score"`
@@ -1628,10 +1627,9 @@ type OccurrenceClaimInput_CvssScore struct {
 	union json.RawMessage
 }
 
-// OccurrenceClaimOutput A CVSS claim one occurrence's report stated, declared for recording: the finding by
-// its fingerprint (the identity both sides share), the assessment whose report stated
-// the claim, and the claim itself — the vector and the score, both present, the way a
-// contracts report states them (a present score block carries its vector).
+// OccurrenceClaimOutput A CVSS claim one occurrence's report stated, declared for recording: the finding
+// by its fingerprint, the assessment whose report stated the claim, and the claim
+// itself — the vector and the score, both present.
 type OccurrenceClaimOutput struct {
 	AssessmentId    openapi_types.UUID `json:"assessment_id"`
 	CvssScore       string             `json:"cvss_score"`
@@ -1641,13 +1639,11 @@ type OccurrenceClaimOutput struct {
 	RepositoryId    openapi_types.UUID `json:"repository_id"`
 }
 
-// OccurrenceClaimOutcome What the claim door did with one declared claim: the honest answer per claim,
-// never a script-side guess — the retired backfill's report (the coverage counts and
-// the review lists) answered from the door's own responses.
+// OccurrenceClaimOutcome What the claim door did with one declared claim.
 type OccurrenceClaimOutcome string
 
 // OccurrenceClaimReport The batch's answers, one row per declared claim in declaration order, with the
-// coverage count per outcome — the report shape the retired backfill produced.
+// count per outcome.
 type OccurrenceClaimReport struct {
 	Counts  map[string]int          `json:"counts"`
 	Results []OccurrenceClaimResult `json:"results"`
@@ -1656,24 +1652,20 @@ type OccurrenceClaimReport struct {
 // OccurrenceClaimResult One declared claim's answer: the outcome, the finding and occurrence it bound to,
 // and the decision that recorded it (the audit trail, none when nothing was written).
 type OccurrenceClaimResult struct {
-	// Claim A CVSS claim one occurrence's report stated, declared for recording: the finding by
-	// its fingerprint (the identity both sides share), the assessment whose report stated
-	// the claim, and the claim itself — the vector and the score, both present, the way a
-	// contracts report states them (a present score block carries its vector).
+	// Claim A CVSS claim one occurrence's report stated, declared for recording: the finding
+	// by its fingerprint, the assessment whose report stated the claim, and the claim
+	// itself — the vector and the score, both present.
 	Claim        OccurrenceClaimOutput `json:"claim"`
 	DecisionId   *openapi_types.UUID   `json:"decision_id"`
 	FindingId    *openapi_types.UUID   `json:"finding_id"`
 	OccurrenceId *openapi_types.UUID   `json:"occurrence_id"`
 
-	// Outcome What the claim door did with one declared claim: the honest answer per claim,
-	// never a script-side guess — the retired backfill's report (the coverage counts and
-	// the review lists) answered from the door's own responses.
+	// Outcome What the claim door did with one declared claim.
 	Outcome OccurrenceClaimOutcome `json:"outcome"`
 }
 
-// OccurrenceClaimsBody A batch of declared CVSS claims under one authority: a ticket and a rationale
-// naming why the claims are recorded (the claim-audit discipline — a verified
-// person's statement, never a machine's).
+// OccurrenceClaimsBody A batch of declared CVSS claims under one authority: a verified person's
+// ticket and rationale.
 type OccurrenceClaimsBody struct {
 	Claims    []OccurrenceClaimInput `json:"claims"`
 	Rationale string                 `json:"rationale"`
@@ -2092,15 +2084,11 @@ type RepositoryRef struct {
 	UpdatedAt                *time.Time          `json:"updated_at"`
 }
 
-// RepositoryResolution One asked-for URL spelling's answer over the repository universe (the read-side
-// plan's S1): the repository core knows under it — its own id, never a neighbor's —
-// plus the upstream edge as the hint when the matched row carries one (a fork, a
-// mirror: the same edge the fork resolution reads, the caller's to judge). A URL
-// correction's vacated spelling follows its edge to the repository that moved, so an
-// old spelling answers the identity that survived the move. Several rows under one
-// case-folded spelling is the honest ambiguity a person settles — the candidates,
-// oldest first, instead of a script-side guess; no row at all (an unregistered or
-// unparseable spelling) is the honest absence.
+// RepositoryResolution One asked-for URL spelling's answer: the repository core knows under it, plus
+// the upstream edge as the hint when the matched row carries one (a fork or mirror:
+// the caller's to judge). A URL correction's vacated spelling follows its edge to
+// the repository that moved. Several rows under one case-folded spelling answer as
+// candidates, oldest first; no row at all is the honest absence.
 type RepositoryResolution struct {
 	AliasOf    *openapi_types.UUID `json:"alias_of"`
 	Candidates *[]Repository       `json:"candidates,omitempty"`
