@@ -379,23 +379,14 @@ const (
 	SourceScan     ImpactTier = "source_scan"
 )
 
-// Defines values for OrderSortBy.
+// Defines values for LivenessStatus.
 const (
-	OrderSortByAsset      OrderSortBy = "asset"
-	OrderSortByCreatedAt  OrderSortBy = "created_at"
-	OrderSortByFinishedAt OrderSortBy = "finished_at"
-	OrderSortById         OrderSortBy = "id"
-	OrderSortByIds        OrderSortBy = "ids"
-	OrderSortByReason     OrderSortBy = "reason"
-	OrderSortByRepository OrderSortBy = "repository"
-	OrderSortByStartedAt  OrderSortBy = "started_at"
-	OrderSortByState      OrderSortBy = "state"
-)
-
-// Defines values for OrderSortOrder.
-const (
-	Asc  OrderSortOrder = "asc"
-	Desc OrderSortOrder = "desc"
+	Active   LivenessStatus = "active"
+	Archived LivenessStatus = "archived"
+	Disabled LivenessStatus = "disabled"
+	Missing  LivenessStatus = "missing"
+	Moved    LivenessStatus = "moved"
+	Unknown  LivenessStatus = "unknown"
 )
 
 // Defines values for OrderSortBy.

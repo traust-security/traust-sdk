@@ -14,6 +14,13 @@ class ViewComponentTest(unittest.TestCase):
             {"type": "string", "format": "date-time", "nullable": True},
         )
 
+    def test_an_always_null_type_becomes_an_untyped_nullable(self):
+        for kinds in ("null", ["null"]):
+            self.assertEqual(
+                openapi({"type": kinds, "description": "d"}, "P"),
+                {"description": "d", "nullable": True},
+            )
+
     def test_a_null_enum_member_becomes_nullability(self):
         out = openapi({"type": ["string", "null"], "enum": ["high", None]}, "P")
         self.assertEqual(out, {"type": "string", "enum": ["high"], "nullable": True})
@@ -83,58 +90,6 @@ class ViewComponentTest(unittest.TestCase):
         found = {"AInsight": {"$ref": "#/components/schemas/MissingInsight"}}
         with self.assertRaisesRegex(SystemExit, "MissingInsight: referenced, but no view"):
             reachable(found, ["AInsight"])
-
-    def test_a_shared_definition_is_its_schemas_component_without_insight(self):
-        base = "https://example.com/traust-contracts/views_schema/v1/finding-records.schema.json"
-        views.SHARED.add("finding-records")
-        try:
-            self.assertEqual(
-                openapi({"$ref": base + "#/$defs/finding_view"}, "E"),
-                {"$ref": "#/components/schemas/FindingRecordsFindingView"},
-            )
-            with self.assertRaisesRegex(SystemExit, "referenced by its \\$defs only"):
-                openapi({"$ref": base}, "E")
-        finally:
-            views.SHARED.discard("finding-records")
-
-    def test_shared_schemas_that_reference_each_other_name_each_others_components(self):
-        base = "https://example.com/traust-contracts/views_schema/v1/"
-        view = {"properties": {"a": {"$ref": base + "first.schema.json#/$defs/row"}}}
-        first = {"$defs": {"row": {"properties": {"b": {"$ref": base + "second.schema.json#/$defs/cell"}}}}}
-        second = {"$defs": {"cell": {"type": "string"}}}
-        found = shared_components({"the-view": view}, {"first": first, "second": second}.__getitem__)
-        self.assertEqual(sorted(found), ["FirstRow", "SecondCell"])
-        self.assertEqual(
-            found["FirstRow"]["properties"]["b"], {"$ref": "#/components/schemas/SecondCell"}
-        )
-        self.assertEqual(views.SHARED, {"first", "second"})
-
-    def test_each_run_starts_from_no_shared_schema(self):
-        base = "https://example.com/traust-contracts/views_schema/v1/"
-        view = {"properties": {"a": {"$ref": base + "first.schema.json#/$defs/row"}}}
-        load = {"first": {"$defs": {"row": {"type": "string"}}}}.__getitem__
-        self.assertEqual(sorted(shared_components({"v": view}, load)), ["FirstRow"])
-        self.assertEqual(sorted(shared_components({"v": view}, load)), ["FirstRow"])
-        self.assertEqual(shared_components({"v": {}}, load), {})
-        self.assertEqual(views.SHARED, set())
-
-    def test_a_view_contract_with_no_view_name_is_never_taken_for_shared(self):
-        base = "https://example.com/traust-contracts/views_schema/v1/"
-        view = {"properties": {"a": {"$ref": base + "newer-view.schema.json#/$defs/row"}}}
-        newer = {"type": "object", "properties": {}, "$defs": {"row": {"type": "string"}}}
-        with self.assertRaisesRegex(SystemExit, "newer-view: referenced like a view"):
-            shared_components({"v": view}, {"newer-view": newer}.__getitem__)
-
-    def test_a_schema_traust_contracts_lacks_stops_the_generator_cleanly(self):
-        class Missing(Exception):
-            pass
-
-        def read(name):
-            raise Missing(name)
-
-        with self.assertRaisesRegex(SystemExit, "gone: referenced, but traust-contracts has no"):
-            shared_reader(read, Missing)("gone")
-        self.assertEqual(shared_reader(lambda name: {"$defs": {}}, Missing)("here"), {"$defs": {}})
 
     def test_refs_lists_every_reference(self):
         node = {"properties": {"a": {"$ref": "#/x/A"}, "b": {"items": {"$ref": "#/x/B"}}}}

@@ -67,8 +67,8 @@ A view composed from others uses their types: `ExecutiveSummaryInsight.Rollup` i
 for), its isolation panel's `ThreatRegister` a `ThreatRegisterInsight`, and so on.
 
 Shared contract definitions that are not a view generate once and are reused: the finding
-records views embed are `FindingRecordsFindingView`, `FindingRecordsOccurrence`,
-`FindingRecordsDecision` and so on (`ContainerFindingsInsight` rows carry them).
+records views embed are `FindingRecordsInsightFindingView`, `FindingRecordsInsightOccurrence`,
+`FindingRecordsInsightDecision` and so on (`ContainerFindingsInsight` rows carry them).
 
 `GetInsightReport` returns any insight rendered as a report on demand, as one file's bytes,
 scoped the same way (`ExecutivePanel` asks for the executive summary's optional panels):

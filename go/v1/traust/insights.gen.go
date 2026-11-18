@@ -28,9 +28,13 @@ func (*FindingsRollupInsight) insightName() ViewName { return FindingsRollup }
 
 func (*FindingsTrendInsight) insightName() ViewName { return FindingsTrend }
 
+func (*FreshnessInsight) insightName() ViewName { return Freshness }
+
 func (*InsecurePatternsInsight) insightName() ViewName { return InsecurePatterns }
 
 func (*InventoryExportInsight) insightName() ViewName { return InventoryExport }
+
+func (*LocInsight) insightName() ViewName { return Loc }
 
 func (*PqcInsight) insightName() ViewName { return Pqc }
 
@@ -42,9 +46,15 @@ func (*PqcWorklistInsight) insightName() ViewName { return PqcWorklist }
 
 func (*PrivilegesInsight) insightName() ViewName { return Privileges }
 
+func (*ProgramInsight) insightName() ViewName { return Program }
+
 func (*RemediationIndexInsight) insightName() ViewName { return RemediationIndex }
 
+func (*ScoreboardInsight) insightName() ViewName { return Scoreboard }
+
 func (*SlaInsight) insightName() ViewName { return Sla }
+
+func (*SpendInsight) insightName() ViewName { return Spend }
 
 func (*ThreatRegisterInsight) insightName() ViewName { return ThreatRegister }
 
