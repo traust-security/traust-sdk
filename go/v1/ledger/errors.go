@@ -1,6 +1,14 @@
 package ledger
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+)
+
+// ErrIncompleteLayerDocument is returned when a raw layer document does
+// not carry the structure every layer holds (a metadata object, events and
+// needs_review arrays) — a truncated or foreign body, never a layer.
+var ErrIncompleteLayerDocument = errors.New("ledger layer document is incomplete")
 
 // Phase identifies where in the submission pipeline an error occurred.
 type Phase string

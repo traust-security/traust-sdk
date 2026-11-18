@@ -1,6 +1,7 @@
 package ledger_test
 
 import (
+	"bytes"
 	"context"
 	"encoding/json"
 	"errors"
@@ -393,5 +394,79 @@ func TestQueryTestDouble_MatchesOpaqueLayerRoutes(t *testing.T) {
 	}
 	if resp.LayerID != layerID || resp.Total != 3 {
 		t.Fatalf("unexpected response: %+v", resp)
+	}
+}
+
+// TestHTTPClient_GetLayerDocumentPreservesUnknownFields proves the raw-document
+// read serves the bytes verbatim: fields types.Layer does not carry survive,
+// and the route and layer id match GetLayer's own.
+func TestHTTPClient_GetLayerDocumentPreservesUnknownFields(t *testing.T) {
+	body := `{"metadata":{},"events":[],"needs_review":[],"future":{"signature":"retained"}}`
+	var gotPath, gotLayerID, gotAuth string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		gotPath, gotLayerID, gotAuth = r.URL.Path, r.URL.Query().Get("layer_id"), r.Header.Get("Authorization")
+		_, _ = w.Write([]byte(body))
+	}))
+	defer srv.Close()
+
+	client := ledger.NewHTTPClient(srv.URL, ledger.WithAuthFunc(func(r *http.Request) {
+		r.Header.Set("Authorization", "Bearer machine")
+	}))
+	got, err := client.GetLayerDocument(context.Background(), "corpus:org/repo")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != body {
+		t.Fatalf("document = %s, want the verbatim bytes", got)
+	}
+	if gotPath != "/v1/ledger/layer" || gotLayerID != "corpus:org/repo" {
+		t.Fatalf("route = %s?layer_id=%s, want GetLayer's own", gotPath, gotLayerID)
+	}
+	if gotAuth != "Bearer machine" {
+		t.Fatal("auth function was not applied")
+	}
+}
+
+// TestHTTPClient_GetLayerDocumentFailsClosed proves the structural check: a
+// body that is not a JSON object holding metadata, events and needs_review
+// is refused, as is every non-2xx status.
+func TestHTTPClient_GetLayerDocumentFailsClosed(t *testing.T) {
+	for _, body := range []string{`{}`, `null`, `{broken`, `{"metadata":null,"events":[],"needs_review":[]}`, `{"metadata":{},"events":{},"needs_review":[]}`} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(body)) }))
+		_, err := ledger.NewHTTPClient(srv.URL).GetLayerDocument(context.Background(), "layer")
+		srv.Close()
+		if !errors.Is(err, ledger.ErrIncompleteLayerDocument) {
+			t.Fatalf("body %q = %v, want ErrIncompleteLayerDocument", body, err)
+		}
+	}
+	for _, status := range []int{302, 401, 404, 503} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { w.WriteHeader(status) }))
+		_, err := ledger.NewHTTPClient(srv.URL).GetLayerDocument(context.Background(), "layer")
+		srv.Close()
+		var statusErr *ledger.StatusError
+		if !errors.As(err, &statusErr) || statusErr.StatusCode != status {
+			t.Fatalf("status %d = %v, want a StatusError carrying it", status, err)
+		}
+	}
+}
+
+// TestHTTPClient_ResponseLimitBoundsTheRead proves WithResponseLimit stops
+// the read at the limit: an oversized body fails with ErrResponseTooLarge
+// and a body at the limit passes.
+func TestHTTPClient_ResponseLimitBoundsTheRead(t *testing.T) {
+	const limit = 16 << 10
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write(bytes.Repeat([]byte(`{"metadata":{},"events":[],"needs_review":[]},`), limit))
+	}))
+	defer srv.Close()
+
+	if _, err := ledger.NewHTTPClient(srv.URL, ledger.WithResponseLimit(limit)).GetLayerDocument(context.Background(), "layer"); !errors.Is(err, ledger.ErrResponseTooLarge) {
+		t.Fatalf("oversized body = %v, want ErrResponseTooLarge", err)
+	}
+	atLimit := `{"metadata":{},"events":[],"needs_review":[]}`
+	srv2 := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(atLimit)) }))
+	defer srv2.Close()
+	if _, err := ledger.NewHTTPClient(srv2.URL, ledger.WithResponseLimit(int64(len(atLimit)))).GetLayerDocument(context.Background(), "layer"); err != nil {
+		t.Fatalf("body at the limit = %v, want it accepted", err)
 	}
 }
