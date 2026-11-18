@@ -127,12 +127,15 @@ func (p *HTTPProvider) Query(ctx context.Context, method, path string) ([]byte, 
 		return nil, fmt.Errorf("query: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
+	// The status is checked before the body is buffered: an error
+	// response is a StatusError whatever its body weighs, so a misbehaving
+	// service cannot hide a refusal behind an oversized error body.
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, &StatusError{StatusCode: resp.StatusCode, Body: p.readErrorBody(resp.Body)}
+	}
 	body, err := p.readBody(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("query: read response: %w", err)
-	}
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, &StatusError{StatusCode: resp.StatusCode, Body: body}
 	}
 	return body, nil
 }
@@ -143,7 +146,14 @@ func (p *HTTPProvider) readBody(body io.Reader) ([]byte, error) {
 	if p.limit <= 0 {
 		return io.ReadAll(body)
 	}
-	buffered, err := io.ReadAll(io.LimitReader(body, p.limit+1))
+	// One byte past the limit detects the exceed; at the maximum int64
+	// there is no one past a response can reach, so the limit itself is
+	// the read and nothing overflows.
+	probe := p.limit + 1
+	if probe <= 0 {
+		probe = p.limit
+	}
+	buffered, err := io.ReadAll(io.LimitReader(body, probe))
 	if err != nil {
 		return nil, err
 	}
@@ -151,6 +161,18 @@ func (p *HTTPProvider) readBody(body io.Reader) ([]byte, error) {
 		return nil, ErrResponseTooLarge
 	}
 	return buffered, nil
+}
+
+// readErrorBody reads an error response's diagnostic body, best effort:
+// the status is the failure, so a body that cannot be read whole (or at
+// all) never masks it.
+func (p *HTTPProvider) readErrorBody(body io.Reader) []byte {
+	if p.limit <= 0 {
+		buffered, _ := io.ReadAll(body)
+		return buffered
+	}
+	buffered, _ := io.ReadAll(io.LimitReader(body, p.limit))
+	return buffered
 }
 
 func (p *HTTPProvider) post(ctx context.Context, path string, body []byte) ([]byte, error) {
@@ -170,16 +192,18 @@ func (p *HTTPProvider) post(ctx context.Context, path string, body []byte) ([]by
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	respBody, err := p.readBody(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("ingest: read response: %w", err)
-	}
-
+	// The status wins over the body's weight here too: a refusal is a
+	// StatusError whatever its body weighs.
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, &StatusError{
 			StatusCode: resp.StatusCode,
-			Body:       respBody,
+			Body:       p.readErrorBody(resp.Body),
 		}
+	}
+
+	respBody, err := p.readBody(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("ingest: read response: %w", err)
 	}
 
 	return respBody, nil

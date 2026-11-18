@@ -11,11 +11,6 @@ import (
 // HTTP status. Use errors.As to inspect the status code and response body.
 type StatusError = transport.StatusError
 
-// ErrResponseTooLarge is returned when a response body exceeds the limit the
-// client was constructed with (WithResponseLimit): the read stops at the
-// limit, the body is never buffered whole.
-var ErrResponseTooLarge = transport.ErrResponseTooLarge
-
 // HTTPOption configures the built-in HTTP transport.
 type HTTPOption func(*transport.HTTPProvider)
 

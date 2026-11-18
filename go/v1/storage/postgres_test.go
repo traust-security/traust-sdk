@@ -211,6 +211,7 @@ func TestPostgresConsumerReads(t *testing.T) {
 	client, _ := openPostgresStorage(t)
 	checkFindBindingBySubject(t, client)
 	checkFindBindingBySubjectAbsentAndInvalid(t, client)
+	checkFindBindingBySubjectStaysInsideItsScope(t, client)
 	checkCountProjectionRows(t, client)
 	checkStorageRevisionFailsClosed(t, client)
 }

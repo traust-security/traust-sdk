@@ -13,15 +13,94 @@ import (
 	"errors"
 )
 
+// StorageBaseline is the revision a storage schema records.
+type StorageBaseline struct {
+	ContractVersion string
+	Revision        int
+}
+
+// The queries below follow the frozen queries.go shape (one const pair per
+// dialect, a params struct, a method on queries); the storage generator
+// cannot emit them since contracts dropped the queries/ layout, so the
+// package's hand-maintained reads grow here beside their callers.
+
+const artifactBindingFindBySubjectPostgres = "SELECT binding_id\nFROM traust_storage.artifact_binding\nWHERE scope_id = $1\n  AND subject_id = $2\n  AND run_id = $3\n  AND artifact_name = $4\nORDER BY bound_at DESC, binding_id DESC\nLIMIT 1;"
+const artifactBindingFindBySubjectSQLite = "SELECT binding_id\nFROM artifact_binding\nWHERE scope_id = ?\n  AND subject_id = ?\n  AND run_id = ?\n  AND artifact_name = ?\nORDER BY bound_at DESC, binding_id DESC\nLIMIT 1;"
+
+type artifactBindingFindBySubjectParams struct {
+	scopeId      string
+	subjectId    string
+	runId        string
+	artifactName string
+}
+
+func (q queries) artifactBindingFindBySubject(ctx context.Context, conn *sql.Conn, p artifactBindingFindBySubjectParams) *sql.Row {
+	statement := artifactBindingFindBySubjectSQLite
+	if q.dialect == dialectPostgres {
+		statement = artifactBindingFindBySubjectPostgres
+	}
+	return conn.QueryRowContext(ctx, statement, p.scopeId, p.subjectId, p.runId, p.artifactName)
+}
+
+const reportFindingCountPostgres = "SELECT count(*)\nFROM traust_storage.report_finding\nWHERE binding_id = $1;"
+const reportFindingCountSQLite = "SELECT count(*)\nFROM report_finding\nWHERE binding_id = ?;"
+
+type reportFindingCountParams struct {
+	bindingId string
+}
+
+func (q queries) reportFindingCount(ctx context.Context, conn *sql.Conn, p reportFindingCountParams) *sql.Row {
+	statement := reportFindingCountSQLite
+	if q.dialect == dialectPostgres {
+		statement = reportFindingCountPostgres
+	}
+	return conn.QueryRowContext(ctx, statement, p.bindingId)
+}
+
+const triageVerdictCountPostgres = "SELECT count(*)\nFROM traust_storage.triage_verdict\nWHERE binding_id = $1;"
+const triageVerdictCountSQLite = "SELECT count(*)\nFROM triage_verdict\nWHERE binding_id = ?;"
+
+type triageVerdictCountParams struct {
+	bindingId string
+}
+
+func (q queries) triageVerdictCount(ctx context.Context, conn *sql.Conn, p triageVerdictCountParams) *sql.Row {
+	statement := triageVerdictCountSQLite
+	if q.dialect == dialectPostgres {
+		statement = triageVerdictCountPostgres
+	}
+	return conn.QueryRowContext(ctx, statement, p.bindingId)
+}
+
+// The evidence shape the recorded revision implies: byte_size present
+// (sizes are stored beside digests), payload absent (bytes live in the
+// caller's evidence store, never in the database).
+const artifactEvidenceShapePostgres = "SELECT EXISTS (\n    SELECT 1\n    FROM information_schema.columns\n    WHERE table_schema = 'traust_storage'\n      AND table_name = 'artifact_evidence'\n      AND column_name = 'byte_size'\n),\nEXISTS (\n    SELECT 1\n    FROM information_schema.columns\n    WHERE table_schema = 'traust_storage'\n      AND table_name = 'artifact_evidence'\n      AND column_name = 'payload'\n);"
+const artifactEvidenceShapeSQLite = "SELECT EXISTS (\n    SELECT 1\n    FROM pragma_table_info('artifact_evidence')\n    WHERE name = 'byte_size'\n),\nEXISTS (\n    SELECT 1\n    FROM pragma_table_info('artifact_evidence')\n    WHERE name = 'payload'\n);"
+
+type artifactEvidenceShapeParams struct {
+}
+
+func (q queries) artifactEvidenceShape(ctx context.Context, conn *sql.Conn, p artifactEvidenceShapeParams) *sql.Row {
+	statement := artifactEvidenceShapeSQLite
+	if q.dialect == dialectPostgres {
+		statement = artifactEvidenceShapePostgres
+	}
+	return conn.QueryRowContext(ctx, statement)
+}
+
 // FindBindingBySubject returns the binding an artifact name holds for one
-// subject and run — the lookup a report's companion artifacts (a threat
-// model recorded beside its report) resolve through. When more than one
-// binding matches, the newest wins; no match answers ErrBindingNotFound.
-func (c *Client) FindBindingBySubject(ctx context.Context, subjectID, runID, artifactName string) (BindingRecord, error) {
+// scope, subject and run — the lookup a report's companion artifacts (a
+// threat model recorded beside its report) resolve through. The scope is
+// part of the binding identity (the context index is scope, subject, run,
+// name), so the lookup never crosses scope boundaries however the
+// caller-owned identifiers are reused. When more than one binding matches,
+// the newest wins; no match answers ErrBindingNotFound.
+func (c *Client) FindBindingBySubject(ctx context.Context, scopeID, subjectID, runID, artifactName string) (BindingRecord, error) {
 	if c == nil || c.store == nil {
 		return BindingRecord{}, wrap(OperationRead, PhaseInput, ErrNilDatabase)
 	}
-	for _, value := range []string{subjectID, runID, artifactName} {
+	for _, value := range []string{scopeID, subjectID, runID, artifactName} {
 		if value == "" || !validBindingText(value) {
 			return BindingRecord{}, wrap(OperationRead, PhaseInput, ErrInvalidIdentifier)
 		}
@@ -33,7 +112,7 @@ func (c *Client) FindBindingBySubject(ctx context.Context, subjectID, runID, art
 	defer func() { _ = conn.Close() }()
 	var bindingID string
 	err = c.store.queries.artifactBindingFindBySubject(ctx, conn, artifactBindingFindBySubjectParams{
-		subjectId: subjectID, runId: runID, artifactName: artifactName,
+		scopeId: scopeID, subjectId: subjectID, runId: runID, artifactName: artifactName,
 	}).Scan(&bindingID)
 	if errors.Is(err, sql.ErrNoRows) {
 		return BindingRecord{}, wrap(OperationRead, PhaseRead, ErrBindingNotFound)
@@ -85,12 +164,6 @@ func (c *Client) CountProjectionRows(ctx context.Context, bindingID, artifactNam
 	return rows, nil
 }
 
-// StorageBaseline is the revision a storage schema records.
-type StorageBaseline struct {
-	ContractVersion string
-	Revision        int
-}
-
 // StorageRevision reads the baseline the bound database records, failing
 // closed when the recorded baseline is not what this build stamps and
 // accepts (ErrIncompatibleRevision) or when the recorded evidence shape
@@ -124,73 +197,4 @@ func (c *Client) StorageRevision(ctx context.Context) (StorageBaseline, error) {
 		return StorageBaseline{}, wrap(OperationRead, PhaseRead, ErrIncompatibleDatabase)
 	}
 	return StorageBaseline{ContractVersion: version, Revision: revision}, nil
-}
-
-// The queries below follow the frozen queries.go shape (one const pair per
-// dialect, a params struct, a method on queries); the storage generator
-// cannot emit them since contracts dropped the queries/ layout, so the
-// package's hand-maintained reads grow here beside their callers.
-
-const artifactBindingFindBySubjectPostgres = "SELECT binding_id\nFROM traust_storage.artifact_binding\nWHERE subject_id = $1\n  AND run_id = $2\n  AND artifact_name = $3\nORDER BY bound_at DESC, binding_id DESC\nLIMIT 1;"
-const artifactBindingFindBySubjectSQLite = "SELECT binding_id\nFROM artifact_binding\nWHERE subject_id = ?\n  AND run_id = ?\n  AND artifact_name = ?\nORDER BY bound_at DESC, binding_id DESC\nLIMIT 1;"
-
-type artifactBindingFindBySubjectParams struct {
-	subjectId    string
-	runId        string
-	artifactName string
-}
-
-func (q queries) artifactBindingFindBySubject(ctx context.Context, conn *sql.Conn, p artifactBindingFindBySubjectParams) *sql.Row {
-	statement := artifactBindingFindBySubjectSQLite
-	if q.dialect == dialectPostgres {
-		statement = artifactBindingFindBySubjectPostgres
-	}
-	return conn.QueryRowContext(ctx, statement, p.subjectId, p.runId, p.artifactName)
-}
-
-const reportFindingCountPostgres = "SELECT count(*)\nFROM traust_storage.report_finding\nWHERE binding_id = $1;"
-const reportFindingCountSQLite = "SELECT count(*)\nFROM report_finding\nWHERE binding_id = ?;"
-
-type reportFindingCountParams struct {
-	bindingId string
-}
-
-func (q queries) reportFindingCount(ctx context.Context, conn *sql.Conn, p reportFindingCountParams) *sql.Row {
-	statement := reportFindingCountSQLite
-	if q.dialect == dialectPostgres {
-		statement = reportFindingCountPostgres
-	}
-	return conn.QueryRowContext(ctx, statement, p.bindingId)
-}
-
-const triageVerdictCountPostgres = "SELECT count(*)\nFROM traust_storage.triage_verdict\nWHERE binding_id = $1;"
-const triageVerdictCountSQLite = "SELECT count(*)\nFROM triage_verdict\nWHERE binding_id = ?;"
-
-type triageVerdictCountParams struct {
-	bindingId string
-}
-
-func (q queries) triageVerdictCount(ctx context.Context, conn *sql.Conn, p triageVerdictCountParams) *sql.Row {
-	statement := triageVerdictCountSQLite
-	if q.dialect == dialectPostgres {
-		statement = triageVerdictCountPostgres
-	}
-	return conn.QueryRowContext(ctx, statement, p.bindingId)
-}
-
-// The evidence shape the recorded revision implies: byte_size present
-// (sizes are stored beside digests), payload absent (bytes live in the
-// caller's evidence store, never in the database).
-const artifactEvidenceShapePostgres = "SELECT EXISTS (\n    SELECT 1\n    FROM information_schema.columns\n    WHERE table_schema = 'traust_storage'\n      AND table_name = 'artifact_evidence'\n      AND column_name = 'byte_size'\n),\nEXISTS (\n    SELECT 1\n    FROM information_schema.columns\n    WHERE table_schema = 'traust_storage'\n      AND table_name = 'artifact_evidence'\n      AND column_name = 'payload'\n);"
-const artifactEvidenceShapeSQLite = "SELECT EXISTS (\n    SELECT 1\n    FROM pragma_table_info('artifact_evidence')\n    WHERE name = 'byte_size'\n),\nEXISTS (\n    SELECT 1\n    FROM pragma_table_info('artifact_evidence')\n    WHERE name = 'payload'\n);"
-
-type artifactEvidenceShapeParams struct {
-}
-
-func (q queries) artifactEvidenceShape(ctx context.Context, conn *sql.Conn, p artifactEvidenceShapeParams) *sql.Row {
-	statement := artifactEvidenceShapeSQLite
-	if q.dialect == dialectPostgres {
-		statement = artifactEvidenceShapePostgres
-	}
-	return conn.QueryRowContext(ctx, statement)
 }

@@ -35,6 +35,10 @@ func TestFindBindingBySubjectAbsentAndInvalid(t *testing.T) {
 	checkFindBindingBySubjectAbsentAndInvalid(t, openTestStorage(t))
 }
 
+func TestFindBindingBySubjectStaysInsideItsScope(t *testing.T) {
+	checkFindBindingBySubjectStaysInsideItsScope(t, openTestStorage(t))
+}
+
 func TestCountProjectionRowsMatchesFindings(t *testing.T) {
 	checkCountProjectionRows(t, openTestStorage(t))
 }
@@ -61,7 +65,7 @@ func checkFindBindingBySubject(t *testing.T, client *Client) {
 	}
 	const subject, run = "sci:inventory-item:42", "sci:scan-result:7"
 
-	record, err := client.FindBindingBySubject(ctx, subject, run, "threat-model")
+	record, err := client.FindBindingBySubject(ctx, "local", subject, run, "threat-model")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,7 +79,7 @@ func checkFindBindingBySubject(t *testing.T, client *Client) {
 		t.Fatalf("threat-model binding context = %+v, want the requested subject and run", record.Binding)
 	}
 
-	reportRecord, err := client.FindBindingBySubject(ctx, subject, run, "report")
+	reportRecord, err := client.FindBindingBySubject(ctx, "local", subject, run, "report")
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -94,21 +98,61 @@ func checkFindBindingBySubjectAbsentAndInvalid(t *testing.T, client *Client) {
 	// shared PostgreSQL client the other checks already populated.
 	const subject, run = "sci:inventory-item:absent", "sci:scan-result:absent"
 	absent := Binding{ScopeID: "local", SubjectID: stringPointer(subject), RunID: stringPointer(run)}
-	if _, err := client.SaveReport(ctx, SaveReportInput{Binding: absent, Artifact: mustParseArtifact(t, detailReport(t), types.ParseReportArtifact)}); err != nil {
+	if _, err := client.SaveReport(ctx, SaveReportInput{Binding: absent, References: []string{"s3://results/consumer-reads/absent/report.json"}, Artifact: mustParseArtifact(t, detailReport(t), types.ParseReportArtifact)}); err != nil {
 		t.Fatal(err)
 	}
-	if _, err := client.FindBindingBySubject(ctx, subject, run, "threat-model"); !errors.Is(err, ErrBindingNotFound) {
+	if _, err := client.FindBindingBySubject(ctx, absent.ScopeID, subject, run, "threat-model"); !errors.Is(err, ErrBindingNotFound) {
 		t.Fatalf("absent companion = %v, want ErrBindingNotFound", err)
 	}
-	for _, input := range [][3]string{
-		{"", "sci:scan-result:7", "threat-model"},
-		{"sci:inventory-item:42", "", "threat-model"},
-		{"sci:inventory-item:42", "sci:scan-result:7", ""},
-		{"bad\x00subject", "sci:scan-result:7", "threat-model"},
+	for _, input := range [][4]string{
+		{"", "sci:inventory-item:42", "sci:scan-result:7", "threat-model"},
+		{"local", "", "sci:scan-result:7", "threat-model"},
+		{"local", "sci:inventory-item:42", "", "threat-model"},
+		{"local", "sci:inventory-item:42", "sci:scan-result:7", ""},
+		{"bad\x00scope", "sci:inventory-item:42", "sci:scan-result:7", "threat-model"},
+		{"bad\x00subject", "sci:inventory-item:42", "sci:scan-result:7", "threat-model"},
 	} {
-		if _, err := client.FindBindingBySubject(ctx, input[0], input[1], input[2]); !errors.Is(err, ErrInvalidIdentifier) {
+		if _, err := client.FindBindingBySubject(ctx, input[0], input[1], input[2], input[3]); !errors.Is(err, ErrInvalidIdentifier) {
 			t.Fatalf("input %q = %v, want ErrInvalidIdentifier", input, err)
 		}
+	}
+}
+
+// checkFindBindingBySubjectStaysInsideItsScope proves the lookup cannot
+// cross scope boundaries: two scopes reusing the caller-owned subject and
+// run, the other scope's companion newer, and each scope still resolves
+// its own binding.
+func checkFindBindingBySubjectStaysInsideItsScope(t *testing.T, client *Client) {
+	t.Helper()
+	ctx := context.Background()
+	const subject, run = "sci:inventory-item:42", "sci:scan-result:7"
+	local, err := client.saveNamed(ctx, "threat-model", ratedThreatModel(t), Binding{ScopeID: "local", SubjectID: stringPointer(subject), RunID: stringPointer(run)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	other, err := client.saveNamed(ctx, "threat-model", ratedThreatModel(t), Binding{ScopeID: "other", SubjectID: stringPointer(subject), RunID: stringPointer(run)})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// The other scope's companion is definitively newer, so an unscoped
+	// newest-wins lookup would steal it.
+	bump := "UPDATE artifact_binding SET bound_at = datetime(bound_at, '+1 hour') WHERE binding_id = ?"
+	if client.store.dialect == dialectPostgres {
+		bump = "UPDATE traust_storage.artifact_binding SET bound_at = bound_at + interval '1 hour' WHERE binding_id = $1"
+	}
+	if _, err := sqlDB(client).ExecContext(ctx, bump, other.BindingID); err != nil {
+		t.Fatal(err)
+	}
+	record, err := client.FindBindingBySubject(ctx, "local", subject, run, "threat-model")
+	if err != nil || record.BindingID != local.BindingID {
+		t.Fatalf("local lookup = (%s, %v), want its own binding %s", record.BindingID, err, local.BindingID)
+	}
+	record, err = client.FindBindingBySubject(ctx, "other", subject, run, "threat-model")
+	if err != nil || record.BindingID != other.BindingID {
+		t.Fatalf("other lookup = (%s, %v), want its own binding %s", record.BindingID, err, other.BindingID)
+	}
+	if _, err := client.FindBindingBySubject(ctx, "missing-scope", subject, run, "threat-model"); !errors.Is(err, ErrBindingNotFound) {
+		t.Fatalf("absent scope = %v, want ErrBindingNotFound", err)
 	}
 }
 
@@ -129,11 +173,11 @@ func checkCountProjectionRows(t *testing.T, client *Client) {
 	}
 	// The report and the triage are distinct bindings of one subject/run:
 	// resolve each through its own name, then count its projection.
-	reportRecord, err := client.FindBindingBySubject(ctx, *binding.SubjectID, *binding.RunID, "report")
+	reportRecord, err := client.FindBindingBySubject(ctx, binding.ScopeID, *binding.SubjectID, *binding.RunID, "report")
 	if err != nil {
 		t.Fatal(err)
 	}
-	triageRecord, err := client.FindBindingBySubject(ctx, *binding.SubjectID, *binding.RunID, "triage")
+	triageRecord, err := client.FindBindingBySubject(ctx, binding.ScopeID, *binding.SubjectID, *binding.RunID, "triage")
 	if err != nil {
 		t.Fatal(err)
 	}

@@ -6,6 +6,7 @@ import (
 	"encoding/json"
 	"errors"
 	"io"
+	"math"
 	"net/http"
 	"net/http/httptest"
 	"testing"
@@ -468,5 +469,72 @@ func TestHTTPClient_ResponseLimitBoundsTheRead(t *testing.T) {
 	defer srv2.Close()
 	if _, err := ledger.NewHTTPClient(srv2.URL, ledger.WithResponseLimit(int64(len(atLimit)))).GetLayerDocument(context.Background(), "layer"); err != nil {
 		t.Fatalf("body at the limit = %v, want it accepted", err)
+	}
+}
+
+// TestHTTPClient_GetLayerDocumentTransportFailures proves the read's
+// failure edges: a cancelled context before the call, and a connection
+// that drops mid-body — both errors, never a partial document.
+func TestHTTPClient_GetLayerDocumentTransportFailures(t *testing.T) {
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		_, _ = w.Write([]byte(`{"metadata":{},"events":[],"needs_review":[]}`))
+	}))
+	defer srv.Close()
+
+	ctx, cancel := context.WithCancel(context.Background())
+	cancel()
+	if _, err := ledger.NewHTTPClient(srv.URL).GetLayerDocument(ctx, "layer"); !errors.Is(err, context.Canceled) {
+		t.Fatalf("cancelled context = %v, want context.Canceled", err)
+	}
+
+	dropped := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		// A declared length the body never reaches: the client's read
+		// fails mid-body once the server closes the short connection.
+		w.Header().Set("Content-Length", "4096")
+		_, _ = w.Write([]byte(`{"metadata":{`))
+	}))
+	defer dropped.Close()
+	if _, err := ledger.NewHTTPClient(dropped.URL).GetLayerDocument(context.Background(), "layer"); err == nil {
+		t.Fatal("a dropped body was served as a document")
+	} else if errors.Is(err, ledger.ErrIncompleteLayerDocument) {
+		t.Fatalf("a dropped body reported the structural check (%v), want the read error", err)
+	}
+}
+
+// TestHTTPClient_ResponseLimitNeverMasksStatuses proves the status wins
+// over the limit: an error response whose body exceeds the configured
+// limit is still the StatusError carrying its code, not the read limit.
+func TestHTTPClient_ResponseLimitNeverMasksStatuses(t *testing.T) {
+	for _, status := range []int{http.StatusUnauthorized, http.StatusServiceUnavailable} {
+		srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+			w.WriteHeader(status)
+			_, _ = w.Write(bytes.Repeat([]byte("core is unwell "), 4096))
+		}))
+		_, err := ledger.NewHTTPClient(srv.URL, ledger.WithResponseLimit(128)).GetLayerDocument(context.Background(), "layer")
+		srv.Close()
+		var statusErr *ledger.StatusError
+		if !errors.As(err, &statusErr) || statusErr.StatusCode != status {
+			t.Fatalf("status %d with an oversized body = %v, want the StatusError carrying it", status, err)
+		}
+		if errors.Is(err, ledger.ErrResponseTooLarge) {
+			t.Fatalf("status %d masked by the response limit", status)
+		}
+	}
+}
+
+// TestHTTPClient_ResponseLimitAtMaximumStillReads proves the one-past
+// probe cannot overflow: at the maximum int64 limit a normal body reads
+// whole instead of wrapping the reader negative and serving it empty.
+func TestHTTPClient_ResponseLimitAtMaximumStillReads(t *testing.T) {
+	body := `{"metadata":{},"events":[],"needs_review":[]}`
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) { _, _ = w.Write([]byte(body)) }))
+	defer srv.Close()
+
+	got, err := ledger.NewHTTPClient(srv.URL, ledger.WithResponseLimit(math.MaxInt64)).GetLayerDocument(context.Background(), "layer")
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(got) != body {
+		t.Fatalf("document = %s, want the verbatim bytes", got)
 	}
 }
