@@ -215,14 +215,24 @@ cancelled or lost lease cancels and waits for the active operation, then makes n
 Executors return their original UTF-8 report bytes as `ProducedReport.Payload` and their measured
 `JobResult`; the SDK never rewrites references, registers a report-selected ref or invents usage.
 It sends eligible report payloads unchanged through the selected generated record request,
-then completes with the executor's result. Refused work and failures with no payload complete
-without recording. `Run` logs completed-order failures and refusals through the injected logger
+then completes with the executor's result. Only a succeeded job can record an authored assessment:
+that door creates a completed audit for triage. A failed or degraded assessment job completes
+with its original outcome and usage but no assessment or artifact. Other report doors keep their
+stage behavior; refusals and failures without payloads complete without recording.
+`Run` logs completed-order failures and refusals through the injected logger
 and continues claiming; `RunOnce` preserves typed errors for one-shot callers. Logs include safe
 order/status/reason and cause-type fields, never error text, HTTP problem text or response bodies.
 `PreparationRefusedError.Err` remains available to one-shot callers, who own its sanitization.
 No POST is retried. An order-specific record 4xx completes failed while held; 401/403/429 stop
 without completing. A transport failure, 5xx or malformed success receipt leaves the order
 identity available for reconciliation and does not complete.
+
+SCI's `sci_scan` payload is an authored audit report. Scanner observations may be
+referenced in its `scanner_correlation`; a raw `adapter-result` document is not
+an assessment report. For an unjudged audit finding, omit `validation_status`
+rather than sending the historical `not_verified` value. After completion,
+`GetArtifactContent` returns the original report bytes and `GetAssessmentIntake`
+maps its finding IDs to the native IDs that `PrepareTriage` returns.
 
 ## Test your code
 

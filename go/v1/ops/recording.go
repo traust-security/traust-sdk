@@ -97,7 +97,7 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 		produced.Result.Reason = ptr(traust.RunOrderReasonRunnerCrashed)
 		return run.fail(ctx, l, produced.Result, err)
 	}
-	if produced.Result.Outcome == traust.OutcomeRefused || (produced.Result.Outcome == traust.OutcomeFailed && len(produced.Payload) == 0) {
+	if !run.Request.shouldRecord(produced) {
 		completed, err := l.complete(ctx, produced.Result)
 		return &RecordingResult{Order: l.latest(completed), Result: produced.Result}, err
 	}
@@ -127,6 +127,14 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 	}
 	completed, err := l.complete(ctx, produced.Result)
 	return &RecordingResult{Order: l.latest(completed), Receipt: receipt, Result: produced.Result}, err
+}
+
+func (request RecordingRequest) shouldRecord(report ProducedReport) bool {
+	if request.Assessment != nil {
+		// Core's authored assessment door publishes a completed audit, never a partial one.
+		return report.Result.Outcome == traust.OutcomeSucceeded
+	}
+	return report.Result.Outcome != traust.OutcomeRefused && (report.Result.Outcome != traust.OutcomeFailed || len(report.Payload) != 0)
 }
 
 func (run RecordingRun) validate() error {

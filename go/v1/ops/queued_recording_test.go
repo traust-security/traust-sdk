@@ -330,6 +330,9 @@ func TestQueuedRecordingPreparesExecutesRecordsAndCompletesOriginalReport(t *tes
 			var server *queuedRecordingServer
 			degraded := map[string]int{"partial": 2}
 			result := traust.JobResult{Outcome: traust.OutcomeDegraded, Degraded: &degraded}
+			if kind == "assessment" {
+				result = traust.JobResult{Outcome: traust.OutcomeSucceeded}
+			}
 			runner, core := newQueuedRecordingRunner(t, executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
 				server.event("execute")
 				if execution.Order.Id == nil || execution.Order.StartedAt == nil || len(execution.Argv) == 0 {
@@ -384,7 +387,7 @@ func TestQueuedRecordingPreparesExecutesRecordsAndCompletesOriginalReport(t *tes
 			}))
 			server = core
 			order, err := runner.RunOnce(context.Background())
-			if err != nil || order == nil || order.State != traust.RunOrderStateDegraded {
+			if err != nil || order == nil || order.State != traust.RunOrderState(result.Outcome) {
 				t.Fatalf("order=%+v err=%v", order, err)
 			}
 			events, completed := recordingEvents(server)
@@ -613,6 +616,30 @@ func TestQueuedPreparationProblemsNeverMasqueradeAsDomainRefusals(t *testing.T) 
 			}
 			if wantClosed && failureDiagnosis(completed) {
 				t.Fatalf("HTTP preparation error closed with a domain refusal reason: %+v", completed)
+			}
+		})
+	}
+}
+
+func TestQueuedIncompleteAssessmentCompletesWithoutPublishingReport(t *testing.T) {
+	for _, result := range []traust.JobResult{
+		{Outcome: traust.OutcomeFailed, Reason: ptr(traust.RunOrderReasonRunnerCrashed)},
+		{Outcome: traust.OutcomeDegraded, Degraded: &map[string]int{"unverified": 2}},
+		{Outcome: traust.OutcomeRefused, Reason: ptr(traust.RunOrderReasonBadRequest)},
+	} {
+		t.Run(string(result.Outcome), func(t *testing.T) {
+			result.Usage = &[]traust.ModelUsage{{
+				OccurredAt: time.Date(2026, 11, 1, 0, 0, 0, 0, time.UTC),
+				Provider:   "test-provider", Model: "test-model", TokensIn: 31, TokensOut: 17,
+			}}
+			runner, server := newQueuedRecordingRunner(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+				return ProducedReport{Payload: []byte(`{"title":"partial audit","findings":[]}`), Result: result}, nil
+			}), fixedRecordingTemplate(assessmentRecordingTemplate()))
+			order, err := runner.RunOnce(context.Background())
+			events, completed := recordingEvents(server)
+			if err != nil || order == nil || order.State != traust.RunOrderState(result.Outcome) ||
+				!slices.Equal(events, []string{"claim", "manifest", "complete"}) || !reflect.DeepEqual(completed, result) {
+				t.Fatalf("order=%+v err=%v events=%v completed=%+v, want only completion with %+v", order, err, events, completed, result)
 			}
 		})
 	}

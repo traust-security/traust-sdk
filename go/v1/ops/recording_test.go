@@ -182,8 +182,8 @@ func TestRecordingRunMaintainsLeaseAndCompletesNativeOutcome(t *testing.T) {
 		t.Fatal(err)
 	}
 	heartbeats, records, completions := server.counts()
-	if heartbeats < 3 || records != 1 || completions != 1 || result.Receipt.Assessment == nil || result.Result.Outcome != traust.OutcomeDegraded {
-		t.Fatal("run did not heartbeat during execution and record/complete exactly once")
+	if heartbeats < 3 || records != 0 || completions != 1 || result.Receipt.Assessment != nil || result.Result.Outcome != traust.OutcomeDegraded {
+		t.Fatal("degraded assessment did not heartbeat and complete once without publishing")
 	}
 	if result.Order.Id == nil || *result.Order.Id != *server.order.Id || !result.Order.StartedAt.Equal(*server.order.StartedAt) {
 		t.Fatal("native run identity/provenance changed")
