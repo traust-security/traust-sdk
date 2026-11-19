@@ -1,0 +1,6 @@
+pack: example
+assets:
+  smoke:
+    run: [python3, -c, "import json, sys; json.dump(dict(outcome='succeeded'), sys.stdout)", "{run_id}"]
+    trigger: {every: 7d}
+    runner: {labels: [deterministic]}
