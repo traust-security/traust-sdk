@@ -31,7 +31,13 @@ def _strip_null_branches(node: dict) -> None:
             continue
         if len(kept) == 1 and isinstance(kept[0], dict):
             del node[key]
-            node.update(kept[0])
+            if set(kept[0]) == {"$ref"}:
+                # a bare $ref: 3.0 ignores nullable as its sibling, so the null
+                # would silently vanish (a required nullable enum decoded as its
+                # zero value) — wrap the ref so the flag survives
+                node["allOf"] = [kept[0]]
+            else:
+                node.update(kept[0])
         else:
             node[key] = kept
         node["nullable"] = True

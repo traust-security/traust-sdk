@@ -284,6 +284,13 @@ func TestContainerFindingsDecodeIntoTheSharedFindingRecords(t *testing.T) {
 		len(is[[]traust.FindingRecordsInsightDecision](row.History)) != 1 {
 		t.Fatalf("row = %+v", row)
 	}
+	// the cvss chain decodes with its provenance: the band the vector computes
+	// and which source won the effective severity
+	if view.Cvss == nil || view.Cvss.Basis != traust.FindingRecordsInsightFindingCvssBasisComputed ||
+		view.Cvss.Severity == nil || *view.Cvss.Severity != traust.FindingRecordsInsightFindingCvssSeverityHigh ||
+		view.Cvss.Score == nil || *view.Cvss.Score != "7.5" {
+		t.Fatalf("cvss = %+v", view.Cvss)
+	}
 	for _, tt := range []struct {
 		name      string
 		index     int

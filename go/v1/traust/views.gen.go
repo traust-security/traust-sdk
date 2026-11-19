@@ -94,6 +94,23 @@ const (
 	FindingRecordsInsightDispositionValidityTruePositive  FindingRecordsInsightDispositionValidity = "true_positive"
 )
 
+// Defines values for FindingRecordsInsightFindingCvssBasis.
+const (
+	FindingRecordsInsightFindingCvssBasisComputed  FindingRecordsInsightFindingCvssBasis = "computed"
+	FindingRecordsInsightFindingCvssBasisJudgement FindingRecordsInsightFindingCvssBasis = "judgement"
+	FindingRecordsInsightFindingCvssBasisScanner   FindingRecordsInsightFindingCvssBasis = "scanner"
+	FindingRecordsInsightFindingCvssBasisUnrated   FindingRecordsInsightFindingCvssBasis = "unrated"
+)
+
+// Defines values for FindingRecordsInsightFindingCvssSeverity.
+const (
+	FindingRecordsInsightFindingCvssSeverityCritical      FindingRecordsInsightFindingCvssSeverity = "critical"
+	FindingRecordsInsightFindingCvssSeverityHigh          FindingRecordsInsightFindingCvssSeverity = "high"
+	FindingRecordsInsightFindingCvssSeverityInformational FindingRecordsInsightFindingCvssSeverity = "informational"
+	FindingRecordsInsightFindingCvssSeverityLow           FindingRecordsInsightFindingCvssSeverity = "low"
+	FindingRecordsInsightFindingCvssSeverityMedium        FindingRecordsInsightFindingCvssSeverity = "medium"
+)
+
 // Defines values for FindingRecordsInsightFindingViewEffectiveSeverity.
 const (
 	FindingRecordsInsightFindingViewEffectiveSeverityCritical      FindingRecordsInsightFindingViewEffectiveSeverity = "critical"
@@ -1251,8 +1268,31 @@ type FindingRecordsInsightFinding struct {
 	UpdatedAt time.Time `json:"updated_at"`
 }
 
+// FindingRecordsInsightFindingCvss A finding's CVSS as consumers render it: the occurrence's score and vector, the severity the vector computes (FIRST's qualitative rating), and which source won the effective severity.
+type FindingRecordsInsightFindingCvss struct {
+	// Basis Which source won the effective severity.
+	Basis FindingRecordsInsightFindingCvssBasis `json:"basis"`
+
+	// Score CVSS base score from 0 to 10 as an exact decimal string. Core emits the shortest fixed-point form, the same from every storage backend (for example "9.8", "10", "0"); the pattern also admits trailing zeros, so compare as decimals. Null when the finding is unscored.
+	Score *string `json:"score"`
+
+	// Severity The severity the vector computes; null when the vector doesn't parse.
+	Severity *FindingRecordsInsightFindingCvssSeverity `json:"severity"`
+
+	// Vector Raw; null when unscored.
+	Vector *string `json:"vector"`
+}
+
+// FindingRecordsInsightFindingCvssBasis Which source won the effective severity.
+type FindingRecordsInsightFindingCvssBasis string
+
+// FindingRecordsInsightFindingCvssSeverity The severity the vector computes; null when the vector doesn't parse.
+type FindingRecordsInsightFindingCvssSeverity string
+
 // FindingRecordsInsightFindingView A finding as Core serves it: the record, its selected occurrence and disposition, effective severity and SLA.
 type FindingRecordsInsightFindingView struct {
+	Cvss *FindingRecordsInsightFindingCvss `json:"cvss"`
+
 	// Cwes CWE ids as recorded, raw.
 	Cwes []string `json:"cwes"`
 
