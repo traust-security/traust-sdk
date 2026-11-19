@@ -1,6 +1,21 @@
 package ledger
 
-import "fmt"
+import (
+	"errors"
+	"fmt"
+
+	"github.com/traust-security/traust-sdk/go/v1/ledger/internal/transport"
+)
+
+// ErrIncompleteLayerDocument is returned when a raw layer document does
+// not carry the structure every layer holds (a metadata object, events and
+// needs_review arrays) — a truncated or foreign body, never a layer.
+var ErrIncompleteLayerDocument = errors.New("ledger layer document is incomplete")
+
+// ErrResponseTooLarge is returned when a response body exceeds the limit
+// the client was constructed with (WithResponseLimit): the read stops at
+// the limit, the body is never buffered whole.
+var ErrResponseTooLarge = transport.ErrResponseTooLarge
 
 // Phase identifies where in the submission pipeline an error occurred.
 type Phase string

@@ -30,6 +30,13 @@ func WithAuthFunc(fn func(*http.Request)) HTTPOption {
 	return HTTPOption(transport.WithAuthFunc(fn))
 }
 
+// WithResponseLimit bounds what one response body may buffer: a body over
+// the limit fails with ErrResponseTooLarge instead of being read whole. A
+// limit of zero or less keeps reads unbounded.
+func WithResponseLimit(limit int64) HTTPOption {
+	return HTTPOption(transport.WithResponseLimit(limit))
+}
+
 // NewHTTPClient creates a Client backed by the ledger service's HTTP API.
 //
 //	client := ledger.NewHTTPClient("https://ledger.example.com",

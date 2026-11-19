@@ -12,6 +12,7 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"io"
 	"net/http"
@@ -37,11 +38,17 @@ func (e *StatusError) Error() string {
 	return fmt.Sprintf("ingest: http status %d: %s", e.StatusCode, string(e.Body))
 }
 
+// ErrResponseTooLarge is returned when a response body exceeds the limit
+// the provider was configured with (WithResponseLimit): the read stops at
+// the limit, the body is never buffered whole.
+var ErrResponseTooLarge = errors.New("ledger response exceeds the configured limit")
+
 // HTTPProvider implements the ledger service HTTP transport.
 type HTTPProvider struct {
 	baseURL string
 	client  *http.Client
 	auth    func(*http.Request)
+	limit   int64
 }
 
 // Option configures the HTTP provider.
@@ -64,6 +71,13 @@ func WithBearerToken(token string) Option {
 // WithAuthFunc sets a custom auth function called before each request.
 func WithAuthFunc(fn func(*http.Request)) Option {
 	return func(p *HTTPProvider) { p.auth = fn }
+}
+
+// WithResponseLimit bounds what one response body may buffer: a body over
+// the limit fails with ErrResponseTooLarge instead of being read whole. A
+// limit of zero or less keeps reads unbounded.
+func WithResponseLimit(limit int64) Option {
+	return func(p *HTTPProvider) { p.limit = limit }
 }
 
 // New creates an HTTPProvider targeting the given ledger service base URL.
@@ -113,14 +127,52 @@ func (p *HTTPProvider) Query(ctx context.Context, method, path string) ([]byte, 
 		return nil, fmt.Errorf("query: %w", err)
 	}
 	defer func() { _ = resp.Body.Close() }()
-	body, err := io.ReadAll(resp.Body)
+	// The status is checked before the body is buffered: an error
+	// response is a StatusError whatever its body weighs, so a misbehaving
+	// service cannot hide a refusal behind an oversized error body.
+	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
+		return nil, &StatusError{StatusCode: resp.StatusCode, Body: p.readErrorBody(resp.Body)}
+	}
+	body, err := p.readBody(resp.Body)
 	if err != nil {
 		return nil, fmt.Errorf("query: read response: %w", err)
 	}
-	if resp.StatusCode < http.StatusOK || resp.StatusCode >= http.StatusMultipleChoices {
-		return nil, &StatusError{StatusCode: resp.StatusCode, Body: body}
-	}
 	return body, nil
+}
+
+// readBody buffers a response body under the configured limit: a body over
+// the limit is refused before it is whole in memory.
+func (p *HTTPProvider) readBody(body io.Reader) ([]byte, error) {
+	if p.limit <= 0 {
+		return io.ReadAll(body)
+	}
+	// One byte past the limit detects the exceed; at the maximum int64
+	// there is no one past a response can reach, so the limit itself is
+	// the read and nothing overflows.
+	probe := p.limit + 1
+	if probe <= 0 {
+		probe = p.limit
+	}
+	buffered, err := io.ReadAll(io.LimitReader(body, probe))
+	if err != nil {
+		return nil, err
+	}
+	if int64(len(buffered)) > p.limit {
+		return nil, ErrResponseTooLarge
+	}
+	return buffered, nil
+}
+
+// readErrorBody reads an error response's diagnostic body, best effort:
+// the status is the failure, so a body that cannot be read whole (or at
+// all) never masks it.
+func (p *HTTPProvider) readErrorBody(body io.Reader) []byte {
+	if p.limit <= 0 {
+		buffered, _ := io.ReadAll(body)
+		return buffered
+	}
+	buffered, _ := io.ReadAll(io.LimitReader(body, p.limit))
+	return buffered
 }
 
 func (p *HTTPProvider) post(ctx context.Context, path string, body []byte) ([]byte, error) {
@@ -140,16 +192,18 @@ func (p *HTTPProvider) post(ctx context.Context, path string, body []byte) ([]by
 	}
 	defer func() { _ = resp.Body.Close() }()
 
-	respBody, err := io.ReadAll(resp.Body)
-	if err != nil {
-		return nil, fmt.Errorf("ingest: read response: %w", err)
-	}
-
+	// The status wins over the body's weight here too: a refusal is a
+	// StatusError whatever its body weighs.
 	if resp.StatusCode < 200 || resp.StatusCode >= 300 {
 		return nil, &StatusError{
 			StatusCode: resp.StatusCode,
-			Body:       respBody,
+			Body:       p.readErrorBody(resp.Body),
 		}
+	}
+
+	respBody, err := p.readBody(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("ingest: read response: %w", err)
 	}
 
 	return respBody, nil

@@ -203,3 +203,15 @@ func TestPostgresFindingsSummaryUsesSameRunAndJSONScope(t *testing.T) {
 		t.Fatalf("other scope = %+v, %v", other, err)
 	}
 }
+
+// TestPostgresConsumerReads runs the interaction-boundary reads (the
+// subject-scoped binding lookup, the projection count, the baseline
+// accessor) against the engine that serves their prefixed query text.
+func TestPostgresConsumerReads(t *testing.T) {
+	client, _ := openPostgresStorage(t)
+	checkFindBindingBySubject(t, client)
+	checkFindBindingBySubjectAbsentAndInvalid(t, client)
+	checkFindBindingBySubjectStaysInsideItsScope(t, client)
+	checkCountProjectionRows(t, client)
+	checkStorageRevisionFailsClosed(t, client)
+}

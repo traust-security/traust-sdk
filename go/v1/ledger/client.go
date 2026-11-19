@@ -84,6 +84,36 @@ func (c *Client) GetLayer(ctx context.Context, layerID string) (types.Layer, err
 	return out, nil
 }
 
+// GetLayerDocument returns the raw layer document for layerID — the bytes
+// verbatim, unknown fields retained, never decoded into types.Layer — for
+// consumers that validate or serve the document itself. The document is
+// structurally checked (a JSON object holding metadata, events and
+// needs_review) and the read honors the client's response limit
+// (WithResponseLimit): construct the client with one to bound what a
+// misbehaving service can make the caller buffer.
+func (c *Client) GetLayerDocument(ctx context.Context, layerID string) (json.RawMessage, error) {
+	path := LayerPath(LayerOpDocument, layerID, nil)
+	body, err := c.p.Query(ctx, http.MethodGet, path)
+	if err != nil {
+		return nil, fmt.Errorf("query: get layer document: %w", err)
+	}
+	if !json.Valid(body) {
+		return nil, fmt.Errorf("query: decode layer document: %w", ErrIncompleteLayerDocument)
+	}
+	var document map[string]json.RawMessage
+	if err := json.Unmarshal(body, &document); err != nil || document == nil {
+		return nil, fmt.Errorf("query: decode layer document: %w", ErrIncompleteLayerDocument)
+	}
+	var metadata map[string]json.RawMessage
+	var events, reviews []json.RawMessage
+	if json.Unmarshal(document["metadata"], &metadata) != nil || metadata == nil ||
+		json.Unmarshal(document["events"], &events) != nil || events == nil ||
+		json.Unmarshal(document["needs_review"], &reviews) != nil || reviews == nil {
+		return nil, fmt.Errorf("query: decode layer document: %w", ErrIncompleteLayerDocument)
+	}
+	return json.RawMessage(body), nil
+}
+
 // GetFindings returns resolved finding dispositions for layerID.
 func (c *Client) GetFindings(ctx context.Context, layerID string) (FindingsResponse, error) {
 	path := LayerPath(LayerOpFindings, layerID, nil)
