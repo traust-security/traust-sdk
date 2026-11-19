@@ -596,6 +596,14 @@ const (
 	SeverityMedium        Severity = "medium"
 )
 
+// Defines values for SeverityBasis.
+const (
+	Computed  SeverityBasis = "computed"
+	Judgement SeverityBasis = "judgement"
+	Scanner   SeverityBasis = "scanner"
+	Unrated   SeverityBasis = "unrated"
+)
+
 // Defines values for Signing.
 const (
 	Failed       Signing = "failed"
@@ -1213,6 +1221,17 @@ type FindingCount struct {
 	Total int `json:"total"`
 }
 
+// FindingCvss A finding's CVSS as consumers render it: the occurrence's score and vector, the severity
+// the vector computes, and which source won the effective severity.
+type FindingCvss struct {
+	// Basis Which source won a finding's severity label: the CVSS band the vector computes, the
+	// scanner's word for an unscored finding, a judgement's re-rating, or nothing.
+	Basis    SeverityBasis `json:"basis"`
+	Score    *string       `json:"score"`
+	Severity Severity      `json:"severity"`
+	Vector   *string       `json:"vector"`
+}
+
 // FindingDimension defines model for FindingDimension.
 type FindingDimension string
 
@@ -1279,8 +1298,11 @@ type FindingVerdict struct {
 
 // FindingView defines model for FindingView.
 type FindingView struct {
-	Cwes        *[]string `json:"cwes,omitempty"`
-	Description *string   `json:"description"`
+	// Cvss A finding's CVSS as consumers render it: the occurrence's score and vector, the severity
+	// the vector computes, and which source won the effective severity.
+	Cvss        *FindingCvss `json:"cvss,omitempty"`
+	Cwes        *[]string    `json:"cwes,omitempty"`
+	Description *string      `json:"description"`
 
 	// Disposition A finding's merged judgement, ordered only by explicit E0-E3 evidence strength.
 	Disposition       *Disposition `json:"disposition,omitempty"`
@@ -2262,6 +2284,10 @@ type ScheduledEffort struct {
 
 // Severity defines model for Severity.
 type Severity string
+
+// SeverityBasis Which source won a finding's severity label: the CVSS band the vector computes, the
+// scanner's word for an unscored finding, a judgement's re-rating, or nothing.
+type SeverityBasis string
 
 // Signing How signing a layer's root went (traust-ledger `SignAttempt.status`).
 type Signing string
