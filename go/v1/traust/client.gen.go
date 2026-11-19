@@ -389,6 +389,17 @@ const (
 	Unknown  LivenessStatus = "unknown"
 )
 
+// Defines values for OccurrenceClaimOutcome.
+const (
+	AlreadyCarried  OccurrenceClaimOutcome = "already_carried"
+	AlreadyRecorded OccurrenceClaimOutcome = "already_recorded"
+	Conflicting     OccurrenceClaimOutcome = "conflicting"
+	Invalid         OccurrenceClaimOutcome = "invalid"
+	Recorded        OccurrenceClaimOutcome = "recorded"
+	UnknownFinding  OccurrenceClaimOutcome = "unknown_finding"
+	Unreported      OccurrenceClaimOutcome = "unreported"
+)
+
 // Defines values for OrderSortBy.
 const (
 	OrderSortByAsset      OrderSortBy = "asset"
@@ -1041,6 +1052,12 @@ type DecisionBody struct {
 // DecisionReason defines model for DecisionReason.
 type DecisionReason string
 
+// DefaultRefNaming The forge's default-branch answer for a repository: the branch and its head.
+type DefaultRefNaming struct {
+	Branch string `json:"branch"`
+	Sha    string `json:"sha"`
+}
+
 // DenyCode defines model for DenyCode.
 type DenyCode string
 
@@ -1587,6 +1604,74 @@ type Occurrence struct {
 	Severity     ScannerSeverity     `json:"severity"`
 }
 
+// OccurrenceClaimInput A CVSS claim one occurrence's report stated, declared for recording: the finding
+// by its fingerprint, the assessment whose report stated the claim, and the claim
+// itself — the vector and the score, both present.
+type OccurrenceClaimInput struct {
+	AssessmentId    openapi_types.UUID             `json:"assessment_id"`
+	CvssScore       OccurrenceClaimInput_CvssScore `json:"cvss_score"`
+	CvssVector      string                         `json:"cvss_vector"`
+	Fingerprint     string                         `json:"fingerprint"`
+	FingerprintAlgo string                         `json:"fingerprint_algo"`
+	RepositoryId    openapi_types.UUID             `json:"repository_id"`
+}
+
+// OccurrenceClaimInputCvssScore0 defines model for .
+type OccurrenceClaimInputCvssScore0 = float32
+
+// OccurrenceClaimInputCvssScore1 defines model for .
+type OccurrenceClaimInputCvssScore1 = string
+
+// OccurrenceClaimInput_CvssScore defines model for OccurrenceClaimInput.CvssScore.
+type OccurrenceClaimInput_CvssScore struct {
+	union json.RawMessage
+}
+
+// OccurrenceClaimOutput A CVSS claim one occurrence's report stated, declared for recording: the finding
+// by its fingerprint, the assessment whose report stated the claim, and the claim
+// itself — the vector and the score, both present.
+type OccurrenceClaimOutput struct {
+	AssessmentId    openapi_types.UUID `json:"assessment_id"`
+	CvssScore       string             `json:"cvss_score"`
+	CvssVector      string             `json:"cvss_vector"`
+	Fingerprint     string             `json:"fingerprint"`
+	FingerprintAlgo string             `json:"fingerprint_algo"`
+	RepositoryId    openapi_types.UUID `json:"repository_id"`
+}
+
+// OccurrenceClaimOutcome What the claim door did with one declared claim.
+type OccurrenceClaimOutcome string
+
+// OccurrenceClaimReport The batch's answers, one row per declared claim in declaration order, with the
+// count per outcome.
+type OccurrenceClaimReport struct {
+	Counts  map[string]int          `json:"counts"`
+	Results []OccurrenceClaimResult `json:"results"`
+}
+
+// OccurrenceClaimResult One declared claim's answer: the outcome, the finding and occurrence it bound to,
+// and the decision that recorded it (the audit trail, none when nothing was written).
+type OccurrenceClaimResult struct {
+	// Claim A CVSS claim one occurrence's report stated, declared for recording: the finding
+	// by its fingerprint, the assessment whose report stated the claim, and the claim
+	// itself — the vector and the score, both present.
+	Claim        OccurrenceClaimOutput `json:"claim"`
+	DecisionId   *openapi_types.UUID   `json:"decision_id"`
+	FindingId    *openapi_types.UUID   `json:"finding_id"`
+	OccurrenceId *openapi_types.UUID   `json:"occurrence_id"`
+
+	// Outcome What the claim door did with one declared claim.
+	Outcome OccurrenceClaimOutcome `json:"outcome"`
+}
+
+// OccurrenceClaimsBody A batch of declared CVSS claims under one authority: a verified person's
+// ticket and rationale.
+type OccurrenceClaimsBody struct {
+	Claims    []OccurrenceClaimInput `json:"claims"`
+	Rationale string                 `json:"rationale"`
+	Ticket    string                 `json:"ticket"`
+}
+
 // OnboardingPlan defines model for OnboardingPlan.
 type OnboardingPlan struct {
 	ExistingRepositoryIds *[]openapi_types.UUID `json:"existing_repository_ids,omitempty"`
@@ -1997,6 +2082,23 @@ type RepositoryRef struct {
 	RepositoryId             openapi_types.UUID  `json:"repository_id"`
 	Sha                      string              `json:"sha"`
 	UpdatedAt                *time.Time          `json:"updated_at"`
+}
+
+// RepositoryResolution One asked-for URL spelling's answer: the repository core knows under it, plus
+// the upstream edge as the hint when the matched row carries one (a fork or mirror:
+// the caller's to judge). A URL correction's vacated spelling follows its edge to
+// the repository that moved. Several rows under one case-folded spelling answer as
+// candidates, oldest first; no row at all is the honest absence.
+type RepositoryResolution struct {
+	AliasOf    *openapi_types.UUID `json:"alias_of"`
+	Candidates *[]Repository       `json:"candidates,omitempty"`
+	Repository *Repository         `json:"repository,omitempty"`
+	Url        string              `json:"url"`
+}
+
+// RepositoryResolutionRequest A set of repository URL spellings, any fold core's canonicalizer performs.
+type RepositoryResolutionRequest struct {
+	Urls []string `json:"urls"`
 }
 
 // RepositorySpec defines model for RepositorySpec.
@@ -2738,6 +2840,9 @@ type RestateJSONRequestBody = RestatementBody
 // DecideJSONRequestBody defines body for Decide for application/json ContentType.
 type DecideJSONRequestBody = DecisionBody
 
+// RecordOccurrenceClaimsJSONRequestBody defines body for RecordOccurrenceClaims for application/json ContentType.
+type RecordOccurrenceClaimsJSONRequestBody = OccurrenceClaimsBody
+
 // OnboardJSONRequestBody defines body for Onboard for application/json ContentType.
 type OnboardJSONRequestBody = OnboardingRequest
 
@@ -2783,8 +2888,14 @@ type SetOwnersJSONRequestBody = Owners
 // RegisterRefJSONRequestBody defines body for RegisterRef for application/json ContentType.
 type RegisterRefJSONRequestBody = RefRegistration
 
+// MarkDefaultBranchJSONRequestBody defines body for MarkDefaultBranch for application/json ContentType.
+type MarkDefaultBranchJSONRequestBody = DefaultRefNaming
+
 // CorrectRepositoryUrlJSONRequestBody defines body for CorrectRepositoryUrl for application/json ContentType.
 type CorrectRepositoryUrlJSONRequestBody = UrlCorrection
+
+// ResolveRepositoriesJSONRequestBody defines body for ResolveRepositories for application/json ContentType.
+type ResolveRepositoriesJSONRequestBody = RepositoryResolutionRequest
 
 // RecordValidationJSONRequestBody defines body for RecordValidation for application/json ContentType.
 type RecordValidationJSONRequestBody = RecordValidation
@@ -3416,6 +3527,68 @@ func (t *FindingView_Locations_Item) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsOccurrenceClaimInputCvssScore0 returns the union data inside the OccurrenceClaimInput_CvssScore as a OccurrenceClaimInputCvssScore0
+func (t OccurrenceClaimInput_CvssScore) AsOccurrenceClaimInputCvssScore0() (OccurrenceClaimInputCvssScore0, error) {
+	var body OccurrenceClaimInputCvssScore0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOccurrenceClaimInputCvssScore0 overwrites any union data inside the OccurrenceClaimInput_CvssScore as the provided OccurrenceClaimInputCvssScore0
+func (t *OccurrenceClaimInput_CvssScore) FromOccurrenceClaimInputCvssScore0(v OccurrenceClaimInputCvssScore0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOccurrenceClaimInputCvssScore0 performs a merge with any union data inside the OccurrenceClaimInput_CvssScore, using the provided OccurrenceClaimInputCvssScore0
+func (t *OccurrenceClaimInput_CvssScore) MergeOccurrenceClaimInputCvssScore0(v OccurrenceClaimInputCvssScore0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsOccurrenceClaimInputCvssScore1 returns the union data inside the OccurrenceClaimInput_CvssScore as a OccurrenceClaimInputCvssScore1
+func (t OccurrenceClaimInput_CvssScore) AsOccurrenceClaimInputCvssScore1() (OccurrenceClaimInputCvssScore1, error) {
+	var body OccurrenceClaimInputCvssScore1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromOccurrenceClaimInputCvssScore1 overwrites any union data inside the OccurrenceClaimInput_CvssScore as the provided OccurrenceClaimInputCvssScore1
+func (t *OccurrenceClaimInput_CvssScore) FromOccurrenceClaimInputCvssScore1(v OccurrenceClaimInputCvssScore1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeOccurrenceClaimInputCvssScore1 performs a merge with any union data inside the OccurrenceClaimInput_CvssScore, using the provided OccurrenceClaimInputCvssScore1
+func (t *OccurrenceClaimInput_CvssScore) MergeOccurrenceClaimInputCvssScore1(v OccurrenceClaimInputCvssScore1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t OccurrenceClaimInput_CvssScore) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *OccurrenceClaimInput_CvssScore) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsReviewReason returns the union data inside the ReviewItem_Reason as a ReviewReason
 func (t ReviewItem_Reason) AsReviewReason() (ReviewReason, error) {
 	var body ReviewReason
@@ -3729,6 +3902,11 @@ type ClientInterface interface {
 	// VerifyLayer request
 	VerifyLayer(ctx context.Context, layerId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// RecordOccurrenceClaimsWithBody request with any body
+	RecordOccurrenceClaimsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RecordOccurrenceClaims(ctx context.Context, body RecordOccurrenceClaimsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// OnboardWithBody request with any body
 	OnboardWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3897,6 +4075,11 @@ type ClientInterface interface {
 	// GetCurrentDefaultRef request
 	GetCurrentDefaultRef(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// MarkDefaultBranchWithBody request with any body
+	MarkDefaultBranchWithBody(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	MarkDefaultBranch(ctx context.Context, repositoryId openapi_types.UUID, body MarkDefaultBranchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// CorrectRepositoryUrlWithBody request with any body
 	CorrectRepositoryUrlWithBody(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3910,6 +4093,11 @@ type ClientInterface interface {
 
 	// ListWorkItems request
 	ListWorkItems(ctx context.Context, repositoryId openapi_types.UUID, params *ListWorkItemsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// ResolveRepositoriesWithBody request with any body
+	ResolveRepositoriesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	ResolveRepositories(ctx context.Context, body ResolveRepositoriesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListOwnedRepositories request
 	ListOwnedRepositories(ctx context.Context, teamId openapi_types.UUID, params *ListOwnedRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4407,6 +4595,30 @@ func (c *RawClient) ListEvents(ctx context.Context, layerId openapi_types.UUID, 
 
 func (c *RawClient) VerifyLayer(ctx context.Context, layerId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewVerifyLayerRequest(c.Server, layerId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) RecordOccurrenceClaimsWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRecordOccurrenceClaimsRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) RecordOccurrenceClaims(ctx context.Context, body RecordOccurrenceClaimsJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRecordOccurrenceClaimsRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -5149,6 +5361,30 @@ func (c *RawClient) GetCurrentDefaultRef(ctx context.Context, repositoryId opena
 	return c.Client.Do(req)
 }
 
+func (c *RawClient) MarkDefaultBranchWithBody(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewMarkDefaultBranchRequestWithBody(c.Server, repositoryId, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) MarkDefaultBranch(ctx context.Context, repositoryId openapi_types.UUID, body MarkDefaultBranchJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewMarkDefaultBranchRequest(c.Server, repositoryId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *RawClient) CorrectRepositoryUrlWithBody(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewCorrectRepositoryUrlRequestWithBody(c.Server, repositoryId, contentType, body)
 	if err != nil {
@@ -5199,6 +5435,30 @@ func (c *RawClient) VerifyRepository(ctx context.Context, repositoryId openapi_t
 
 func (c *RawClient) ListWorkItems(ctx context.Context, repositoryId openapi_types.UUID, params *ListWorkItemsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListWorkItemsRequest(c.Server, repositoryId, params)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) ResolveRepositoriesWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResolveRepositoriesRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) ResolveRepositories(ctx context.Context, body ResolveRepositoriesJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewResolveRepositoriesRequest(c.Server, body)
 	if err != nil {
 		return nil, err
 	}
@@ -7828,6 +8088,46 @@ func NewVerifyLayerRequest(server string, layerId openapi_types.UUID) (*http.Req
 	return req, nil
 }
 
+// NewRecordOccurrenceClaimsRequest calls the generic RecordOccurrenceClaims builder with application/json body
+func NewRecordOccurrenceClaimsRequest(server string, body RecordOccurrenceClaimsJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRecordOccurrenceClaimsRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRecordOccurrenceClaimsRequestWithBody generates requests for RecordOccurrenceClaims with any type of body
+func NewRecordOccurrenceClaimsRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/occurrence-claims")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewOnboardRequest calls the generic Onboard builder with application/json body
 func NewOnboardRequest(server string, body OnboardJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -10213,6 +10513,53 @@ func NewGetCurrentDefaultRefRequest(server string, repositoryId openapi_types.UU
 	return req, nil
 }
 
+// NewMarkDefaultBranchRequest calls the generic MarkDefaultBranch builder with application/json body
+func NewMarkDefaultBranchRequest(server string, repositoryId openapi_types.UUID, body MarkDefaultBranchJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewMarkDefaultBranchRequestWithBody(server, repositoryId, "application/json", bodyReader)
+}
+
+// NewMarkDefaultBranchRequestWithBody generates requests for MarkDefaultBranch with any type of body
+func NewMarkDefaultBranchRequestWithBody(server string, repositoryId openapi_types.UUID, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "repository_id", runtime.ParamLocationPath, repositoryId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/repositories/%s/refs/default", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewCorrectRepositoryUrlRequest calls the generic CorrectRepositoryUrl builder with application/json body
 func NewCorrectRepositoryUrlRequest(server string, repositoryId openapi_types.UUID, body CorrectRepositoryUrlJSONRequestBody) (*http.Request, error) {
 	var bodyReader io.Reader
@@ -10466,6 +10813,46 @@ func NewListWorkItemsRequest(server string, repositoryId openapi_types.UUID, par
 	if err != nil {
 		return nil, err
 	}
+
+	return req, nil
+}
+
+// NewResolveRepositoriesRequest calls the generic ResolveRepositories builder with application/json body
+func NewResolveRepositoriesRequest(server string, body ResolveRepositoriesJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewResolveRepositoriesRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewResolveRepositoriesRequestWithBody generates requests for ResolveRepositories with any type of body
+func NewResolveRepositoriesRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/repositories:resolve")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
 
 	return req, nil
 }
@@ -10989,6 +11376,11 @@ type ClientWithResponsesInterface interface {
 	// VerifyLayerWithResponse request
 	VerifyLayerWithResponse(ctx context.Context, layerId openapi_types.UUID, reqEditors ...RequestEditorFn) (*VerifyLayerResponse, error)
 
+	// RecordOccurrenceClaimsWithBodyWithResponse request with any body
+	RecordOccurrenceClaimsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordOccurrenceClaimsResponse, error)
+
+	RecordOccurrenceClaimsWithResponse(ctx context.Context, body RecordOccurrenceClaimsJSONRequestBody, reqEditors ...RequestEditorFn) (*RecordOccurrenceClaimsResponse, error)
+
 	// OnboardWithBodyWithResponse request with any body
 	OnboardWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OnboardResponse, error)
 
@@ -11157,6 +11549,11 @@ type ClientWithResponsesInterface interface {
 	// GetCurrentDefaultRefWithResponse request
 	GetCurrentDefaultRefWithResponse(ctx context.Context, repositoryId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetCurrentDefaultRefResponse, error)
 
+	// MarkDefaultBranchWithBodyWithResponse request with any body
+	MarkDefaultBranchWithBodyWithResponse(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MarkDefaultBranchResponse, error)
+
+	MarkDefaultBranchWithResponse(ctx context.Context, repositoryId openapi_types.UUID, body MarkDefaultBranchJSONRequestBody, reqEditors ...RequestEditorFn) (*MarkDefaultBranchResponse, error)
+
 	// CorrectRepositoryUrlWithBodyWithResponse request with any body
 	CorrectRepositoryUrlWithBodyWithResponse(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CorrectRepositoryUrlResponse, error)
 
@@ -11170,6 +11567,11 @@ type ClientWithResponsesInterface interface {
 
 	// ListWorkItemsWithResponse request
 	ListWorkItemsWithResponse(ctx context.Context, repositoryId openapi_types.UUID, params *ListWorkItemsParams, reqEditors ...RequestEditorFn) (*ListWorkItemsResponse, error)
+
+	// ResolveRepositoriesWithBodyWithResponse request with any body
+	ResolveRepositoriesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResolveRepositoriesResponse, error)
+
+	ResolveRepositoriesWithResponse(ctx context.Context, body ResolveRepositoriesJSONRequestBody, reqEditors ...RequestEditorFn) (*ResolveRepositoriesResponse, error)
 
 	// ListOwnedRepositoriesWithResponse request
 	ListOwnedRepositoriesWithResponse(ctx context.Context, teamId openapi_types.UUID, params *ListOwnedRepositoriesParams, reqEditors ...RequestEditorFn) (*ListOwnedRepositoriesResponse, error)
@@ -12083,6 +12485,31 @@ func (r VerifyLayerResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r VerifyLayerResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RecordOccurrenceClaimsResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *OccurrenceClaimReport
+	JSON401      *Problem
+	JSON403      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r RecordOccurrenceClaimsResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RecordOccurrenceClaimsResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -13243,6 +13670,31 @@ func (r GetCurrentDefaultRefResponse) StatusCode() int {
 	return 0
 }
 
+type MarkDefaultBranchResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *RepositoryRef
+	JSON401      *Problem
+	JSON409      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r MarkDefaultBranchResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r MarkDefaultBranchResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type CorrectRepositoryUrlResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -13338,6 +13790,30 @@ func (r ListWorkItemsResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ListWorkItemsResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type ResolveRepositoriesResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *[]RepositoryResolution
+	JSON401      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r ResolveRepositoriesResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r ResolveRepositoriesResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -13877,6 +14353,23 @@ func (c *ClientWithResponses) VerifyLayerWithResponse(ctx context.Context, layer
 	return ParseVerifyLayerResponse(rsp)
 }
 
+// RecordOccurrenceClaimsWithBodyWithResponse request with arbitrary body returning *RecordOccurrenceClaimsResponse
+func (c *ClientWithResponses) RecordOccurrenceClaimsWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordOccurrenceClaimsResponse, error) {
+	rsp, err := c.RecordOccurrenceClaimsWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRecordOccurrenceClaimsResponse(rsp)
+}
+
+func (c *ClientWithResponses) RecordOccurrenceClaimsWithResponse(ctx context.Context, body RecordOccurrenceClaimsJSONRequestBody, reqEditors ...RequestEditorFn) (*RecordOccurrenceClaimsResponse, error) {
+	rsp, err := c.RecordOccurrenceClaims(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRecordOccurrenceClaimsResponse(rsp)
+}
+
 // OnboardWithBodyWithResponse request with arbitrary body returning *OnboardResponse
 func (c *ClientWithResponses) OnboardWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*OnboardResponse, error) {
 	rsp, err := c.OnboardWithBody(ctx, contentType, body, reqEditors...)
@@ -14411,6 +14904,23 @@ func (c *ClientWithResponses) GetCurrentDefaultRefWithResponse(ctx context.Conte
 	return ParseGetCurrentDefaultRefResponse(rsp)
 }
 
+// MarkDefaultBranchWithBodyWithResponse request with arbitrary body returning *MarkDefaultBranchResponse
+func (c *ClientWithResponses) MarkDefaultBranchWithBodyWithResponse(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*MarkDefaultBranchResponse, error) {
+	rsp, err := c.MarkDefaultBranchWithBody(ctx, repositoryId, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseMarkDefaultBranchResponse(rsp)
+}
+
+func (c *ClientWithResponses) MarkDefaultBranchWithResponse(ctx context.Context, repositoryId openapi_types.UUID, body MarkDefaultBranchJSONRequestBody, reqEditors ...RequestEditorFn) (*MarkDefaultBranchResponse, error) {
+	rsp, err := c.MarkDefaultBranch(ctx, repositoryId, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseMarkDefaultBranchResponse(rsp)
+}
+
 // CorrectRepositoryUrlWithBodyWithResponse request with arbitrary body returning *CorrectRepositoryUrlResponse
 func (c *ClientWithResponses) CorrectRepositoryUrlWithBodyWithResponse(ctx context.Context, repositoryId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*CorrectRepositoryUrlResponse, error) {
 	rsp, err := c.CorrectRepositoryUrlWithBody(ctx, repositoryId, contentType, body, reqEditors...)
@@ -14453,6 +14963,23 @@ func (c *ClientWithResponses) ListWorkItemsWithResponse(ctx context.Context, rep
 		return nil, err
 	}
 	return ParseListWorkItemsResponse(rsp)
+}
+
+// ResolveRepositoriesWithBodyWithResponse request with arbitrary body returning *ResolveRepositoriesResponse
+func (c *ClientWithResponses) ResolveRepositoriesWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*ResolveRepositoriesResponse, error) {
+	rsp, err := c.ResolveRepositoriesWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResolveRepositoriesResponse(rsp)
+}
+
+func (c *ClientWithResponses) ResolveRepositoriesWithResponse(ctx context.Context, body ResolveRepositoriesJSONRequestBody, reqEditors ...RequestEditorFn) (*ResolveRepositoriesResponse, error) {
+	rsp, err := c.ResolveRepositories(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseResolveRepositoriesResponse(rsp)
 }
 
 // ListOwnedRepositoriesWithResponse request returning *ListOwnedRepositoriesResponse
@@ -16157,6 +16684,53 @@ func ParseVerifyLayerResponse(rsp *http.Response) (*VerifyLayerResponse, error) 
 			return nil, err
 		}
 		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRecordOccurrenceClaimsResponse parses an HTTP response from a RecordOccurrenceClaimsWithResponse call
+func ParseRecordOccurrenceClaimsResponse(rsp *http.Response) (*RecordOccurrenceClaimsResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RecordOccurrenceClaimsResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest OccurrenceClaimReport
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 403:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON403 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest Problem
@@ -18360,6 +18934,53 @@ func ParseGetCurrentDefaultRefResponse(rsp *http.Response) (*GetCurrentDefaultRe
 	return response, nil
 }
 
+// ParseMarkDefaultBranchResponse parses an HTTP response from a MarkDefaultBranchWithResponse call
+func ParseMarkDefaultBranchResponse(rsp *http.Response) (*MarkDefaultBranchResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &MarkDefaultBranchResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest RepositoryRef
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseCorrectRepositoryUrlResponse parses an HTTP response from a CorrectRepositoryUrlWithResponse call
 func ParseCorrectRepositoryUrlResponse(rsp *http.Response) (*CorrectRepositoryUrlResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -18531,6 +19152,46 @@ func ParseListWorkItemsResponse(rsp *http.Response) (*ListWorkItemsResponse, err
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest PageWorkItem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseResolveRepositoriesResponse parses an HTTP response from a ResolveRepositoriesWithResponse call
+func ParseResolveRepositoriesResponse(rsp *http.Response) (*ResolveRepositoriesResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &ResolveRepositoriesResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest []RepositoryResolution
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

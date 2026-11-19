@@ -1541,6 +1541,26 @@ func (c *Client) ListWorkItemsAll(ctx context.Context, repositoryId openapi_type
 	}, page.Cursor)
 }
 
+// MarkDefaultBranch is POST /v1/repositories/{repositoryId}/refs/default: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) MarkDefaultBranch(ctx context.Context, repositoryId openapi_types.UUID, body MarkDefaultBranchJSONRequestBody) (*RepositoryRef, error) {
+	raw, err := c.ClientInterface.MarkDefaultBranch(ctx, repositoryId, body)
+	if err != nil {
+		return nil, fmt.Errorf("MarkDefaultBranch(%s): %w", repositoryId, err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("MarkDefaultBranch(%s): %w", repositoryId, err)
+	}
+	response, err := ParseMarkDefaultBranchResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("MarkDefaultBranch(%s): %w", repositoryId, err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("MarkDefaultBranch(%s): %w", repositoryId, err)
+	}
+	return found, nil
+}
+
 // Onboard is POST /v1/onboarding: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Onboard(ctx context.Context, body OnboardJSONRequestBody) (*OnboardingResult, error) {
 	raw, err := c.ClientInterface.Onboard(ctx, body)
@@ -1798,6 +1818,26 @@ func (c *Client) RecordAssessment(ctx context.Context, body RecordAssessmentJSON
 	return found, nil
 }
 
+// RecordOccurrenceClaims is POST /v1/occurrence-claims: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) RecordOccurrenceClaims(ctx context.Context, body RecordOccurrenceClaimsJSONRequestBody) (*OccurrenceClaimReport, error) {
+	raw, err := c.ClientInterface.RecordOccurrenceClaims(ctx, body)
+	if err != nil {
+		return nil, fmt.Errorf("RecordOccurrenceClaims: %w", err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("RecordOccurrenceClaims: %w", err)
+	}
+	response, err := ParseRecordOccurrenceClaimsResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("RecordOccurrenceClaims: %w", err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("RecordOccurrenceClaims: %w", err)
+	}
+	return found, nil
+}
+
 // RecordRemediation is POST /v1/remediation-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordRemediation(ctx context.Context, body RecordRemediationJSONRequestBody) (*WorkItem, error) {
 	raw, err := c.ClientInterface.RecordRemediation(ctx, body)
@@ -1936,6 +1976,29 @@ func (c *Client) RegisterRef(ctx context.Context, repositoryId openapi_types.UUI
 		return nil, fmt.Errorf("RegisterRef(%s): %w", repositoryId, err)
 	}
 	return found, nil
+}
+
+// ResolveRepositories is POST /v1/repositories:resolve: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) ResolveRepositories(ctx context.Context, body ResolveRepositoriesJSONRequestBody) ([]RepositoryResolution, error) {
+	raw, err := c.ClientInterface.ResolveRepositories(ctx, body)
+	if err != nil {
+		return nil, fmt.Errorf("ResolveRepositories: %w", err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("ResolveRepositories: %w", err)
+	}
+	response, err := ParseResolveRepositoriesResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("ResolveRepositories: %w", err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("ResolveRepositories: %w", err)
+	}
+	if found == nil {
+		return nil, nil
+	}
+	return *found, nil
 }
 
 // ResolveRole is GET /v1/registry/resolve: the decoded body, or a *ProblemError when core refuses.
