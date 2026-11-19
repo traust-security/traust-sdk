@@ -34,7 +34,7 @@
           "finding_id": "00000000-0000-4000-8000-000000000001",
           "assessment_id": "00000000-0000-4000-8000-000000000003",
           "severity": "high",
-          "cvss_vector": null,
+          "cvss_vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
           "cvss_score": "7.5",
           "rule": "CVE-2026-0001"
         },
@@ -52,6 +52,12 @@
           "last_decision_at": "2026-11-16T00:00:00Z"
         },
         "effective_severity": "high",
+        "cvss": {
+          "score": "7.5",
+          "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+          "severity": "high",
+          "basis": "computed"
+        },
         "sla_due": null,
         "first_reported_at": "2026-11-16T00:00:00Z",
         "last_reported_at": "2026-11-16T00:00:00Z",

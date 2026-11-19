@@ -941,10 +941,8 @@ type ConnectionConfig struct {
 	// Credential A connection's credential reference: the environment (`env`), or the Kubernetes Secret
 	// named `name` and the credential's `key` within it (`secret`).
 	Credential CredentialConfig `json:"credential"`
-
-	// Harness The harness a gateway connection fronts its wire with.
-	Harness   *Harness `json:"harness,omitempty"`
-	Supported *bool    `json:"supported,omitempty"`
+	Harness    *Harness         `json:"harness"`
+	Supported  *bool            `json:"supported,omitempty"`
 
 	// Type The wire a provider speaks and the credential format it takes. The type names the wire,
 	// not the model family: a gateway serving both wires appears as two providers.
@@ -1045,16 +1043,16 @@ type Decision_Validity struct {
 // DecisionBody A countersign or re-rating; the finding is the path, never the body (no id confusion).
 type DecisionBody struct {
 	ArtifactId           *openapi_types.UUID    `json:"artifact_id"`
-	EvidenceGrade        *EvidenceGrade         `json:"evidence_grade,omitempty"`
+	EvidenceGrade        *EvidenceGrade         `json:"evidence_grade"`
 	FixedRepositoryRefId *openapi_types.UUID    `json:"fixed_repository_ref_id"`
 	OccurredAt           *time.Time             `json:"occurred_at"`
 	Rationale            string                 `json:"rationale"`
-	Reason               *DecisionReason        `json:"reason,omitempty"`
+	Reason               *DecisionReason        `json:"reason"`
 	RepositoryRefId      *openapi_types.UUID    `json:"repository_ref_id"`
-	Resolution           *DispositionResolution `json:"resolution,omitempty"`
-	Severity             *Severity              `json:"severity,omitempty"`
-	SourceChannel        *SourceChannel         `json:"source_channel,omitempty"`
-	Validity             *Validity              `json:"validity,omitempty"`
+	Resolution           *DispositionResolution `json:"resolution"`
+	Severity             *Severity              `json:"severity"`
+	SourceChannel        *SourceChannel         `json:"source_channel"`
+	Validity             *Validity              `json:"validity"`
 }
 
 // DecisionReason defines model for DecisionReason.
@@ -1098,9 +1096,9 @@ type Disposition struct {
 	FpReassertionBlocked *bool                  `json:"fp_reassertion_blocked,omitempty"`
 	LastDecisionAt       *time.Time             `json:"last_decision_at"`
 	Line                 *string                `json:"line"`
-	Resolution           *DispositionResolution `json:"resolution,omitempty"`
-	Severity             *Severity              `json:"severity,omitempty"`
-	Validity             *Validity              `json:"validity,omitempty"`
+	Resolution           *DispositionResolution `json:"resolution"`
+	Severity             *Severity              `json:"severity"`
+	Validity             *Validity              `json:"validity"`
 }
 
 // DispositionAssurance defines model for DispositionAssurance.
@@ -1171,12 +1169,9 @@ type ExternalRef struct {
 // FeedEvent One change on the ops feed: an order reaching a `FEED_ORDER_STATES` state (with its
 // reason), a new assessment, or a recorded release. Exactly one is set.
 type FeedEvent struct {
-	// Assessment 3a · what was examined: a ref (and image), by an assessor, with what outcome.
-	Assessment *Assessment `json:"assessment,omitempty"`
-
-	// Order 4a · one unit of work; queued, leased by a worker, finished with an outcome.
-	Order   *RunOrder `json:"order,omitempty"`
-	Release *Release  `json:"release,omitempty"`
+	Assessment *Assessment `json:"assessment"`
+	Order      *RunOrder   `json:"order"`
+	Release    *Release    `json:"release"`
 }
 
 // FeedStatus defines model for FeedStatus.
@@ -1228,7 +1223,7 @@ type FindingCvss struct {
 	// scanner's word for an unscored finding, a judgement's re-rating, or nothing.
 	Basis    SeverityBasis `json:"basis"`
 	Score    *string       `json:"score"`
-	Severity Severity      `json:"severity"`
+	Severity *Severity     `json:"severity"`
 	Vector   *string       `json:"vector"`
 }
 
@@ -1298,15 +1293,11 @@ type FindingVerdict struct {
 
 // FindingView defines model for FindingView.
 type FindingView struct {
-	// Cvss A finding's CVSS as consumers render it: the occurrence's score and vector, the severity
-	// the vector computes, and which source won the effective severity.
-	Cvss        *FindingCvss `json:"cvss,omitempty"`
-	Cwes        *[]string    `json:"cwes,omitempty"`
-	Description *string      `json:"description"`
-
-	// Disposition A finding's merged judgement, ordered only by explicit E0-E3 evidence strength.
-	Disposition       *Disposition `json:"disposition,omitempty"`
-	EffectiveSeverity *Severity    `json:"effective_severity,omitempty"`
+	Cvss              *FindingCvss `json:"cvss"`
+	Cwes              *[]string    `json:"cwes,omitempty"`
+	Description       *string      `json:"description"`
+	Disposition       *Disposition `json:"disposition"`
+	EffectiveSeverity *Severity    `json:"effective_severity"`
 
 	// Finding 3b · one weakness or vulnerability in a repository, identified by fingerprint.
 	Finding         Finding                       `json:"finding"`
@@ -1314,10 +1305,8 @@ type FindingView struct {
 	Labels          *[]FindingLabel               `json:"labels,omitempty"`
 	LastReportedAt  *time.Time                    `json:"last_reported_at"`
 	Locations       *[]FindingView_Locations_Item `json:"locations,omitempty"`
-
-	// Occurrence A finding as one assessment reported it.
-	Occurrence *Occurrence `json:"occurrence,omitempty"`
-	SlaDue     *time.Time  `json:"sla_due"`
+	Occurrence      *Occurrence                   `json:"occurrence"`
+	SlaDue          *time.Time                    `json:"sla_due"`
 }
 
 // FindingView_Locations_Item defines model for FindingView.locations.Item.
@@ -1330,24 +1319,20 @@ type FixStrategy string
 
 // ForgeFacts defines model for ForgeFacts.
 type ForgeFacts struct {
-	AheadBy             *int    `json:"ahead_by"`
-	Archived            *bool   `json:"archived"`
-	AuditDate           *string `json:"audit_date"`
-	AuditedSha          *string `json:"audited_sha"`
-	AvailabilityQueried *bool   `json:"availability_queried,omitempty"`
-	CanonicalUrl        *string `json:"canonical_url"`
-	ChangedLines        *int    `json:"changed_lines"`
-	CompareTruncated    *bool   `json:"compare_truncated"`
-	DefaultBranch       *string `json:"default_branch"`
-	DepsOnly            *bool   `json:"deps_only"`
-	Error               *string `json:"error"`
-	FirstPartyFiles     *int    `json:"first_party_files"`
-	Fork                *bool   `json:"fork"`
-
-	// GoneReason Why a repository left: the gone-class taxonomy. The remediation differs - update the
-	// URL (gone), wait (empty), check the network or token (unreachable) - so the UI carries
-	// the reason, not just the disposition.
-	GoneReason          *GoneReason        `json:"gone_reason,omitempty"`
+	AheadBy             *int               `json:"ahead_by"`
+	Archived            *bool              `json:"archived"`
+	AuditDate           *string            `json:"audit_date"`
+	AuditedSha          *string            `json:"audited_sha"`
+	AvailabilityQueried *bool              `json:"availability_queried,omitempty"`
+	CanonicalUrl        *string            `json:"canonical_url"`
+	ChangedLines        *int               `json:"changed_lines"`
+	CompareTruncated    *bool              `json:"compare_truncated"`
+	DefaultBranch       *string            `json:"default_branch"`
+	DepsOnly            *bool              `json:"deps_only"`
+	Error               *string            `json:"error"`
+	FirstPartyFiles     *int               `json:"first_party_files"`
+	Fork                *bool              `json:"fork"`
+	GoneReason          *GoneReason        `json:"gone_reason"`
 	HasAudit            bool               `json:"has_audit"`
 	Head                *string            `json:"head"`
 	IacFiles            *int               `json:"iac_files"`
@@ -1422,25 +1407,25 @@ type ImpactClassification string
 // ImpactEvidence What each tier observed for one commit, unobserved is None; the impact-analysis
 // schema's evidence block.
 type ImpactEvidence struct {
-	BinaryLinkedLibrary   *ImpactEvidenceBinaryLinkedLibrary `json:"binary_linked_library,omitempty"`
-	BinaryStringScan      *ImpactEvidenceBinaryStringScan    `json:"binary_string_scan,omitempty"`
-	BinarySymbolScan      *ImpactEvidenceBinarySymbolScan    `json:"binary_symbol_scan,omitempty"`
-	EvidenceLevel         *DependencyEvidenceLevel           `json:"evidence_level,omitempty"`
+	BinaryLinkedLibrary   *ImpactEvidenceBinaryLinkedLibrary `json:"binary_linked_library"`
+	BinaryStringScan      *ImpactEvidenceBinaryStringScan    `json:"binary_string_scan"`
+	BinarySymbolScan      *ImpactEvidenceBinarySymbolScan    `json:"binary_symbol_scan"`
+	EvidenceLevel         *DependencyEvidenceLevel           `json:"evidence_level"`
 	FeaturePatternMatches *int                               `json:"feature_pattern_matches"`
-	Govulncheck           *ImpactEvidenceGovulncheck         `json:"govulncheck,omitempty"`
+	Govulncheck           *ImpactEvidenceGovulncheck         `json:"govulncheck"`
 	GovulncheckTrace      *[]string                          `json:"govulncheck_trace"`
 	L1DependsOn           *bool                              `json:"l1_depends_on"`
 	L1VersionInRange      *bool                              `json:"l1_version_in_range"`
 	L4PackageImported     *bool                              `json:"l4_package_imported"`
 	L4PackagesFound       *[]string                          `json:"l4_packages_found"`
-	ManifestScan          *ImpactEvidenceManifestScan        `json:"manifest_scan,omitempty"`
+	ManifestScan          *ImpactEvidenceManifestScan        `json:"manifest_scan"`
 	ManifestVersion       *string                            `json:"manifest_version"`
 	NeedsManualTrace      *bool                              `json:"needs_manual_trace"`
 	Notes                 *string                            `json:"notes"`
-	SbomScan              *ImpactEvidenceSbomScan            `json:"sbom_scan,omitempty"`
+	SbomScan              *ImpactEvidenceSbomScan            `json:"sbom_scan"`
 	SbomShippedVersion    *string                            `json:"sbom_shipped_version"`
-	SourceImportScan      *ImpactEvidenceSourceImportScan    `json:"source_import_scan,omitempty"`
-	SymbolUsageScan       *ImpactEvidenceSymbolUsageScan     `json:"symbol_usage_scan,omitempty"`
+	SourceImportScan      *ImpactEvidenceSourceImportScan    `json:"source_import_scan"`
+	SymbolUsageScan       *ImpactEvidenceSymbolUsageScan     `json:"symbol_usage_scan"`
 }
 
 // ImpactEvidenceBinaryLinkedLibrary defines model for ImpactEvidenceBinaryLinkedLibrary.
@@ -1486,7 +1471,7 @@ type ImpactExportRepo struct {
 	AssessmentId   openapi_types.UUID   `json:"assessment_id"`
 	Classification ImpactClassification `json:"classification"`
 	Document       map[string]JsonValue `json:"document"`
-	Ecosystem      Ecosystem            `json:"ecosystem"`
+	Ecosystem      *Ecosystem           `json:"ecosystem"`
 
 	// Evidence What each tier observed for one commit, unobserved is None; the impact-analysis
 	// schema's evidence block.
@@ -1514,19 +1499,14 @@ type ImpactInput struct {
 	Findings FindingContext `json:"findings"`
 
 	// Package What an advisory says about one package: its affected spans and listed versions.
-	Package AffectedPackage `json:"package"`
-
-	// PreparationScope The complete package/version set prepared together from one dependency snapshot.
-	PreparationScope *ImpactPreparationScope `json:"preparation_scope,omitempty"`
+	Package          AffectedPackage         `json:"package"`
+	PreparationScope *ImpactPreparationScope `json:"preparation_scope"`
 	PreparedAt       time.Time               `json:"prepared_at"`
 	Products         *[]string               `json:"products,omitempty"`
 
 	// Subject What a skill works on: a commit of a repository, and the assessment when there is one.
-	Subject SubjectRef `json:"subject"`
-
-	// Symbols An empty result means unresolved, never "no vulnerable symbol": a data-shaped fix
-	// (deny-list, validation table, dependency bump) changes no function.
-	Symbols *SymbolResolution `json:"symbols,omitempty"`
+	Subject SubjectRef        `json:"subject"`
+	Symbols *SymbolResolution `json:"symbols"`
 	Tiers   *[]ImpactTier     `json:"tiers,omitempty"`
 }
 
@@ -1556,7 +1536,7 @@ type IntakeResult struct {
 type JobResult struct {
 	Degraded *map[string]int `json:"degraded,omitempty"`
 	Outcome  Outcome         `json:"outcome"`
-	Reason   *RunOrderReason `json:"reason,omitempty"`
+	Reason   *RunOrderReason `json:"reason"`
 	Usage    *[]ModelUsage   `json:"usage,omitempty"`
 	Written  *[]string       `json:"written,omitempty"`
 }
@@ -1901,7 +1881,7 @@ type PrecedentReason struct {
 	// Strength What a precedent may save: a person's verdict earns fewer votes; a machine's annotates.
 	Strength          PrecedentStrength `json:"strength"`
 	Symbol            string            `json:"symbol"`
-	UnavailableReason *HashUnavailable  `json:"unavailable_reason,omitempty"`
+	UnavailableReason *HashUnavailable  `json:"unavailable_reason"`
 }
 
 // PrecedentStrength What a precedent may save: a person's verdict earns fewer votes; a machine's annotates.
@@ -1930,12 +1910,12 @@ type Principal struct {
 	Identity   string          `json:"identity"`
 	Kind       ActorKind       `json:"kind"`
 	Roles      *[]Role         `json:"roles,omitempty"`
-	VerifiedBy *IdentitySource `json:"verified_by,omitempty"`
+	VerifiedBy *IdentitySource `json:"verified_by"`
 }
 
 // Problem The error body every route returns (RFC 9457 problem details).
 type Problem struct {
-	Code      *DenyCode    `json:"code,omitempty"`
+	Code      *DenyCode    `json:"code"`
 	Detail    string       `json:"detail"`
 	Instance  string       `json:"instance"`
 	Issues    *[]DenyIssue `json:"issues,omitempty"`
@@ -1964,7 +1944,7 @@ type ProgressReport struct {
 
 // Provenance defines model for Provenance.
 type Provenance struct {
-	Artifact   *ArtifactRef       `json:"artifact,omitempty"`
+	Artifact   *ArtifactRef       `json:"artifact"`
 	OccurredAt time.Time          `json:"occurred_at"`
 	RunId      openapi_types.UUID `json:"run_id"`
 	Source     SourceType         `json:"source"`
@@ -1989,7 +1969,7 @@ type RefKind string
 
 // RefRegistration defines model for RefRegistration.
 type RefRegistration struct {
-	Kind *RefKind `json:"kind,omitempty"`
+	Kind *RefKind `json:"kind"`
 	Name *string  `json:"name"`
 	Sha  string   `json:"sha"`
 }
@@ -2031,13 +2011,11 @@ type RemediationInput struct {
 // among them), the preferred strategy for its class, its latest recorded validation and the
 // audit's `remediation` suggestion.
 type RemediationItem struct {
-	Decisions       *[]Decision  `json:"decisions,omitempty"`
-	Finding         FindingView  `json:"finding"`
-	RemediationHint *string      `json:"remediation_hint"`
-	Strategy        *FixStrategy `json:"strategy,omitempty"`
-
-	// Validation One recorded validation run's outcome for one finding, as `record` stored it.
-	Validation *ValidationAttempt `json:"validation,omitempty"`
+	Decisions       *[]Decision        `json:"decisions,omitempty"`
+	Finding         FindingView        `json:"finding"`
+	RemediationHint *string            `json:"remediation_hint"`
+	Strategy        *FixStrategy       `json:"strategy"`
+	Validation      *ValidationAttempt `json:"validation"`
 }
 
 // RemediationRecordBody defines model for RemediationRecordBody.
@@ -2064,26 +2042,18 @@ type ReportFormat string
 
 // Repository defines model for Repository.
 type Repository struct {
-	Archived  *bool      `json:"archived"`
-	CreatedAt *time.Time `json:"created_at"`
-
-	// Disposition A repository's standing in the planner's universe. The unreachable disposition is
-	// user-removable only: no automatic recovery, ever - the re-verification is a deliberate
-	// act (the verify door, the operator's record path).
-	Disposition         *RepositoryDisposition `json:"disposition,omitempty"`
+	Archived            *bool                  `json:"archived"`
+	CreatedAt           *time.Time             `json:"created_at"`
+	Disposition         *RepositoryDisposition `json:"disposition"`
 	DispositionAt       *time.Time             `json:"disposition_at"`
 	DispositionEvidence *string                `json:"disposition_evidence"`
-
-	// DispositionReason Why a repository left: the gone-class taxonomy. The remediation differs - update the
-	// URL (gone), wait (empty), check the network or token (unreachable) - so the UI carries
-	// the reason, not just the disposition.
-	DispositionReason *GoneReason         `json:"disposition_reason,omitempty"`
-	GoneStreak        *int                `json:"gone_streak,omitempty"`
-	Id                *openapi_types.UUID `json:"id"`
-	Public            bool                `json:"public"`
-	UpdatedAt         *time.Time          `json:"updated_at"`
-	UpstreamId        *openapi_types.UUID `json:"upstream_id"`
-	Url               string              `json:"url"`
+	DispositionReason   *GoneReason            `json:"disposition_reason"`
+	GoneStreak          *int                   `json:"gone_streak,omitempty"`
+	Id                  *openapi_types.UUID    `json:"id"`
+	Public              bool                   `json:"public"`
+	UpdatedAt           *time.Time             `json:"updated_at"`
+	UpstreamId          *openapi_types.UUID    `json:"upstream_id"`
+	Url                 string                 `json:"url"`
 }
 
 // RepositoryDisposition A repository's standing in the planner's universe. The unreachable disposition is
@@ -2114,7 +2084,7 @@ type RepositoryRef struct {
 type RepositoryResolution struct {
 	AliasOf    *openapi_types.UUID `json:"alias_of"`
 	Candidates *[]Repository       `json:"candidates,omitempty"`
-	Repository *Repository         `json:"repository,omitempty"`
+	Repository *Repository         `json:"repository"`
 	Url        string              `json:"url"`
 }
 
@@ -2142,14 +2112,14 @@ type RepositoryVerification struct {
 // RestatementBody An administrator's correction; the decision is the path, never the body.
 type RestatementBody struct {
 	Approvers            *[]string              `json:"approvers,omitempty"`
-	EvidenceGrade        *EvidenceGrade         `json:"evidence_grade,omitempty"`
+	EvidenceGrade        *EvidenceGrade         `json:"evidence_grade"`
 	FixedRepositoryRefId *openapi_types.UUID    `json:"fixed_repository_ref_id"`
 	Rationale            string                 `json:"rationale"`
 	Reason               RestatementReason      `json:"reason"`
-	Resolution           *DispositionResolution `json:"resolution,omitempty"`
-	Severity             *Severity              `json:"severity,omitempty"`
+	Resolution           *DispositionResolution `json:"resolution"`
+	Severity             *Severity              `json:"severity"`
 	Ticket               string                 `json:"ticket"`
-	Validity             *Validity              `json:"validity,omitempty"`
+	Validity             *Validity              `json:"validity"`
 }
 
 // RestatementReason defines model for RestatementReason.
@@ -2162,16 +2132,15 @@ type RestatementReason string
 // queue without one finding-detail call per case. Absent on cases a fold could not
 // assemble a view for; the case itself is still the actionable datum.
 type ReviewCase struct {
-	// Disposition A finding's merged judgement, ordered only by explicit E0-E3 evidence strength.
-	Disposition *Disposition       `json:"disposition,omitempty"`
+	Disposition *Disposition       `json:"disposition"`
 	FindingId   openapi_types.UUID `json:"finding_id"`
 
 	// Kind Why a person must look, worst first: the fold's states, then a pending review item.
 	Kind         ReviewCaseKind     `json:"kind"`
 	RepositoryId openapi_types.UUID `json:"repository_id"`
-	ReviewItem   *ReviewItem        `json:"review_item,omitempty"`
+	ReviewItem   *ReviewItem        `json:"review_item"`
 	Since        time.Time          `json:"since"`
-	View         *FindingView       `json:"view,omitempty"`
+	View         *FindingView       `json:"view"`
 }
 
 // ReviewCaseKind Why a person must look, worst first: the fold's states, then a pending review item.
@@ -2417,7 +2386,7 @@ type ValidationAttempt struct {
 	AttemptId          openapi_types.UUID  `json:"attempt_id"`
 	DecisionId         *openapi_types.UUID `json:"decision_id"`
 	EvidenceArtifactId openapi_types.UUID  `json:"evidence_artifact_id"`
-	EvidenceGrade      *EvidenceGrade      `json:"evidence_grade,omitempty"`
+	EvidenceGrade      *EvidenceGrade      `json:"evidence_grade"`
 	FindingId          openapi_types.UUID  `json:"finding_id"`
 	OccurredAt         time.Time           `json:"occurred_at"`
 	Rationale          *string             `json:"rationale"`
@@ -2441,7 +2410,7 @@ type ValidationFindingResult struct {
 	ArtifactId    openapi_types.UUID    `json:"artifact_id"`
 	AssessmentId  openapi_types.UUID    `json:"assessment_id"`
 	DecisionId    *openapi_types.UUID   `json:"decision_id"`
-	EvidenceGrade *EvidenceGrade        `json:"evidence_grade,omitempty"`
+	EvidenceGrade *EvidenceGrade        `json:"evidence_grade"`
 	FindingId     openapi_types.UUID    `json:"finding_id"`
 	Rationale     *string               `json:"rationale"`
 	ReviewItemIds *[]openapi_types.UUID `json:"review_item_ids,omitempty"`
@@ -2458,7 +2427,7 @@ type ValidationRecordInput struct {
 	InstallFailure    *string                    `json:"install_failure"`
 	Policy            *ValidationRecordingPolicy `json:"policy,omitempty"`
 	Sources           []ValidationSourceBinding  `json:"sources"`
-	TargetAttestation *TargetAttestation         `json:"target_attestation,omitempty"`
+	TargetAttestation *TargetAttestation         `json:"target_attestation"`
 }
 
 // ValidationRecordResult defines model for ValidationRecordResult.
@@ -2560,23 +2529,19 @@ type WorkItem struct {
 	FindingIds []openapi_types.UUID `json:"finding_ids"`
 	FixBranch  *string              `json:"fix_branch"`
 	FixCommit  *string              `json:"fix_commit"`
-
-	// Fork Where a fix is pushed: a private mirror of the upstream, or the repository itself.
-	Fork     *Fork        `json:"fork,omitempty"`
-	OpenedAt time.Time    `json:"opened_at"`
-	Patch    *ArtifactRef `json:"patch,omitempty"`
+	Fork       *Fork                `json:"fork"`
+	OpenedAt   time.Time            `json:"opened_at"`
+	Patch      *ArtifactRef         `json:"patch"`
 
 	// PatchRefusal Secret categories when recording withholds a patch for removed/context-line secrets; null on report-only calls and subsequent reads. Not persisted.
 	PatchRefusal    *string             `json:"patch_refusal"`
-	Report          *ArtifactRef        `json:"report,omitempty"`
+	Report          *ArtifactRef        `json:"report"`
 	ReportedBy      *openapi_types.UUID `json:"reported_by"`
 	RepositoryRefId openapi_types.UUID  `json:"repository_ref_id"`
 	Status          RemediationStatus   `json:"status"`
-	Strategy        *FixStrategy        `json:"strategy,omitempty"`
-
-	// Tracker A thing in another system: a merge request, a commit or a ticket, by URL or key.
-	Tracker    *ExternalRef       `json:"tracker,omitempty"`
-	WorkItemId openapi_types.UUID `json:"work_item_id"`
+	Strategy        *FixStrategy        `json:"strategy"`
+	Tracker         *ExternalRef        `json:"tracker"`
+	WorkItemId      openapi_types.UUID  `json:"work_item_id"`
 }
 
 // FindAdvisoryParams defines parameters for FindAdvisory.
