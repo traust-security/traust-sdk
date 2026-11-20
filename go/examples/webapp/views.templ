@@ -121,6 +121,8 @@ templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
 		}
 		<button hx-post="/runs" hx-vals={ `{"asset":"scan","repository_id":"` + repo.Id.String() + `"}` } hx-target="#runs" hx-swap="afterbegin">Run scan</button>
 		<ul id="runs"></ul>
+		<h2>Run history</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/runs" } hx-trigger="load, run-finished from:body"></div>
 		<h2>Findings</h2>
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/findings" } hx-trigger="load, run-finished from:body"></div>
 	}
@@ -166,6 +168,18 @@ templ decideForm(f traust.FindingView) {
 
 templ decided() {
 	<p id="decide">Decision recorded. <a href="">Reload</a> to see the finding's new state.</p>
+}
+
+// runHistory is what ran for a repository and who asked: a person, or the engine on its trigger.
+templ runHistory(orders []traust.RunOrder) {
+	if len(orders) == 0 {
+		<p>No runs yet.</p>
+	}
+	<ul>
+		for _, o := range orders {
+			<li>{ o.Asset }: { string(o.State) }, requested by { o.RequestedBy }</li>
+		}
+	</ul>
 }
 
 // job is work core finishes later: until done, the row asks poll for itself every second.

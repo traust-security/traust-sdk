@@ -45,6 +45,21 @@ func (a *app) runStatus(w http.ResponseWriter, r *http.Request) {
 	render(w, r, http.StatusOK, runRow(poller.ResumeToken(), order.State, done))
 }
 
+// runHistory is a repository's latest runs, from any requester.
+func (a *app) runHistory(w http.ResponseWriter, r *http.Request) {
+	id, ok := pathID(w, r, "id")
+	if !ok {
+		return
+	}
+	limit := 10
+	page, err := a.core.ListOrders(r.Context(), &traust.ListOrdersParams{RepositoryId: &id, Limit: &limit})
+	if err != nil {
+		fail(w, r, err)
+		return
+	}
+	render(w, r, http.StatusOK, runHistory(page.Items))
+}
+
 func (a *app) startReport(w http.ResponseWriter, r *http.Request) {
 	name, format := traust.ViewName(r.PostFormValue("report")), traust.ReportFormatMarkdown
 	poller, err := a.core.BeginRequestReport(r.Context(), traust.ReportRequest{Report: name, Format: &format})

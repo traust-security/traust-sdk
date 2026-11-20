@@ -28,6 +28,7 @@ func (a *app) routes() http.Handler {
 	mux.HandleFunc("POST /onboard", a.signedIn(a.onboard))
 	mux.HandleFunc("GET /repositories/{id}", a.signedIn(a.repository))
 	mux.HandleFunc("GET /repositories/{id}/findings", a.signedIn(a.findings))
+	mux.HandleFunc("GET /repositories/{id}/runs", a.signedIn(a.runHistory))
 	mux.HandleFunc("GET /findings/{id}", a.signedIn(a.finding))
 	mux.HandleFunc("POST /findings/{id}/decide", a.signedIn(a.decide))
 	mux.HandleFunc("POST /runs", a.signedIn(a.startRun))

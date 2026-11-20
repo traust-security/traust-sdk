@@ -145,7 +145,16 @@ func TestARepositoryShowsItsBranchAndItsFindingsAreDecided(t *testing.T) {
 	core.Handle("GET /v1/repositories/{id}/findings", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageFindingView{Items: []traust.FindingView{view}})))
 	core.Handle("GET /v1/findings/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, view)))
 	core.Handle("POST /v1/findings/{id}/decisions", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Decision{})))
+	core.Handle("GET /v1/orders", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageRunOrder{
+		Items: []traust.RunOrder{{Asset: "scan", State: traust.RunOrderStateSucceeded, RequestedBy: "engine"}},
+	})))
 	h := newApp(t, core)
+	if runs := send(h, http.MethodGet, "/repositories/"+repo.String()+"/runs", "ada", nil).Body.String(); !strings.Contains(runs, "scan: succeeded, requested by engine") {
+		t.Fatalf("run history: %s, want the engine's scan", runs)
+	}
+	if q := core.Requests()[0].Query; q.Get("repository_id") != repo.String() {
+		t.Fatalf("run history asked for %v, want the repository's runs", q)
+	}
 
 	page := send(h, http.MethodGet, "/repositories/"+repo.String(), "ada", nil).Body.String()
 	if !strings.Contains(page, "Default branch main at 4c7f0b9") || !strings.Contains(page, `repository_id&#34;:&#34;`+repo.String()) {

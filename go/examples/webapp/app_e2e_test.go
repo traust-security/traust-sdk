@@ -86,6 +86,9 @@ func TestE2EOnboardScanAndDecide(t *testing.T) {
 		t.Fatalf("scan: %s, want succeeded", done)
 	}
 
+	if runs := e.get(t, "/repositories/"+repo[1]+"/runs"); !strings.Contains(runs, "scan: succeeded, requested by ") {
+		t.Fatalf("run history: %s, want the person's scan", runs)
+	}
 	findings := e.get(t, "/repositories/"+repo[1]+"/findings")
 	ids := regexp.MustCompile(`href="/findings/([0-9a-f-]+)">Fixture: `).FindAllStringSubmatch(findings, -1)
 	if len(ids) != 3 {
