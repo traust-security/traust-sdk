@@ -1,6 +1,6 @@
 # traust-sdk (Go)
 
-Program against traust: read its inventory, findings and insights, keep inventory current, and
+Program against traust: read its inventory, findings, dashboards and reports, keep inventory current, and
 run work for it. Every call goes to traust-core's REST API; the SDK handles auth, retries,
 paging, typed errors and the run lifecycle.
 
@@ -50,37 +50,46 @@ for f, err := range client.ListFindingsAll(ctx, repoID, nil) { … } // every pa
 ```
 
 Each paged listing has an `…All` iterator that follows the cursor and stops at the first error.
-Counts, rollups and dashboards come from core, never from walking a listing:
-`SummarizeFindings`, `FindingTimeline`, `SummarizeExposure`, `ExposureTimeline`, and
-`GetInsight(ctx, "findings-rollup", params)` for any insight (dashboards, SARIF, OSCAL, …).
-A view with a contract in traust-contracts `views_schema/v1` also has a generated `…Insight`
-type; `GetInsightAs` asks for that view and decodes it strictly, refusing a field outside the
-contract:
+Counts and dashboards come from core, never from walking a listing.
+
+### Dashboards
+
+One query answers a dashboard card: what to count, broken down by up to three dimensions, over
+the repositories (or products, teams) the person may see. Rows read by typed key:
 
 ```go
-rollup, err := traust.GetInsightAs[traust.FindingsRollupInsight](ctx, client, params)
-critical := rollup.Total.Open.Critical                 // unknown is nil, e.g. rollup.AsOf
+result, err := client.QueryDashboard(ctx, traust.DashboardQuery{
+    Subject:       traust.SubjectFindings,
+    Measures:      []traust.Measure{traust.MeasureFindings},
+    GroupBy:       &[]traust.Dimension{traust.DimensionSeverity},
+    RepositoryIds: &repoIDs,
+})
+for _, row := range result.Rows {
+    severity, count := row.Group(traust.DimensionSeverity), row.Measure(traust.MeasureFindings)
+}
+```
+
+### Reports
+
+A report is a job core builds; follow the build, then download the file. A `json` report is the
+view itself, and `ReportView` decodes it as its generated `…Insight` type, refusing a field
+outside the contract:
+
+```go
+format := traust.ReportFormatMarkdown
+poller, err := client.BeginRequestReport(ctx, traust.ReportRequest{Report: traust.FindingsRollup, Format: &format})
+report, err := poller.Wait(ctx, 2*time.Second)         // ready or failed; ResumeReport(token) after a restart
+file, err := client.GetReportFile(ctx, report.OrderId) // the stored bytes, whatever the format
+
+rollup, err := traust.ReportView[traust.FindingsRollupInsight](ctx, client, report) // a ready json report
 ```
 
 A view composed from others uses their types: `ExecutiveSummaryInsight.Rollup` is a
 `FindingsRollupInsight`, its `Pqc` a `*PqcPortfolioInsight` (nil when the panel was not asked
-for), its isolation panel's `ThreatRegister` a `ThreatRegisterInsight`, and so on.
-
-Shared contract definitions that are not a view generate once and are reused: the finding
-records views embed are `FindingRecordsInsightFindingView`, `FindingRecordsInsightOccurrence`,
-`FindingRecordsInsightDecision` and so on (`ContainerFindingsInsight` rows carry them).
-
-`GetInsightReport` returns any insight rendered as a report on demand, as one file's bytes,
-scoped the same way (`ExecutivePanel` asks for the executive summary's optional panels):
-
-```go
-format := traust.ReportFormatHtml
-panels := []traust.ExecutivePanel{traust.ExecutivePanelIsolation}
-html, err := client.GetInsightReport(ctx, traust.ExecutiveSummary,
-	&traust.GetInsightReportParams{Format: &format, ExecutivePanel: &panels})
-```
-
-Formats are `ReportFormatMarkdown`, `ReportFormatHtml` and `ReportFormatCsv` (csv only for an insight with an export table).
+for), its isolation panel's `ThreatRegister` a `ThreatRegisterInsight`, and so on. Shared
+contract definitions generate once and are reused: the finding records views embed are
+`FindingRecordsInsightFindingView`, `FindingRecordsInsightOccurrence`,
+`FindingRecordsInsightDecision` (`ContainerFindingsInsight` rows carry them).
 
 ### Query orders
 
@@ -244,8 +253,9 @@ identity available for reconciliation and does not complete.
 ## Example app
 
 [`examples/webapp`](examples/webapp) is a small web app on traust (net/http, templ, htmx): sign in,
-see your repositories, start a run and watch it finish. It acts as each signed-in person with
-`OnBehalfOf`, follows runs with `Poller`, and runs its pack's work in the same binary.
+see your findings by severity, start a run and watch it finish, build a report and download it.
+It acts as each signed-in person with `OnBehalfOf`, reads its dashboard with `QueryDashboard`,
+follows runs and report builds with `Poller`, and runs its pack's work in the same binary.
 `make webapp` starts it against a local traust-server; `make e2e` tests it end to end.
 
 ## Test your code

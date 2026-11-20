@@ -8,7 +8,7 @@ SCHEMAS_DIR := $(CONTRACTS_SOURCE)/artifacts_schema/v1
 # db/v1 restructure dropped. Regenerating it is the G6 layout adaptation (plan 28), and plan 05
 # retires the package; until then v1/storage/ is hand-maintained and checked by drift.
 CORE_REPO := https://github.com/traust-security/traust-core.git
-CORE_REF := 6cf9a0b6f2d7ed0ebaa53a1119c62dd2d4beea66
+CORE_REF := 264736f36a45a471f46dd6abf68b9dc646091ca0
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
 CORE_PYTHON := cd "$(CORE_SOURCE)" && uv run --quiet python
 OPENAPI_DIR := ./internal/generate/openapi
@@ -90,7 +90,7 @@ mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context
 # ephemeral self-signed certificate, trusted through SSL_CERT_FILE), and the e2e config
 # maps the mock's host to the gitlab kind in forge_hosts.
 # One package at a time: both share the server, and ops onboards what v1/traust expects empty.
-# core_up starts traust-server at CORE_REF on $$port beside the e2eforge stand-in, mints a
+# core_up starts traust-server at CORE_REF on $$port, its report builder, and the e2eforge stand-in; mints a
 # person token ($$home/person) and a runner token ($$home/runner), and stops both on exit.
 define core_up
 	home="$$(mktemp -d)"; \
@@ -101,7 +101,8 @@ define core_up
 	for _ in $$(seq 100); do [ -s "$$home/forge-port" ] && break; sleep 0.1; done; \
 	forge_port=$$(cat "$$home/forge-port"); \
 	(cd "$(CORE_SOURCE)" && exec env SSL_CERT_FILE="$$home/forge-ca.pem" HTTPS_PROXY="http://127.0.0.1:$$forge_port" https_proxy="http://127.0.0.1:$$forge_port" uv run --quiet traust-server --config "$$home/config.yaml" --port $$port) > "$$home/server.log" 2>&1 & pid=$$!; \
-	trap 'kill $$pid $$forge_pid 2>/dev/null || true; rm -rf "$$home"' EXIT; \
+	(cd "$(CORE_SOURCE)" && exec uv run --quiet traust-server --config "$$home/config.yaml" --role reports) > "$$home/reports.log" 2>&1 & reports_pid=$$!; \
+	trap 'kill $$pid $$reports_pid $$forge_pid 2>/dev/null || true; rm -rf "$$home"' EXIT; \
 	for _ in $$(seq 60); do curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz && break; sleep 1; done; \
 	curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz || { cat "$$home/server.log"; exit 1; }; \
 	$(call mint,e2e@example.com,False,person); \

@@ -196,6 +196,7 @@ func copyOrder(order traust.RunOrder) traust.RunOrder {
 	order.ForkScheduledAt = copyPointer(order.ForkScheduledAt)
 	order.ForkUrl = copyPointer(order.ForkUrl)
 	order.Id = copyPointer(order.Id)
+	order.InputArtifactId = copyPointer(order.InputArtifactId)
 	order.Lane = copyPointer(order.Lane)
 	order.LeaseExpiresAt = copyPointer(order.LeaseExpiresAt)
 	order.LeaseHolder = copyPointer(order.LeaseHolder)

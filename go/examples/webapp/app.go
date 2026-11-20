@@ -1,10 +1,13 @@
 package main
 
 import (
+	"context"
 	"errors"
+	"fmt"
 	"net/http"
 
 	"github.com/a-h/templ"
+	"github.com/google/uuid"
 
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 )
@@ -24,6 +27,9 @@ func (a *app) routes() http.Handler {
 	mux.HandleFunc("POST /sign-out", a.signOut)
 	mux.HandleFunc("POST /runs", a.signedIn(a.startRun))
 	mux.HandleFunc("GET /runs/{token}", a.signedIn(a.runStatus))
+	mux.HandleFunc("POST /reports", a.signedIn(a.startReport))
+	mux.HandleFunc("GET /reports/{token}", a.signedIn(a.reportStatus))
+	mux.HandleFunc("GET /reports/{token}/file", a.signedIn(a.reportFile))
 	return mux
 }
 
@@ -52,7 +58,46 @@ func (a *app) home(w http.ResponseWriter, r *http.Request) {
 		}
 		repos = append(repos, repo)
 	}
-	render(w, r, http.StatusOK, home(*me, repos))
+	severities, err := a.findingsBySeverity(ctx, repos)
+	if err != nil {
+		fail(w, r, err)
+		return
+	}
+	render(w, r, http.StatusOK, home(*me, repos, severities))
+}
+
+// findingsBySeverity is one dashboard query over the person's repositories.
+func (a *app) findingsBySeverity(ctx context.Context, repos []traust.Repository) ([]tally, error) {
+	ids := make([]uuid.UUID, 0, len(repos))
+	for _, repo := range repos {
+		if repo.Id != nil {
+			ids = append(ids, *repo.Id)
+		}
+	}
+	if len(ids) == 0 {
+		return nil, nil
+	}
+	result, err := a.core.QueryDashboard(ctx, traust.DashboardQuery{
+		Subject:       traust.SubjectFindings,
+		Measures:      []traust.Measure{traust.MeasureFindings},
+		GroupBy:       &[]traust.Dimension{traust.DimensionSeverity},
+		RepositoryIds: &ids,
+	})
+	if err != nil {
+		return nil, err
+	}
+	tallies := make([]tally, 0, len(result.Rows))
+	for _, row := range result.Rows {
+		label, count := "unrated", "0"
+		if s := row.Group(traust.DimensionSeverity); s != nil {
+			label = *s
+		}
+		if n := row.Measure(traust.MeasureFindings); n != nil {
+			count = fmt.Sprint(*n)
+		}
+		tallies = append(tallies, tally{label, count})
+	}
+	return tallies, nil
 }
 
 func (a *app) signIn(w http.ResponseWriter, r *http.Request) {
@@ -97,6 +142,46 @@ func (a *app) runStatus(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	render(w, r, http.StatusOK, runRow(poller.ResumeToken(), order.State, done))
+}
+
+func (a *app) startReport(w http.ResponseWriter, r *http.Request) {
+	name, format := traust.ViewName(r.PostFormValue("report")), traust.ReportFormatMarkdown
+	poller, err := a.core.BeginRequestReport(r.Context(), traust.ReportRequest{Report: name, Format: &format})
+	if err != nil {
+		fail(w, r, err)
+		return
+	}
+	render(w, r, http.StatusOK, reportRow(poller.ResumeToken(), traust.Report{Report: name, Status: traust.ReportStatusQueued}, false))
+}
+
+func (a *app) reportStatus(w http.ResponseWriter, r *http.Request) {
+	poller, err := a.core.ResumeReport(r.PathValue("token"))
+	if err != nil {
+		render(w, r, http.StatusBadRequest, failure("That is not a report."))
+		return
+	}
+	report, done, err := poller.Poll(r.Context())
+	if err != nil {
+		fail(w, r, err)
+		return
+	}
+	render(w, r, http.StatusOK, reportRow(poller.ResumeToken(), report, done))
+}
+
+func (a *app) reportFile(w http.ResponseWriter, r *http.Request) {
+	id, err := uuid.Parse(r.PathValue("token"))
+	if err != nil {
+		http.Error(w, "That is not a report.", http.StatusBadRequest)
+		return
+	}
+	file, err := a.core.GetReportFile(r.Context(), id)
+	if err != nil {
+		http.Error(w, http.StatusText(status(err)), status(err))
+		return
+	}
+	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
+	w.Header().Set("Content-Disposition", `attachment; filename="report.md"`)
+	_, _ = w.Write(file)
 }
 
 // signedIn sends the handler's traust calls as the signed-in person.

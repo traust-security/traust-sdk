@@ -34,11 +34,12 @@ err = r.Run(ctx)
 | check the ledger | `c` | `ListLayers`, `ListEvents`, `VerifyLayer`, `Checkpoint`; core writes ledger events when records and decisions land, you never append them |
 | find exposure | `c` | `GetAdvisory`, `Affected`, `PackagesAffected`, `Dependents`, `Dependencies`, `ListImpacts`, `SummarizeExposure`, `ExposureTimeline`, `FeedStatuses` |
 | read validation | `c` | `ListValidationAttempts` |
-| show a dashboard, rollup or export | `c` | `GetInsight` (one call for every insight: findings-rollup, exposure, sla, sarif, …) |
+| show a dashboard | `c` | `QueryDashboard` (one query per card); rows read by `row.Group(dimension)`, `row.Measure(measure)` |
+| build a report or export | `c` | `BeginRequestReport` → `GetReportFile`; `ReportView` decodes a json report as its `…Insight` type |
 | react to changes | `c` | `ReadFeed` / `ReadFeedAll` |
 | test code that uses the SDK | `traustest` | a fake core: `traustest.New(t)`, `Handle`, `Client()`, `Requests()` |
 
-Counts, rollups and dashboards come from `SummarizeFindings`, `SummarizeExposure` and `GetInsight`; never compute them from listings.
+Counts and dashboards come from `QueryDashboard`, `SummarizeFindings` and `SummarizeExposure`, reports from `BeginRequestReport`; never compute them from listings.
 
 Method names are core's operation ids. A long or unclear name is fixed in core's route, never by a wrapper here.
 
@@ -80,7 +81,7 @@ Each step is one core endpoint. A step core doesn't serve is not a step: never s
 
 | Package | Owns | Consumer writes |
 |---|---|---|
-| `v1/traust` | `traust.Client`: types and enums generated from core's OpenAPI; the generated `(T, error)` calls and `…All` iterators; auth, read retries, typed problem errors (`errors.Is` on status and deny code); `Poller` for work core finishes later | a `TokenSource` |
+| `v1/traust` | `traust.Client`: types and enums generated from core's OpenAPI; the generated `(T, error)` calls and `…All` iterators; auth, read retries, typed problem errors (`errors.Is` on status and deny code); `Poller` for work core finishes later (orders, report builds) | a `TokenSource` |
 | `v1/traust/traustest` | a fake core for consumers' tests: canned responses, recorded requests | — |
 | `v1/ops` | the lease (heartbeat, lease loss, complete) and its two ways in: `Runner` (claim, pinned pack, the asset's command) and `RecordingRun` (start, prepare, record); `ProcessExecutor` | an `Executor` (or `ProcessExecutor`); the pack file |
 | `v1/<pkg>/<pkg>test` | test doubles for each extension point; the conformance suite every `Executor` passes against `traust serve` | — |

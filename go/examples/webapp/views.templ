@@ -5,6 +5,12 @@ import "github.com/traust-security/traust-sdk/go/v1/traust"
 // htmx swaps error responses too, so a refusal shows where its request was made.
 const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"...","swap":true}]}`
 
+// tally is one row of a count: a label and its number, as core answered them.
+type tally struct {
+	Label string
+	Count string
+}
+
 templ page(title string) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -32,16 +38,33 @@ templ signIn(problem string) {
 	}
 }
 
-templ home(me traust.Principal, repos []traust.Repository) {
+templ home(me traust.Principal, repos []traust.Repository, severities []tally) {
 	@page("traust") {
 		<header>
 			Signed in as { me.Display }
 			<form method="post" action="/sign-out"><button>Sign out</button></form>
 		</header>
 		<section>
+			<h2>Findings by severity</h2>
+			if len(severities) == 0 {
+				<p>No findings in your repositories.</p>
+			}
+			<dl>
+				for _, s := range severities {
+					<dt>{ s.Label }</dt>
+					<dd>{ s.Count }</dd>
+				}
+			</dl>
+		</section>
+		<section>
 			<h2>Runs</h2>
 			<button hx-post="/runs" hx-vals={ `{"asset":"smoke"}` } hx-target="#runs" hx-swap="afterbegin">Run smoke</button>
 			<ul id="runs"></ul>
+		</section>
+		<section>
+			<h2>Reports</h2>
+			<button hx-post="/reports" hx-vals={ `{"report":"findings-rollup"}` } hx-target="#reports" hx-swap="afterbegin">Build the findings rollup</button>
+			<ul id="reports"></ul>
 		</section>
 		<section>
 			<h2>Repositories</h2>
@@ -54,11 +77,27 @@ templ home(me traust.Principal, repos []traust.Repository) {
 	}
 }
 
-templ runRow(token string, state traust.RunOrderState, done bool) {
+// job is work core finishes later: until done, the row asks poll for itself every second.
+templ job(poll string, done bool) {
 	if done {
-		<li id={ "run-" + token }>{ token }: { string(state) }</li>
+		<li>{ children... }</li>
 	} else {
-		<li id={ "run-" + token } hx-get={ "/runs/" + token } hx-trigger="every 1s" hx-swap="outerHTML">{ token }: { string(state) }…</li>
+		<li hx-get={ poll } hx-trigger="every 1s" hx-swap="outerHTML">{ children... }…</li>
+	}
+}
+
+templ runRow(token string, state traust.RunOrderState, done bool) {
+	@job("/runs/"+token, done) {
+		run { token }: { string(state) }
+	}
+}
+
+templ reportRow(token string, report traust.Report, done bool) {
+	@job("/reports/"+token, done) {
+		{ string(report.Report) } report: { string(report.Status) }
+		if report.Status == traust.ReportStatusReady {
+			<a href={ templ.URL("/reports/" + token + "/file") } download>download</a>
+		}
 	}
 }
 
