@@ -339,7 +339,7 @@ func onboardForm() templ.Component {
 				}()
 			}
 			ctx = templ.InitializeContext(ctx)
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<h1>Onboard repositories</h1><form hx-post=\"/onboard/plan\" hx-target=\"#plan\"><label>Product <input name=\"product\" required placeholder=\"payments\"></label> <label>Label <input name=\"label\" placeholder=\"Payments (new products only)\"></label> <label>Repository URLs, one per line <textarea name=\"repositories\" rows=\"4\" required></textarea></label> <label><input type=\"checkbox\" name=\"scan\" value=\"on\" checked> Scan after onboarding</label> <button>Preview</button></form><div id=\"plan\"></div>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 24, "<h1>Onboard repositories</h1><form hx-post=\"/onboard/plan\" hx-target=\"#plan\"><label>Product <input name=\"product\" required placeholder=\"payments\"></label> <label>Label <input name=\"label\" placeholder=\"Payments (new products only)\"></label> <label>Repository URLs, one per line <textarea name=\"repositories\" rows=\"4\" required></textarea></label> <button>Preview</button></form><div id=\"plan\"></div><p>The engine schedules a scan of each new repository on its next pass; a repository's page runs one now.</p>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

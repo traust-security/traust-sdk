@@ -264,8 +264,10 @@ with `OnBehalfOf`, records scans with `ops.AssessDefaultRef`, follows runs and r
 `Poller`, and runs its pack's work in the same binary. Its scan skill is a fixture (canned,
 contracts-valid findings, labelled as such) so it plays without an agent or a model key.
 
-`make webapp` starts it against a local traust-server that reaches real forges: sign in with the
-token it prints and onboard any public repository. `make e2e` runs the same flows end to end
+`make webapp` runs the whole stack locally: traust-server (reaching real forges), its report
+builder, and traust-engine, which plans a scan of each repository under the app's pack. Sign in
+with the token it prints and onboard any public repository; the engine's next pass scans it.
+It needs `uv` and `cosign` (the local ledger is signed). `make e2e` runs the same flows end to end
 against a forge stand-in.
 
 ## Test your code

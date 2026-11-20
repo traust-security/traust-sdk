@@ -11,27 +11,28 @@ CORE_REPO := https://github.com/traust-security/traust-core.git
 CORE_REF := 264736f36a45a471f46dd6abf68b9dc646091ca0
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
 CORE_PYTHON := cd "$(CORE_SOURCE)" && uv run --quiet python
+ENGINE_REPO := https://github.com/traust-security/traust-engine.git
+ENGINE_REF := c82854b33a538e985bee7c5d932194afa1edacf2
+ENGINE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/engine/checkout-$(ENGINE_REF)
 OPENAPI_DIR := ./internal/generate/openapi
 OUT_DIR := ./v1/enums
 ROOT := ..
 GO_CI := python3 $(ROOT)/ci/lang/go/ci.py
 export PATH := $(shell go env GOPATH)/bin:$(PATH)
 
-.PHONY: contracts core generate api-generate e2e webapp test webapp-generate test-integration check-drift fmt fmt-check vet lint security tools
+.PHONY: contracts core engine generate api-generate e2e webapp test webapp-generate test-integration check-drift fmt fmt-check vet lint security tools
+
+# checkout pins $(1) to commit $(3) of $(2), fetching only that commit; $(4) are git clean's flags.
+define checkout
+	@set -eu; \
+	if [ ! -d "$(1)/.git" ]; then rm -rf "$(1)"; mkdir -p "$(1)"; git -C "$(1)" init --quiet; git -C "$(1)" remote add origin "$(2)"; fi; \
+	if ! git -C "$(1)" cat-file -e "$(3)^{commit}" 2>/dev/null; then git -C "$(1)" fetch --quiet --no-tags --depth=1 origin "$(3)"; fi; \
+	git -C "$(1)" checkout --quiet --detach --force "$(3)"; \
+	git -C "$(1)" clean $(4)
+endef
 
 contracts:
-	@set -eu; \
-	if [ ! -d "$(CONTRACTS_SOURCE)/.git" ]; then \
-	  rm -rf "$(CONTRACTS_SOURCE)"; \
-	  mkdir -p "$(CONTRACTS_SOURCE)"; \
-	  git -C "$(CONTRACTS_SOURCE)" init --quiet; \
-	  git -C "$(CONTRACTS_SOURCE)" remote add origin "$(CONTRACTS_REPO)"; \
-	fi; \
-	if ! git -C "$(CONTRACTS_SOURCE)" cat-file -e "$(CONTRACTS_REF)^{commit}" 2>/dev/null; then \
-	  git -C "$(CONTRACTS_SOURCE)" fetch --quiet --no-tags --depth=1 origin "$(CONTRACTS_REF)"; \
-	fi; \
-	git -C "$(CONTRACTS_SOURCE)" checkout --quiet --detach --force "$(CONTRACTS_REF)"; \
-	git -C "$(CONTRACTS_SOURCE)" clean -ffdqx
+	$(call checkout,$(CONTRACTS_SOURCE),$(CONTRACTS_REPO),$(CONTRACTS_REF),-ffdqx)
 
 generate: contracts
 	go run ./internal/generate -enums "$(ENUMS_DIR)" -out "$(OUT_DIR)" -schemas "$(SCHEMAS_DIR)" -types ./v1/types -validate ./v1/validate/schemas_gen.go -contracts-ref "$(CONTRACTS_REF)"
@@ -51,18 +52,13 @@ check-drift: generate api-generate webapp-generate
 	@git diff --exit-code ./examples/webapp/views_templ.go $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go ./v1/ops/pack.schema.json || (echo "ERROR: generated files are out of date; run 'make generate api-generate' and commit" && exit 1)
 
 core:
-	@set -eu; \
-	if [ ! -d "$(CORE_SOURCE)/.git" ]; then \
-	  rm -rf "$(CORE_SOURCE)"; \
-	  mkdir -p "$(CORE_SOURCE)"; \
-	  git -C "$(CORE_SOURCE)" init --quiet; \
-	  git -C "$(CORE_SOURCE)" remote add origin "$(CORE_REPO)"; \
-	fi; \
-	if ! git -C "$(CORE_SOURCE)" cat-file -e "$(CORE_REF)^{commit}" 2>/dev/null; then \
-	  git -C "$(CORE_SOURCE)" fetch --quiet --no-tags --depth=1 origin "$(CORE_REF)"; \
-	fi; \
-	git -C "$(CORE_SOURCE)" checkout --quiet --detach --force "$(CORE_REF)"; \
-	git -C "$(CORE_SOURCE)" clean -ffdq
+	$(call checkout,$(CORE_SOURCE),$(CORE_REPO),$(CORE_REF),-ffdq)
+
+# The engine runs in core's environment without its own dependencies, so the core that plans is
+# the core at CORE_REF that serves.
+engine: core
+	$(call checkout,$(ENGINE_SOURCE),$(ENGINE_REPO),$(ENGINE_REF),-ffdq)
+	@cd "$(CORE_SOURCE)" && uv pip install --quiet --no-deps "$(ENGINE_SOURCE)"
 
 # Everything the SDK knows about core comes from core at CORE_REF: the client from its OpenAPI
 # (built, used once, deleted), the Go types of the Insight view contracts core validates its
@@ -80,7 +76,7 @@ api-generate: core
 	($(CORE_PYTHON) -c "import json; from traust_core.v1.contracts import config_schema; print(json.dumps(config_schema('pack'), indent=2))") > ./v1/ops/pack.schema.json
 
 # A local-issuer token for the e2e server: $(1) identity, $(2) machine (True/False), $(3) file.
-mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context import Config, Context; print(Context(Config.from_file(Path('$$home/config.yaml'))).local_issuer.mint('$(1)', machine=$(2)).token.get_secret_value())") > "$$home/$(3)"
+mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context import Config, Context; print(Context(Config.from_file(Path('$$home/traust.yaml'))).local_issuer.mint('$(1)', machine=$(2)).token.get_secret_value())") > "$$home/$(3)"
 
 # The generated client and the runner against traust-server built from core at CORE_REF.
 # The suite never leaves localhost: the vocabulary test onboards one repository, and
@@ -93,22 +89,31 @@ mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context
 # core_up starts traust-server at CORE_REF on $$port beside its report builder, mints a person
 # token ($$home/person) and a runner token ($$home/runner), and stops everything on exit. With
 # forge=stand-in, core reaches forges only through the e2eforge stand-in (no network); otherwise
-# it reaches real ones. The config grants the example's scan asset its assessment recording.
+# it reaches real ones. The config grants the example's scan asset its assessment recording. With
+# complete=yes the config home is what the engine's preflight demands of a deployment: workspace
+# locations, a cosign-signed ledger, and a model registry (core's own fixture at CORE_REF; no
+# example skill uses a model).
 define core_up
-	home="$$(mktemp -d)"; proxy=""; forge_pid=""; \
-	printf 'home: %s\nidentity:\n  trust_local: true\nrecording:\n  assessment: [scan]\n' "$$home" > "$$home/config.yaml"; \
+	home="$$(mktemp -d)"; proxy=""; pids=""; \
+	printf 'home: %s\nidentity:\n  trust_local: true\nrecording:\n  assessment: [scan]\n' "$$home" > "$$home/traust.yaml"; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet python -c "import traust_core.v1.rest.server"); \
+	if [ "$${complete:-}" = yes ]; then \
+	  mkdir -p "$$home/workspace" "$$home/analysis-results" "$$home/progress-tracker"; \
+	  (cd "$$home" && COSIGN_PASSWORD= cosign generate-key-pair --output-key-prefix ledger >/dev/null); \
+	  printf 'locations:\n  workspace: %s/workspace\n  analysis_results: %s/analysis-results\n  progress_tracker: %s/progress-tracker\nledger:\n  key_path: %s/ledger.key\n  public_key_path: %s/ledger.pub\n' "$$home" "$$home" "$$home" "$$home" "$$home" >> "$$home/traust.yaml"; \
+	  cp "$(CORE_SOURCE)/tests/fixtures/operations/model-registry.yaml" "$$home/"; \
+	fi; \
 	if [ "$${forge:-}" = stand-in ]; then \
-	  printf 'forge_hosts:\n  e2e-forge.test: gitlab\n' >> "$$home/config.yaml"; \
+	  printf 'forge_hosts:\n  e2e-forge.test: gitlab\n' >> "$$home/traust.yaml"; \
 	  go build -o "$$home/e2eforge" ./internal/e2eforge; \
-	  "$$home/e2eforge" -ca "$$home/forge-ca.pem" > "$$home/forge-port" & forge_pid=$$!; \
+	  "$$home/e2eforge" -ca "$$home/forge-ca.pem" > "$$home/forge-port" & pids="$$pids $$!"; \
 	  for _ in $$(seq 100); do [ -s "$$home/forge-port" ] && break; sleep 0.1; done; \
 	  forge_port=$$(cat "$$home/forge-port"); \
 	  proxy="SSL_CERT_FILE=$$home/forge-ca.pem HTTPS_PROXY=http://127.0.0.1:$$forge_port https_proxy=http://127.0.0.1:$$forge_port"; \
 	fi; \
-	(cd "$(CORE_SOURCE)" && exec env $$proxy uv run --quiet traust-server --config "$$home/config.yaml" --port $$port) > "$$home/server.log" 2>&1 & pid=$$!; \
-	(cd "$(CORE_SOURCE)" && exec uv run --quiet traust-server --config "$$home/config.yaml" --role reports) > "$$home/reports.log" 2>&1 & reports_pid=$$!; \
-	trap 'kill $$pid $$reports_pid $$forge_pid 2>/dev/null || true; rm -rf "$$home"' EXIT; \
+	(cd "$(CORE_SOURCE)" && exec env COSIGN_PASSWORD= $$proxy uv run --quiet traust-server --config "$$home/traust.yaml" --port $$port) > "$$home/server.log" 2>&1 & pids="$$pids $$!"; \
+	(cd "$(CORE_SOURCE)" && exec uv run --quiet traust-server --config "$$home/traust.yaml" --role reports) > "$$home/reports.log" 2>&1 & pids="$$pids $$!"; \
+	trap 'kill $$pids 2>/dev/null || true; rm -rf "$$home"' EXIT; \
 	for _ in $$(seq 60); do curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz && break; sleep 1; done; \
 	curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz || { cat "$$home/server.log"; exit 1; }; \
 	$(call mint,e2e@example.com,False,person); \
@@ -123,10 +128,13 @@ e2e: core
 	cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .
 
 # The example app against a local traust-server that reaches real forges: sign in with the
-# person token it prints, then onboard any public repository.
-webapp: core
-	@set -eu; port=18080; \
+# person token it prints, then onboard any public repository. The engine plans the pack's work
+# (a scan per repository, on its trigger) every minute.
+webapp: engine
+	@set -eu; port=18080; complete=yes; \
+	command -v cosign >/dev/null || { echo "make webapp signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
 	$(core_up); \
+	(cd "$(CORE_SOURCE)" && exec uv run --quiet traust-engine run --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --every 1m) > "$$home/engine.log" 2>&1 & pids="$$pids $$!"; \
 	echo "sign in at http://localhost:3000 with: $$(cat "$$home/person")"; \
 	cd examples/webapp && TRAUST_URL=http://127.0.0.1:$$port TRAUST_TOKEN_FILE="$$home/runner" go run .
 

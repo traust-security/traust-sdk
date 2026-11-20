@@ -83,8 +83,9 @@ func (a *app) onboardForm(w http.ResponseWriter, r *http.Request) {
 	render(w, r, http.StatusOK, onboardForm())
 }
 
-// onboarding reads the form: a product, its label when new, one repository URL per line, and
-// whether to plan a scan of each.
+// onboarding reads the form: a product, its label when new, and one repository URL per line.
+// It plans no baseline: an order onboarding plans carries no pack, so no pinned runner may run
+// it; the engine plans each new repository's scan under its pack instead.
 func onboarding(r *http.Request) traust.OnboardingRequest {
 	request := traust.OnboardingRequest{Product: strings.TrimSpace(r.PostFormValue("product"))}
 	if label := strings.TrimSpace(r.PostFormValue("label")); label != "" {
@@ -97,9 +98,6 @@ func onboarding(r *http.Request) traust.OnboardingRequest {
 		}
 	}
 	request.Repositories = &specs
-	if r.PostFormValue("scan") == "on" {
-		request.Baseline = &[]string{"scan"}
-	}
 	return request
 }
 

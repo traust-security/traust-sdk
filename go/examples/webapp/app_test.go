@@ -120,7 +120,7 @@ func TestOnboardingPreviewsThenOnboards(t *testing.T) {
 	})))
 	core.Handle("POST /v1/onboarding", onlyFor("ada", traustest.JSON(http.StatusOK, traust.OnboardingResult{ProductId: uuid.New()})))
 	h := newApp(t, core)
-	form := url.Values{"product": {"payments"}, "label": {"Payments"}, "repositories": {"https://forge.example/org/a\n\n https://forge.example/org/b \n"}, "scan": {"on"}}
+	form := url.Values{"product": {"payments"}, "label": {"Payments"}, "repositories": {"https://forge.example/org/a\n\n https://forge.example/org/b \n"}}
 
 	if preview := send(h, http.MethodPost, "/onboard/plan", "ada", form).Body.String(); !strings.Contains(preview, "register https://forge.example/org/a") || !strings.Contains(preview, `hx-post="/onboard"`) {
 		t.Fatalf("preview: %s, want what onboarding will do and the button to do it", preview)
@@ -130,8 +130,8 @@ func TestOnboardingPreviewsThenOnboards(t *testing.T) {
 	if err := json.Unmarshal(core.Requests()[1].Body, &sent); err != nil || onboarded.Header().Get("HX-Redirect") != "/" {
 		t.Fatalf("onboard: %d %v, want a redirect home", onboarded.Code, err)
 	}
-	if sent.Product != "payments" || *sent.Label != "Payments" || len(*sent.Repositories) != 2 || (*sent.Repositories)[1].Url != "https://forge.example/org/b" || (*sent.Baseline)[0] != "scan" {
-		t.Fatalf("onboarding request %+v, want the form's product, label, two repositories and a scan", sent)
+	if sent.Product != "payments" || *sent.Label != "Payments" || len(*sent.Repositories) != 2 || (*sent.Repositories)[1].Url != "https://forge.example/org/b" || sent.Baseline != nil {
+		t.Fatalf("onboarding request %+v, want the form's product, label and two repositories, and no baseline", sent)
 	}
 }
 
