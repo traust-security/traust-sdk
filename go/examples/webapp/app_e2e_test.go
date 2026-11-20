@@ -66,7 +66,7 @@ func (e e2e) get(t *testing.T, path string) string {
 	return w.Body.String()
 }
 
-func TestE2EOnboardScanAndDecide(t *testing.T) {
+func TestE2EOnboardScanTriageAndReview(t *testing.T) {
 	e := newE2E(t)
 	form := url.Values{"product": {"webapp-e2e"}, "label": {"Webapp e2e"}, "repositories": {e2eRepository}}
 	if w := send(e.app, http.MethodPost, "/onboard", e.user, form); w.Header().Get("HX-Redirect") != "/" {
@@ -76,33 +76,55 @@ func TestE2EOnboardScanAndDecide(t *testing.T) {
 	if repo == nil {
 		t.Fatal("home lists no onboarded repository")
 	}
-
-	started := send(e.app, http.MethodPost, "/runs", e.user, url.Values{"asset": {"scan"}, "repository_id": {repo[1]}})
-	token := polled(t, started, "/runs/")
-	if _, err := e.worker.RunOnce(t.Context()); err != nil {
-		t.Fatal(err)
+	for _, asset := range []string{"scan", "triage"} {
+		token := polled(t, send(e.app, http.MethodPost, "/runs", e.user, url.Values{"asset": {asset}, "repository_id": {repo[1]}}), "/runs/")
+		if _, err := e.worker.RunOnce(t.Context()); err != nil {
+			t.Fatal(err)
+		}
+		if done := e.get(t, "/runs/"+token); !strings.Contains(done, string(traust.RunOrderStateSucceeded)) {
+			t.Fatalf("%s: %s, want succeeded", asset, done)
+		}
 	}
-	if done := e.get(t, "/runs/"+token); !strings.Contains(done, string(traust.RunOrderStateSucceeded)) {
-		t.Fatalf("scan: %s, want succeeded", done)
-	}
-
-	if runs := e.get(t, "/repositories/"+repo[1]+"/runs"); !strings.Contains(runs, "scan: succeeded, requested by ") {
-		t.Fatalf("run history: %s, want the person's scan", runs)
+	if runs := e.get(t, "/repositories/"+repo[1]+"/runs"); !strings.Contains(runs, "triage: succeeded, requested by ") {
+		t.Fatalf("run history: %s, want the person's triage", runs)
 	}
 	findings := e.get(t, "/repositories/"+repo[1]+"/findings")
-	ids := regexp.MustCompile(`href="/findings/([0-9a-f-]+)">Fixture: `).FindAllStringSubmatch(findings, -1)
-	if len(ids) != 3 {
+	if n := len(regexp.MustCompile(`href="/findings/[0-9a-f-]+">Fixture: `).FindAllString(findings, -1)); n != 3 {
 		t.Fatalf("findings: %s, want the fixture scan's three", findings)
 	}
-	decided := send(e.app, http.MethodPost, "/findings/"+ids[0][1]+"/decide", e.user, url.Values{"validity": {"false_positive"}, "rationale": {"a fixture finding"}})
-	if decided.Code != http.StatusOK {
-		t.Fatalf("decide: %d %s", decided.Code, decided.Body)
+	if !strings.Contains(findings, "· confirmed") {
+		t.Fatalf("findings: %s, want the triage's true positive confirmed", findings)
 	}
-	if detail := e.get(t, "/findings/"+ids[0][1]); !strings.Contains(detail, "false_positive") {
-		t.Fatalf("finding after the decision: %s, want it false_positive", detail)
+
+	// the triage's other verdicts wait on a person: settle one, then restate it
+	cases := regexp.MustCompile(`href="/findings/([0-9a-f-]+)">[^<]*</a>\s*needs_review`).FindAllStringSubmatch(e.get(t, "/review"), -1)
+	if len(cases) == 0 {
+		t.Fatal("review: nothing waits on the person after a triage")
 	}
-	if home := e.get(t, "/"); !strings.Contains(home, "<dt>") {
-		t.Fatalf("home: the dashboard counts nothing after a scan")
+	finding := "/findings/" + cases[0][1]
+	if w := send(e.app, http.MethodPost, finding+"/decide", e.user, url.Values{"validity": {"false_positive"}, "rationale": {"a fixture finding"}}); w.Code != http.StatusOK {
+		t.Fatalf("decide: %d %s", w.Code, w.Body)
+	}
+	latest := regexp.MustCompile(`hx-post="/decisions/([0-9a-f-]+)/restate"`).FindStringSubmatch(e.get(t, finding))
+	if latest == nil {
+		t.Fatal("finding: no decision to restate after deciding")
+	}
+	restate := url.Values{"validity": {"confirmed"}, "reason": {"operator_error"}, "ticket": {"SEC-1"}, "rationale": {"decided on the wrong finding"}}
+	if w := send(e.app, http.MethodPost, "/decisions/"+latest[1]+"/restate", e.user, restate); w.Code != http.StatusForbidden {
+		t.Fatalf("a person's restatement: %d, want 403 (restating is an admin's correction)", w.Code)
+	}
+	admin, err := os.ReadFile(os.Getenv("TRAUST_E2E_ADMIN_TOKEN_FILE"))
+	if err != nil {
+		t.Fatal(err)
+	}
+	if w := send(e.app, http.MethodPost, "/decisions/"+latest[1]+"/restate", strings.TrimSpace(string(admin)), restate); w.Code != http.StatusOK {
+		t.Fatalf("the admin's restatement: %d %s", w.Code, w.Body)
+	}
+	if detail := e.get(t, finding); !strings.Contains(detail, "restates an earlier decision") {
+		t.Fatalf("finding after the restatement: %s, want it in the history", detail)
+	}
+	if home := e.get(t, "/"); !strings.Contains(home, "Findings by state") || !strings.Contains(home, "<dt>") {
+		t.Fatal("home: the dashboard counts nothing after a scan and a triage")
 	}
 }
 

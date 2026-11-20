@@ -37,16 +37,16 @@ func (a *app) home(w http.ResponseWriter, r *http.Request) {
 		}
 		repos = append(repos, repo)
 	}
-	severities, err := a.findingsBySeverity(ctx, repos)
+	cards, err := a.dashboard(ctx, repos)
 	if err != nil {
 		fail(w, r, err)
 		return
 	}
-	render(w, r, http.StatusOK, home(*me, repos, severities))
+	render(w, r, http.StatusOK, home(*me, repos, cards))
 }
 
-// findingsBySeverity is one dashboard query over the person's repositories.
-func (a *app) findingsBySeverity(ctx context.Context, repos []traust.Repository) ([]tally, error) {
+// dashboard is the home page's cards: one dashboard query each, over the person's repositories.
+func (a *app) dashboard(ctx context.Context, repos []traust.Repository) ([]card, error) {
 	ids := make([]uuid.UUID, 0, len(repos))
 	for _, repo := range repos {
 		if repo.Id != nil {
@@ -56,27 +56,38 @@ func (a *app) findingsBySeverity(ctx context.Context, repos []traust.Repository)
 	if len(ids) == 0 {
 		return nil, nil
 	}
-	result, err := a.core.QueryDashboard(ctx, traust.DashboardQuery{
-		Subject:       traust.SubjectFindings,
-		Measures:      []traust.Measure{traust.MeasureFindings},
-		GroupBy:       &[]traust.Dimension{traust.DimensionSeverity},
-		RepositoryIds: &ids,
-	})
-	if err != nil {
-		return nil, err
+	queries := []struct {
+		title   string
+		subject traust.Subject
+		measure traust.Measure
+		by      traust.Dimension
+	}{
+		{"Findings by severity", traust.SubjectFindings, traust.MeasureFindings, traust.DimensionSeverity},
+		{"Findings by state", traust.SubjectFindings, traust.MeasureFindings, traust.DimensionState},
+		{"Review queue by status", traust.SubjectReviewItems, traust.MeasureReviewItems, traust.DimensionStatus},
 	}
-	tallies := make([]tally, 0, len(result.Rows))
-	for _, row := range result.Rows {
-		label, count := "unrated", "0"
-		if s := row.Group(traust.DimensionSeverity); s != nil {
-			label = *s
+	cards := make([]card, 0, len(queries))
+	for _, q := range queries {
+		result, err := a.core.QueryDashboard(ctx, traust.DashboardQuery{
+			Subject: q.subject, Measures: []traust.Measure{q.measure}, GroupBy: &[]traust.Dimension{q.by}, RepositoryIds: &ids,
+		})
+		if err != nil {
+			return nil, err
 		}
-		if n := row.Measure(traust.MeasureFindings); n != nil {
-			count = fmt.Sprint(*n)
+		c := card{Title: q.title}
+		for _, row := range result.Rows {
+			label, count := "none", "0"
+			if g := row.Group(q.by); g != nil {
+				label = *g
+			}
+			if n := row.Measure(q.measure); n != nil {
+				count = fmt.Sprint(*n)
+			}
+			c.Rows = append(c.Rows, tally{label, count})
 		}
-		tallies = append(tallies, tally{label, count})
+		cards = append(cards, c)
 	}
-	return tallies, nil
+	return cards, nil
 }
 
 func (a *app) onboardForm(w http.ResponseWriter, r *http.Request) {

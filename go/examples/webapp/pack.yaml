@@ -8,3 +8,11 @@ assets:
     partitions: dynamic:repo
     trigger: {every: 24h}
     runner: {labels: [llm]}
+  # A triage of the repository's latest scan: a verdict on each finding, for a person to countersign.
+  triage:
+    run: [python3, -m, traust.cli, session, run, --skill, triage, --repo, "{repo_url}", --run-id, "{run_id}"]
+    params: {repo_url: HttpsRepoUrl}
+    partitions: dynamic:repo
+    deps: [scan]
+    trigger: {every: 24h}
+    runner: {labels: [llm]}

@@ -80,11 +80,18 @@ func TestHomeShowsThePersonAndTheirRepositories(t *testing.T) {
 		Rows:    []traust.DashboardRow{{Groups: map[string]*string{"severity": &high}, Measures: map[string]*float32{"findings": &three}}},
 	})))
 	body := send(newApp(t, core), http.MethodGet, "/", "ada", nil).Body.String()
-	var asked traust.DashboardQuery
-	if err := json.Unmarshal(core.Requests()[2].Body, &asked); err != nil || asked.RepositoryIds == nil || (*asked.RepositoryIds)[0] != repo {
-		t.Fatalf("dashboard query %+v %v, want it scoped to the person's repositories", asked, err)
+	var subjects []traust.Subject
+	for _, req := range core.Requests()[2:] {
+		var asked traust.DashboardQuery
+		if err := json.Unmarshal(req.Body, &asked); err != nil || asked.RepositoryIds == nil || (*asked.RepositoryIds)[0] != repo {
+			t.Fatalf("dashboard query %+v %v, want it scoped to the person's repositories", asked, err)
+		}
+		subjects = append(subjects, asked.Subject)
 	}
-	for _, want := range []string{"Signed in as Ada", `href="/repositories/` + repo.String() + `"`, "<dt>high</dt><dd>3</dd>"} {
+	if len(subjects) != 3 || subjects[2] != traust.SubjectReviewItems {
+		t.Fatalf("dashboard asked %v, want two findings cards and the review queue", subjects)
+	}
+	for _, want := range []string{"Signed in as Ada", `href="/repositories/` + repo.String() + `"`, "<dt>high</dt><dd>3</dd>", "Review queue by status"} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("home lacks %q:\n%s", want, body)
 		}
@@ -145,6 +152,13 @@ func TestARepositoryShowsItsBranchAndItsFindingsAreDecided(t *testing.T) {
 	core.Handle("GET /v1/repositories/{id}/findings", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageFindingView{Items: []traust.FindingView{view}})))
 	core.Handle("GET /v1/findings/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, view)))
 	core.Handle("POST /v1/findings/{id}/decisions", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Decision{})))
+	decision, actor, why := uuid.New(), "triage", "a fixture verdict"
+	var verdict traust.Decision_Validity
+	if err := verdict.FromValidity(traust.ValidityTruePositive); err != nil {
+		t.Fatal(err)
+	}
+	core.Handle("GET /v1/findings/{id}/decisions", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Decision{{Id: &decision, FindingId: found, Actor: &actor, Rationale: &why, Validity: &verdict}})))
+	core.Handle("POST /v1/decisions/{id}/restatement", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Decision{})))
 	core.Handle("GET /v1/orders", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageRunOrder{
 		Items: []traust.RunOrder{{Asset: "scan", State: traust.RunOrderStateSucceeded, RequestedBy: "engine"}},
 	})))
@@ -164,11 +178,33 @@ func TestARepositoryShowsItsBranchAndItsFindingsAreDecided(t *testing.T) {
 	if !strings.Contains(list, "SQL built from input") || !strings.Contains(list, "high · undecided") {
 		t.Fatalf("findings: %s", list)
 	}
+	detail := send(h, http.MethodGet, "/findings/"+found.String(), "ada", nil).Body.String()
+	if !strings.Contains(detail, "true_positive by triage: a fixture verdict") || !strings.Contains(detail, `hx-post="/decisions/`+decision.String()+`/restate"`) {
+		t.Fatalf("finding: %s, want its decisions and a restate form for the latest", detail)
+	}
+	restated := send(h, http.MethodPost, "/decisions/"+decision.String()+"/restate", "ada", url.Values{"validity": {"confirmed"}, "reason": {"operator_error"}, "ticket": {"SEC-1"}, "rationale": {"wrong verdict"}})
+	var restatement traust.RestatementBody
+	if err := json.Unmarshal(core.Requests()[len(core.Requests())-1].Body, &restatement); err != nil || restated.Code != http.StatusOK ||
+		restatement.Reason != traust.OperatorError || *restatement.Validity != traust.ValidityConfirmed || restatement.Ticket != "SEC-1" || restatement.Rationale != "wrong verdict" {
+		t.Fatalf("restate: %d %+v %v", restated.Code, restatement, err)
+	}
 	decided := send(h, http.MethodPost, "/findings/"+found.String()+"/decide", "ada", url.Values{"validity": {"false_positive"}, "rationale": {"test fixture"}})
 	var body traust.DecisionBody
 	last := core.Requests()[len(core.Requests())-1]
 	if err := json.Unmarshal(last.Body, &body); err != nil || decided.Code != http.StatusOK || *body.Validity != traust.ValidityFalsePositive || body.Rationale != "test fixture" {
 		t.Fatalf("decide: %d %+v %v, want the person's validity and rationale", decided.Code, body, err)
+	}
+}
+
+func TestTheReviewQueueListsWhatWaitsOnThePerson(t *testing.T) {
+	core := traustest.New(t)
+	found := uuid.New()
+	core.Handle("GET /v1/findings/review-queue", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageReviewCase{Items: []traust.ReviewCase{{
+		FindingId: found, Kind: traust.AwaitingSignoff, View: &traust.FindingView{Finding: traust.Finding{Id: &found, Title: "SQL built from input"}},
+	}}})))
+	page := send(newApp(t, core), http.MethodGet, "/review", "ada", nil).Body.String()
+	if !strings.Contains(page, `href="/findings/`+found.String()+`">SQL built from input</a>`) || !strings.Contains(page, "awaiting_signoff") {
+		t.Fatalf("review: %s", page)
 	}
 }
 
@@ -203,6 +239,7 @@ func TestWorkNeedsASignedInPerson(t *testing.T) {
 		{http.MethodPost, "/runs"}, {http.MethodGet, "/runs/" + uuid.NewString()},
 		{http.MethodPost, "/reports"}, {http.MethodGet, "/reports/" + uuid.NewString()}, {http.MethodGet, "/reports/" + uuid.NewString() + "/file"},
 		{http.MethodPost, "/onboard"}, {http.MethodGet, "/repositories/" + uuid.NewString()}, {http.MethodPost, "/findings/" + uuid.NewString() + "/decide"},
+		{http.MethodGet, "/review"}, {http.MethodPost, "/decisions/" + uuid.NewString() + "/restate"},
 	} {
 		if w := send(h, route[0], route[1], "", nil); w.Code != http.StatusUnauthorized {
 			t.Fatalf("%s %s: %d, want 401", route[0], route[1], w.Code)

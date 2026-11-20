@@ -79,3 +79,53 @@ func TestAssessDefaultRefRecordsTheCommitCoreNames(t *testing.T) {
 		})
 	}
 }
+
+func TestTriageLatestJudgesTheRepositorysLatestAssessment(t *testing.T) {
+	repo, assessment := uuid.New(), uuid.New()
+	tests := []struct {
+		name    string
+		order   traust.RunOrder
+		latest  http.Handler
+		refused traust.RunOrderReason
+		fails   bool
+	}{
+		{name: "the latest assessment", order: traust.RunOrder{RepositoryId: &repo}, latest: traustest.JSON(http.StatusOK, traust.Assessment{Id: &assessment})},
+		{name: "an order without a repository", order: traust.RunOrder{}, refused: traust.RunOrderReasonBadRequest},
+		{name: "nothing recorded yet", order: traust.RunOrder{RepositoryId: &repo}, latest: traustest.Problem(http.StatusNotFound, "none"), refused: traust.RunOrderReasonNotFound},
+		{name: "core unavailable", order: traust.RunOrder{RepositoryId: &repo}, latest: traustest.Problem(http.StatusServiceUnavailable, "down"), fails: true},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			core := traustest.New(t)
+			if tt.latest != nil {
+				core.Handle("GET /v1/repositories/{id}/assessments/latest", tt.latest)
+			}
+			preparer, err := TriageLatest(core.Client(), traust.AssessmentKindSecureCode1)
+			if err != nil {
+				t.Fatal(err)
+			}
+			request, err := preparer.PrepareRecording(t.Context(), tt.order)
+			var refusal *PreparationRefusedError
+			switch {
+			case tt.refused != "":
+				if !errors.As(err, &refusal) || refusal.Reason != tt.refused {
+					t.Fatalf("got %v, want a %s refusal", err, tt.refused)
+				}
+			case tt.fails:
+				if err == nil || errors.As(err, &refusal) {
+					t.Fatalf("got %v, want an error that is not a refusal", err)
+				}
+			default:
+				if err != nil || request.Triage == nil || request.AssessmentID != assessment || request.Triage.Provenance.Source != traust.SourceTypeTriageReport {
+					t.Fatalf("request %+v err %v, want a triage of the latest assessment", request, err)
+				}
+				if q := core.Requests()[0].Query.Get("kind"); q != string(traust.AssessmentKindSecureCode1) {
+					t.Fatalf("asked for kind %q", q)
+				}
+			}
+		})
+	}
+	if _, err := TriageLatest(nil, traust.AssessmentKindSecureCode1); err == nil {
+		t.Fatal("TriageLatest built without a client")
+	}
+}

@@ -31,6 +31,8 @@ func (a *app) routes() http.Handler {
 	mux.HandleFunc("GET /repositories/{id}/runs", a.signedIn(a.runHistory))
 	mux.HandleFunc("GET /findings/{id}", a.signedIn(a.finding))
 	mux.HandleFunc("POST /findings/{id}/decide", a.signedIn(a.decide))
+	mux.HandleFunc("POST /decisions/{id}/restate", a.signedIn(a.restate))
+	mux.HandleFunc("GET /review", a.signedIn(a.review))
 	mux.HandleFunc("POST /runs", a.signedIn(a.startRun))
 	mux.HandleFunc("GET /runs/{token}", a.signedIn(a.runStatus))
 	mux.HandleFunc("POST /reports", a.signedIn(a.startReport))
@@ -86,9 +88,14 @@ func status(err error) int {
 	return http.StatusBadGateway
 }
 
+// fail answers with core's refusal and its reason, which core words for people; anything else is
+// core being unavailable.
 func fail(w http.ResponseWriter, r *http.Request, err error) {
-	code := status(err)
-	render(w, r, code, failure(http.StatusText(code)))
+	code, message := status(err), http.StatusText(status(err))
+	if p, ok := errors.AsType[*traust.ProblemError](err); ok && p.Problem != nil && code < http.StatusInternalServerError {
+		message = p.Problem.Title + ": " + p.Problem.Detail
+	}
+	render(w, r, code, failure(message))
 }
 
 func render(w http.ResponseWriter, r *http.Request, code int, view templ.Component) {
@@ -124,4 +131,21 @@ func validity(d *traust.Disposition) string {
 		return "undecided"
 	}
 	return string(*d.Validity)
+}
+
+func decisionValidity(d traust.Decision) string {
+	if d.Validity == nil {
+		return "no validity"
+	}
+	if v, err := d.Validity.AsValidity(); err == nil {
+		return string(v)
+	}
+	return "restated validity"
+}
+
+func caseTitle(c traust.ReviewCase) string {
+	if c.View != nil {
+		return c.View.Finding.Title
+	}
+	return c.FindingId.String()
 }

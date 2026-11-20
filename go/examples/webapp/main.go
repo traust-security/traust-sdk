@@ -57,16 +57,20 @@ func run(ctx context.Context, addr string, forgeHosts []string) error {
 	return serve(ctx, server, runner)
 }
 
-// worker claims the pack's orders: scans run the fixture skill and record as an assessment of the
-// repository's default branch.
+// worker claims the pack's orders and runs the fixture skills: a scan records as an assessment of
+// the repository's default branch, a triage judges the repository's latest scan.
 func worker(core *traust.Client, pack *ops.Pack, forgeHosts []string) (*ops.Runner, error) {
 	scans, err := ops.AssessDefaultRef(core, traust.SourceTypeVulnScanReport, "webapp-fixture")
 	if err != nil {
 		return nil, err
 	}
+	triages, err := ops.TriageLatest(core, traust.AssessmentKindSecureCode1)
+	if err != nil {
+		return nil, err
+	}
 	return ops.NewRunner(ops.RunnerConfig{
 		Client: core, Pack: pack, Executor: fixtureSkills{now: time.Now}, Assets: pack.Assets(),
-		Recordings: map[string]ops.RecordingPreparer{"scan": scans}, ForgeHosts: forgeHosts,
+		Recordings: map[string]ops.RecordingPreparer{"scan": scans, "triage": triages}, ForgeHosts: forgeHosts,
 		Logger: slog.Default(), LeaseSeconds: 60, PollInterval: time.Second,
 	})
 }

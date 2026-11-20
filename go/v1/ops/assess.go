@@ -58,3 +58,38 @@ func (a defaultRefAssessment) PrepareRecording(ctx context.Context, order traust
 		Input: input,
 	}, nil
 }
+
+type latestTriage struct {
+	client *traust.Client
+	kind   traust.AssessmentKind
+}
+
+// TriageLatest records each order's triage of its repository's latest recorded assessment of
+// kind; the SDK prepares that assessment's findings as the executor's TriageInput.
+func TriageLatest(client *traust.Client, kind traust.AssessmentKind) (RecordingPreparer, error) {
+	if client == nil || kind == "" {
+		return nil, errors.New("ops: TriageLatest needs a client and an assessment kind")
+	}
+	return latestTriage{client, kind}, nil
+}
+
+func (t latestTriage) PrepareRecording(ctx context.Context, order traust.RunOrder) (RecordingRequest, error) {
+	if order.RepositoryId == nil {
+		return RecordingRequest{}, &PreparationRefusedError{Reason: traust.RunOrderReasonBadRequest, Err: errors.New("the order names no repository")}
+	}
+	id := *order.RepositoryId
+	assessment, err := t.client.GetLatestRecordedAssessment(ctx, id, &traust.GetLatestRecordedAssessmentParams{Kind: t.kind})
+	if errors.Is(err, traust.ErrNotFound) {
+		return RecordingRequest{}, &PreparationRefusedError{Reason: traust.RunOrderReasonNotFound, Err: fmt.Errorf("repository %s has no %s assessment to triage", id, t.kind)}
+	}
+	if err != nil {
+		return RecordingRequest{}, fmt.Errorf("reading repository %s's latest %s assessment: %w", id, t.kind, err)
+	}
+	if assessment.Id == nil {
+		return RecordingRequest{}, fmt.Errorf("core answered repository %s's latest %s assessment without an id", id, t.kind)
+	}
+	return RecordingRequest{
+		Triage:       &traust.TriageRecordBody{Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport}},
+		AssessmentID: *assessment.Id,
+	}, nil
+}

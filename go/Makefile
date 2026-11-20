@@ -87,15 +87,16 @@ mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context
 # maps the mock's host to the gitlab kind in forge_hosts.
 # One package at a time: both share the server, and ops onboards what v1/traust expects empty.
 # core_up starts traust-server at CORE_REF on $$port beside its report builder, mints a person
-# token ($$home/person) and a runner token ($$home/runner), and stops everything on exit. With
+# token ($$home/person), an admin's ($$home/admin: admins restate decisions) and a runner token
+# ($$home/runner), and stops everything on exit. With
 # forge=stand-in, core reaches forges only through the e2eforge stand-in (no network); otherwise
-# it reaches real ones. The config grants the example's scan asset its assessment recording. With
+# it reaches real ones. The config grants the example's scan and triage assets their recording. With
 # complete=yes the config home is what the engine's preflight demands of a deployment: workspace
 # locations, a cosign-signed ledger, and a model registry (core's own fixture at CORE_REF; no
 # example skill uses a model).
 define core_up
 	home="$$(mktemp -d)"; proxy=""; pids=""; \
-	printf 'home: %s\nidentity:\n  trust_local: true\nrecording:\n  assessment: [scan]\n' "$$home" > "$$home/traust.yaml"; \
+	printf 'home: %s\nidentity:\n  trust_local: true\n  admins: [admin@example.com]\nrecording:\n  assessment: [scan]\n  triage: [triage]\n' "$$home" > "$$home/traust.yaml"; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet python -c "import traust_core.v1.rest.server"); \
 	if [ "$${complete:-}" = yes ]; then \
 	  mkdir -p "$$home/workspace" "$$home/analysis-results" "$$home/progress-tracker"; \
@@ -117,13 +118,14 @@ define core_up
 	for _ in $$(seq 60); do curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz && break; sleep 1; done; \
 	curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz || { cat "$$home/server.log"; exit 1; }; \
 	$(call mint,e2e@example.com,False,person); \
+	$(call mint,admin@example.com,False,admin); \
 	$(call mint,e2e-runner,True,runner)
 endef
 
 e2e: core
 	@set -eu; port=18080; forge=stand-in; \
 	$(core_up); \
-	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; \
+	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_ADMIN_TOKEN_FILE="$$home/admin" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; \
 	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/ ./v1/ops/; \
 	cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .
 
@@ -135,7 +137,8 @@ webapp: engine
 	command -v cosign >/dev/null || { echo "make webapp signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
 	$(core_up); \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet traust-engine run --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --every 1m) > "$$home/engine.log" 2>&1 & pids="$$pids $$!"; \
-	echo "sign in at http://localhost:3000 with: $$(cat "$$home/person")"; \
+	echo "sign in at http://localhost:3000 as a person: $$(cat "$$home/person")"; \
+	echo "or as an admin (restates decisions): $$(cat "$$home/admin")"; \
 	cd examples/webapp && TRAUST_URL=http://127.0.0.1:$$port TRAUST_TOKEN_FILE="$$home/runner" go run .
 
 fmt:

@@ -11,6 +11,15 @@ type tally struct {
 	Count string
 }
 
+// card is one dashboard query's answer.
+type card struct {
+	Title string
+	Rows  []tally
+}
+
+// restatements are why a person may restate a decision.
+var restatements = []traust.RestatementReason{traust.OperatorError, traust.DataError, traust.BaselineRewrite}
+
 // validities are the answers a person may give about a finding.
 var validities = []traust.Validity{traust.ValidityConfirmed, traust.ValidityFalsePositive, traust.ValidityHardening, traust.ValidityNotAffected}
 
@@ -24,7 +33,7 @@ templ page(title string) {
 			<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 		</head>
 		<body>
-			<nav><a href="/">Home</a> · <a href="/onboard">Onboard</a></nav>
+			<nav><a href="/">Home</a> · <a href="/onboard">Onboard</a> · <a href="/review">Review</a></nav>
 			{ children... }
 		</body>
 	</html>
@@ -42,24 +51,26 @@ templ signIn(problem string) {
 	}
 }
 
-templ home(me traust.Principal, repos []traust.Repository, severities []tally) {
+templ home(me traust.Principal, repos []traust.Repository, cards []card) {
 	@page("traust") {
 		<header>
 			Signed in as { me.Display }
 			<form method="post" action="/sign-out"><button>Sign out</button></form>
 		</header>
-		<section>
-			<h2>Findings by severity</h2>
-			if len(severities) == 0 {
-				<p>No findings in your repositories.</p>
-			}
-			<dl>
-				for _, s := range severities {
-					<dt>{ s.Label }</dt>
-					<dd>{ s.Count }</dd>
+		for _, c := range cards {
+			<section>
+				<h2>{ c.Title }</h2>
+				if len(c.Rows) == 0 {
+					<p>Nothing yet.</p>
 				}
-			</dl>
-		</section>
+				<dl>
+					for _, row := range c.Rows {
+						<dt>{ row.Label }</dt>
+						<dd>{ row.Count }</dd>
+					}
+				</dl>
+			</section>
+		}
 		<section>
 			<h2>Repositories</h2>
 			if len(repos) == 0 {
@@ -119,7 +130,9 @@ templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
 		if ref != nil {
 			<p>Default branch { text(ref.Name) } at { ref.Sha }</p>
 		}
-		<button hx-post="/runs" hx-vals={ `{"asset":"scan","repository_id":"` + repo.Id.String() + `"}` } hx-target="#runs" hx-swap="afterbegin">Run scan</button>
+		for _, asset := range []string{"scan", "triage"} {
+			<button hx-post="/runs" hx-vals={ `{"asset":"` + asset + `","repository_id":"` + repo.Id.String() + `"}` } hx-target="#runs" hx-swap="afterbegin">Run { asset }</button>
+		}
 		<ul id="runs"></ul>
 		<h2>Run history</h2>
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/runs" } hx-trigger="load, run-finished from:body"></div>
@@ -142,7 +155,7 @@ templ findingList(findings []traust.FindingView) {
 	</ul>
 }
 
-templ finding(f traust.FindingView) {
+templ finding(f traust.FindingView, decisions []traust.Decision) {
 	@page(f.Finding.Title) {
 		<h1>{ f.Finding.Title }</h1>
 		<p>{ severity(f.EffectiveSeverity) } · { validity(f.Disposition) }</p>
@@ -150,6 +163,65 @@ templ finding(f traust.FindingView) {
 			<p>{ *f.Description }</p>
 		}
 		@decideForm(f)
+		<h2>Decisions</h2>
+		<ol>
+			for _, d := range decisions {
+				<li>
+					{ decisionValidity(d) } by { text(d.Actor) }: { text(d.Rationale) }
+					if d.RestatesId != nil {
+						(restates an earlier decision)
+					}
+				</li>
+			}
+		</ol>
+		if len(decisions) > 0 {
+			@restateForm(decisions[len(decisions)-1])
+		}
+	}
+}
+
+// restateForm corrects a recorded decision with a reason and a ticket; core keeps both.
+templ restateForm(d traust.Decision) {
+	<form id="restate" hx-post={ "/decisions/" + d.Id.String() + "/restate" } hx-swap="outerHTML">
+		<h2>Restate the latest decision</h2>
+		<label>
+			Correct its validity to
+			<select name="validity">
+				for _, val := range validities {
+					<option value={ string(val) }>{ string(val) }</option>
+				}
+			</select>
+		</label>
+		<select name="reason">
+			for _, r := range restatements {
+				<option value={ string(r) }>{ string(r) }</option>
+			}
+		</select>
+		<label>Ticket <input name="ticket" required placeholder="SEC-123"/></label>
+		<label>Rationale <textarea name="rationale" required></textarea></label>
+		<button>Restate</button>
+	</form>
+}
+
+templ restated() {
+	<p id="restate">Restated. <a href="">Reload</a> to see the history.</p>
+}
+
+// review is the countersign queue: machine verdicts and conflicts a person settles.
+templ review(cases []traust.ReviewCase) {
+	@page("Review") {
+		<h1>Review</h1>
+		if len(cases) == 0 {
+			<p>Nothing waits on you.</p>
+		}
+		<ul>
+			for _, c := range cases {
+				<li>
+					<a href={ templ.URL("/findings/" + c.FindingId.String()) }>{ caseTitle(c) }</a>
+					{ string(c.Kind) } · { validity(c.Disposition) }
+				</li>
+			}
+		</ul>
 	}
 }
 

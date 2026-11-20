@@ -197,10 +197,12 @@ runner, err := ops.NewRunner(ops.RunnerConfig{
 })
 ```
 
-A scan of a repository needs no preparer of your own: `ops.AssessDefaultRef(client, source,
-assessorVersion)` records the report as an assessment of the commit core says the repository's
-default branch is at, and passes that subject (`traust.SubjectRef`) as `Execution.Input`. Core
-records only what its config grants: list the asset under `recording.assessment`.
+A scan or a triage of a repository needs no preparer of your own. `ops.AssessDefaultRef(client,
+source, assessorVersion)` records the report as an assessment of the commit core says the
+repository's default branch is at, and passes that subject (`traust.SubjectRef`) as
+`Execution.Input`. `ops.TriageLatest(client, kind)` triages the repository's latest recorded
+assessment of that kind; the executor gets its findings as `Execution.TriageInput`. Core records
+only what its config grants: list each asset under `recording.assessment` or `recording.triage`.
 
 Otherwise your preparer chooses exactly one generated request template, its provenance source and explicit
 bindings. Leave its payload empty. For triage, choose `RecordingRequest.AssessmentID`; the SDK
@@ -258,15 +260,18 @@ identity available for reconciliation and does not complete.
 ## Example app
 
 [`examples/webapp`](examples/webapp) is a small web app on traust (net/http, templ, htmx). From a
-blank core: onboard repositories (with a dry-run preview), scan one, work its findings (decide),
-watch the dashboard count them, and build and download a report. It acts as each signed-in person
-with `OnBehalfOf`, records scans with `ops.AssessDefaultRef`, follows runs and report builds with
-`Poller`, and runs its pack's work in the same binary. Its scan skill is a fixture (canned,
-contracts-valid findings, labelled as such) so it plays without an agent or a model key.
+blank core: onboard repositories (with a dry-run preview), scan one and triage it, settle what the
+triage leaves in the review queue, decide and restate findings, watch the dashboard count it all,
+and build and download a report. It acts as each signed-in person
+with `OnBehalfOf`, records scans and triages with `ops.AssessDefaultRef` and `ops.TriageLatest`,
+follows runs and report builds with `Poller`, and runs its pack's work in the same binary. Its
+skills are fixtures (canned, contracts-valid findings and verdicts, labelled as such) so it plays
+without an agent or a model key.
 
 `make webapp` runs the whole stack locally: traust-server (reaching real forges), its report
 builder, and traust-engine, which plans a scan of each repository under the app's pack. Sign in
-with the token it prints and onboard any public repository; the engine's next pass scans it.
+as the person it prints (or the admin, who may restate decisions) and onboard any public
+repository; the engine's next pass scans it, then triages it.
 It needs `uv` and `cosign` (the local ledger is signed). `make e2e` runs the same flows end to end
 against a forge stand-in.
 

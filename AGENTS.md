@@ -27,6 +27,7 @@ err = r.Run(ctx)
 | act for a signed-in person (a BFF) | `traust.OnBehalfOf(ctx, token)` | every call made with that ctx |
 | run queued pack commands | `ops.Runner` + `ops.ProcessExecutor` or your `Executor` | `Claim` → `GetOrderManifest` → your run → `Complete` (the runner calls these, you don't) |
 | record a repository scan | `ops.AssessDefaultRef` as the asset's `RecordingPreparer` | `GetRepository`, `GetCurrentDefaultRef` (the SDK calls these) |
+| triage a repository's latest scan | `ops.TriageLatest` as the asset's `RecordingPreparer` | `GetLatestRecordedAssessment`, `PrepareTriage` (the SDK calls these) |
 | run and record a dispatched order | `ops.RecordingRun` + your `Executor` | `Start` → `Prepare*` → your run → `Record*` → `Complete` (same) |
 | read what a run produced | `c` | `ListOrderAssessments` (what an order recorded), `GetAssessment`, `GetArtifact`, `GetArtifactContent`, `ListRepositoryAssessments` |
 | read findings | `c` | `ListFindings`, `SummarizeFindings` (counts by severity, CWE, validity, …), `FindingTimeline`, `GetFinding`, `ListDecisions`, `AdvisoriesFor` |
