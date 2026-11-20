@@ -153,8 +153,11 @@ err = runner.Run(ctx)
   `client.Submit(ctx, traust.SubmitRequest{Order: …, Config: &[]traust.ConfigDigest{pack.Pin()}})`.
 - **`ops.RecordingRun`** runs one explicitly dispatched order and records the executor's report
   through core's record door (triage, remediation, validation, verification, assessments). Give it
-  one request template with an empty payload; it binds the server's order id and start time as
-  provenance and shares the queued runner's preparation, recording and completion lifecycle.
+  one request template with an empty payload. Both runner paths bind each write to the order ID
+  and positive `LeaseGeneration` returned by the original claim or start. An executor making a
+  lease-bound call must use `Execution.Order.LeaseGeneration` (or the whole argv parameter
+  `{lease_generation}` for a pack command), never a newly fetched order. `Provenance.OccurredAt`
+  remains the event time; if omitted, the SDK uses the time it captured the executor's report.
 
 ### Record queued reports
 
@@ -215,14 +218,24 @@ cancelled or lost lease cancels and waits for the active operation, then makes n
 Executors return their original UTF-8 report bytes as `ProducedReport.Payload` and their measured
 `JobResult`; the SDK never rewrites references, registers a report-selected ref or invents usage.
 It sends eligible report payloads unchanged through the selected generated record request,
-then completes with the executor's result. Refused work and failures with no payload complete
-without recording. `Run` logs completed-order failures and refusals through the injected logger
+then completes with the executor's result. Only a succeeded job can record an authored assessment:
+that door creates a completed audit for triage. A failed or degraded assessment job completes
+with its original outcome and usage but no assessment or artifact. Other report doors keep their
+stage behavior; refusals and failures without payloads complete without recording.
+`Run` logs completed-order failures and refusals through the injected logger
 and continues claiming; `RunOnce` preserves typed errors for one-shot callers. Logs include safe
 order/status/reason and cause-type fields, never error text, HTTP problem text or response bodies.
 `PreparationRefusedError.Err` remains available to one-shot callers, who own its sanitization.
 No POST is retried. An order-specific record 4xx completes failed while held; 401/403/429 stop
 without completing. A transport failure, 5xx or malformed success receipt leaves the order
 identity available for reconciliation and does not complete.
+
+SCI's `sci_scan` payload is an authored audit report. Scanner observations may be
+referenced in its `scanner_correlation`; a raw `adapter-result` document is not
+an assessment report. For an unjudged audit finding, omit `validation_status`
+rather than sending the historical `not_verified` value. After completion,
+`GetArtifactContent` returns the original report bytes and `GetAssessmentIntake`
+maps its finding IDs to the native IDs that `PrepareTriage` returns.
 
 ## Test your code
 
@@ -250,6 +263,14 @@ as the runnable examples do. `make e2e` runs the SDK itself against a real `trau
 
 `storage`, `ledger`, `skills`, `types`, `enums` and `validate` predate the REST API. They keep
 working for existing callers and take bug fixes only; new code uses `traust` and `ops`.
+
+`types.ParseSessionTaskArtifact` and `types.EncodeSessionTaskArtifact` validate tasks for
+execution. An older v1 task with a `run_id` but no `lease_generation` is no longer runnable:
+restage it under a fresh claim. Do not copy the current generation onto the old task or its
+output. Manual tasks (`run_id: null`) still need no generation. To inspect past sessions, use
+`types.ParseRunManifestArtifact`; historical session entries need no generation to be read.
+If you need to validate the original task bytes for an audit, use the contracts revision
+that staged them. Historical validation does not authorize replay.
 
 ### Skills SDK
 

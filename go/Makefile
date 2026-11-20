@@ -1,5 +1,5 @@
 CONTRACTS_REPO := https://github.com/traust-security/traust-contracts.git
-CONTRACTS_REF := 31d0d884672149e606934c2844ffcbf3bdd4b925
+CONTRACTS_REF := 15bded2e3e4b6c70bd1e20ef8df50c7b66b5ebc1
 CONTRACTS_CACHE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/contracts
 CONTRACTS_SOURCE := $(CONTRACTS_CACHE)/checkout-$(CONTRACTS_REF)
 ENUMS_DIR := $(CONTRACTS_SOURCE)/enums/v1
@@ -8,7 +8,7 @@ SCHEMAS_DIR := $(CONTRACTS_SOURCE)/artifacts_schema/v1
 # db/v1 restructure dropped. Regenerating it is the G6 layout adaptation (plan 28), and plan 05
 # retires the package; until then v1/storage/ is hand-maintained and checked by drift.
 CORE_REPO := https://github.com/traust-security/traust-core.git
-CORE_REF := 6cf9a0b6f2d7ed0ebaa53a1119c62dd2d4beea66
+CORE_REF := 9423712361702813b156b8a18d01a2e4f42636b8
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
 CORE_PYTHON := cd "$(CORE_SOURCE)" && uv run --quiet python
 OPENAPI_DIR := ./internal/generate/openapi
@@ -88,8 +88,10 @@ mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context
 e2e: core
 	@set -eu; \
 	home="$$(mktemp -d)"; port=18080; \
-	printf 'home: %s\nidentity:\n  trust_local: true\nforge_hosts:\n  e2e-forge.test: gitlab\n' "$$home" > "$$home/config.yaml"; \
+	printf 'home: %s\nidentity:\n  trust_local: true\nforge_hosts:\n  e2e-forge.test: gitlab\nrecording:\n  assessment: [audit, sci_scan]\n  start:\n    - principal: machine:e2e-runner\n      assets: [audit]\n      all_repositories: true\n' "$$home" > "$$home/config.yaml"; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet python -c "import traust_core.v1.rest.server"); \
+	$(call mint,e2e@example.com,False,person); \
+	$(call mint,e2e-runner,True,runner); \
 	go build -o "$$home/e2eforge" ./internal/e2eforge; \
 	"$$home/e2eforge" -ca "$$home/forge-ca.pem" > "$$home/forge-port" & forge_pid=$$!; \
 	for _ in $$(seq 100); do [ -s "$$home/forge-port" ] && break; sleep 0.1; done; \
@@ -98,8 +100,6 @@ e2e: core
 	trap 'kill $$pid $$forge_pid 2>/dev/null || true; rm -rf "$$home"' EXIT; \
 	for _ in $$(seq 60); do curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz && break; sleep 1; done; \
 	curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz || { cat "$$home/server.log"; exit 1; }; \
-	$(call mint,e2e@example.com,False,person); \
-	$(call mint,e2e-runner,True,runner); \
 	TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner" \
 	  go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/ ./v1/ops/
 

@@ -867,6 +867,7 @@ type AssessmentKind string
 // AssessmentRecordRequest defines model for AssessmentRecordRequest.
 type AssessmentRecordRequest struct {
 	AssessorVersion string             `json:"assessor_version"`
+	LeaseGeneration int                `json:"lease_generation"`
 	Payload         string             `json:"payload"`
 	Provenance      Provenance         `json:"provenance"`
 	RepositoryRefId openapi_types.UUID `json:"repository_ref_id"`
@@ -919,7 +920,8 @@ type ComparisonStatus string
 
 // CompleteRequest defines model for CompleteRequest.
 type CompleteRequest struct {
-	Result JobResult `json:"result"`
+	LeaseGeneration int       `json:"lease_generation"`
+	Result          JobResult `json:"result"`
 }
 
 // ComplianceFramework defines model for ComplianceFramework.
@@ -1180,6 +1182,7 @@ type FeedStatus struct {
 	LastError *string    `json:"last_error"`
 	MaxAge    string     `json:"max_age"`
 	Name      string     `json:"name"`
+	Refresh   *string    `json:"refresh"`
 }
 
 // Finding 3b · one weakness or vulnerability in a repository, identified by fingerprint.
@@ -1562,7 +1565,8 @@ type Layer struct {
 
 // LeaseRequest defines model for LeaseRequest.
 type LeaseRequest struct {
-	LeaseSeconds int `json:"lease_seconds"`
+	LeaseGeneration int `json:"lease_generation"`
+	LeaseSeconds    int `json:"lease_seconds"`
 }
 
 // LivenessStatus defines model for LivenessStatus.
@@ -1952,10 +1956,11 @@ type Provenance struct {
 
 // RecordValidation defines model for RecordValidation.
 type RecordValidation struct {
-	Bindings   ValidationRecordInput `json:"bindings"`
-	Payload    string                `json:"payload"`
-	Provenance Provenance            `json:"provenance"`
-	RunOrderId openapi_types.UUID    `json:"run_order_id"`
+	Bindings        ValidationRecordInput `json:"bindings"`
+	LeaseGeneration int                   `json:"lease_generation"`
+	Payload         string                `json:"payload"`
+	Provenance      Provenance            `json:"provenance"`
+	RunOrderId      openapi_types.UUID    `json:"run_order_id"`
 }
 
 // RefDependency A package at one version in an SBOM: a commit's manifest or an image's.
@@ -2020,10 +2025,11 @@ type RemediationItem struct {
 
 // RemediationRecordBody defines model for RemediationRecordBody.
 type RemediationRecordBody struct {
-	Diff       *string            `json:"diff"`
-	Payload    string             `json:"payload"`
-	Provenance Provenance         `json:"provenance"`
-	RunOrderId openapi_types.UUID `json:"run_order_id"`
+	Diff            *string            `json:"diff"`
+	LeaseGeneration int                `json:"lease_generation"`
+	Payload         string             `json:"payload"`
+	Provenance      Provenance         `json:"provenance"`
+	RunOrderId      openapi_types.UUID `json:"run_order_id"`
 }
 
 // RemediationRequest What the scheduling door takes: the fork the fix lands on and the findings to fix.
@@ -2198,6 +2204,7 @@ type RoleRouting struct {
 type RunOrder struct {
 	ArtifactId      *openapi_types.UUID `json:"artifact_id"`
 	Asset           string              `json:"asset"`
+	CompletedBy     *string             `json:"completed_by"`
 	CreatedAt       *time.Time          `json:"created_at"`
 	EventSource     *string             `json:"event_source"`
 	FinishedAt      *time.Time          `json:"finished_at"`
@@ -2207,6 +2214,7 @@ type RunOrder struct {
 	Id              *openapi_types.UUID `json:"id"`
 	Lane            *string             `json:"lane"`
 	LeaseExpiresAt  *time.Time          `json:"lease_expires_at"`
+	LeaseGeneration int                 `json:"lease_generation"`
 	LeaseHolder     *string             `json:"lease_holder"`
 	Priority        int                 `json:"priority"`
 	Reason          *string             `json:"reason"`
@@ -2362,9 +2370,10 @@ type TriageItem struct {
 
 // TriageRecordBody defines model for TriageRecordBody.
 type TriageRecordBody struct {
-	Payload    string             `json:"payload"`
-	Provenance Provenance         `json:"provenance"`
-	RunOrderId openapi_types.UUID `json:"run_order_id"`
+	LeaseGeneration int                `json:"lease_generation"`
+	Payload         string             `json:"payload"`
+	Provenance      Provenance         `json:"provenance"`
+	RunOrderId      openapi_types.UUID `json:"run_order_id"`
 }
 
 // TriageRecordResult defines model for TriageRecordResult.
@@ -2490,9 +2499,10 @@ type VerificationItem struct {
 
 // VerificationRecordBody defines model for VerificationRecordBody.
 type VerificationRecordBody struct {
-	Payload    string             `json:"payload"`
-	Provenance Provenance         `json:"provenance"`
-	RunOrderId openapi_types.UUID `json:"run_order_id"`
+	LeaseGeneration int                `json:"lease_generation"`
+	Payload         string             `json:"payload"`
+	Provenance      Provenance         `json:"provenance"`
+	RunOrderId      openapi_types.UUID `json:"run_order_id"`
 }
 
 // VerificationVerdict defines model for VerificationVerdict.

@@ -1,0 +1,60 @@
+{
+  "title": "Example security audit",
+  "metadata": {
+    "repository": "https://e2e-forge.test/e2e/fixture",
+    "commit": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "date": "2026-11-15",
+    "scope": "The example repository at the audited ref",
+    "additional": {"harness_version": "1.2.3", "deterministic_steps": {"opengrep": "ran"}}
+  },
+  "executive_summary": {
+    "prose": "The audit found a fixed credential in settings and an unmaintained repository.",
+    "severity_counts": {"critical": 0, "high": 1, "medium": 0, "low": 1, "informational": 0}
+  },
+  "severity_criteria": [
+    {"level": "critical", "definition": "What critical means for this audit of the repository."},
+    {"level": "high", "definition": "What high means for this audit of the repository."},
+    {"level": "medium", "definition": "What medium means for this audit of the repository."},
+    {"level": "low", "definition": "What low means for this audit of the repository."}
+  ],
+  "findings": [
+    {
+      "id": "FIXTURE-aaaaaaa-001",
+      "title": "Hardcoded credential in settings loader",
+      "severity": "high",
+      "cwes": ["CWE-798"],
+      "locations": [{"path": "config/settings.py", "lines": "104-111"}],
+      "description": "The settings loader reads a credential that never rotates across releases.",
+      "remediation": "Move the credential to the secret store and read it at startup.",
+      "remediation_effort": "xs",
+      "owasp_llm_references": ["LLM01"],
+      "fingerprint": "8773f22ee7f9106e18505768f0b93860078184db3404df8eb688c316dcd83d0a",
+      "fingerprint_algo": "v3"
+    },
+    {
+      "id": "FIXTURE-aaaaaaa-002",
+      "title": "Repository appears unmaintained: no commits in two years",
+      "severity": "low",
+      "cwes": ["CWE-1104"],
+      "locations": [{"path": "repo:maintenance"}],
+      "description": "The repository shows no maintenance activity across the last two years.",
+      "remediation": "Confirm ownership and archive or transfer the repository.",
+      "fingerprint": "b43e4dbd41cd0417fc35083d157fb4a09e254d1f2b79fff0477d7bf74c010d0a",
+      "fingerprint_algo": "v3"
+    }
+  ],
+  "scanner_correlation": [
+    {"tool": "opengrep", "rule_id": "traust-fixture-settings", "location": "config/settings.py:104", "result": "promoted", "finding_ids": ["FIXTURE-aaaaaaa-001"]},
+    {"tool": "opengrep", "rule_id": "traust-fixture-settings", "location": "tests/settings.py:22", "result": "dismissed", "notes": "Synthetic value used only by a test."}
+  ],
+  "findings_summary": [
+    {"severity": "critical", "count": 0, "finding_ids": []},
+    {"severity": "high", "count": 1, "finding_ids": ["FIXTURE-aaaaaaa-001"]},
+    {"severity": "medium", "count": 0, "finding_ids": []},
+    {"severity": "low", "count": 1, "finding_ids": ["FIXTURE-aaaaaaa-002"]},
+    {"severity": "informational", "count": 0, "finding_ids": []}
+  ],
+  "remediation_roadmap": [
+    {"priority": "p1", "action": "Rotate the credential and move it to the secret store.", "addresses": ["FIXTURE-aaaaaaa-001"]}
+  ]
+}

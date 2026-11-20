@@ -49,6 +49,14 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 		json.NewEncoder(w).Encode(server.order)
 	case strings.HasSuffix(request.URL.Path, "/heartbeat"):
 		server.events = append(server.events, "heartbeat")
+		var body traust.LeaseRequest
+		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if !acceptsGeneration(w, body.LeaseGeneration, server.order.LeaseGeneration) {
+			return
+		}
 		if server.heartbeatStatus != 0 {
 			w.Header().Set("Content-Type", "application/problem+json")
 			w.WriteHeader(server.heartbeatStatus)
@@ -58,8 +66,7 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 		expires := time.Now().Add(server.leaseLength)
 		server.order.LeaseExpiresAt = &expires
 		if server.changeOrigin {
-			changed := server.order.StartedAt.Add(time.Second)
-			server.order.StartedAt = &changed
+			server.order.LeaseGeneration++
 		}
 		json.NewEncoder(w).Encode(server.order)
 	case strings.HasSuffix(request.URL.Path, "/remediation-input"):
@@ -72,6 +79,14 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 		})
 	case request.URL.Path == "/v1/assessment-records" || request.URL.Path == "/v1/remediation-records":
 		server.events = append(server.events, "record")
+		var body traust.RemediationRecordBody
+		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
+			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if !acceptsGeneration(w, body.LeaseGeneration, server.order.LeaseGeneration) {
+			return
+		}
 		if server.disconnect {
 			connection, _, err := w.(http.Hijacker).Hijack()
 			if err == nil {
@@ -86,7 +101,7 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 			return
 		}
 		if request.URL.Path == "/v1/remediation-records" {
-			_ = json.NewDecoder(request.Body).Decode(&server.remediationBody)
+			server.remediationBody = body
 			json.NewEncoder(w).Encode(traust.WorkItem{
 				WorkItemId:      uuid.MustParse("cbb60c79-1c48-4938-b71e-e19d0b9b9ca7"),
 				RepositoryRefId: uuid.MustParse("dfc7fdca-cba2-4a54-a9d3-4b57041bbb5f"),
@@ -105,6 +120,9 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 		var body traust.CompleteRequest
 		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 			w.WriteHeader(400)
+			return
+		}
+		if !acceptsGeneration(w, body.LeaseGeneration, server.order.LeaseGeneration) {
 			return
 		}
 		server.completed = body.Result
@@ -129,7 +147,7 @@ func newRecordingRun(
 	id := uuid.MustParse("dfc7fdca-cba2-4a54-a9d3-4b57041bbb5f")
 	started := time.Date(2026, 10, 28, 1, 2, 3, 123456789, time.UTC)
 	server := &lifecycleServer{
-		order:       traust.RunOrder{Id: &id, StartedAt: &started, State: traust.RunOrderStateLeased},
+		order:       traust.RunOrder{Id: &id, StartedAt: &started, LeaseGeneration: 4, State: traust.RunOrderStateLeased},
 		leaseLength: time.Second,
 	}
 	httpServer := httptest.NewServer(server)
@@ -167,8 +185,8 @@ func (server *lifecycleServer) counts() (heartbeats, records, completions int) {
 
 func TestRecordingRunMaintainsLeaseAndCompletesNativeOutcome(t *testing.T) {
 	run, server := newLifecycleRun(t, executorFunc(func(ctx context.Context, execution Execution) (ProducedReport, error) {
-		if execution.Order.Id == nil || execution.Order.StartedAt == nil {
-			return ProducedReport{}, errors.New("missing server provenance")
+		if execution.Order.Id == nil || execution.Order.LeaseGeneration != 4 {
+			return ProducedReport{}, errors.New("missing claim identity")
 		}
 		select {
 		case <-ctx.Done():
@@ -182,11 +200,11 @@ func TestRecordingRunMaintainsLeaseAndCompletesNativeOutcome(t *testing.T) {
 		t.Fatal(err)
 	}
 	heartbeats, records, completions := server.counts()
-	if heartbeats < 3 || records != 1 || completions != 1 || result.Receipt.Assessment == nil || result.Result.Outcome != traust.OutcomeDegraded {
-		t.Fatal("run did not heartbeat during execution and record/complete exactly once")
+	if heartbeats < 3 || records != 0 || completions != 1 || result.Receipt.Assessment != nil || result.Result.Outcome != traust.OutcomeDegraded {
+		t.Fatal("degraded assessment did not heartbeat and complete once without publishing")
 	}
-	if result.Order.Id == nil || *result.Order.Id != *server.order.Id || !result.Order.StartedAt.Equal(*server.order.StartedAt) {
-		t.Fatal("native run identity/provenance changed")
+	if result.Order.Id == nil || *result.Order.Id != *server.order.Id || result.Order.LeaseGeneration != server.order.LeaseGeneration {
+		t.Fatal("native run identity changed")
 	}
 }
 
@@ -233,7 +251,23 @@ func TestLeaseExpiryCancelsWorkWithoutFurtherMutation(t *testing.T) {
 	}
 }
 
-func TestChangedServerOriginIsLeaseLossNotNewProvenance(t *testing.T) {
+func TestRecordingRunRejectsStartWithoutPositiveLeaseGeneration(t *testing.T) {
+	for _, generation := range []int{0, -1} {
+		executed := false
+		run, server := newLifecycleRun(t, executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+			executed = true
+			return ProducedReport{}, errors.New("unexpected execution")
+		}))
+		server.order.LeaseGeneration = generation
+		_, err := run.Run(t.Context())
+		heartbeats, records, completions := server.counts()
+		if executed || !lost(err) || heartbeats+records+completions != 0 {
+			t.Fatalf("start generation %d: executed=%t err=%v writes=%d/%d/%d", generation, executed, err, heartbeats, records, completions)
+		}
+	}
+}
+
+func TestHeartbeatChangingGenerationWithSameStartTimeIsLeaseLoss(t *testing.T) {
 	run, server := newLifecycleRun(t, executorFunc(func(ctx context.Context, _ Execution) (ProducedReport, error) {
 		<-ctx.Done()
 		return ProducedReport{}, ctx.Err()
@@ -242,7 +276,7 @@ func TestChangedServerOriginIsLeaseLossNotNewProvenance(t *testing.T) {
 	_, err := run.Run(context.Background())
 	var lost *LeaseLostError
 	if !errors.As(err, &lost) {
-		t.Fatal("heartbeat was permitted to replace the immutable provenance origin")
+		t.Fatal("heartbeat was permitted to replace the original lease generation")
 	}
 	_, records, completions := server.counts()
 	if records != 0 || completions != 0 {
@@ -344,11 +378,13 @@ func TestUnknownExecutorOutcomeCompletesFailedWithoutRecording(t *testing.T) {
 // The remediation template posts the executor's report through core's remediation record door,
 // stamped with the held order's identity, and carries the recorded work item back.
 func TestRemediationTemplateRecordsThroughTheRemediationDoor(t *testing.T) {
+	var reportReady time.Time
 	run, server := newRecordingRun(t, executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
 		var input traust.RemediationInput
 		if err := json.Unmarshal(execution.Input, &input); err != nil || input.FixBranch != "server-fix-branch" {
 			return ProducedReport{}, errors.New("missing core-prepared remediation input")
 		}
+		reportReady = time.Now()
 		return ProducedReport{Payload: []byte("remediation report"), Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
 	}), RecordingRequest{Remediation: &traust.RemediationRecordBody{
 		Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport},
@@ -369,11 +405,11 @@ func TestRemediationTemplateRecordsThroughTheRemediationDoor(t *testing.T) {
 	server.mu.Lock()
 	defer server.mu.Unlock()
 	body := server.remediationBody
-	if server.order.Id == nil || server.order.StartedAt == nil || body.RunOrderId != *server.order.Id || body.Provenance.RunId != *server.order.Id {
+	if server.order.Id == nil || body.LeaseGeneration != server.order.LeaseGeneration || body.RunOrderId != *server.order.Id || body.Provenance.RunId != *server.order.Id {
 		t.Fatal("the record was not stamped with the server's order identity")
 	}
-	if !body.Provenance.OccurredAt.Equal(*server.order.StartedAt) || body.Payload != "remediation report" {
-		t.Fatal("the record was not stamped with the server's start time and the executor's bytes")
+	if body.Provenance.OccurredAt.Before(reportReady) || body.Provenance.OccurredAt.After(time.Now()) || body.Payload != "remediation report" {
+		t.Fatalf("expected captured report time and original bytes, got %v and %q", body.Provenance.OccurredAt, body.Payload)
 	}
 	if body.Provenance.Source != traust.SourceTypeTriageReport {
 		t.Fatal("the record lost its explicit provenance source")

@@ -74,6 +74,16 @@ type queuedServer struct {
 	onClaim          func()
 }
 
+func acceptsGeneration(w http.ResponseWriter, got, want int) bool {
+	if got > 0 && got == want {
+		return true
+	}
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(http.StatusConflict)
+	_ = json.NewEncoder(w).Encode(traust.Problem{Title: "lease lost", Status: http.StatusConflict})
+	return false
+}
+
 func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Request) {
 	server.mu.Lock()
 	defer server.mu.Unlock()
@@ -162,6 +172,9 @@ func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Reque
 			w.WriteHeader(http.StatusBadRequest)
 			return
 		}
+		if !acceptsGeneration(w, body.LeaseGeneration, server.order.LeaseGeneration) {
+			return
+		}
 		if server.heartbeatStatus != 0 && (server.heartbeatFailAt == 0 || server.heartbeatCalls >= server.heartbeatFailAt) {
 			w.Header().Set("Content-Type", "application/problem+json")
 			w.WriteHeader(server.heartbeatStatus)
@@ -179,6 +192,9 @@ func (server *queuedServer) ServeHTTP(w http.ResponseWriter, request *http.Reque
 		var body traust.CompleteRequest
 		if err := json.NewDecoder(request.Body).Decode(&body); err != nil {
 			w.WriteHeader(http.StatusBadRequest)
+			return
+		}
+		if !acceptsGeneration(w, body.LeaseGeneration, server.order.LeaseGeneration) {
 			return
 		}
 		server.result = body.Result
@@ -209,7 +225,7 @@ func queuedRunner(t *testing.T, executor Executor) (*Runner, *queuedServer) {
 	started, expires := time.Now(), time.Now().Add(time.Minute)
 	server := &queuedServer{pack: pack, asset: "ledger_audit", order: traust.RunOrder{
 		Id: &id, ArtifactId: &artifactID, Asset: "ledger_audit", State: traust.RunOrderStateLeased,
-		StartedAt: &started, LeaseExpiresAt: &expires, RequestedBy: "human:operator",
+		StartedAt: &started, LeaseExpiresAt: &expires, LeaseGeneration: 1, RequestedBy: "human:operator",
 	}}
 	return serveRunner(t, executor, server, nil)
 }
@@ -217,7 +233,7 @@ func queuedRunner(t *testing.T, executor Executor) (*Runner, *queuedServer) {
 const vocabularyPack = `pack: security
 assets:
   agentic_scan:
-    run: [session, --run, "{run_id}", --worker, "{worker}", --role, "{role}", --rule, "{rule}", --repo, "{repo_url}"]
+    run: [session, --run, "{run_id}", --worker, "{worker}", --role, "{role}", --rule, "{rule}", --repo, "{repo_url}", --lease-generation, "{lease_generation}"]
     model: {role: threat-model}
     trigger: {every: 7d}
 `
@@ -235,7 +251,7 @@ func vocabularyRunner(t *testing.T, executor Executor) (*Runner, *queuedServer) 
 	worker, rule := "runner-1", "rule-3+threat-model-pr"
 	server := &queuedServer{pack: pack, asset: "agentic_scan", order: traust.RunOrder{
 		Id: &id, ArtifactId: &artifactID, Asset: "agentic_scan", State: traust.RunOrderStateLeased,
-		StartedAt: &started, LeaseExpiresAt: &expires, RequestedBy: "human:operator",
+		StartedAt: &started, LeaseExpiresAt: &expires, LeaseGeneration: 17, RequestedBy: "human:operator",
 		LeaseHolder: &worker, RepositoryId: &repositoryID, Rule: &rule,
 	}, repository: &traust.Repository{Id: &repositoryID, Url: "https://github.com/example/app"}}
 	return serveRunner(t, executor, server, []string{"github.com"})
@@ -463,7 +479,7 @@ func TestVocabularyRunnerResolvesEveryParameterFromItsSource(t *testing.T) {
 	}
 	want := []string{
 		"session", "--run", order.Id.String(), "--worker", "runner-1", "--role", "threat-model",
-		"--rule", "rule-3+threat-model-pr", "--repo", "https://github.com/example/app",
+		"--rule", "rule-3+threat-model-pr", "--repo", "https://github.com/example/app", "--lease-generation", "17",
 	}
 	if !slices.Equal(argv, want) {
 		t.Fatalf("resolved argv %v, want %v", argv, want)
