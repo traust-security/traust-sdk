@@ -197,7 +197,12 @@ runner, err := ops.NewRunner(ops.RunnerConfig{
 })
 ```
 
-Your preparer chooses exactly one generated request template, its provenance source and explicit
+A scan of a repository needs no preparer of your own: `ops.AssessDefaultRef(client, source,
+assessorVersion)` records the report as an assessment of the commit core says the repository's
+default branch is at, and passes that subject (`traust.SubjectRef`) as `Execution.Input`. Core
+records only what its config grants: list the asset under `recording.assessment`.
+
+Otherwise your preparer chooses exactly one generated request template, its provenance source and explicit
 bindings. Leave its payload empty. For triage, choose `RecordingRequest.AssessmentID`; the SDK
 calls `PrepareTriage` for that assessment and passes the result as `Execution.TriageInput`.
 For remediation or verification, the SDK calls `PrepareRemediation` or `PrepareVerification`
@@ -252,11 +257,16 @@ identity available for reconciliation and does not complete.
 
 ## Example app
 
-[`examples/webapp`](examples/webapp) is a small web app on traust (net/http, templ, htmx): sign in,
-see your findings by severity, start a run and watch it finish, build a report and download it.
-It acts as each signed-in person with `OnBehalfOf`, reads its dashboard with `QueryDashboard`,
-follows runs and report builds with `Poller`, and runs its pack's work in the same binary.
-`make webapp` starts it against a local traust-server; `make e2e` tests it end to end.
+[`examples/webapp`](examples/webapp) is a small web app on traust (net/http, templ, htmx). From a
+blank core: onboard repositories (with a dry-run preview), scan one, work its findings (decide),
+watch the dashboard count them, and build and download a report. It acts as each signed-in person
+with `OnBehalfOf`, records scans with `ops.AssessDefaultRef`, follows runs and report builds with
+`Poller`, and runs its pack's work in the same binary. Its scan skill is a fixture (canned,
+contracts-valid findings, labelled as such) so it plays without an agent or a model key.
+
+`make webapp` starts it against a local traust-server that reaches real forges: sign in with the
+token it prints and onboard any public repository. `make e2e` runs the same flows end to end
+against a forge stand-in.
 
 ## Test your code
 

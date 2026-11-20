@@ -1,6 +1,10 @@
 pack: webapp
 assets:
-  smoke:
-    run: [python3, -c, "import json, sys; json.dump(dict(outcome='succeeded'), sys.stdout)", "{run_id}"]
-    trigger: {every: 7d}
-    runner: {labels: [deterministic]}
+  # A secure-code audit of a repository's default branch. The example answers it with a fixture
+  # skill (skills.go); a live deployment runs this command, the traust harness's skill session.
+  scan:
+    run: [python3, -m, traust.cli, session, run, --skill, secure-code-audit, --repo, "{repo_url}", --run-id, "{run_id}"]
+    params: {repo_url: HttpsRepoUrl}
+    partitions: dynamic:repo
+    trigger: {every: 24h}
+    runner: {labels: [llm]}

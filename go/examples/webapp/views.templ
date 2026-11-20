@@ -11,6 +11,9 @@ type tally struct {
 	Count string
 }
 
+// validities are the answers a person may give about a finding.
+var validities = []traust.Validity{traust.ValidityConfirmed, traust.ValidityFalsePositive, traust.ValidityHardening, traust.ValidityNotAffected}
+
 templ page(title string) {
 	<!DOCTYPE html>
 	<html lang="en">
@@ -21,6 +24,7 @@ templ page(title string) {
 			<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
 		</head>
 		<body>
+			<nav><a href="/">Home</a> · <a href="/onboard">Onboard</a></nav>
 			{ children... }
 		</body>
 	</html>
@@ -57,24 +61,111 @@ templ home(me traust.Principal, repos []traust.Repository, severities []tally) {
 			</dl>
 		</section>
 		<section>
-			<h2>Runs</h2>
-			<button hx-post="/runs" hx-vals={ `{"asset":"smoke"}` } hx-target="#runs" hx-swap="afterbegin">Run smoke</button>
-			<ul id="runs"></ul>
+			<h2>Repositories</h2>
+			if len(repos) == 0 {
+				<p>Nothing onboarded yet. <a href="/onboard">Onboard a repository.</a></p>
+			}
+			<ul>
+				for _, repo := range repos {
+					<li><a href={ templ.URL("/repositories/" + repo.Id.String()) }>{ repo.Url }</a></li>
+				}
+			</ul>
 		</section>
 		<section>
 			<h2>Reports</h2>
 			<button hx-post="/reports" hx-vals={ `{"report":"findings-rollup"}` } hx-target="#reports" hx-swap="afterbegin">Build the findings rollup</button>
 			<ul id="reports"></ul>
 		</section>
-		<section>
-			<h2>Repositories</h2>
-			<ul>
-				for _, repo := range repos {
-					<li>{ repo.Url }</li>
-				}
-			</ul>
-		</section>
 	}
+}
+
+templ onboardForm() {
+	@page("Onboard") {
+		<h1>Onboard repositories</h1>
+		<form hx-post="/onboard/plan" hx-target="#plan">
+			<label>Product <input name="product" required placeholder="payments"/></label>
+			<label>Label <input name="label" placeholder="Payments (new products only)"/></label>
+			<label>Repository URLs, one per line <textarea name="repositories" rows="4" required></textarea></label>
+			<label><input type="checkbox" name="scan" value="on" checked/> Scan after onboarding</label>
+			<button>Preview</button>
+		</form>
+		<div id="plan"></div>
+	}
+}
+
+templ onboardPlan(plan traust.OnboardingPlan) {
+	<section>
+		<h2>What onboarding will do</h2>
+		<ul>
+			for _, spec := range items(plan.New) {
+				<li>register { spec.Url }</li>
+			}
+			for _, id := range items(plan.ExistingRepositoryIds) {
+				<li>refresh repository { id.String() }</li>
+			}
+			for _, gap := range items(plan.Gaps) {
+				<li role="alert">{ gap.Subject }: { gap.Reason }</li>
+			}
+		</ul>
+		if len(items(plan.Gaps)) == 0 {
+			<button hx-post="/onboard" hx-include="closest body form">Onboard</button>
+		}
+	</section>
+}
+
+templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
+	@page(repo.Url) {
+		<h1>{ repo.Url }</h1>
+		if ref != nil {
+			<p>Default branch { text(ref.Name) } at { ref.Sha }</p>
+		}
+		<button hx-post="/runs" hx-vals={ `{"asset":"scan","repository_id":"` + repo.Id.String() + `"}` } hx-target="#runs" hx-swap="afterbegin">Run scan</button>
+		<ul id="runs"></ul>
+		<h2>Findings</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/findings" } hx-trigger="load, run-finished from:body"></div>
+	}
+}
+
+templ findingList(findings []traust.FindingView) {
+	if len(findings) == 0 {
+		<p>No findings yet. Run a scan.</p>
+	}
+	<ul>
+		for _, f := range findings {
+			<li>
+				<a href={ templ.URL("/findings/" + f.Finding.Id.String()) }>{ f.Finding.Title }</a>
+				{ severity(f.EffectiveSeverity) } · { validity(f.Disposition) }
+			</li>
+		}
+	</ul>
+}
+
+templ finding(f traust.FindingView) {
+	@page(f.Finding.Title) {
+		<h1>{ f.Finding.Title }</h1>
+		<p>{ severity(f.EffectiveSeverity) } · { validity(f.Disposition) }</p>
+		if f.Description != nil {
+			<p>{ *f.Description }</p>
+		}
+		@decideForm(f)
+	}
+}
+
+templ decideForm(f traust.FindingView) {
+	<form id="decide" hx-post={ "/findings/" + f.Finding.Id.String() + "/decide" } hx-swap="outerHTML">
+		<h2>Decide</h2>
+		<select name="validity">
+			for _, v := range validities {
+				<option value={ string(v) }>{ string(v) }</option>
+			}
+		</select>
+		<label>Rationale <textarea name="rationale" required></textarea></label>
+		<button>Record the decision</button>
+	</form>
+}
+
+templ decided() {
+	<p id="decide">Decision recorded. <a href="">Reload</a> to see the finding's new state.</p>
 }
 
 // job is work core finishes later: until done, the row asks poll for itself every second.
@@ -102,5 +193,5 @@ templ reportRow(token string, report traust.Report, done bool) {
 }
 
 templ failure(message string) {
-	<li role="alert">{ message }</li>
+	<p role="alert">{ message }</p>
 }

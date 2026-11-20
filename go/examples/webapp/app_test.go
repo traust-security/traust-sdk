@@ -84,7 +84,7 @@ func TestHomeShowsThePersonAndTheirRepositories(t *testing.T) {
 	if err := json.Unmarshal(core.Requests()[2].Body, &asked); err != nil || asked.RepositoryIds == nil || (*asked.RepositoryIds)[0] != repo {
 		t.Fatalf("dashboard query %+v %v, want it scoped to the person's repositories", asked, err)
 	}
-	for _, want := range []string{"Signed in as Ada", "https://forge.example/a", `hx-post="/runs"`, "<dt>high</dt><dd>3</dd>"} {
+	for _, want := range []string{"Signed in as Ada", `href="/repositories/` + repo.String() + `"`, "<dt>high</dt><dd>3</dd>"} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("home lacks %q:\n%s", want, body)
 		}
@@ -107,9 +107,59 @@ func TestARunPollsUntilCoreFinishesIt(t *testing.T) {
 	if err := json.Unmarshal(core.Requests()[0].Body, &submitted); err != nil || submitted.Order.Asset != "smoke" || submitted.Config == nil {
 		t.Fatalf("submitted %+v %v, want smoke pinned to the pack", submitted, err)
 	}
-	done := send(h, http.MethodGet, "/runs/"+id.String(), "ada", nil).Body.String()
-	if !strings.Contains(done, "succeeded") || strings.Contains(done, "hx-trigger") {
-		t.Fatalf("finished: %s, want succeeded and polling stopped", done)
+	done := send(h, http.MethodGet, "/runs/"+id.String(), "ada", nil)
+	if !strings.Contains(done.Body.String(), "succeeded") || strings.Contains(done.Body.String(), "hx-trigger") || done.Header().Get("HX-Trigger") != "run-finished" {
+		t.Fatalf("finished: %s, want succeeded, polling stopped and the page told", done.Body)
+	}
+}
+
+func TestOnboardingPreviewsThenOnboards(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("POST /v1/onboarding/plan", onlyFor("ada", traustest.JSON(http.StatusOK, traust.OnboardingPlan{
+		New: &[]traust.RepositorySpec{{Url: "https://forge.example/org/a"}},
+	})))
+	core.Handle("POST /v1/onboarding", onlyFor("ada", traustest.JSON(http.StatusOK, traust.OnboardingResult{ProductId: uuid.New()})))
+	h := newApp(t, core)
+	form := url.Values{"product": {"payments"}, "label": {"Payments"}, "repositories": {"https://forge.example/org/a\n\n https://forge.example/org/b \n"}, "scan": {"on"}}
+
+	if preview := send(h, http.MethodPost, "/onboard/plan", "ada", form).Body.String(); !strings.Contains(preview, "register https://forge.example/org/a") || !strings.Contains(preview, `hx-post="/onboard"`) {
+		t.Fatalf("preview: %s, want what onboarding will do and the button to do it", preview)
+	}
+	onboarded := send(h, http.MethodPost, "/onboard", "ada", form)
+	var sent traust.OnboardingRequest
+	if err := json.Unmarshal(core.Requests()[1].Body, &sent); err != nil || onboarded.Header().Get("HX-Redirect") != "/" {
+		t.Fatalf("onboard: %d %v, want a redirect home", onboarded.Code, err)
+	}
+	if sent.Product != "payments" || *sent.Label != "Payments" || len(*sent.Repositories) != 2 || (*sent.Repositories)[1].Url != "https://forge.example/org/b" || (*sent.Baseline)[0] != "scan" {
+		t.Fatalf("onboarding request %+v, want the form's product, label, two repositories and a scan", sent)
+	}
+}
+
+func TestARepositoryShowsItsBranchAndItsFindingsAreDecided(t *testing.T) {
+	core := traustest.New(t)
+	repo, ref, found := uuid.New(), uuid.New(), uuid.New()
+	branch, high := "main", traust.SeverityHigh
+	core.Handle("GET /v1/repositories/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Repository{Id: &repo, Url: "https://forge.example/org/a"})))
+	core.Handle("GET /v1/repositories/{id}/refs/current-default", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{Id: &ref, RepositoryId: repo, Name: &branch, Sha: "4c7f0b9"})))
+	view := traust.FindingView{Finding: traust.Finding{Id: &found, RepositoryId: repo, Title: "SQL built from input"}, EffectiveSeverity: &high}
+	core.Handle("GET /v1/repositories/{id}/findings", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageFindingView{Items: []traust.FindingView{view}})))
+	core.Handle("GET /v1/findings/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, view)))
+	core.Handle("POST /v1/findings/{id}/decisions", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Decision{})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/repositories/"+repo.String(), "ada", nil).Body.String()
+	if !strings.Contains(page, "Default branch main at 4c7f0b9") || !strings.Contains(page, `repository_id&#34;:&#34;`+repo.String()) {
+		t.Fatalf("repository: %s, want its branch and a scan button for it", page)
+	}
+	list := send(h, http.MethodGet, "/repositories/"+repo.String()+"/findings", "ada", nil).Body.String()
+	if !strings.Contains(list, "SQL built from input") || !strings.Contains(list, "high · undecided") {
+		t.Fatalf("findings: %s", list)
+	}
+	decided := send(h, http.MethodPost, "/findings/"+found.String()+"/decide", "ada", url.Values{"validity": {"false_positive"}, "rationale": {"test fixture"}})
+	var body traust.DecisionBody
+	last := core.Requests()[len(core.Requests())-1]
+	if err := json.Unmarshal(last.Body, &body); err != nil || decided.Code != http.StatusOK || *body.Validity != traust.ValidityFalsePositive || body.Rationale != "test fixture" {
+		t.Fatalf("decide: %d %+v %v, want the person's validity and rationale", decided.Code, body, err)
 	}
 }
 
@@ -143,6 +193,7 @@ func TestWorkNeedsASignedInPerson(t *testing.T) {
 	for _, route := range [][2]string{
 		{http.MethodPost, "/runs"}, {http.MethodGet, "/runs/" + uuid.NewString()},
 		{http.MethodPost, "/reports"}, {http.MethodGet, "/reports/" + uuid.NewString()}, {http.MethodGet, "/reports/" + uuid.NewString() + "/file"},
+		{http.MethodPost, "/onboard"}, {http.MethodGet, "/repositories/" + uuid.NewString()}, {http.MethodPost, "/findings/" + uuid.NewString() + "/decide"},
 	} {
 		if w := send(h, route[0], route[1], "", nil); w.Code != http.StatusUnauthorized {
 			t.Fatalf("%s %s: %d, want 401", route[0], route[1], w.Code)

@@ -1,9 +1,7 @@
 package main
 
 import (
-	"context"
 	"errors"
-	"fmt"
 	"net/http"
 
 	"github.com/a-h/templ"
@@ -25,79 +23,19 @@ func (a *app) routes() http.Handler {
 	mux.HandleFunc("GET /{$}", a.home)
 	mux.HandleFunc("POST /sign-in", a.signIn)
 	mux.HandleFunc("POST /sign-out", a.signOut)
+	mux.HandleFunc("GET /onboard", a.signedIn(a.onboardForm))
+	mux.HandleFunc("POST /onboard/plan", a.signedIn(a.planOnboarding))
+	mux.HandleFunc("POST /onboard", a.signedIn(a.onboard))
+	mux.HandleFunc("GET /repositories/{id}", a.signedIn(a.repository))
+	mux.HandleFunc("GET /repositories/{id}/findings", a.signedIn(a.findings))
+	mux.HandleFunc("GET /findings/{id}", a.signedIn(a.finding))
+	mux.HandleFunc("POST /findings/{id}/decide", a.signedIn(a.decide))
 	mux.HandleFunc("POST /runs", a.signedIn(a.startRun))
 	mux.HandleFunc("GET /runs/{token}", a.signedIn(a.runStatus))
 	mux.HandleFunc("POST /reports", a.signedIn(a.startReport))
 	mux.HandleFunc("GET /reports/{token}", a.signedIn(a.reportStatus))
 	mux.HandleFunc("GET /reports/{token}/file", a.signedIn(a.reportFile))
 	return mux
-}
-
-func (a *app) home(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie(sessionCookie)
-	if err != nil {
-		render(w, r, http.StatusOK, signIn(""))
-		return
-	}
-	ctx := traust.OnBehalfOf(r.Context(), cookie.Value)
-	me, err := a.core.Whoami(ctx)
-	if errors.Is(err, traust.ErrUnauthorized) {
-		http.SetCookie(w, &http.Cookie{Name: sessionCookie, MaxAge: -1})
-		render(w, r, http.StatusUnauthorized, signIn("Your session ended. Sign in again."))
-		return
-	}
-	if err != nil {
-		fail(w, r, err)
-		return
-	}
-	var repos []traust.Repository
-	for repo, err := range a.core.ListRepositoriesAll(ctx, nil) {
-		if err != nil {
-			fail(w, r, err)
-			return
-		}
-		repos = append(repos, repo)
-	}
-	severities, err := a.findingsBySeverity(ctx, repos)
-	if err != nil {
-		fail(w, r, err)
-		return
-	}
-	render(w, r, http.StatusOK, home(*me, repos, severities))
-}
-
-// findingsBySeverity is one dashboard query over the person's repositories.
-func (a *app) findingsBySeverity(ctx context.Context, repos []traust.Repository) ([]tally, error) {
-	ids := make([]uuid.UUID, 0, len(repos))
-	for _, repo := range repos {
-		if repo.Id != nil {
-			ids = append(ids, *repo.Id)
-		}
-	}
-	if len(ids) == 0 {
-		return nil, nil
-	}
-	result, err := a.core.QueryDashboard(ctx, traust.DashboardQuery{
-		Subject:       traust.SubjectFindings,
-		Measures:      []traust.Measure{traust.MeasureFindings},
-		GroupBy:       &[]traust.Dimension{traust.DimensionSeverity},
-		RepositoryIds: &ids,
-	})
-	if err != nil {
-		return nil, err
-	}
-	tallies := make([]tally, 0, len(result.Rows))
-	for _, row := range result.Rows {
-		label, count := "unrated", "0"
-		if s := row.Group(traust.DimensionSeverity); s != nil {
-			label = *s
-		}
-		if n := row.Measure(traust.MeasureFindings); n != nil {
-			count = fmt.Sprint(*n)
-		}
-		tallies = append(tallies, tally{label, count})
-	}
-	return tallies, nil
 }
 
 func (a *app) signIn(w http.ResponseWriter, r *http.Request) {
@@ -118,72 +56,6 @@ func (a *app) signOut(w http.ResponseWriter, r *http.Request) {
 	http.Redirect(w, r, "/", http.StatusSeeOther)
 }
 
-func (a *app) startRun(w http.ResponseWriter, r *http.Request) {
-	poller, err := a.core.BeginSubmit(r.Context(), traust.SubmitRequest{
-		Order:  traust.OrderRequest{Asset: r.PostFormValue("asset"), Priority: 1},
-		Config: &[]traust.ConfigDigest{a.pack},
-	})
-	if err != nil {
-		fail(w, r, err)
-		return
-	}
-	render(w, r, http.StatusOK, runRow(poller.ResumeToken(), traust.RunOrderStateQueued, false))
-}
-
-func (a *app) runStatus(w http.ResponseWriter, r *http.Request) {
-	poller, err := a.core.ResumeOrder(r.PathValue("token"))
-	if err != nil {
-		render(w, r, http.StatusBadRequest, failure("That is not a run."))
-		return
-	}
-	order, done, err := poller.Poll(r.Context())
-	if err != nil {
-		fail(w, r, err)
-		return
-	}
-	render(w, r, http.StatusOK, runRow(poller.ResumeToken(), order.State, done))
-}
-
-func (a *app) startReport(w http.ResponseWriter, r *http.Request) {
-	name, format := traust.ViewName(r.PostFormValue("report")), traust.ReportFormatMarkdown
-	poller, err := a.core.BeginRequestReport(r.Context(), traust.ReportRequest{Report: name, Format: &format})
-	if err != nil {
-		fail(w, r, err)
-		return
-	}
-	render(w, r, http.StatusOK, reportRow(poller.ResumeToken(), traust.Report{Report: name, Status: traust.ReportStatusQueued}, false))
-}
-
-func (a *app) reportStatus(w http.ResponseWriter, r *http.Request) {
-	poller, err := a.core.ResumeReport(r.PathValue("token"))
-	if err != nil {
-		render(w, r, http.StatusBadRequest, failure("That is not a report."))
-		return
-	}
-	report, done, err := poller.Poll(r.Context())
-	if err != nil {
-		fail(w, r, err)
-		return
-	}
-	render(w, r, http.StatusOK, reportRow(poller.ResumeToken(), report, done))
-}
-
-func (a *app) reportFile(w http.ResponseWriter, r *http.Request) {
-	id, err := uuid.Parse(r.PathValue("token"))
-	if err != nil {
-		http.Error(w, "That is not a report.", http.StatusBadRequest)
-		return
-	}
-	file, err := a.core.GetReportFile(r.Context(), id)
-	if err != nil {
-		http.Error(w, http.StatusText(status(err)), status(err))
-		return
-	}
-	w.Header().Set("Content-Type", "text/markdown; charset=utf-8")
-	w.Header().Set("Content-Disposition", `attachment; filename="report.md"`)
-	_, _ = w.Write(file)
-}
-
 // signedIn sends the handler's traust calls as the signed-in person.
 func (a *app) signedIn(next http.HandlerFunc) http.HandlerFunc {
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -194,6 +66,15 @@ func (a *app) signedIn(next http.HandlerFunc) http.HandlerFunc {
 		}
 		next(w, r.WithContext(traust.OnBehalfOf(r.Context(), cookie.Value)))
 	}
+}
+
+// pathID is the {id} or {token} a route names, or a 400 already answered.
+func pathID(w http.ResponseWriter, r *http.Request, name string) (uuid.UUID, bool) {
+	id, err := uuid.Parse(r.PathValue(name))
+	if err != nil {
+		render(w, r, http.StatusBadRequest, failure("That link names nothing."))
+	}
+	return id, err == nil
 }
 
 // status passes core's refusal through; anything else is core being unavailable.
@@ -213,4 +94,33 @@ func render(w http.ResponseWriter, r *http.Request, code int, view templ.Compone
 	w.Header().Set("Content-Type", "text/html; charset=utf-8")
 	w.WriteHeader(code)
 	_ = view.Render(r.Context(), w)
+}
+
+// items reads a generated optional list; nil is an empty one.
+func items[T any](list *[]T) []T {
+	if list == nil {
+		return nil
+	}
+	return *list
+}
+
+func text(s *string) string {
+	if s == nil {
+		return ""
+	}
+	return *s
+}
+
+func severity(s *traust.Severity) string {
+	if s == nil {
+		return "unrated"
+	}
+	return string(*s)
+}
+
+func validity(d *traust.Disposition) string {
+	if d == nil || d.Validity == nil {
+		return "undecided"
+	}
+	return string(*d.Validity)
 }

@@ -90,17 +90,23 @@ mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context
 # ephemeral self-signed certificate, trusted through SSL_CERT_FILE), and the e2e config
 # maps the mock's host to the gitlab kind in forge_hosts.
 # One package at a time: both share the server, and ops onboards what v1/traust expects empty.
-# core_up starts traust-server at CORE_REF on $$port, its report builder, and the e2eforge stand-in; mints a
-# person token ($$home/person) and a runner token ($$home/runner), and stops both on exit.
+# core_up starts traust-server at CORE_REF on $$port beside its report builder, mints a person
+# token ($$home/person) and a runner token ($$home/runner), and stops everything on exit. With
+# forge=stand-in, core reaches forges only through the e2eforge stand-in (no network); otherwise
+# it reaches real ones. The config grants the example's scan asset its assessment recording.
 define core_up
-	home="$$(mktemp -d)"; \
-	printf 'home: %s\nidentity:\n  trust_local: true\nforge_hosts:\n  e2e-forge.test: gitlab\n' "$$home" > "$$home/config.yaml"; \
+	home="$$(mktemp -d)"; proxy=""; forge_pid=""; \
+	printf 'home: %s\nidentity:\n  trust_local: true\nrecording:\n  assessment: [scan]\n' "$$home" > "$$home/config.yaml"; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet python -c "import traust_core.v1.rest.server"); \
-	go build -o "$$home/e2eforge" ./internal/e2eforge; \
-	"$$home/e2eforge" -ca "$$home/forge-ca.pem" > "$$home/forge-port" & forge_pid=$$!; \
-	for _ in $$(seq 100); do [ -s "$$home/forge-port" ] && break; sleep 0.1; done; \
-	forge_port=$$(cat "$$home/forge-port"); \
-	(cd "$(CORE_SOURCE)" && exec env SSL_CERT_FILE="$$home/forge-ca.pem" HTTPS_PROXY="http://127.0.0.1:$$forge_port" https_proxy="http://127.0.0.1:$$forge_port" uv run --quiet traust-server --config "$$home/config.yaml" --port $$port) > "$$home/server.log" 2>&1 & pid=$$!; \
+	if [ "$${forge:-}" = stand-in ]; then \
+	  printf 'forge_hosts:\n  e2e-forge.test: gitlab\n' >> "$$home/config.yaml"; \
+	  go build -o "$$home/e2eforge" ./internal/e2eforge; \
+	  "$$home/e2eforge" -ca "$$home/forge-ca.pem" > "$$home/forge-port" & forge_pid=$$!; \
+	  for _ in $$(seq 100); do [ -s "$$home/forge-port" ] && break; sleep 0.1; done; \
+	  forge_port=$$(cat "$$home/forge-port"); \
+	  proxy="SSL_CERT_FILE=$$home/forge-ca.pem HTTPS_PROXY=http://127.0.0.1:$$forge_port https_proxy=http://127.0.0.1:$$forge_port"; \
+	fi; \
+	(cd "$(CORE_SOURCE)" && exec env $$proxy uv run --quiet traust-server --config "$$home/config.yaml" --port $$port) > "$$home/server.log" 2>&1 & pid=$$!; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet traust-server --config "$$home/config.yaml" --role reports) > "$$home/reports.log" 2>&1 & reports_pid=$$!; \
 	trap 'kill $$pid $$reports_pid $$forge_pid 2>/dev/null || true; rm -rf "$$home"' EXIT; \
 	for _ in $$(seq 60); do curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz && break; sleep 1; done; \
@@ -110,13 +116,14 @@ define core_up
 endef
 
 e2e: core
-	@set -eu; port=18080; \
+	@set -eu; port=18080; forge=stand-in; \
 	$(core_up); \
 	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; \
 	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/ ./v1/ops/; \
 	cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .
 
-# The example app against a local traust-server: sign in with the person token it prints.
+# The example app against a local traust-server that reaches real forges: sign in with the
+# person token it prints, then onboard any public repository.
 webapp: core
 	@set -eu; port=18080; \
 	$(core_up); \
