@@ -18,6 +18,7 @@ func TestPackCommandRunsOnlyVocabularyArguments(t *testing.T) {
 		ok   bool
 	}{
 		{"run_id as a whole argument", asset(`run: [tool, "{run_id}"]`), true},
+		{"lease generation as a whole argument", asset(`run: [tool, "{lease_generation}"]`), true},
 		{"worker as a whole argument", asset(`run: [tool, "{worker}"]`), true},
 		{"rule as a whole argument", asset(`run: [tool, "{rule}"]`), true},
 		{"repo_url as a whole argument", asset(`run: [tool, "{repo_url}"]`), true},

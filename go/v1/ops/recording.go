@@ -15,9 +15,8 @@ import (
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 )
 
-// RecordingRequest selects exactly one generated request template. Payload must be empty: the
-// executor supplies it. RunOrderId and provenance RunId/OccurredAt may be unset or match the
-// server's order; source, artifact provenance, repository references and bindings are explicit.
+// RecordingRequest selects one generated template with an empty payload. Order ID and lease
+// generation come from claim/start; provenance OccurredAt is the event time, not lease identity.
 type RecordingRequest struct {
 	Assessment   *traust.AssessmentRecordRequest `json:"assessment,omitempty"`
 	Triage       *traust.TriageRecordBody        `json:"triage,omitempty"`
@@ -77,8 +76,8 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 	if err := run.Request.validate(); err != nil {
 		return run.fail(ctx, l, traust.JobResult{}, err)
 	}
-	id, payload, provenance := run.Request.template()
-	if err := l.stamp(&id, &provenance, &payload, ""); err != nil {
+	id, generation, _, provenance := run.Request.template()
+	if err := l.validateBinding(id, generation, provenance); err != nil {
 		return run.fail(ctx, l, traust.JobResult{}, err)
 	}
 	prepared, preparedFindings, err := run.prepare(ctx, l, execution)
@@ -86,6 +85,7 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 		return run.preparationFailed(ctx, l, err)
 	}
 	produced, err := l.run(ctx, run.Executor, prepared)
+	capturedAt := time.Now().UTC()
 	switch {
 	case lost(err) || ctx.Err() != nil:
 		return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
@@ -108,7 +108,7 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 		return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
 	}
 	receipt, err := superviseRequest(ctx, l, func(work context.Context) (RecordingReceipt, error) {
-		return run.record(work, l, produced.Payload, preparedFindings)
+		return run.record(work, l, produced.Payload, capturedAt, preparedFindings)
 	})
 	if err != nil {
 		if lost(err) || ctx.Err() != nil {
@@ -164,7 +164,7 @@ func (request RecordingRequest) validate() error {
 	if request.Triage != nil && request.AssessmentID == uuid.Nil {
 		return errors.New("ops: triage recording needs the source assessment id")
 	}
-	if _, payload, provenance := request.template(); payload != "" || provenance.Source == "" {
+	if _, _, payload, provenance := request.template(); payload != "" || provenance.Source == "" {
 		return errors.New("ops: request template needs an empty payload and an explicit provenance source")
 	}
 	return nil

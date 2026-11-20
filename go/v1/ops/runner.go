@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -299,13 +300,11 @@ func (r *Runner) finish(ctx context.Context, l *lease, result traust.JobResult) 
 	return &order, err
 }
 
-// resolve fills the command's parameters from the order, its lease and the pack: the order's id
-// and routing rule, the claiming worker, the asset's model role, and — whatever the command
-// names — the repository URL of a repository-bound order, so no such order runs for a host off
-// the allowlist.
+// resolve fills the pinned command from the original lease and pack, checking the repository
+// URL against the host allowlist even when the command doesn't use it.
 func (r *Runner) resolve(ctx context.Context, l *lease, cmd command) ([]string, error) {
 	order := l.order()
-	values := map[string]string{paramRunID: l.id().String()}
+	values := map[string]string{paramRunID: l.id().String(), paramLeaseGeneration: strconv.Itoa(order.LeaseGeneration)}
 	if order.LeaseHolder != nil {
 		values[paramWorker] = *order.LeaseHolder
 	}

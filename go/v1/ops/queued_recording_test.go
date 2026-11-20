@@ -209,6 +209,10 @@ func (server *queuedRecordingServer) ServeHTTP(w http.ResponseWriter, request *h
 			return
 		}
 		server.queue.mu.Lock()
+		if !acceptsGeneration(w, body.LeaseGeneration, server.queue.order.LeaseGeneration) {
+			server.queue.mu.Unlock()
+			return
+		}
 		server.recorded, server.recordPath = body, path
 		server.queue.mu.Unlock()
 		signalRecordingStage(server.recordStarted)
@@ -249,7 +253,7 @@ func newQueuedRecordingRunner(t *testing.T, executor Executor, preparer Recordin
 	started, expires := time.Now(), time.Now().Add(time.Minute)
 	server := &queuedRecordingServer{
 		queue: &queuedServer{pack: pack, asset: "ledger_audit", order: traust.RunOrder{
-			Id: &id, StartedAt: &started, LeaseExpiresAt: &expires, State: traust.RunOrderStateLeased,
+			Id: &id, StartedAt: &started, LeaseExpiresAt: &expires, LeaseGeneration: 7, State: traust.RunOrderStateLeased,
 			Asset: "ledger_audit", WorkItemId: &workItemID,
 		}},
 		assessmentID: uuid.New(), prepareStarted: make(chan struct{}, 8), recordStarted: make(chan struct{}, 8),
@@ -327,6 +331,7 @@ func TestQueuedRecordingPreparesExecutesRecordsAndCompletesOriginalReport(t *tes
 	for _, kind := range []string{"assessment", "triage", "remediation", "verification", "validation"} {
 		t.Run(kind, func(t *testing.T) {
 			original := []byte(" \r\n{\"finding_ref\":\"worker-label\",\"text\":\"é <tag> & \\u0061\",\"n\":1.00}\t\n")
+			eventTime := time.Date(2024, 5, 1, 12, 0, 0, 0, time.UTC)
 			var server *queuedRecordingServer
 			degraded := map[string]int{"partial": 2}
 			result := traust.JobResult{Outcome: traust.OutcomeDegraded, Degraded: &degraded}
@@ -335,7 +340,7 @@ func TestQueuedRecordingPreparesExecutesRecordsAndCompletesOriginalReport(t *tes
 			}
 			runner, core := newQueuedRecordingRunner(t, executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
 				server.event("execute")
-				if execution.Order.Id == nil || execution.Order.StartedAt == nil || len(execution.Argv) == 0 {
+				if execution.Order.Id == nil || execution.Order.LeaseGeneration != 7 || len(execution.Argv) == 0 {
 					return ProducedReport{}, errors.New("missing leased order or pinned command")
 				}
 				switch kind {
@@ -360,16 +365,16 @@ func TestQueuedRecordingPreparesExecutesRecordsAndCompletesOriginalReport(t *tes
 				}
 				// Consumer mutations must not replace the server identity or work-item selection.
 				*execution.Order.Id = uuid.New()
-				*execution.Order.StartedAt = time.Time{}
+				execution.Order.LeaseGeneration++
 				return ProducedReport{Payload: original, Result: result}, nil
 			}), recordingPreparerFunc(func(_ context.Context, order traust.RunOrder) (RecordingRequest, error) {
 				server.event("template")
-				if order.Id == nil || order.StartedAt == nil || order.WorkItemId == nil {
+				if order.Id == nil || order.LeaseGeneration != 7 || order.WorkItemId == nil {
 					return RecordingRequest{}, errors.New("preparer did not receive server context")
 				}
 				*order.WorkItemId = uuid.New()
 				request := RecordingRequest{Input: json.RawMessage(`{"consumer":"input"}`)}
-				provenance := traust.Provenance{Source: traust.SourceTypeTriageReport}
+				provenance := traust.Provenance{Source: traust.SourceTypeTriageReport, OccurredAt: eventTime}
 				switch kind {
 				case "assessment":
 					request.Assessment = &traust.AssessmentRecordRequest{AssessorVersion: "test-assessor", Provenance: provenance}
@@ -403,7 +408,8 @@ func TestQueuedRecordingPreparesExecutesRecordsAndCompletesOriginalReport(t *tes
 				t.Fatalf("events=%v result=%+v want=%v/%+v", events, completed, want, result)
 			}
 			body := server.recorded
-			if !bytes.Equal([]byte(body.Payload), original) || body.RunOrderId != *order.Id || body.Provenance.RunId != *order.Id || !body.Provenance.OccurredAt.Equal(*order.StartedAt) || body.Provenance.Source != traust.SourceTypeTriageReport {
+			if !bytes.Equal([]byte(body.Payload), original) || body.RunOrderId != *order.Id || body.LeaseGeneration != 7 ||
+				body.Provenance.RunId != *order.Id || !body.Provenance.OccurredAt.Equal(eventTime) || body.Provenance.Source != traust.SourceTypeTriageReport {
 				t.Fatalf("record did not preserve original bytes and server provenance: %+v", body)
 			}
 			wantPath := "/v1/" + kind + "-records"
@@ -486,7 +492,7 @@ func TestQueuedRecordingRejectsInvalidTemplateBeforeExecution(t *testing.T) {
 		{"missing source", func(request *RecordingRequest) { request.Assessment.Provenance.Source = "" }},
 		{"wrong order", func(request *RecordingRequest) { request.Assessment.RunOrderId = uuid.New() }},
 		{"wrong provenance run", func(request *RecordingRequest) { request.Assessment.Provenance.RunId = uuid.New() }},
-		{"wrong provenance time", func(request *RecordingRequest) { request.Assessment.Provenance.OccurredAt = time.Unix(1, 0) }},
+		{"wrong lease generation", func(request *RecordingRequest) { request.Assessment.LeaseGeneration = 1 }},
 		{"missing assessment", func(request *RecordingRequest) {
 			request.Triage = &traust.TriageRecordBody{Provenance: request.Assessment.Provenance}
 			request.Assessment = nil
@@ -1219,7 +1225,7 @@ func TestQueuedRecordingOrderBindingsCannotBeRewrittenByConsumerPointers(t *test
 
 func TestLeaseIsolatesEveryMutableOrderPointerAndReturnedSnapshot(t *testing.T) {
 	id, started, expires := uuid.New(), time.Now().UTC(), time.Now().Add(time.Minute).UTC()
-	order := traust.RunOrder{Id: &id, StartedAt: &started, LeaseExpiresAt: &expires, State: traust.RunOrderStateLeased}
+	order := traust.RunOrder{Id: &id, StartedAt: &started, LeaseExpiresAt: &expires, LeaseGeneration: 1, State: traust.RunOrderStateLeased}
 	fields := reflect.ValueOf(&order).Elem()
 	for i := range fields.NumField() {
 		field := fields.Field(i)

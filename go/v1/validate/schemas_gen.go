@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 15bded2e3e4b6c70bd1e20ef8df50c7b66b5ebc1. DO NOT EDIT.
 
 package validate
 
@@ -6562,6 +6562,11 @@ var Schemas = map[string]string{
         "skill": {"$ref": "session-task.schema.json#/$defs/name"},
         "mode": {"$ref": "session-task.schema.json#/$defs/name"},
         "executor_session": {"type": ["string", "null"], "minLength": 1},
+        "lease_generation": {
+          "description": "Claim that staged this session. Historical entries without a recorded generation remain readable.",
+          "type": "integer",
+          "minimum": 1
+        },
         "models": {"$ref": "session-task.schema.json#/$defs/models"},
         "task_sha256": {"$ref": "#/$defs/sha256"},
         "inputs": {
@@ -6645,6 +6650,11 @@ var Schemas = map[string]string{
   "properties": {
     "schema_version": {"const": "1"},
     "run_id": {"type": ["string", "null"], "format": "uuid"},
+    "lease_generation": {
+      "description": "Generation returned by the claim that staged this task; not the order's current generation looked up later.",
+      "type": ["integer", "null"],
+      "minimum": 1
+    },
     "skill": {"$ref": "#/$defs/name"},
     "mode": {"$ref": "#/$defs/name"},
     "args": {"type": "array", "items": {"type": "string"}},
@@ -6660,6 +6670,12 @@ var Schemas = map[string]string{
       }
     }
   },
+  "if": {"properties": {"run_id": {"type": "string"}}},
+  "then": {
+    "required": ["lease_generation"],
+    "properties": {"lease_generation": {"type": "integer"}}
+  },
+  "else": {"properties": {"lease_generation": {"type": "null"}}},
   "$defs": {
     "name": {
       "type": "string",

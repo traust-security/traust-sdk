@@ -9,6 +9,7 @@ import (
 	"log/slog"
 	"os"
 	"slices"
+	"strconv"
 	"strings"
 	"testing"
 	"time"
@@ -127,8 +128,8 @@ func TestE2ERunnerResolvesEveryCommandParameter(t *testing.T) {
 	if err != nil || order == nil || *order.Id != *want.Id || order.State != traust.RunOrderStateSucceeded {
 		t.Fatalf("order=%+v err=%v", order, err)
 	}
-	if len(argv) != 8 || argv[0] != "python3" || argv[3] != want.Id.String() || argv[4] == "" ||
-		argv[5] != "smoke-role" || argv[6] != rule || argv[7] != repository {
+	if len(argv) != 9 || argv[0] != "python3" || argv[3] != want.Id.String() || argv[4] == "" ||
+		argv[5] != "smoke-role" || argv[6] != rule || argv[7] != repository || argv[8] != strconv.Itoa(order.LeaseGeneration) || order.LeaseGeneration < 1 {
 		t.Fatalf("resolved argv: %v", argv)
 	}
 	if idle, err := runner.RunOnce(ctx); err != nil || idle != nil {
@@ -177,6 +178,7 @@ func TestE2ERecordingPreservesReportFields(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	eventTime := time.Date(2024, 4, 5, 6, 7, 8, 0, time.UTC)
 	run := RecordingRun{
 		Client: worker,
 		Start: traust.StartRecordingRequest{
@@ -185,7 +187,7 @@ func TestE2ERecordingPreservesReportFields(t *testing.T) {
 		},
 		Request: RecordingRequest{Assessment: &traust.AssessmentRecordRequest{
 			RepositoryRefId: *ref.Id, AssessorVersion: "1.2.3",
-			Provenance: traust.Provenance{Source: traust.SourceTypeVulnScanReport},
+			Provenance: traust.Provenance{Source: traust.SourceTypeVulnScanReport, OccurredAt: eventTime},
 		}},
 		Executor: executorFunc(func(context.Context, Execution) (ProducedReport, error) {
 			return ProducedReport{Payload: payload, Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
@@ -198,6 +200,10 @@ func TestE2ERecordingPreservesReportFields(t *testing.T) {
 	recorded := result.Receipt.Assessment
 	if recorded == nil || result.Order.State != traust.RunOrderStateSucceeded {
 		t.Fatalf("recording did not succeed: %+v", result)
+	}
+	assessment, err := person.GetAssessment(ctx, recorded.AssessmentId)
+	if err != nil || assessment == nil || !assessment.OccurredAt.Equal(eventTime) {
+		t.Fatalf("expected assessment event time %v, got %+v, %v", eventTime, assessment, err)
 	}
 	raw, err := person.GetArtifactContent(ctx, recorded.ArtifactId)
 	if err != nil {

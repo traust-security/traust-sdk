@@ -153,8 +153,11 @@ err = runner.Run(ctx)
   `client.Submit(ctx, traust.SubmitRequest{Order: …, Config: &[]traust.ConfigDigest{pack.Pin()}})`.
 - **`ops.RecordingRun`** runs one explicitly dispatched order and records the executor's report
   through core's record door (triage, remediation, validation, verification, assessments). Give it
-  one request template with an empty payload; it binds the server's order id and start time as
-  provenance and shares the queued runner's preparation, recording and completion lifecycle.
+  one request template with an empty payload. Both runner paths bind each write to the order ID
+  and positive `LeaseGeneration` returned by the original claim or start. An executor making a
+  lease-bound call must use `Execution.Order.LeaseGeneration` (or the whole argv parameter
+  `{lease_generation}` for a pack command), never a newly fetched order. `Provenance.OccurredAt`
+  remains the event time; if omitted, the SDK uses the time it captured the executor's report.
 
 ### Record queued reports
 

@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 15bded2e3e4b6c70bd1e20ef8df50c7b66b5ebc1. DO NOT EDIT.
 
 package types
 
@@ -45,6 +45,7 @@ type RunManifestProgress struct {
 type Session struct {
 	ExecutorSession interface{}         `json:"executor_session"`
 	Inputs          []SessionInputsItem `json:"inputs"`
+	LeaseGeneration *int                `json:"lease_generation,omitempty"`
 	Mode            string              `json:"mode"`
 	Models          map[string]string   `json:"models"`
 	Output          SessionOutput       `json:"output"`

@@ -50,7 +50,8 @@ func TestCoreClaimReclaim(t *testing.T) {
 		return l
 	}
 	old := claim(nil, 8)
-	first, err := run.record(t.Context(), old, payload, nil)
+	capturedAt := time.Now().UTC()
+	first, err := run.record(t.Context(), old, payload, capturedAt, nil)
 	if err != nil || first.Assessment == nil || len(first.Assessment.Intake.Findings) != 2 {
 		t.Fatalf("first attempt receipt: %+v, %v", first, err)
 	}
@@ -58,19 +59,33 @@ func TestCoreClaimReclaim(t *testing.T) {
 	time.Sleep(time.Until(*old.origin.LeaseExpiresAt) + 10*time.Millisecond)
 	id := old.id()
 	current := claim(&id, 60)
-	if current.id() != id || !current.origin.StartedAt.After(*old.origin.StartedAt) {
-		t.Fatal("expected a new claim of the original order")
+	if current.id() != id || current.origin.LeaseGeneration != old.origin.LeaseGeneration+1 ||
+		old.origin.LeaseHolder == nil || current.origin.LeaseHolder == nil || *current.origin.LeaseHolder != *old.origin.LeaseHolder {
+		t.Fatal("expected the same worker to reclaim its order under the next lease generation")
 	}
+	wantConflict := func(operation string, err error) {
+		t.Helper()
+		if problem := causeProblem(err); problem == nil || problem.StatusCode != http.StatusConflict {
+			t.Fatalf("%s: expected conflict, got %v", operation, err)
+		}
+	}
+	_, err = client.Heartbeat(t.Context(), id, traust.LeaseRequest{LeaseGeneration: old.origin.LeaseGeneration, LeaseSeconds: 60})
+	wantConflict("stale heartbeat", err)
+	result := traust.JobResult{Outcome: traust.OutcomeSucceeded}
+	staleCompletion := traust.CompleteRequest{LeaseGeneration: old.origin.LeaseGeneration, Result: result}
+	_, err = client.Complete(t.Context(), id, staleCompletion)
+	wantConflict("stale completion", err)
 	refused := func(l *lease, data []byte) {
 		t.Helper()
-		receipt, err := run.record(t.Context(), l, data, nil)
-		if problem := causeProblem(err); problem == nil || problem.StatusCode != http.StatusConflict || receipt.Assessment != nil {
-			t.Fatalf("expected conflict without receipt, got %+v, %v", receipt, err)
+		receipt, err := run.record(t.Context(), l, data, capturedAt, nil)
+		wantConflict("record", err)
+		if receipt.Assessment != nil {
+			t.Fatalf("rejected record returned a receipt: %+v", receipt)
 		}
 	}
 	refused(old, payload)
 	refused(current, append([]byte("\n"), payload...))
-	repeated, err := run.record(t.Context(), current, payload, nil)
+	repeated, err := run.record(t.Context(), current, payload, capturedAt, nil)
 	if err != nil || repeated.Assessment == nil {
 		t.Fatalf("current attempt replay: %+v, %v", repeated, err)
 	}
@@ -78,7 +93,15 @@ func TestCoreClaimReclaim(t *testing.T) {
 	if b.AssessmentId != a.AssessmentId || b.ArtifactId != a.ArtifactId || !maps.Equal(b.Intake.Findings, a.Intake.Findings) || (b.Intake.Created != nil && len(*b.Intake.Created) != 0) {
 		t.Fatal("reclaim did not replay the original assessment, artifact and finding IDs")
 	}
-	if _, err := current.complete(t.Context(), traust.JobResult{Outcome: traust.OutcomeSucceeded}); err != nil {
-		t.Fatal(err)
+	finished, err := current.complete(t.Context(), result)
+	if err != nil || finished == nil {
+		t.Fatalf("completion: %+v, %v", finished, err)
+	}
+	_, err = client.Complete(t.Context(), id, staleCompletion)
+	wantConflict("stale terminal replay", err)
+	replay, err := client.Complete(t.Context(), id, traust.CompleteRequest{LeaseGeneration: current.origin.LeaseGeneration, Result: result})
+	if err != nil || replay == nil || replay.Id == nil || *replay.Id != id || replay.LeaseGeneration != current.origin.LeaseGeneration ||
+		replay.State != traust.RunOrderStateSucceeded || replay.FinishedAt == nil || finished.FinishedAt == nil || !replay.FinishedAt.Equal(*finished.FinishedAt) {
+		t.Fatalf("exact completion replay did not return the original completion: %+v, %v", replay, err)
 	}
 }
