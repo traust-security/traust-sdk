@@ -36,6 +36,8 @@ jobs:
           cache-dependency-path: go/go.sum
       - run: go test -race ./...
         working-directory: go
+      - run: go test -race ./...
+        working-directory: go/examples/webapp
 
   integration:
     runs-on: ubuntu-latest

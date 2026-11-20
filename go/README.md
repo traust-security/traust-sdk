@@ -120,12 +120,23 @@ opens and closes, so "who owned this on date X" stays answerable.
 
 ## Errors
 
-A refusal is a `*traust.ProblemError` with the HTTP status and core's problem document; a transport
-failure is the underlying error.
+A refusal matches its status with `errors.Is`, and core's deny code matches too. For the problem
+document itself, take the `*traust.ProblemError`; a transport failure is the underlying error.
 
 ```go
-var problem *traust.ProblemError
-if errors.As(err, &problem) && problem.StatusCode == http.StatusNotFound { … }
+errors.Is(err, traust.ErrNotFound)     // also ErrUnauthorized, ErrForbidden, ErrConflict, ErrInvalid
+errors.Is(err, traust.BudgetExhausted) // a DenyCode core sent, as the problem's code or an issue's
+if p, ok := errors.AsType[*traust.ProblemError](err); ok { log.Print(p.Problem.RequestId) }
+```
+
+## Act for a person
+
+A service serving many users (a BFF) keeps one client under its own identity and sends each
+user's calls as that user, so core authorizes and attributes them to the person:
+
+```go
+ctx := traust.OnBehalfOf(r.Context(), userToken) // an empty token is an error, never a fallback
+order, err := client.Submit(ctx, req)
 ```
 
 ## Run work
@@ -149,8 +160,14 @@ err = runner.Run(ctx)
   kills the group when the lease is lost. The command prints its `JobResult` as JSON on stdout;
   set `Outcome` for commands that print something else. Write your own `ops.Executor` for other
   runtimes (a Kubernetes Job, a container).
-- **Asking for a run** (a person's token) pins the order to the pack:
-  `client.Submit(ctx, traust.SubmitRequest{Order: …, Config: &[]traust.ConfigDigest{pack.Pin()}})`.
+- **Asking for a run** (a person's token) pins the order to the pack, and `BeginSubmit` follows
+  it until core finishes it. Keep `ResumeToken()` (the order id) to pick it up from any process:
+
+  ```go
+  poller, err := client.BeginSubmit(ctx, traust.SubmitRequest{Order: …, Config: &[]traust.ConfigDigest{pack.Pin()}})
+  order, err := poller.Wait(ctx, 2*time.Second)              // or poller.Poll(ctx) once
+  poller, err = client.ResumeOrder(token)                    // after a restart
+  ```
 - **`ops.RecordingRun`** runs one explicitly dispatched order and records the executor's report
   through core's record door (triage, remediation, validation, verification, assessments). Give it
   one request template with an empty payload; it binds the server's order id and start time as
@@ -223,6 +240,13 @@ order/status/reason and cause-type fields, never error text, HTTP problem text o
 No POST is retried. An order-specific record 4xx completes failed while held; 401/403/429 stop
 without completing. A transport failure, 5xx or malformed success receipt leaves the order
 identity available for reconciliation and does not complete.
+
+## Example app
+
+[`examples/webapp`](examples/webapp) is a small web app on traust (net/http, templ, htmx): sign in,
+see your repositories, start a run and watch it finish. It acts as each signed-in person with
+`OnBehalfOf`, follows runs with `Poller`, and runs its pack's work in the same binary.
+`make webapp` starts it against a local traust-server; `make e2e` tests it end to end.
 
 ## Test your code
 

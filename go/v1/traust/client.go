@@ -52,6 +52,25 @@ func (t StaticToken) BearerToken(_ context.Context) (string, error) {
 	return string(t), nil
 }
 
+type onBehalfOfKey struct{}
+
+// OnBehalfOf sends the calls made with ctx under a person's bearer token instead of the client's,
+// so core authorizes and attributes them to that person: a BFF acting for its signed-in user.
+func OnBehalfOf(ctx context.Context, token string) context.Context {
+	return context.WithValue(ctx, onBehalfOfKey{}, token)
+}
+
+func bearer(ctx context.Context, tokens TokenSource) (string, error) {
+	token, person := ctx.Value(onBehalfOfKey{}).(string)
+	if !person {
+		return tokens.BearerToken(ctx)
+	}
+	if strings.TrimSpace(token) == "" {
+		return "", errors.New("OnBehalfOf token is empty")
+	}
+	return token, nil
+}
+
 // Config configures a Client. BaseURL and Tokens are required; the rest have defaults.
 type Config struct {
 	BaseURL string
@@ -106,7 +125,7 @@ func NewClient(cfg Config) (*Client, error) {
 	wrapped.Transport = &retryTransport{base: inner, retries: cfg.Retries, backoff: cfg.Backoff, now: now}
 	httpClient = &wrapped
 	editor := func(ctx context.Context, req *http.Request) error {
-		token, err := cfg.Tokens.BearerToken(ctx)
+		token, err := bearer(ctx, cfg.Tokens)
 		if err != nil {
 			return fmt.Errorf("traust: bearer token: %w", err)
 		}
@@ -118,30 +137,6 @@ func NewClient(cfg Config) (*Client, error) {
 		return nil, fmt.Errorf("traust: building client: %w", err)
 	}
 	return &Client{ClientWithResponses: generated}, nil
-}
-
-// ProblemError reports a non-retryable failed response. Problem carries the
-// RFC 7807 document when the server sent one; otherwise Body holds the raw
-// response.
-type ProblemError struct {
-	StatusCode int
-	Problem    *Problem
-	Body       string
-}
-
-func (e *ProblemError) Error() string {
-	if e.Problem != nil {
-		detail := e.Problem.Detail
-		if detail == "" {
-			detail = e.Problem.Title
-		}
-		request := ""
-		if e.Problem.RequestId != "" {
-			request = " (request " + e.Problem.RequestId + ")"
-		}
-		return fmt.Sprintf("traust-core: %d %s: %s%s", e.StatusCode, e.Problem.Title, detail, request)
-	}
-	return fmt.Sprintf("traust-core: HTTP %d", e.StatusCode)
 }
 
 // CheckResponse returns nil for a 2xx response, otherwise its *ProblemError: the RFC 7807

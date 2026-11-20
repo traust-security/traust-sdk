@@ -23,7 +23,8 @@ err = r.Run(ctx)
 | onboard a product and its repositories | `c` | `PlanOnboarding` (dry run) → `Onboard` |
 | keep inventory current | `c` | `RegisterRef` (a commit and its branch), `SetOwners` (the teams a source reports; core stamps when ownership opens and closes) |
 | look up inventory | `c` | `ListRepositories` (by `url`), `ListRefs` (by `sha`), `ListProducts`, `ListOwners`, `ListProductsOf`, `ListOwnedRepositories` |
-| ask for a run (a person's token) | `c` | `Submit` with `Config: &[]traust.ConfigDigest{pack.Pin()}`, the pack version it must run under |
+| ask for a run (a person's token) | `c` | `Submit` with `Config: &[]traust.ConfigDigest{pack.Pin()}`, the pack version it must run under; `BeginSubmit` / `ResumeOrder` to follow it to the end |
+| act for a signed-in person (a BFF) | `traust.OnBehalfOf(ctx, token)` | every call made with that ctx |
 | run queued pack commands | `ops.Runner` + `ops.ProcessExecutor` or your `Executor` | `Claim` → `GetOrderManifest` → your run → `Complete` (the runner calls these, you don't) |
 | run and record a dispatched order | `ops.RecordingRun` + your `Executor` | `Start` → `Prepare*` → your run → `Record*` → `Complete` (same) |
 | read what a run produced | `c` | `ListOrderAssessments` (what an order recorded), `GetAssessment`, `GetArtifact`, `GetArtifactContent`, `ListRepositoryAssessments` |
@@ -79,7 +80,7 @@ Each step is one core endpoint. A step core doesn't serve is not a step: never s
 
 | Package | Owns | Consumer writes |
 |---|---|---|
-| `v1/traust` | `traust.Client`: types and enums generated from core's OpenAPI; the generated `(T, error)` calls and `…All` iterators; auth, read retries, typed problem errors | a `TokenSource` |
+| `v1/traust` | `traust.Client`: types and enums generated from core's OpenAPI; the generated `(T, error)` calls and `…All` iterators; auth, read retries, typed problem errors (`errors.Is` on status and deny code); `Poller` for work core finishes later | a `TokenSource` |
 | `v1/traust/traustest` | a fake core for consumers' tests: canned responses, recorded requests | — |
 | `v1/ops` | the lease (heartbeat, lease loss, complete) and its two ways in: `Runner` (claim, pinned pack, the asset's command) and `RecordingRun` (start, prepare, record); `ProcessExecutor` | an `Executor` (or `ProcessExecutor`); the pack file |
 | `v1/<pkg>/<pkg>test` | test doubles for each extension point; the conformance suite every `Executor` passes against `traust serve` | — |

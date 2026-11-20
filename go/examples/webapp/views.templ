@@ -1,0 +1,67 @@
+package main
+
+import "github.com/traust-security/traust-sdk/go/v1/traust"
+
+// htmx swaps error responses too, so a refusal shows where its request was made.
+const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"...","swap":true}]}`
+
+templ page(title string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<title>{ title }</title>
+			<meta name="htmx-config" content={ htmxConfig }/>
+			<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+		</head>
+		<body>
+			{ children... }
+		</body>
+	</html>
+}
+
+templ signIn(problem string) {
+	@page("Sign in to traust") {
+		<form method="post" action="/sign-in">
+			<label>Your traust token <input type="password" name="token" required autofocus/></label>
+			<button>Sign in</button>
+			if problem != "" {
+				<p role="alert">{ problem }</p>
+			}
+		</form>
+	}
+}
+
+templ home(me traust.Principal, repos []traust.Repository) {
+	@page("traust") {
+		<header>
+			Signed in as { me.Display }
+			<form method="post" action="/sign-out"><button>Sign out</button></form>
+		</header>
+		<section>
+			<h2>Runs</h2>
+			<button hx-post="/runs" hx-vals={ `{"asset":"smoke"}` } hx-target="#runs" hx-swap="afterbegin">Run smoke</button>
+			<ul id="runs"></ul>
+		</section>
+		<section>
+			<h2>Repositories</h2>
+			<ul>
+				for _, repo := range repos {
+					<li>{ repo.Url }</li>
+				}
+			</ul>
+		</section>
+	}
+}
+
+templ runRow(token string, state traust.RunOrderState, done bool) {
+	if done {
+		<li id={ "run-" + token }>{ token }: { string(state) }</li>
+	} else {
+		<li id={ "run-" + token } hx-get={ "/runs/" + token } hx-trigger="every 1s" hx-swap="outerHTML">{ token }: { string(state) }…</li>
+	}
+}
+
+templ failure(message string) {
+	<li role="alert">{ message }</li>
+}

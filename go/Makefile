@@ -17,7 +17,7 @@ ROOT := ..
 GO_CI := python3 $(ROOT)/ci/lang/go/ci.py
 export PATH := $(shell go env GOPATH)/bin:$(PATH)
 
-.PHONY: contracts core generate api-generate e2e test test-integration check-drift fmt fmt-check vet lint security tools
+.PHONY: contracts core generate api-generate e2e webapp test webapp-generate test-integration check-drift fmt fmt-check vet lint security tools
 
 contracts:
 	@set -eu; \
@@ -38,12 +38,17 @@ generate: contracts
 
 test:
 	go test ./...
+	cd examples/webapp && go test ./...
+
+# The example app is its own module, so the SDK's go.mod never carries its web dependencies.
+webapp-generate:
+	cd examples/webapp && go tool templ generate
 
 test-integration:
 	go test -count=1 -v ./v1/storage/...
 
-check-drift: generate api-generate
-	@git diff --exit-code $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go ./v1/ops/pack.schema.json || (echo "ERROR: generated files are out of date; run 'make generate api-generate' and commit" && exit 1)
+check-drift: generate api-generate webapp-generate
+	@git diff --exit-code ./examples/webapp/views_templ.go $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go ./v1/ops/pack.schema.json || (echo "ERROR: generated files are out of date; run 'make generate api-generate' and commit" && exit 1)
 
 core:
 	@set -eu; \
@@ -85,9 +90,10 @@ mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context
 # ephemeral self-signed certificate, trusted through SSL_CERT_FILE), and the e2e config
 # maps the mock's host to the gitlab kind in forge_hosts.
 # One package at a time: both share the server, and ops onboards what v1/traust expects empty.
-e2e: core
-	@set -eu; \
-	home="$$(mktemp -d)"; port=18080; \
+# core_up starts traust-server at CORE_REF on $$port beside the e2eforge stand-in, mints a
+# person token ($$home/person) and a runner token ($$home/runner), and stops both on exit.
+define core_up
+	home="$$(mktemp -d)"; \
 	printf 'home: %s\nidentity:\n  trust_local: true\nforge_hosts:\n  e2e-forge.test: gitlab\n' "$$home" > "$$home/config.yaml"; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet python -c "import traust_core.v1.rest.server"); \
 	go build -o "$$home/e2eforge" ./internal/e2eforge; \
@@ -99,9 +105,22 @@ e2e: core
 	for _ in $$(seq 60); do curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz && break; sleep 1; done; \
 	curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz || { cat "$$home/server.log"; exit 1; }; \
 	$(call mint,e2e@example.com,False,person); \
-	$(call mint,e2e-runner,True,runner); \
-	TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner" \
-	  go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/ ./v1/ops/
+	$(call mint,e2e-runner,True,runner)
+endef
+
+e2e: core
+	@set -eu; port=18080; \
+	$(core_up); \
+	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; \
+	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/ ./v1/ops/; \
+	cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .
+
+# The example app against a local traust-server: sign in with the person token it prints.
+webapp: core
+	@set -eu; port=18080; \
+	$(core_up); \
+	echo "sign in at http://localhost:3000 with: $$(cat "$$home/person")"; \
+	cd examples/webapp && TRAUST_URL=http://127.0.0.1:$$port TRAUST_TOKEN_FILE="$$home/runner" go run .
 
 fmt:
 	gofmt -w .
@@ -111,6 +130,7 @@ fmt-check:
 
 vet:
 	go vet ./...
+	cd examples/webapp && go vet ./...
 
 lint:
 	golangci-lint run ./...
