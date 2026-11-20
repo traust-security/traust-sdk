@@ -264,6 +264,14 @@ as the runnable examples do. `make e2e` runs the SDK itself against a real `trau
 `storage`, `ledger`, `skills`, `types`, `enums` and `validate` predate the REST API. They keep
 working for existing callers and take bug fixes only; new code uses `traust` and `ops`.
 
+`types.ParseSessionTaskArtifact` and `types.EncodeSessionTaskArtifact` validate tasks for
+execution. An older v1 task with a `run_id` but no `lease_generation` is no longer runnable:
+restage it under a fresh claim. Do not copy the current generation onto the old task or its
+output. Manual tasks (`run_id: null`) still need no generation. To inspect past sessions, use
+`types.ParseRunManifestArtifact`; historical session entries need no generation to be read.
+If you need to validate the original task bytes for an audit, use the contracts revision
+that staged them. Historical validation does not authorize replay.
+
 ### Skills SDK
 
 Import a skill, plug in your provider, call it — typed input in, typed result out:
