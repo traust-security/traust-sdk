@@ -1,6 +1,7 @@
 package main
 
 import (
+	"embed"
 	"errors"
 	"net/http"
 
@@ -9,6 +10,9 @@ import (
 
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 )
+
+//go:embed static
+var static embed.FS
 
 // The session cookie holds the signed-in person's traust token; a real app's OIDC login sets it.
 const sessionCookie = "traust_token"
@@ -20,6 +24,7 @@ type app struct {
 
 func (a *app) routes() http.Handler {
 	mux := http.NewServeMux()
+	mux.Handle("GET /static/", http.FileServerFS(static))
 	mux.HandleFunc("GET /{$}", a.home)
 	mux.HandleFunc("POST /sign-in", a.signIn)
 	mux.HandleFunc("POST /sign-out", a.signOut)
@@ -33,6 +38,9 @@ func (a *app) routes() http.Handler {
 	mux.HandleFunc("POST /findings/{id}/decide", a.signedIn(a.decide))
 	mux.HandleFunc("POST /decisions/{id}/restate", a.signedIn(a.restate))
 	mux.HandleFunc("GET /review", a.signedIn(a.review))
+	mux.HandleFunc("GET /repositories/{id}/ledger", a.signedIn(a.ledger))
+	mux.HandleFunc("POST /repositories/{id}/checkpoint", a.signedIn(a.checkpoint))
+	mux.HandleFunc("POST /layers/{id}/verify", a.signedIn(a.verify))
 	mux.HandleFunc("POST /runs", a.signedIn(a.startRun))
 	mux.HandleFunc("GET /runs/{token}", a.signedIn(a.runStatus))
 	mux.HandleFunc("POST /reports", a.signedIn(a.startReport))
@@ -148,4 +156,19 @@ func caseTitle(c traust.ReviewCase) string {
 		return c.View.Finding.Title
 	}
 	return c.FindingId.String()
+}
+
+func value[T any](p *T) T {
+	var zero T
+	if p == nil {
+		return zero
+	}
+	return *p
+}
+
+func short(s *string) string {
+	if s == nil {
+		return "none"
+	}
+	return (*s)[:min(len(*s), 12)]
 }

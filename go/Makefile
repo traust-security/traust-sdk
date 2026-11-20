@@ -86,23 +86,49 @@ mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context
 # ephemeral self-signed certificate, trusted through SSL_CERT_FILE), and the e2e config
 # maps the mock's host to the gitlab kind in forge_hosts.
 # One package at a time: both share the server, and ops onboards what v1/traust expects empty.
+# provision is what a deployment does to a fresh configured database, the sequence core runs
+# itself for a fresh local store: the contracts' baseline DDL, the whole upgrade channel, then
+# the data channel.
+export provision := from pathlib import Path; import sys, sqlalchemy as sa; \
+	from traust_core.v1 import contracts, data_migrations; from traust_core.v1.context import Config; \
+	from traust_core.v1.repositories.sql import Dialect, apply_schema, on_driver_connection; \
+	engine = sa.create_engine(Config.from_file(Path(sys.argv[1])).database.engine_url()); dialect = Dialect.of(engine); \
+	apply_schema(engine, contracts.database_ddl(dialect)); \
+	on_driver_connection(engine, lambda dbapi: contracts.run_db_upgrades(dbapi, dialect)); \
+	data_migrations.run(engine)
+
 # core_up starts traust-server at CORE_REF on $$port beside its report builder, mints a person
 # token ($$home/person), an admin's ($$home/admin: admins restate decisions) and a runner token
 # ($$home/runner), and stops everything on exit. With
 # forge=stand-in, core reaches forges only through the e2eforge stand-in (no network); otherwise
-# it reaches real ones. The config grants the example's scan and triage assets their recording. With
+# it reaches real ones. The config grants the example's scan and triage assets their recording and
+# keeps a ledger (unsigned unless complete=yes). With
 # complete=yes the config home is what the engine's preflight demands of a deployment: workspace
 # locations, a cosign-signed ledger, and a model registry (core's own fixture at CORE_REF; no
-# example skill uses a model).
+# example skill uses a model). With STORE=byos core brings its own storage the way a deployment
+# does: Postgres for records and an S3 store (versitygw) for artifacts, in throwaway containers.
 define core_up
-	home="$$(mktemp -d)"; proxy=""; pids=""; \
+	home="$$(mktemp -d)"; proxy=""; pids=""; containers=""; trap 'exit 130' INT TERM; \
 	printf 'home: %s\nidentity:\n  trust_local: true\n  admins: [admin@example.com]\nrecording:\n  assessment: [scan]\n  triage: [triage]\n' "$$home" > "$$home/traust.yaml"; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet python -c "import traust_core.v1.rest.server"); \
 	if [ "$${complete:-}" = yes ]; then \
 	  mkdir -p "$$home/workspace" "$$home/analysis-results" "$$home/progress-tracker"; \
-	  (cd "$$home" && COSIGN_PASSWORD= cosign generate-key-pair --output-key-prefix ledger >/dev/null); \
+	  (cd "$$home" && COSIGN_PASSWORD= cosign generate-key-pair --output-key-prefix ledger >/dev/null 2>&1); \
 	  printf 'locations:\n  workspace: %s/workspace\n  analysis_results: %s/analysis-results\n  progress_tracker: %s/progress-tracker\nledger:\n  key_path: %s/ledger.key\n  public_key_path: %s/ledger.pub\n' "$$home" "$$home" "$$home" "$$home" "$$home" >> "$$home/traust.yaml"; \
 	  cp "$(CORE_SOURCE)/tests/fixtures/operations/model-registry.yaml" "$$home/"; \
+	else \
+	  printf 'ledger: {}\n' >> "$$home/traust.yaml"; \
+	fi; \
+	if [ "$${STORE:-}" = byos ]; then \
+	  podman run -d --rm --name traust-sdk-webapp-pg -e POSTGRES_USER=traust -e POSTGRES_PASSWORD=traust-test-only -e POSTGRES_DB=traust -p 127.0.0.1:15433:5432 docker.io/library/postgres:16 >/dev/null; \
+	  podman run -d --rm --name traust-sdk-webapp-s3 -e ROOT_ACCESS_KEY=traust -e ROOT_SECRET_KEY=traust-test-only -p 127.0.0.1:19000:7070 docker.io/versity/versitygw:latest posix /tmp >/dev/null; \
+	  containers="traust-sdk-webapp-pg traust-sdk-webapp-s3"; \
+	  trap 'podman stop -t 2 $$containers >/dev/null 2>&1 || true; rm -rf "$$home"' EXIT; \
+	  for _ in $$(seq 60); do podman exec traust-sdk-webapp-pg pg_isready -U traust -q 2>/dev/null && curl -s -o /dev/null http://127.0.0.1:19000/ && break; sleep 1; done; \
+	  curl -sf -o /dev/null --aws-sigv4 aws:amz:us-east-1:s3 --user traust:traust-test-only -X PUT http://127.0.0.1:19000/traust; \
+	  export TRAUST_DB_PASSWORD=traust-test-only TRAUST_S3_ACCESS_KEY=traust TRAUST_S3_SECRET_KEY=traust-test-only; \
+	  printf 'database:\n  url: postgresql+psycopg://traust@127.0.0.1:15433/traust\n  password_env: TRAUST_DB_PASSWORD\nartifacts:\n  s3:\n    bucket: traust\n    endpoint_url: http://127.0.0.1:19000\n    region: us-east-1\n    access_key_env: TRAUST_S3_ACCESS_KEY\n    secret_key_env: TRAUST_S3_SECRET_KEY\n' >> "$$home/traust.yaml"; \
+	  (cd "$(CORE_SOURCE)" && uv run --quiet --extra postgres python -c "$$provision" "$$home/traust.yaml"); \
 	fi; \
 	if [ "$${forge:-}" = stand-in ]; then \
 	  printf 'forge_hosts:\n  e2e-forge.test: gitlab\n' >> "$$home/traust.yaml"; \
@@ -114,7 +140,7 @@ define core_up
 	fi; \
 	(cd "$(CORE_SOURCE)" && exec env COSIGN_PASSWORD= $$proxy uv run --quiet traust-server --config "$$home/traust.yaml" --port $$port) > "$$home/server.log" 2>&1 & pids="$$pids $$!"; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet traust-server --config "$$home/traust.yaml" --role reports) > "$$home/reports.log" 2>&1 & pids="$$pids $$!"; \
-	trap 'kill $$pids 2>/dev/null || true; rm -rf "$$home"' EXIT; \
+	trap 'kill $$pids 2>/dev/null || true; [ -z "$$containers" ] || podman stop -t 2 $$containers >/dev/null 2>&1; rm -rf "$$home"' EXIT; \
 	for _ in $$(seq 60); do curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz && break; sleep 1; done; \
 	curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz || { cat "$$home/server.log"; exit 1; }; \
 	$(call mint,e2e@example.com,False,person); \

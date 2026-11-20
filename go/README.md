@@ -262,7 +262,7 @@ identity available for reconciliation and does not complete.
 [`examples/webapp`](examples/webapp) is a small web app on traust (net/http, templ, htmx). From a
 blank core: onboard repositories (with a dry-run preview), scan one and triage it, settle what the
 triage leaves in the review queue, decide and restate findings, watch the dashboard count it all,
-and build and download a report. It acts as each signed-in person
+verify (and, as an admin, checkpoint) each repository's ledger, and build and download a report. It acts as each signed-in person
 with `OnBehalfOf`, records scans and triages with `ops.AssessDefaultRef` and `ops.TriageLatest`,
 follows runs and report builds with `Poller`, and runs its pack's work in the same binary. Its
 skills are fixtures (canned, contracts-valid findings and verdicts, labelled as such) so it plays
@@ -272,8 +272,13 @@ without an agent or a model key.
 builder, and traust-engine, which plans a scan of each repository under the app's pack. Sign in
 as the person it prints (or the admin, who may restate decisions) and onboard any public
 repository; the engine's next pass scans it, then triages it.
-It needs `uv` and `cosign` (the local ledger is signed). `make e2e` runs the same flows end to end
-against a forge stand-in.
+It needs `uv` and `cosign` (the local ledger is signed). `make webapp STORE=byos` brings its own
+storage the way a deployment does, Postgres for records and an S3 store for artifacts, in throwaway
+containers (needs `podman`). `make e2e` runs the same flows end to end against a forge stand-in.
+
+To run real skills, give the pack's assets their model roles and swap the app's `fixtureSkills`
+executor for `ops.ProcessExecutor{}`: each order then runs the pack's command, the traust
+harness's skill session, which needs a harness checkout and a logged-in agent on the worker.
 
 ## Test your code
 

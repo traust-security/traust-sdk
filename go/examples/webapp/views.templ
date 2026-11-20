@@ -1,6 +1,11 @@
 package main
 
-import "github.com/traust-security/traust-sdk/go/v1/traust"
+import (
+	"fmt"
+	"strings"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+)
 
 // htmx swaps error responses too, so a refusal shows where its request was made.
 const htmxConfig = `{"responseHandling":[{"code":"204","swap":false},{"code":"...","swap":true}]}`
@@ -31,10 +36,13 @@ templ page(title string) {
 			<title>{ title }</title>
 			<meta name="htmx-config" content={ htmxConfig }/>
 			<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+			<link rel="stylesheet" href="/static/app.css"/>
 		</head>
 		<body>
-			<nav><a href="/">Home</a> · <a href="/onboard">Onboard</a> · <a href="/review">Review</a></nav>
-			{ children... }
+			<nav><a class="brand" href="/">ᛏ traust</a><a href="/onboard">Onboard</a><a href="/review">Review</a></nav>
+			<main>
+				{ children... }
+			</main>
 		</body>
 	</html>
 }
@@ -57,6 +65,7 @@ templ home(me traust.Principal, repos []traust.Repository, cards []card) {
 			Signed in as { me.Display }
 			<form method="post" action="/sign-out"><button>Sign out</button></form>
 		</header>
+		<div class="cards">
 		for _, c := range cards {
 			<section>
 				<h2>{ c.Title }</h2>
@@ -71,6 +80,7 @@ templ home(me traust.Principal, repos []traust.Repository, cards []card) {
 				</dl>
 			</section>
 		}
+		</div>
 		<section>
 			<h2>Repositories</h2>
 			if len(repos) == 0 {
@@ -138,6 +148,40 @@ templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/runs" } hx-trigger="load, run-finished from:body"></div>
 		<h2>Findings</h2>
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/findings" } hx-trigger="load, run-finished from:body"></div>
+		<h2>Ledger</h2>
+		<div id="ledger" hx-get={ "/repositories/" + repo.Id.String() + "/ledger" } hx-trigger="load"></div>
+	}
+}
+
+// ledger is the repository's proof chain: decisions as Merkle layers, signed when a key is set.
+templ ledger(repo string, layers []traust.Layer) {
+	<div id="ledger">
+		if len(layers) == 0 {
+			<p>No decisions recorded yet.</p>
+		}
+		<ul>
+			for _, l := range layers {
+				<li>
+					{ text(l.Line) } layer: { fmt.Sprint(value(l.MerkleSize)) } events, root { short(l.MerkleRoot) },
+					if l.MerkleRootSignature != nil {
+						signed
+					} else {
+						unsigned
+					}
+					<button hx-post={ "/layers/" + l.Id.String() + "/verify" } hx-target="next .verdict">Verify</button>
+					<span class="verdict"></span>
+				</li>
+			}
+		</ul>
+		<button hx-post={ "/repositories/" + repo + "/checkpoint" } hx-target="#ledger" hx-swap="outerHTML">Checkpoint (admins)</button>
+	</div>
+}
+
+templ verified(result traust.VerifyResult) {
+	if result.Passed != nil && *result.Passed {
+		<span class="verdict">verified</span>
+	} else {
+		<span class="verdict" role="alert">failed: { strings.Join(items(result.Errors), "; ") }</span>
 	}
 }
 
@@ -149,7 +193,7 @@ templ findingList(findings []traust.FindingView) {
 		for _, f := range findings {
 			<li>
 				<a href={ templ.URL("/findings/" + f.Finding.Id.String()) }>{ f.Finding.Title }</a>
-				{ severity(f.EffectiveSeverity) } · { validity(f.Disposition) }
+				<span class={ "sev", severity(f.EffectiveSeverity) }>{ severity(f.EffectiveSeverity) }</span> · { validity(f.Disposition) }
 			</li>
 		}
 	</ul>
@@ -158,7 +202,7 @@ templ findingList(findings []traust.FindingView) {
 templ finding(f traust.FindingView, decisions []traust.Decision) {
 	@page(f.Finding.Title) {
 		<h1>{ f.Finding.Title }</h1>
-		<p>{ severity(f.EffectiveSeverity) } · { validity(f.Disposition) }</p>
+		<p><span class={ "sev", severity(f.EffectiveSeverity) }>{ severity(f.EffectiveSeverity) }</span> · { validity(f.Disposition) }</p>
 		if f.Description != nil {
 			<p>{ *f.Description }</p>
 		}

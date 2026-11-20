@@ -126,6 +126,22 @@ func TestE2EOnboardScanTriageAndReview(t *testing.T) {
 	if home := e.get(t, "/"); !strings.Contains(home, "Findings by state") || !strings.Contains(home, "<dt>") {
 		t.Fatal("home: the dashboard counts nothing after a scan and a triage")
 	}
+
+	// the decisions are the repository's ledger: anyone verifies it, only an admin checkpoints it
+	ledger := e.get(t, "/repositories/"+repo[1]+"/ledger")
+	layer := regexp.MustCompile(`hx-post="/layers/([0-9a-f-]+)/verify"`).FindStringSubmatch(ledger)
+	if layer == nil {
+		t.Fatalf("ledger: %s, want the repository's layer", ledger)
+	}
+	if v := send(e.app, http.MethodPost, "/layers/"+layer[1]+"/verify", e.user, nil).Body.String(); !strings.Contains(v, "verified") {
+		t.Fatalf("verify: %s, want the layer verified", v)
+	}
+	if w := send(e.app, http.MethodPost, "/repositories/"+repo[1]+"/checkpoint", e.user, nil); w.Code != http.StatusForbidden {
+		t.Fatalf("a person's checkpoint: %d, want 403", w.Code)
+	}
+	if w := send(e.app, http.MethodPost, "/repositories/"+repo[1]+"/checkpoint", strings.TrimSpace(string(admin)), nil); w.Code != http.StatusOK {
+		t.Fatalf("the admin's checkpoint: %d %s", w.Code, w.Body)
+	}
 }
 
 // core's report builder (its reports role, which make e2e starts) builds the person's report;

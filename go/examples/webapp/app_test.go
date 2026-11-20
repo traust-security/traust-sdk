@@ -175,7 +175,7 @@ func TestARepositoryShowsItsBranchAndItsFindingsAreDecided(t *testing.T) {
 		t.Fatalf("repository: %s, want its branch and a scan button for it", page)
 	}
 	list := send(h, http.MethodGet, "/repositories/"+repo.String()+"/findings", "ada", nil).Body.String()
-	if !strings.Contains(list, "SQL built from input") || !strings.Contains(list, "high · undecided") {
+	if !strings.Contains(list, "SQL built from input") || !strings.Contains(list, `<span class="sev high">high</span> · undecided`) {
 		t.Fatalf("findings: %s", list)
 	}
 	detail := send(h, http.MethodGet, "/findings/"+found.String(), "ada", nil).Body.String()
@@ -205,6 +205,28 @@ func TestTheReviewQueueListsWhatWaitsOnThePerson(t *testing.T) {
 	page := send(newApp(t, core), http.MethodGet, "/review", "ada", nil).Body.String()
 	if !strings.Contains(page, `href="/findings/`+found.String()+`">SQL built from input</a>`) || !strings.Contains(page, "awaiting_signoff") {
 		t.Fatalf("review: %s", page)
+	}
+}
+
+func TestTheLedgerVerifiesAndOnlyAnAdminCheckpoints(t *testing.T) {
+	core := traustest.New(t)
+	repo, layer := uuid.New(), uuid.New()
+	line, size, root := "main", 4, "abcdef0123456789"
+	core.Handle("GET /v1/repositories/{id}/ledger/layers", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Layer{{Id: &layer, RepositoryId: repo, Line: &line, MerkleSize: &size, MerkleRoot: &root}})))
+	passed := true
+	core.Handle("GET /v1/ledger/layers/{id}/verification", onlyFor("ada", traustest.JSON(http.StatusOK, traust.VerifyResult{LayerId: layer, Passed: &passed})))
+	core.Handle("POST /v1/repositories/{id}/ledger/checkpoint", traustest.Problem(http.StatusForbidden, "a ledger checkpoint is an admin's"))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/repositories/"+repo.String()+"/ledger", "ada", nil).Body.String()
+	if !strings.Contains(page, "main layer: 4 events, root abcdef012345,") || !strings.Contains(page, "unsigned") {
+		t.Fatalf("ledger: %s", page)
+	}
+	if v := send(h, http.MethodPost, "/layers/"+layer.String()+"/verify", "ada", nil).Body.String(); !strings.Contains(v, "verified") {
+		t.Fatalf("verify: %s", v)
+	}
+	if w := send(h, http.MethodPost, "/repositories/"+repo.String()+"/checkpoint", "ada", nil); w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "an admin&#39;s") {
+		t.Fatalf("a person's checkpoint: %d %s, want core's refusal shown", w.Code, w.Body)
 	}
 }
 
@@ -264,5 +286,11 @@ func TestCoreRefusalsKeepTheirStatus(t *testing.T) {
 				t.Fatalf("core %d: app %d, want %d", core, w.Code, want)
 			}
 		})
+	}
+}
+
+func TestTheStylesheetNeedsNoSignIn(t *testing.T) {
+	if w := send(newApp(t, traustest.New(t)), http.MethodGet, "/static/app.css", "", nil); w.Code != http.StatusOK || !strings.Contains(w.Body.String(), "--frost") {
+		t.Fatalf("stylesheet: %d", w.Code)
 	}
 }
