@@ -98,6 +98,10 @@ templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
 		@admin(repo)
 		<h2>Refs</h2>
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/refs" } hx-trigger="load"></div>
+		<h2>Products</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/products" } hx-trigger="load"></div>
+		<h2>Owners</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/owners" } hx-trigger="load"></div>
 		for _, asset := range []string{"scan", "triage"} {
 			<button hx-post="/runs" hx-vals={ `{"asset":"` + asset + `","repository_id":"` + repo.Id.String() + `"}` } hx-target="#runs" hx-swap="afterbegin">Run { asset }</button>
 		}

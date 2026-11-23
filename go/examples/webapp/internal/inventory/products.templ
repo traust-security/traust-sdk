@@ -1,0 +1,59 @@
+package inventory
+
+import (
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// productList is the products page: core's whole catalogue, each product linking to its page.
+templ productList(products []traust.Product) {
+	@web.Page("Products") {
+		<h1>Products</h1>
+		if len(products) == 0 {
+			<p>No products known yet.</p>
+		}
+		<ul>
+			for _, product := range products {
+				<li><a href={ templ.URL("/products/" + product.Id.String()) }>{ product.Name }</a> ({ product.Slug })</li>
+			}
+		</ul>
+	}
+}
+
+// productDetail is a product's page: the product itself and the refs core knows under it.
+templ productDetail(product traust.Product, refs []traust.RepositoryRef) {
+	@web.Page(product.Name) {
+		<h1>{ product.Name }</h1>
+		<p>{ product.Slug }</p>
+		<h2>Refs</h2>
+		if len(refs) == 0 {
+			<p>No refs known yet.</p>
+		}
+		<ul>
+			for _, ref := range refs {
+				<li>
+					<a href={ templ.URL("/refs/" + ref.Id.String()) }>{ refName(ref) }</a> at { ref.Sha }
+					if web.Value(ref.IsDefault) {
+						· default
+					}
+				</li>
+			}
+		</ul>
+	}
+}
+
+// repositoryProducts is a repository page's lazy products section: the products core files the
+// repository under, each linking to its own page.
+templ repositoryProducts(products []traust.Product) {
+	<div id="products">
+		if len(products) == 0 {
+			<p>No products known yet.</p>
+		}
+		<ul>
+			for _, product := range products {
+				<li><a href={ templ.URL("/products/" + product.Id.String()) }>{ product.Name }</a></li>
+			}
+		</ul>
+	</div>
+}

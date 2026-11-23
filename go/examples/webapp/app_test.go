@@ -572,3 +572,106 @@ func TestRefAdministrationRefusalKeepsItsStatus(t *testing.T) {
 		}
 	}
 }
+
+func TestTheProductsPageListsCoresCatalogue(t *testing.T) {
+	core := traustest.New(t)
+	payments, ledger := uuid.New(), uuid.New()
+	core.Handle("GET /v1/products", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageProduct{Items: []traust.Product{
+		{Id: &payments, Name: "Payments", Slug: "payments"},
+		{Id: &ledger, Name: "Ledger", Slug: "ledger"},
+	}})))
+	page := send(newApp(t, core), http.MethodGet, "/products", "ada", nil).Body.String()
+	for _, want := range []string{
+		"<h1>Products</h1>",
+		`href="/products/` + payments.String() + `">Payments</a> (payments)`,
+		`href="/products/` + ledger.String() + `">Ledger</a> (ledger)`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("products page lacks %q:\n%s", want, page)
+		}
+	}
+}
+
+func TestAProductPageShowsItselfAndItsRefs(t *testing.T) {
+	core := traustest.New(t)
+	product, ref, repo := uuid.New(), uuid.New(), uuid.New()
+	kind, name, isDefault := "branch", "main", true
+	core.Handle("GET /v1/products/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Product{Id: &product, Name: "Payments", Slug: "payments"})))
+	core.Handle("GET /v1/products/{id}/refs", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.RepositoryRef{
+		{Id: &ref, RepositoryId: repo, Kind: &kind, Name: &name, Sha: "4c7f0b9", IsDefault: &isDefault},
+	})))
+	page := send(newApp(t, core), http.MethodGet, "/products/"+product.String(), "ada", nil).Body.String()
+	for _, want := range []string{
+		"<h1>Payments</h1>", "payments",
+		`href="/refs/` + ref.String() + `">branch main</a> at 4c7f0b9 · default`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("product page lacks %q:\n%s", want, page)
+		}
+	}
+}
+
+func TestARepositoryListsItsProductsAndItsOwners(t *testing.T) {
+	core := traustest.New(t)
+	repo, product, team := uuid.New(), uuid.New(), uuid.New()
+	core.Handle("GET /v1/repositories/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Repository{Id: &repo, Url: "https://forge.example/org/a"})))
+	core.Handle("GET /v1/repositories/{id}/refs/current-default", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{})))
+	core.Handle("GET /v1/repositories/{id}/products", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Product{{Id: &product, Name: "Payments", Slug: "payments"}})))
+	core.Handle("GET /v1/repositories/{id}/owners", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Team{{Id: &team, Name: "payments"}})))
+	h := newApp(t, core)
+	page := send(h, http.MethodGet, "/repositories/"+repo.String(), "ada", nil).Body.String()
+	for _, want := range []string{
+		`hx-get="/repositories/` + repo.String() + `/products"`,
+		`hx-get="/repositories/` + repo.String() + `/owners"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("repository page lacks its lazy %q:\n%s", want, page)
+		}
+	}
+	products := send(h, http.MethodGet, "/repositories/"+repo.String()+"/products", "ada", nil).Body.String()
+	if !strings.Contains(products, `href="/products/`+product.String()+`">Payments</a>`) {
+		t.Fatalf("repository products: %s, want the product listed", products)
+	}
+	owners := send(h, http.MethodGet, "/repositories/"+repo.String()+"/owners", "ada", nil).Body.String()
+	if !strings.Contains(owners, `href="/teams/`+team.String()+`">payments</a>`) {
+		t.Fatalf("repository owners: %s, want the team linking to its page", owners)
+	}
+}
+
+func TestSettingOwnersSendsTheTeams(t *testing.T) {
+	core := traustest.New(t)
+	repo, team := uuid.New(), uuid.New()
+	core.Handle("PUT /v1/repositories/{id}/owners", onlyFor("ada", traustest.JSON(http.StatusOK, traust.SyncReport{})))
+	core.Handle("GET /v1/repositories/{id}/owners", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Team{{Id: &team, Name: "payments"}})))
+	form := url.Values{"teams": {"payments\n\n ledger "}}
+	set := send(newApp(t, core), http.MethodPost, "/repositories/"+repo.String()+"/owners", "ada", form)
+	var owners traust.Owners
+	if err := json.Unmarshal(core.Requests()[0].Body, &owners); err != nil || set.Code != http.StatusOK ||
+		len(owners.Teams) != 2 || owners.Teams[0] != "payments" || owners.Teams[1] != "ledger" {
+		t.Fatalf("set owners: %d %+v %v, want the form's two teams", set.Code, owners, err)
+	}
+	if !strings.Contains(set.Body.String(), `href="/teams/`+team.String()+`">payments</a>`) {
+		t.Fatalf("set owners: %s, want the section re-listed with core's answer", set.Body)
+	}
+}
+
+func TestATeamPageListsItsRepositories(t *testing.T) {
+	core := traustest.New(t)
+	team, repo := uuid.New(), uuid.New()
+	core.Handle("GET /v1/teams/{id}/repositories", onlyFor("ada", traustest.JSON(http.StatusOK, []uuid.UUID{repo})))
+	core.Handle("GET /v1/repositories/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Repository{Id: &repo, Url: "https://forge.example/org/a"})))
+	page := send(newApp(t, core), http.MethodGet, "/teams/"+team.String(), "ada", nil).Body.String()
+	if !strings.Contains(page, "The team's repositories") ||
+		!strings.Contains(page, `href="/repositories/`+repo.String()+`">https://forge.example/org/a</a>`) {
+		t.Fatalf("team page: %s, want its repositories listed", page)
+	}
+}
+
+func TestOwnerAdministrationRefusalKeepsItsStatus(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("PUT /v1/repositories/{id}/owners", traustest.Problem(http.StatusForbidden, "setting owners is an admin's"))
+	w := send(newApp(t, core), http.MethodPost, "/repositories/"+uuid.NewString()+"/owners", "ada", url.Values{"teams": {"payments"}})
+	if w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "an admin&#39;s") {
+		t.Fatalf("set owners: %d %s, want core's refusal shown", w.Code, w.Body)
+	}
+}
