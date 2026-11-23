@@ -27,9 +27,38 @@ counts, err := client.SummarizeFindings(ctx, *repo.Id,
 ```
 
 Every operation is a method named after core's operation: `client.GetRepository(ctx, id)`
-returns `(*traust.Repository, error)`. The full list, by task, is the "Using the SDK" table in
-[AGENTS.md](../AGENTS.md#using-the-sdk); `go doc ./v1/traust` shows every signature and the runnable
-examples.
+returns `(*traust.Repository, error)`. The full list, by task, is the [Using the SDK](#using-the-sdk)
+table; `go doc ./v1/traust` shows every signature and the runnable examples.
+
+## Using the SDK
+
+One client for everything you ask traust; one runner for the work you do for it.
+
+| I want to… | Use | Core operations |
+|---|---|---|
+| onboard a product and its repositories | `c` | `PlanOnboarding` (dry run) → `Onboard` |
+| keep inventory current | `c` | `RegisterRef` (a commit and its branch), `SetOwners` (the teams a source reports; core stamps when ownership opens and closes) |
+| look up inventory | `c` | `ListRepositories` (by `url`), `ListRefs` (by `sha`), `ListProducts`, `ListOwners`, `ListProductsOf`, `ListOwnedRepositories` |
+| ask for a run (a person's token) | `c` | `Submit` with `Config: &[]traust.ConfigDigest{pack.Pin()}`, the pack version it must run under; `BeginSubmit` / `ResumeOrder` to follow it to the end |
+| act for a signed-in person (a BFF) | `traust.OnBehalfOf(ctx, token)` | every call made with that ctx |
+| run queued pack commands | `ops.Runner` + `ops.ProcessExecutor` or your `Executor` | `Claim` → `GetOrderManifest` → your run → `Complete` (the runner calls these, you don't) |
+| record a repository scan | `ops.AssessDefaultRef` as the asset's `RecordingPreparer` | `GetRepository`, `GetCurrentDefaultRef` (the SDK calls these) |
+| triage a repository's latest scan | `ops.TriageLatest` as the asset's `RecordingPreparer` | `GetLatestRecordedAssessment`, `PrepareTriage` (the SDK calls these) |
+| run and record a dispatched order | `ops.RecordingRun` + your `Executor` | `Start` → `Prepare*` → your run → `Record*` → `Complete` (same) |
+| read what a run produced | `c` | `ListOrderAssessments` (what an order recorded), `GetAssessment`, `GetArtifact`, `GetArtifactContent`, `ListRepositoryAssessments` |
+| read findings | `c` | `ListFindings`, `SummarizeFindings` (counts by severity, CWE, validity, …), `FindingTimeline`, `GetFinding`, `ListDecisions`, `AdvisoriesFor` |
+| work findings (a person's token) | `c` | `ReviewQueue`, `Decide`, `Restate` |
+| follow remediation | `c` | `ListWorkItems`, `PrepareRemediation`, `PrepareVerification`, `ListVerifications` |
+| check the ledger | `c` | `ListLayers`, `ListEvents`, `VerifyLayer`, `Checkpoint`; core writes ledger events when records and decisions land, you never append them |
+| find exposure | `c` | `GetAdvisory`, `Affected`, `PackagesAffected`, `Dependents`, `Dependencies`, `ListImpacts`, `SummarizeExposure`, `ExposureTimeline`, `FeedStatuses` |
+| read validation | `c` | `ListValidationAttempts` |
+| show a dashboard | `c` | `QueryDashboard` (one query per card); rows read by `row.Group(dimension)`, `row.Measure(measure)` |
+| build a report or export | `c` | `BeginRequestReport` → `GetReportFile`; `ReportView` decodes a json report as its `…Insight` type |
+| react to changes | `c` | `ReadFeed` / `ReadFeedAll` |
+| test code that uses the SDK | `traustest` | a fake core: `traustest.New(t)`, `Handle`, `Client()`, `Requests()` |
+
+Counts and dashboards come from `QueryDashboard`, `SummarizeFindings` and `SummarizeExposure`,
+reports from `BeginRequestReport`; never compute them from listings.
 
 ## Connect
 
@@ -50,7 +79,6 @@ for f, err := range client.ListFindingsAll(ctx, repoID, nil) { … } // every pa
 ```
 
 Each paged listing has an `…All` iterator that follows the cursor and stops at the first error.
-Counts and dashboards come from core, never from walking a listing.
 
 ### Dashboards
 
@@ -164,6 +192,43 @@ runner, err := ops.NewRunner(ops.RunnerConfig{
 })
 err = runner.Run(ctx)
 ```
+
+### How it works
+
+One lifecycle, two ways in. Both hold the order's lease the same way (`v1/ops/lease.go`); nothing
+else in the SDK heartbeats, records or completes.
+
+```mermaid
+sequenceDiagram
+    participant R as SDK (v1/ops)
+    participant API as traust-core REST API
+    participant X as consumer Executor
+    alt queued order: ops.Runner
+        R->>API: claim(assets)
+        R->>API: manifest: planned with my pinned pack?
+    else dispatched order: ops.RecordingRun
+        R->>API: start
+        R->>API: prepare → skill input
+    end
+    R->>X: run, heartbeating the lease
+    X-->>R: output + JobResult
+    R->>API: record(output), when the order records a document
+    R->>API: complete(JobResult)
+```
+
+Each step is one core endpoint.
+
+| Step | Core endpoint |
+|---|---|
+| submit (a person) | `POST /v1/orders` with the config (pack version) the order must run under |
+| claim / start | `POST /v1/orders/claim` (filtered by `assets`; 204 = nothing queued) · `POST /v1/orders/start` (an explicitly dispatched order) |
+| pinned pack | `GET /v1/orders/{order_id}/manifest`: a runner runs only orders planned with exactly its pack's digest |
+| heartbeat | `POST /v1/orders/{order_id}/heartbeat`; a 409 means the lease is lost: stop, record nothing |
+| prepare | `GET /v1/assessments/{assessment_id}/triage-input`, and each domain's input route as core adds it |
+| record | `POST /v1/assessments/{assessment_id}/triage-records` · `/v1/validation-records` · `/v1/verification-records` · `/v1/assessment-records` |
+| complete | `POST /v1/orders/{order_id}/complete` with `JobResult` (outcome, degraded, usage, and a `RunOrderReason` from core's closed vocabulary); repeat-safe |
+| feed | `GET /v1/feed`, cursor-paged |
+| config resolve, preflight | not served by core: no such step |
 
 - **`ops.ProcessExecutor`** runs the asset's argv with no shell in its own process group and
   kills the group when the lease is lost. The command prints its `JobResult` as JSON on stdout;
@@ -296,11 +361,14 @@ sent := core.Requests()
 An unregistered route answers with a 404 problem. Use `traustest.Start()` (and `Close`) outside a test,
 as the runnable examples do. `make e2e` runs the SDK itself against a real `traust-server`.
 
-## Regenerating
+## Packages
 
-`make -C go api-generate` builds core's OpenAPI at `CORE_REF` (`go/Makefile`), generates
-`v1/traust/client.gen.go` and the `(T, error)` calls and iterators in `v1/traust/calls.gen.go`, writes
-`v1/ops/pack.schema.json`, and deletes the spec. `make -C go check-drift` fails when they're stale.
+| Package | Owns | Consumer writes |
+|---|---|---|
+| `v1/traust` | `traust.Client`: types and enums generated from core's OpenAPI; the generated `(T, error)` calls and `…All` iterators; auth, read retries, typed problem errors (`errors.Is` on status and deny code); `Poller` for work core finishes later (orders, report builds) | a `TokenSource` |
+| `v1/traust/traustest` | a fake core for consumers' tests: canned responses, recorded requests | — |
+| `v1/ops` | the lease (heartbeat, lease loss, complete) and its two ways in: `Runner` (claim, pinned pack, the asset's command) and `RecordingRun` (start, prepare, record); `ProcessExecutor` | an `Executor` (or `ProcessExecutor`); the pack file |
+| `v1/<pkg>/<pkg>test` | test doubles for each extension point; the conformance suite every `Executor` passes against `traust serve` | — |
 
 ## Legacy packages
 
@@ -582,32 +650,3 @@ For consumers who just need types or validation without invoking skills:
 | [`v1/types`](v1/types) | Generated Go structs for every schema in `schemas/v1` |
 | [`v1/enums`](v1/enums) | Generated shared vocabularies (severity, validity, verdicts, ...) |
 | [`v1/validate`](v1/validate) | Validate raw JSON bytes against an embedded v1 schema |
-
-### Regenerating the contracts-generated packages
-
-```bash
-make generate     # verified pinned contracts commit → generated Go outputs
-make check-drift  # fails if generated output is stale
-```
-
-No sibling checkout is needed. `make generate` obtains the full immutable
-`CONTRACTS_REF` from `CONTRACTS_REPO` and validates that the checkout matches it
-exactly; it never generates from latest `main`. The checkout is reused from
-`CONTRACTS_CACHE` (by default the user cache) at `CONTRACTS_SOURCE`. All four
-variables are caller-overridable for fork, CI-cache, and pinned-ref workflows.
-Normal `make test` uses only repository fixtures and requires no network.
-
-Run `make test-integration` for the storage suite against SQLite and PostgreSQL.
-The PostgreSQL suite uses one fixed local test DSN, recreates `traust_storage`
-for each test, and verifies that same-named application tables remain untouched.
-Start the database with:
-
-```bash
-podman run --name traust-postgres --rm -d -e POSTGRES_USER=traust -e POSTGRES_PASSWORD=traust-test-only -e POSTGRES_DB=traust_test -p 127.0.0.1:5432:5432 -v traust-postgres-data:/var/lib/postgresql/data docker.io/library/postgres:16
-```
-
-These are fixed local test-only credentials, **not production/deployed secrets**,
-and no DSN override is supported. `make test-integration` disables the Go test cache so PostgreSQL availability is
-checked on every run. PostgreSQL absence, connectivity failure, or authentication
-failure produces a visible skip while SQLite still executes. Once PostgreSQL
-accepts a connection, all version, initialization, and protocol failures fail.
