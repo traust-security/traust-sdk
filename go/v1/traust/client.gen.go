@@ -187,19 +187,19 @@ const (
 
 // Defines values for Ecosystem.
 const (
-	Actions Ecosystem = "actions"
-	Apk     Ecosystem = "apk"
-	Cargo   Ecosystem = "cargo"
-	Deb     Ecosystem = "deb"
-	Docker  Ecosystem = "docker"
-	Go      Ecosystem = "go"
-	Helm    Ecosystem = "helm"
-	Maven   Ecosystem = "maven"
-	Npm     Ecosystem = "npm"
-	Nuget   Ecosystem = "nuget"
-	Pypi    Ecosystem = "pypi"
-	Rpm     Ecosystem = "rpm"
-	Ruby    Ecosystem = "ruby"
+	EcosystemActions Ecosystem = "actions"
+	EcosystemApk     Ecosystem = "apk"
+	EcosystemCargo   Ecosystem = "cargo"
+	EcosystemDeb     Ecosystem = "deb"
+	EcosystemDocker  Ecosystem = "docker"
+	EcosystemGo      Ecosystem = "go"
+	EcosystemHelm    Ecosystem = "helm"
+	EcosystemMaven   Ecosystem = "maven"
+	EcosystemNpm     Ecosystem = "npm"
+	EcosystemNuget   Ecosystem = "nuget"
+	EcosystemPypi    Ecosystem = "pypi"
+	EcosystemRpm     Ecosystem = "rpm"
+	EcosystemRuby    Ecosystem = "ruby"
 )
 
 // Defines values for EvidenceGrade.
