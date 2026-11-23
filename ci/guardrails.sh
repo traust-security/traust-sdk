@@ -3,7 +3,7 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-# Framework packages (AGENTS.md "How it works") and the frozen ones. A new package is a design
+# Framework packages (go/README.md "Legacy packages") and the frozen ones. A new package is a design
 # change: add it here in the same PR, which routes the PR to a code owner.
 framework="traust ops feed"
 frozen="enums ledger skills storage types validate"

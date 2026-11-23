@@ -26,39 +26,8 @@ counts, err := client.SummarizeFindings(ctx, *repo.Id,
     &traust.SummarizeFindingsParams{GroupBy: traust.FindingDimensionSeverity})
 ```
 
-Every operation is a method named after core's operation: `client.GetRepository(ctx, id)`
-returns `(*traust.Repository, error)`. The full list, by task, is the [Using the SDK](#using-the-sdk)
-table; `go doc ./v1/traust` shows every signature and the runnable examples.
-
-## Using the SDK
-
-One client for everything you ask traust; one runner for the work you do for it.
-
-| I want to… | Use | Core operations |
-|---|---|---|
-| onboard a product and its repositories | `c` | `PlanOnboarding` (dry run) → `Onboard` |
-| keep inventory current | `c` | `RegisterRef` (a commit and its branch), `SetOwners` (the teams a source reports; core stamps when ownership opens and closes) |
-| look up inventory | `c` | `ListRepositories` (by `url`), `ListRefs` (by `sha`), `ListProducts`, `ListOwners`, `ListProductsOf`, `ListOwnedRepositories` |
-| ask for a run (a person's token) | `c` | `Submit` with `Config: &[]traust.ConfigDigest{pack.Pin()}`, the pack version it must run under; `BeginSubmit` / `ResumeOrder` to follow it to the end |
-| act for a signed-in person (a BFF) | `traust.OnBehalfOf(ctx, token)` | every call made with that ctx |
-| run queued pack commands | `ops.Runner` + `ops.ProcessExecutor` or your `Executor` | `Claim` → `GetOrderManifest` → your run → `Complete` (the runner calls these, you don't) |
-| record a repository scan | `ops.AssessDefaultRef` as the asset's `RecordingPreparer` | `GetRepository`, `GetCurrentDefaultRef` (the SDK calls these) |
-| triage a repository's latest scan | `ops.TriageLatest` as the asset's `RecordingPreparer` | `GetLatestRecordedAssessment`, `PrepareTriage` (the SDK calls these) |
-| run and record a dispatched order | `ops.RecordingRun` + your `Executor` | `Start` → `Prepare*` → your run → `Record*` → `Complete` (same) |
-| read what a run produced | `c` | `ListOrderAssessments` (what an order recorded), `GetAssessment`, `GetArtifact`, `GetArtifactContent`, `ListRepositoryAssessments` |
-| read findings | `c` | `ListFindings`, `SummarizeFindings` (counts by severity, CWE, validity, …), `FindingTimeline`, `GetFinding`, `ListDecisions`, `AdvisoriesFor` |
-| work findings (a person's token) | `c` | `ReviewQueue`, `Decide`, `Restate` |
-| follow remediation | `c` | `ListWorkItems`, `PrepareRemediation`, `PrepareVerification`, `ListVerifications` |
-| check the ledger | `c` | `ListLayers`, `ListEvents`, `VerifyLayer`, `Checkpoint`; core writes ledger events when records and decisions land, you never append them |
-| find exposure | `c` | `GetAdvisory`, `Affected`, `PackagesAffected`, `Dependents`, `Dependencies`, `ListImpacts`, `SummarizeExposure`, `ExposureTimeline`, `FeedStatuses` |
-| read validation | `c` | `ListValidationAttempts` |
-| show a dashboard | `c` | `QueryDashboard` (one query per card); rows read by `row.Group(dimension)`, `row.Measure(measure)` |
-| build a report or export | `c` | `BeginRequestReport` → `GetReportFile`; `ReportView` decodes a json report as its `…Insight` type |
-| react to changes | `c` | `ReadFeed` / `ReadFeedAll` |
-| test code that uses the SDK | `traustest` | a fake core: `traustest.New(t)`, `Handle`, `Client()`, `Requests()` |
-
-Counts and dashboards come from `QueryDashboard`, `SummarizeFindings` and `SummarizeExposure`,
-reports from `BeginRequestReport`; never compute them from listings.
+Every operation is a method named after core's operation — `client.GetRepository(ctx, id)` returns
+`(*traust.Repository, error)`; `go doc ./v1/traust` shows every signature and the runnable examples.
 
 ## Connect
 
@@ -78,7 +47,8 @@ page, err := client.ListFindings(ctx, repoID, nil)     // one page
 for f, err := range client.ListFindingsAll(ctx, repoID, nil) { … } // every page
 ```
 
-Each paged listing has an `…All` iterator that follows the cursor and stops at the first error.
+Each paged listing has an `…All` iterator that follows the cursor and stops at the first error. Counts and dashboards
+come from `QueryDashboard`, `SummarizeFindings` and `SummarizeExposure`, reports from `BeginRequestReport` — never from listings.
 
 ### Dashboards
 
@@ -178,25 +148,8 @@ order, err := client.Submit(ctx, req)
 
 ## Run work
 
-A runner claims the orders its pack can run, runs each asset's command, and completes it. You
-supply the pack, an executor and a required `*slog.Logger`; the SDK holds the lease, stops the work
-if the lease is lost, and never runs an order planned with a different pack.
-
-```go
-import "github.com/traust-security/traust-sdk/go/v1/ops"
-
-pack, err := ops.LoadPack(packYAML)   // validated against core's pack schema
-runner, err := ops.NewRunner(ops.RunnerConfig{
-    Client: client, Pack: pack, Executor: ops.ProcessExecutor{}, Logger: logger,
-    Assets: pack.Assets(), LeaseSeconds: 300, PollInterval: 10 * time.Second,
-})
-err = runner.Run(ctx)
-```
-
-### How it works
-
-One lifecycle, two ways in. Both hold the order's lease the same way (`v1/ops/lease.go`); nothing
-else in the SDK heartbeats, records or completes.
+You supply the pack, an executor and a required `*slog.Logger`; the SDK does the rest — one lifecycle,
+two ways in, both holding the order's lease (`v1/ops/lease.go`); nothing else heartbeats, records or completes:
 
 ```mermaid
 sequenceDiagram
@@ -229,6 +182,17 @@ Each step is one core endpoint.
 | complete | `POST /v1/orders/{order_id}/complete` with `JobResult` (outcome, degraded, usage, and a `RunOrderReason` from core's closed vocabulary); repeat-safe |
 | feed | `GET /v1/feed`, cursor-paged |
 | config resolve, preflight | not served by core: no such step |
+
+```go
+import "github.com/traust-security/traust-sdk/go/v1/ops"
+
+pack, err := ops.LoadPack(packYAML)   // validated against core's pack schema
+runner, err := ops.NewRunner(ops.RunnerConfig{
+    Client: client, Pack: pack, Executor: ops.ProcessExecutor{}, Logger: logger,
+    Assets: pack.Assets(), LeaseSeconds: 300, PollInterval: 10 * time.Second,
+})
+err = runner.Run(ctx)
+```
 
 - **`ops.ProcessExecutor`** runs the asset's argv with no shell in its own process group and
   kills the group when the lease is lost. The command prints its `JobResult` as JSON on stdout;
@@ -361,16 +325,12 @@ sent := core.Requests()
 An unregistered route answers with a 404 problem. Use `traustest.Start()` (and `Close`) outside a test,
 as the runnable examples do. `make e2e` runs the SDK itself against a real `traust-server`.
 
-## Packages
-
-| Package | Owns | Consumer writes |
-|---|---|---|
-| `v1/traust` | `traust.Client`: types and enums generated from core's OpenAPI; the generated `(T, error)` calls and `…All` iterators; auth, read retries, typed problem errors (`errors.Is` on status and deny code); `Poller` for work core finishes later (orders, report builds) | a `TokenSource` |
-| `v1/traust/traustest` | a fake core for consumers' tests: canned responses, recorded requests | — |
-| `v1/ops` | the lease (heartbeat, lease loss, complete) and its two ways in: `Runner` (claim, pinned pack, the asset's command) and `RecordingRun` (start, prepare, record); `ProcessExecutor` | an `Executor` (or `ProcessExecutor`); the pack file |
-| `v1/<pkg>/<pkg>test` | test doubles for each extension point; the conformance suite every `Executor` passes against `traust serve` | — |
-
 ## Legacy packages
+
+- `v1/traust` — `traust.Client`: generated types, `(T, error)` calls and `…All` iterators, auth, read retries, typed problem errors, `Poller`; you write a `TokenSource`
+- `v1/traust/traustest` — a fake core for consumers' tests: canned responses, recorded requests
+- `v1/ops` — the lease and its two ways in, `Runner` and `RecordingRun`, plus `ProcessExecutor`; you write an `Executor` and the pack file
+- `v1/<pkg>/<pkg>test` — test doubles for each extension point, and the conformance suite every `Executor` passes against `traust serve`
 
 `storage`, `ledger`, `skills`, `types`, `enums` and `validate` predate the REST API. They keep
 working for existing callers and take bug fixes only; new code uses `traust` and `ops`.
@@ -437,7 +397,7 @@ report, _ := skills.Scan.Run(ctx, provider, skills.ScanInput{
 ### Ledger SDK
 
 Read the historical ledger and submit raw or human actions to the ledger service.
-Machine reports use [native report recording](#native-report-recording), not this
+Machine reports use [record queued reports](#record-queued-reports), not this
 package.
 
 ```go
