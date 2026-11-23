@@ -13,7 +13,6 @@ import (
 	"testing"
 	"time"
 
-	"github.com/traust-security/traust-sdk/go/v1/ops"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 )
 
@@ -21,13 +20,12 @@ import (
 const e2eRepository = "https://e2e-forge.test/e2e/fixture"
 
 type e2e struct {
-	app    http.Handler
-	user   string
-	worker *ops.Runner
+	app  http.Handler
+	user string
 }
 
-// newE2E is the app on the core make e2e started: its client a machine identity, which core
-// refuses to act for a person, and its worker claiming orders from the stand-in forge.
+// newE2E is the app on the box make e2e started: its client a machine identity, which core
+// refuses to act for a person; the box's claim worker runs what the person submits.
 func newE2E(t *testing.T) e2e {
 	t.Helper()
 	person, err := os.ReadFile(os.Getenv("TRAUST_E2E_TOKEN_FILE"))
@@ -38,23 +36,15 @@ func newE2E(t *testing.T) e2e {
 	if err != nil {
 		t.Fatal(err)
 	}
-	pack, err := ops.LoadPack(packYAML)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if _, err := machine.Submit(t.Context(), traust.SubmitRequest{Order: traust.OrderRequest{Asset: "scan"}}); !errors.Is(err, traust.ErrForbidden) {
+	if _, err := machine.Submit(t.Context(), traust.SubmitRequest{Order: traust.OrderRequest{Asset: "full_audit"}}); !errors.Is(err, traust.ErrForbidden) {
 		t.Fatalf("a machine's own submit: %v, want ErrForbidden", err)
 	}
-	runner, err := worker(machine, pack, []string{"e2e-forge.test"})
-	if err != nil {
-		t.Fatal(err)
-	}
 	user := strings.TrimSpace(string(person))
-	h := routes(machine, pack.Pin(), nil)
+	h := routes(machine, nil)
 	if w := send(h, http.MethodPost, "/sign-in", "", url.Values{"token": {user}}); w.Code != http.StatusSeeOther {
 		t.Fatalf("sign in: %d %s", w.Code, w.Body)
 	}
-	return e2e{h, user, runner}
+	return e2e{h, user}
 }
 
 func (e e2e) get(t *testing.T, path string) string {
@@ -76,16 +66,13 @@ func TestE2EOnboardScanTriageAndReview(t *testing.T) {
 	if repo == nil {
 		t.Fatal("home lists no onboarded repository")
 	}
-	for _, asset := range []string{"scan", "triage"} {
+	for _, asset := range []string{"full_audit", "sci_triage"} {
 		token := polled(t, send(e.app, http.MethodPost, "/runs", e.user, url.Values{"asset": {asset}, "repository_id": {repo[1]}}), "/runs/")
-		if _, err := e.worker.RunOnce(t.Context()); err != nil {
-			t.Fatal(err)
-		}
-		if done := e.get(t, "/runs/"+token); !strings.Contains(done, string(traust.RunOrderStateSucceeded)) {
+		if done := e.finished(t, token); !strings.Contains(done, string(traust.RunOrderStateSucceeded)) {
 			t.Fatalf("%s: %s, want succeeded", asset, done)
 		}
 	}
-	if runs := e.get(t, "/repositories/"+repo[1]+"/runs"); !strings.Contains(runs, "triage: succeeded, requested by ") {
+	if runs := e.get(t, "/repositories/"+repo[1]+"/runs"); !strings.Contains(runs, "sci_triage: succeeded, requested by ") {
 		t.Fatalf("run history: %s, want the person's triage", runs)
 	}
 	findings := e.get(t, "/repositories/"+repo[1]+"/findings")
@@ -162,6 +149,20 @@ func TestE2EBuildAndDownloadAReport(t *testing.T) {
 	if file := send(e.app, http.MethodGet, "/reports/"+token+"/file", e.user, nil); file.Code != http.StatusOK || file.Body.Len() == 0 {
 		t.Fatalf("download: %d with %d bytes, want the report", file.Code, file.Body.Len())
 	}
+}
+
+// finished polls a run's row until the box's claim worker has finished the order.
+func (e e2e) finished(t *testing.T, token string) string {
+	t.Helper()
+	row := ""
+	for range 180 {
+		if row = e.get(t, "/runs/"+token); !strings.Contains(row, "hx-trigger") {
+			return row
+		}
+		time.Sleep(time.Second)
+	}
+	t.Fatalf("run %s: %s, still running after 3m", token, row)
+	return row
 }
 
 // polled is the token in a started row's poll path.

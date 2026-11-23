@@ -103,6 +103,9 @@ jobs:
           enable-cache: true
           cache-dependency-glob: go/Makefile
           python-version: "3.12"
+      # the box the webapp e2e runs through signs its ledger and observes repositories
+      - uses: sigstore/cosign-installer@v3
+      - run: go install github.com/zricethezav/gitleaks/v8@v8.18.4 && echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - run: make e2e
 
   guardrails:
