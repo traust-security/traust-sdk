@@ -14,13 +14,18 @@ CORE_PYTHON := cd "$(CORE_SOURCE)" && uv run --quiet python
 ENGINE_REPO := https://github.com/traust-security/traust-engine.git
 ENGINE_REF := c82854b33a538e985bee7c5d932194afa1edacf2
 ENGINE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/engine/checkout-$(ENGINE_REF)
+TRAUST_REPO := https://github.com/traust-security/traust.git
+TRAUST_REF := 7ed390f84270ecceba524798e031b591a6dea5dc
+TRAUST_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/harness/checkout-$(TRAUST_REF)
+# The box's Claude login, kept across runs: log in once with CLAUDE_CONFIG_DIR=$(CLAUDE_RUNNER) claude, or set ANTHROPIC_API_KEY.
+CLAUDE_RUNNER ?= $(or $(XDG_CONFIG_HOME),$(HOME)/.config)/traust-sdk/claude-runner
 OPENAPI_DIR := ./internal/generate/openapi
 OUT_DIR := ./v1/enums
 ROOT := ..
 GO_CI := python3 $(ROOT)/ci/lang/go/ci.py
 export PATH := $(shell go env GOPATH)/bin:$(PATH)
 
-.PHONY: contracts core engine generate api-generate e2e webapp test webapp-generate test-integration check-drift fmt fmt-check vet lint security tools
+.PHONY: contracts core engine harness generate api-generate e2e webapp test webapp-generate test-integration check-drift fmt fmt-check vet lint security tools
 
 # checkout pins $(1) to commit $(3) of $(2), fetching only that commit; $(4) are git clean's flags.
 define checkout
@@ -48,8 +53,9 @@ webapp-generate:
 test-integration:
 	go test -count=1 -v ./v1/storage/...
 
-check-drift: generate api-generate webapp-generate
+check-drift: generate api-generate webapp-generate engine harness
 	@git diff --exit-code -- './examples/webapp/*_templ.go' $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go ./v1/ops/pack.schema.json || (echo "ERROR: generated files are out of date; run 'make generate api-generate' and commit" && exit 1)
+	$(CORE_PYTHON) "$(CURDIR)/internal/pack_drift.py" --webapp "$(CURDIR)/examples/webapp/pack.yaml" --shipped "$(TRAUST_SOURCE)/packs/security/assets.yaml"
 
 core:
 	$(call checkout,$(CORE_SOURCE),$(CORE_REPO),$(CORE_REF),-ffdq)
@@ -59,6 +65,14 @@ core:
 engine: core
 	$(call checkout,$(ENGINE_SOURCE),$(ENGINE_REPO),$(ENGINE_REF),-ffdq)
 	@cd "$(CORE_SOURCE)" && uv pip install --quiet --no-deps "$(ENGINE_SOURCE)"
+
+# The traust harness the pack's skill sessions run in (`traust session run`), installed into
+# core's environment the way the engine is. Its wheel carries no harnessing/ payload, so
+# anything that runs it names the checkout in HARNESS_ROOT (the runtime image does the same
+# with its copied payload).
+harness: core
+	$(call checkout,$(TRAUST_SOURCE),$(TRAUST_REPO),$(TRAUST_REF),-ffdq)
+	@cd "$(CORE_SOURCE)" && uv pip install --quiet --no-deps "$(TRAUST_SOURCE)"
 
 # Everything the SDK knows about core comes from core at CORE_REF: the client from its OpenAPI
 # (built, used once, deleted), the Go types of the Insight view contracts core validates its
@@ -155,14 +169,24 @@ e2e: core
 	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/ ./v1/ops/; \
 	cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .
 
-# The example app against a local traust-server that reaches real forges: sign in with the
-# person token it prints, then onboard any public repository. The engine plans the pack's work
-# (a scan per repository, on its trigger) every minute.
-webapp: engine
+# The example app as the box: a local traust-server, the engine planning the shipped security
+# pack's work every minute, and the engine's claim worker running it — the deterministic assets'
+# materializers and the llm assets' skill sessions in the traust harness — beside the app's
+# pages. Sign in with the person token it prints, then onboard any public repository. The
+# pack is the shipped one (route_on, approvers and every asset copied verbatim from traust at
+# TRAUST_REF; check-drift refuses a copy that drifts), so the box needs what a deployment's
+# runner needs: gitleaks for observation, cosign for the ledger, and a Claude login for the
+# sessions (CLAUDE_RUNNER above). The model registry is the shipped one at TRAUST_REF. The webapp's own
+# fixture-skill runner still runs beside the claim worker until the chunk that drops it.
+webapp: engine harness
 	@set -eu; port=18080; complete=yes; \
 	command -v cosign >/dev/null || { echo "make webapp signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
+	command -v claude >/dev/null || { echo "make webapp runs the pack's skill sessions with claude: install Claude Code (https://claude.com/claude-code)" >&2; exit 1; }; \
 	$(core_up); \
-	(cd "$(CORE_SOURCE)" && exec uv run --quiet traust-engine run --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --every 1m) > "$$home/engine.log" 2>&1 & pids="$$pids $$!"; \
+	mkdir -p "$(CLAUDE_RUNNER)"; ln -s "$(CLAUDE_RUNNER)" "$$home/claude-runner"; \
+	cp "$(TRAUST_SOURCE)/config/model-registry.yaml" "$$home/model-registry.yaml"; \
+	(cd "$(CORE_SOURCE)" && exec env TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine run --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --router traust.ops.router:SecurityRouter --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml" --every 1m) > "$$home/engine.log" 2>&1 & pids="$$pids $$!"; \
+	(cd "$(CORE_SOURCE)" && exec env TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine claim --loop --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --worker webapp-box --label llm --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml") > "$$home/claim.log" 2>&1 & pids="$$pids $$!"; \
 	echo "sign in at http://localhost:3000 as a person: $$(cat "$$home/person")"; \
 	echo "or as an admin (restates decisions): $$(cat "$$home/admin")"; \
 	cd examples/webapp && TRAUST_URL=http://127.0.0.1:$$port TRAUST_TOKEN_FILE="$$home/runner" go run .
