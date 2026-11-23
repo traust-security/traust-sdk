@@ -4,7 +4,7 @@ GO_DIR := go
 LANGS := go
 BUMP_PARTS := patch minor major
 
-.PHONY: help setup hooks lint lint-fix test test-integration security guardrails e2e check-release status bump $(LANGS) $(BUMP_PARTS)
+.PHONY: help setup hooks lint lint-fix test test-integration security guardrails lean e2e check-release status bump $(LANGS) $(BUMP_PARTS)
 
 help:
 	@echo "Targets ($(notdir $(CURDIR))):"
@@ -16,6 +16,7 @@ help:
 	@echo "  make test-integration — storage tests: SQLite + optional local PostgreSQL"
 	@echo "  make security       — govulncheck + gosec (go/)"
 	@echo "  make guardrails     — AGENTS.md rules a machine can check"
+	@echo "  make lean           — bloat gates vs LEAN_BASE: replace-is-delete, justified deps, generated-first"
 	@echo "  make e2e            — generated client vs traust-server at CORE_REF"
 	@echo "  make check-release  — per-language VERSION + CHANGELOG gate vs main"
 	@echo "  make status         — per-language version and tag state"
@@ -45,6 +46,9 @@ security:
 
 guardrails:
 	ci/guardrails.sh
+
+lean:
+	$(PYTHON) ci/lean.py
 
 e2e:
 	$(MAKE) -C $(GO_DIR) e2e
