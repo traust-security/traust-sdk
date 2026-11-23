@@ -53,7 +53,7 @@ func Page(title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><script src=\"https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"/static/app.css\"></head><body><nav><a class=\"brand\" href=\"/\">ᛏ traust</a><a href=\"/onboard\">Onboard</a><a href=\"/products\">Products</a><a href=\"/review\">Review</a></nav><div hx-get=\"/whoami\" hx-trigger=\"load\"></div><main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><script src=\"https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"/static/app.css\"></head><body><nav><a class=\"brand\" href=\"/\">ᛏ traust</a><a href=\"/onboard\">Onboard</a><a href=\"/products\">Products</a><a href=\"/findings\">Findings</a><a href=\"/review\">Review</a></nav><div hx-get=\"/whoami\" hx-trigger=\"load\"></div><main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}

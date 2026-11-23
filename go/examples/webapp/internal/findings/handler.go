@@ -20,6 +20,10 @@ func New(core *traust.Client) *Handler { return &Handler{core: core} }
 // Routes registers the feature's pages.
 func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /repositories/{id}/findings", web.SignedIn(h.findings))
+	mux.HandleFunc("GET /findings", web.SignedIn(h.allFindings))
+	mux.HandleFunc("GET /repositories/{id}/findings/summary", web.SignedIn(h.summary))
+	mux.HandleFunc("GET /repositories/{id}/findings/timeline", web.SignedIn(h.timeline))
+	mux.HandleFunc("GET /repositories/{id}/findings/by-fingerprint", web.SignedIn(h.byFingerprint))
 	mux.HandleFunc("GET /repositories/{id}/assessments", web.SignedIn(h.assessments))
 	mux.HandleFunc("GET /assessments", web.SignedIn(h.allAssessments))
 	mux.HandleFunc("GET /assessments/{id}", web.SignedIn(h.assessment))

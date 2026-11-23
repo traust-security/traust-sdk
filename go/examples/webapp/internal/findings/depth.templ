@@ -1,0 +1,87 @@
+package findings
+
+import (
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// findingsPage is the person's findings across every repository core records for them, grouped by
+// repository and narrowed by the severity and state asked for; each group looks a finding up by
+// its fingerprint.
+templ findingsPage(sections []section) {
+	@web.Page("Findings") {
+		<h1>Findings</h1>
+		<form method="get" action="/findings">
+			<label>
+				Severity
+				<select name="severity">
+					<option value="">any</option>
+					for _, s := range severities {
+						<option value={ string(s) }>{ string(s) }</option>
+					}
+				</select>
+			</label>
+			<label>
+				State
+				<select name="exposure">
+					<option value="">any</option>
+					for _, e := range exposures {
+						<option value={ string(e) }>{ string(e) }</option>
+					}
+				</select>
+			</label>
+			<button>Narrow</button>
+		</form>
+		if len(sections) == 0 {
+			<p>No repositories yet. <a href="/onboard">Onboard one.</a></p>
+		}
+		for _, s := range sections {
+			<section>
+				<h2><a href={ templ.URL("/repositories/" + s.Repository.Id.String()) }>{ s.Repository.Url }</a></h2>
+				<form method="get" action={ templ.URL("/repositories/" + s.Repository.Id.String() + "/findings/by-fingerprint") }>
+					<label>Fingerprint <input name="fingerprint" required placeholder="ORG-A-4C7F0B9-001"/></label>
+					<button>Look up</button>
+				</form>
+				if len(s.Found) == 0 {
+					<p>No findings.</p>
+				}
+				<ul>
+					for _, f := range s.Found {
+						<li>
+							<a href={ templ.URL("/findings/" + f.Finding.Id.String()) }>{ f.Finding.Title }</a>
+							<span class={ "sev", web.Severity(f.EffectiveSeverity) }>{ web.Severity(f.EffectiveSeverity) }</span> · { web.Validity(f.Disposition) }
+						</li>
+					}
+				</ul>
+			</section>
+		}
+	}
+}
+
+// summaryList is the repository page's summary section: its findings counted by severity, each
+// severity's states.
+templ summaryList(rollups []traust.FindingRollup) {
+	if len(rollups) == 0 {
+		<p>No findings yet. Run a scan.</p>
+	}
+	<dl>
+		for _, r := range rollups {
+			<dt>{ rollupKey(r) }</dt>
+			<dd>{ r.Findings } findings · { r.Open } open · { r.Resolved } resolved · { r.Accepted } accepted · { r.FalsePositives } false positives · { r.Hardening } hardening</dd>
+		}
+	</dl>
+}
+
+// timelineList is the repository page's timeline section: the repository's findings replayed
+// bucket by bucket, in core's order.
+templ timelineList(points []traust.FindingSeriesPoint) {
+	if len(points) == 0 {
+		<p>Nothing yet. Run a scan.</p>
+	}
+	<ul>
+		for _, p := range points {
+			<li>{ p.Bucket.Format("January 2006") }: { p.New } new · { openCount(p) } open · { p.Resolved } resolved · { p.Regressions } regressed</li>
+		}
+	</ul>
+}

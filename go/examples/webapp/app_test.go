@@ -911,3 +911,155 @@ func TestAssessmentRefusalsKeepTheirStatus(t *testing.T) {
 		}
 	}
 }
+
+func TestTheFindingsPageSpansThePersonsRepositories(t *testing.T) {
+	core := traustest.New(t)
+	repoA, repoB, inA, inB := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	core.Handle("GET /v1/repositories", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageRepository{Items: []traust.Repository{
+		{Id: &repoA, Url: "https://forge.example/org/a"},
+		{Id: &repoB, Url: "https://forge.example/org/b"},
+	}})))
+	high, medium := traust.SeverityHigh, traust.SeverityMedium
+	core.Handle("GET /v1/findings", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageFindingView{Items: []traust.FindingView{
+		{Finding: traust.Finding{Id: &inA, RepositoryId: repoA, Title: "SQL built from input"}, EffectiveSeverity: &high},
+		{Finding: traust.Finding{Id: &inB, RepositoryId: repoB, Title: "A path escapes the webroot"}, EffectiveSeverity: &medium},
+	}})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/findings?severity=high&severity=medium&exposure=open", "ada", nil).Body.String()
+	for _, want := range []string{
+		"<h1>Findings</h1>", `action="/findings"`,
+		`href="/repositories/` + repoA.String() + `">https://forge.example/org/a</a>`,
+		`href="/findings/` + inA.String() + `">SQL built from input</a>`,
+		`href="/repositories/` + repoB.String() + `">https://forge.example/org/b</a>`,
+		`href="/findings/` + inB.String() + `">A path escapes the webroot</a>`,
+		`action="/repositories/` + repoA.String() + `/findings/by-fingerprint"`,
+		`action="/repositories/` + repoB.String() + `/findings/by-fingerprint"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("findings page lacks %q:\n%s", want, page)
+		}
+	}
+	if a, b, c, d := strings.Index(page, repoA.String()), strings.Index(page, inA.String()), strings.Index(page, repoB.String()), strings.Index(page, inB.String()); !(a < b && b < c && c < d) {
+		t.Fatalf("findings page groups %d %d %d %d, want each repository before its findings", a, b, c, d)
+	}
+	asked := core.Requests()[1].Query
+	if len(asked["repository_ids"]) != 2 || len(asked["severity"]) != 2 || asked["severity"][0] != "high" || asked["severity"][1] != "medium" || asked.Get("exposure") != "open" {
+		t.Fatalf("core was asked %v, want both repositories and the filter passed through", asked)
+	}
+}
+
+func TestTheFindingsPageWithoutRepositoriesAsksCoreForNothing(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/repositories", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageRepository{})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/findings", "ada", nil).Body.String()
+	if !strings.Contains(page, "No repositories yet.") || strings.Contains(page, "<ul>") {
+		t.Fatalf("findings page: %s, want the honest absence and no list", page)
+	}
+	if n := len(core.Requests()); n != 1 {
+		t.Fatalf("core saw %d requests, want only the repositories listing", n)
+	}
+}
+
+func TestARepositorysFindingsAreSummarizedBySeverity(t *testing.T) {
+	core := traustest.New(t)
+	repo, ref := uuid.New(), uuid.New()
+	core.Handle("GET /v1/repositories/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Repository{Id: &repo, Url: "https://forge.example/org/a"})))
+	core.Handle("GET /v1/repositories/{id}/refs/current-default", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{Id: &ref, RepositoryId: repo})))
+	high, low := "high", "low"
+	core.Handle("GET /v1/repositories/{id}/findings/summary", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.FindingRollup{
+		{Key: &high, Findings: 3, Open: 2, Resolved: 1},
+		{Key: &low, Findings: 1, FalsePositives: 1},
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/repositories/"+repo.String(), "ada", nil).Body.String()
+	for _, want := range []string{
+		`hx-get="/repositories/` + repo.String() + `/findings/summary"`,
+		`hx-get="/repositories/` + repo.String() + `/findings/timeline"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("repository page lacks its lazy %q:\n%s", want, page)
+		}
+	}
+	section := send(h, http.MethodGet, "/repositories/"+repo.String()+"/findings/summary", "ada", nil).Body.String()
+	for _, want := range []string{
+		"<dt>high</dt>", "<dd>3 findings · 2 open · 1 resolved · 0 accepted · 0 false positives · 0 hardening</dd>",
+		"<dt>low</dt>", "<dd>1 findings · 0 open · 0 resolved · 0 accepted · 1 false positives · 0 hardening</dd>",
+	} {
+		if !strings.Contains(section, want) {
+			t.Fatalf("summary lacks %q:\n%s", want, section)
+		}
+	}
+	if groupBy := core.Requests()[len(core.Requests())-1].Query.Get("group_by"); groupBy != "severity" {
+		t.Fatalf("summary grouped by %q, want severity", groupBy)
+	}
+}
+
+func TestARepositorysFindingsAreReplayedBucketByBucket(t *testing.T) {
+	core := traustest.New(t)
+	repo := uuid.New()
+	core.Handle("GET /v1/repositories/{id}/findings/timeline", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.FindingSeriesPoint{
+		{Bucket: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), New: 2, OpenBySeverity: map[string]int{"high": 2}},
+		{Bucket: time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC), New: 1, Resolved: 2, Regressions: 1, OpenBySeverity: map[string]int{"high": 1}},
+	})))
+
+	section := send(newApp(t, core), http.MethodGet, "/repositories/"+repo.String()+"/findings/timeline", "ada", nil).Body.String()
+	for _, want := range []string{
+		"January 2026: 2 new · 2 open · 0 resolved · 0 regressed",
+		"February 2026: 1 new · 1 open · 2 resolved · 1 regressed",
+	} {
+		if !strings.Contains(section, want) {
+			t.Fatalf("timeline lacks %q:\n%s", want, section)
+		}
+	}
+	if strings.Index(section, "January 2026") > strings.Index(section, "February 2026") {
+		t.Fatalf("timeline: %s, want the buckets in core's order", section)
+	}
+}
+
+func TestLookingUpAFindingByItsFingerprint(t *testing.T) {
+	core := traustest.New(t)
+	repo, found := uuid.New(), uuid.New()
+	core.Handle("GET /v1/repositories/{id}/findings/by-fingerprint", onlyFor("ada", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("fingerprint") != "ORG-A-4C7F0B9-001" {
+			traustest.Problem(http.StatusNotFound, "no such finding").ServeHTTP(w, r)
+			return
+		}
+		traustest.JSON(http.StatusOK, traust.FindingView{Finding: traust.Finding{Id: &found, RepositoryId: repo, Title: "SQL built from input"}}).ServeHTTP(w, r)
+	})))
+	h := newApp(t, core)
+	path := "/repositories/" + repo.String() + "/findings/by-fingerprint"
+
+	hit := send(h, http.MethodGet, path+"?fingerprint=ORG-A-4C7F0B9-001", "ada", nil)
+	if hit.Code != http.StatusSeeOther || hit.Header().Get("Location") != "/findings/"+found.String() {
+		t.Fatalf("a hit: %d %s, want a redirect to the finding's page", hit.Code, hit.Header().Get("Location"))
+	}
+	miss := send(h, http.MethodGet, path+"?fingerprint=ORG-A-4C7F0B9-404", "ada", nil)
+	if miss.Code != http.StatusNotFound || !strings.Contains(miss.Body.String(), "No finding matches that fingerprint.") {
+		t.Fatalf("a miss: %d %s, want not found said plainly", miss.Code, miss.Body)
+	}
+}
+
+func TestFindingsDepthRefusalsKeepTheirStatus(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/repositories", traustest.Problem(http.StatusForbidden, "repositories are an admin's"))
+	core.Handle("GET /v1/findings", traustest.Problem(http.StatusForbidden, "cross-repository findings are an admin's"))
+	core.Handle("GET /v1/repositories/{id}/findings/summary", traustest.Problem(http.StatusForbidden, "a summary is an admin's"))
+	core.Handle("GET /v1/repositories/{id}/findings/timeline", traustest.Problem(http.StatusForbidden, "a timeline is an admin's"))
+	core.Handle("GET /v1/repositories/{id}/findings/by-fingerprint", traustest.Problem(http.StatusForbidden, "a lookup is an admin's"))
+	h := newApp(t, core)
+	id := uuid.NewString()
+	for _, path := range []string{
+		"/findings",
+		"/repositories/" + id + "/findings/summary",
+		"/repositories/" + id + "/findings/timeline",
+		"/repositories/" + id + "/findings/by-fingerprint?fingerprint=ORG-A-4C7F0B9-001",
+	} {
+		if w := send(h, http.MethodGet, path, "ada", nil); w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "admin&#39;s") {
+			t.Fatalf("%s: %d %s, want core's refusal shown", path, w.Code, w.Body)
+		}
+	}
+}
