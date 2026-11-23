@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/identity"
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 	"github.com/traust-security/traust-sdk/go/v1/ops"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
@@ -23,7 +24,7 @@ func newApp(t *testing.T, core *traustest.Server) http.Handler {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return routes(core.Client(), pack.Pin())
+	return routes(core.Client(), pack.Pin(), nil)
 }
 
 // send makes one request, signed in when token is set.
@@ -78,6 +79,29 @@ func TestSignInKeepsOnlyATokenCoreAccepts(t *testing.T) {
 	cookies := accepted.Result().Cookies()
 	if accepted.Code != http.StatusSeeOther || len(cookies) != 1 || cookies[0].Value != "ada" || !cookies[0].HttpOnly {
 		t.Fatalf("an accepted token: %d %v, want a redirect and an HttpOnly session", accepted.Code, cookies)
+	}
+}
+
+func TestHomeOffersSSOOnlyWhenAnIssuerIsConfigured(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/whoami", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Principal{Display: "Ada"})))
+	pack, err := ops.LoadPack(packYAML)
+	if err != nil {
+		t.Fatal(err)
+	}
+	sso, err := identity.NewSSO("https://issuer.example", "webapp", "test-only-secret", "http://app.test/sso/callback")
+	if err != nil {
+		t.Fatal(err)
+	}
+	offers := send(routes(core.Client(), pack.Pin(), sso), http.MethodGet, "/", "", nil).Body.String()
+	for _, want := range []string{`href="/sso"`, "Sign in with SSO"} {
+		if !strings.Contains(offers, want) {
+			t.Fatalf("home with an issuer lacks %q:\n%s", want, offers)
+		}
+	}
+	plain := send(newApp(t, core), http.MethodGet, "/", "", nil).Body.String()
+	if strings.Contains(plain, "Sign in with SSO") {
+		t.Fatalf("home without an issuer offers SSO:\n%s", plain)
 	}
 }
 

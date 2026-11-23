@@ -21,7 +21,7 @@ templ Page(title string) {
 	</html>
 }
 
-templ SignIn(problem string) {
+templ SignIn(problem string, sso string) {
 	@Page("Sign in to traust") {
 		<form method="post" action="/sign-in">
 			<label>Your traust token <input type="password" name="token" required autofocus/></label>
@@ -30,6 +30,9 @@ templ SignIn(problem string) {
 				<p role="alert">{ problem }</p>
 			}
 		</form>
+		if sso != "" {
+			<p><a href={ sso }>Sign in with SSO</a></p>
+		}
 	}
 }
 

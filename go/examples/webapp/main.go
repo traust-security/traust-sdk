@@ -10,6 +10,7 @@ import (
 	_ "embed"
 	"errors"
 	"flag"
+	"fmt"
 	"log"
 	"log/slog"
 	"net/http"
@@ -36,15 +37,43 @@ var packYAML []byte
 func main() {
 	addr := flag.String("addr", "localhost:3000", "listen address")
 	forgeHosts := flag.String("forge-hosts", "github.com,gitlab.com", "the repository hosts a run may fetch from, comma-separated")
+	oidcIssuer := flag.String("oidc-issuer", "", "the OIDC issuer people sign in with; empty offers pasted-token sign-in only")
+	oidcClientID := flag.String("oidc-client-id", "", "the app's client id at the issuer")
+	oidcSecretFile := flag.String("oidc-client-secret-file", "", "a file holding the app's client secret; empty for a public client")
+	oidcRedirect := flag.String("oidc-redirect-url", "", "where the issuer sends the person back, e.g. http://localhost:3000/sso/callback")
 	flag.Parse()
 	ctx, stop := signal.NotifyContext(context.Background(), os.Interrupt, syscall.SIGTERM)
 	defer stop()
-	if err := run(ctx, *addr, strings.Split(*forgeHosts, ",")); err != nil {
+	secret, err := clientSecret(*oidcSecretFile)
+	if err != nil {
+		log.Fatal(err)
+	}
+	sso, err := identity.NewSSO(*oidcIssuer, *oidcClientID, secret, *oidcRedirect)
+	if err != nil {
+		log.Fatal(err)
+	}
+	if err := run(ctx, *addr, strings.Split(*forgeHosts, ","), sso); err != nil {
 		log.Fatal(err)
 	}
 }
 
-func run(ctx context.Context, addr string, forgeHosts []string) error {
+// clientSecret reads the OIDC client secret file, whole and trimmed; no file is a public client.
+func clientSecret(path string) (string, error) {
+	if path == "" {
+		return "", nil
+	}
+	raw, err := os.ReadFile(path)
+	if err != nil {
+		return "", fmt.Errorf("reading the OIDC client secret: %w", err)
+	}
+	secret := strings.TrimSpace(string(raw))
+	if secret == "" {
+		return "", fmt.Errorf("the OIDC client secret file %s is empty", path)
+	}
+	return secret, nil
+}
+
+func run(ctx context.Context, addr string, forgeHosts []string, sso *identity.SSO) error {
 	cfg, err := traust.LoadConfig()
 	if err != nil {
 		return err
@@ -61,15 +90,15 @@ func run(ctx context.Context, addr string, forgeHosts []string) error {
 	if err != nil {
 		return err
 	}
-	server := &http.Server{Addr: addr, Handler: routes(core, pack.Pin()), ReadHeaderTimeout: 10 * time.Second}
+	server := &http.Server{Addr: addr, Handler: routes(core, pack.Pin(), sso), ReadHeaderTimeout: 10 * time.Second}
 	return serve(ctx, server, runner)
 }
 
 // routes wires the web app: the shared server, then each feature's pages.
-func routes(core *traust.Client, pack traust.ConfigDigest) http.Handler {
+func routes(core *traust.Client, pack traust.ConfigDigest, sso *identity.SSO) http.Handler {
 	return web.Handler(
-		identity.New(core).Routes,
-		inventory.New(core).Routes,
+		identity.New(core, sso).Routes,
+		inventory.New(core, sso.Link()).Routes,
 		runs.New(core, pack).Routes,
 		findings.New(core).Routes,
 		ledger.New(core).Routes,

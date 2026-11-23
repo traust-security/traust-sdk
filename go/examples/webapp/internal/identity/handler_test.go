@@ -14,7 +14,7 @@ import (
 // app is identity's routes alone: the layout's two asks, no feature pages.
 func app(core *traustest.Server) http.Handler {
 	mux := http.NewServeMux()
-	New(core.Client()).Routes(mux)
+	New(core.Client(), nil).Routes(mux)
 	return mux
 }
 

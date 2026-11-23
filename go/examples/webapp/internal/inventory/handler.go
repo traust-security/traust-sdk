@@ -16,7 +16,10 @@ import (
 )
 
 // Handler serves the person's repositories and their pages.
-type Handler struct{ core *traust.Client }
+type Handler struct {
+	core *traust.Client
+	sso  string
+}
 
 // tally is one row of a count: a label and its number, as core answered them.
 type tally struct {
@@ -30,8 +33,8 @@ type card struct {
 	Rows  []tally
 }
 
-// New builds the feature's handler.
-func New(core *traust.Client) *Handler { return &Handler{core: core} }
+// New builds the feature's handler; sso links the sign-in page's SSO offer, "" for none.
+func New(core *traust.Client, sso string) *Handler { return &Handler{core: core, sso: sso} }
 
 // Routes registers the feature's pages.
 func (h *Handler) Routes(mux *http.ServeMux) {
@@ -59,14 +62,14 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 func (h *Handler) home(w http.ResponseWriter, r *http.Request) {
 	cookie, err := r.Cookie(web.SessionCookie)
 	if err != nil {
-		web.Render(w, r, http.StatusOK, web.SignIn(""))
+		web.Render(w, r, http.StatusOK, web.SignIn("", h.sso))
 		return
 	}
 	ctx := traust.OnBehalfOf(r.Context(), cookie.Value)
 	me, err := h.core.Whoami(ctx)
 	if errors.Is(err, traust.ErrUnauthorized) {
 		http.SetCookie(w, &http.Cookie{Name: web.SessionCookie, MaxAge: -1})
-		web.Render(w, r, http.StatusUnauthorized, web.SignIn("Your session ended. Sign in again."))
+		web.Render(w, r, http.StatusUnauthorized, web.SignIn("Your session ended. Sign in again.", h.sso))
 		return
 	}
 	if err != nil {
