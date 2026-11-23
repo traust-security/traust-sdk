@@ -23,9 +23,14 @@ var (
 	ErrNoProfile = errors.New("traust: no profile selected")
 	// ErrUnknownProfile: the selected profile is not in the config file.
 	ErrUnknownProfile = errors.New("traust: unknown profile")
+	// ErrProfileBothCredentials: a profile names a token_file and a client identity.
+	ErrProfileBothCredentials = errors.New("names both a token_file and a client identity")
+	// ErrProfileNoCredential: a profile names neither a token_file nor a client identity.
+	ErrProfileNoCredential = errors.New("names no credential")
 )
 
-// ProfileKeyError reports a profile in the config file that is missing its url or token_file.
+// ProfileKeyError reports a profile in the config file that is missing its url or one of the
+// credential keys.
 type ProfileKeyError struct {
 	Profile string
 	Key     string
@@ -34,6 +39,20 @@ type ProfileKeyError struct {
 func (e *ProfileKeyError) Error() string {
 	return fmt.Sprintf("traust: profile %q has no %s", e.Profile, e.Key)
 }
+
+// ProfileCredentialError reports a profile in the config file that does not name exactly one
+// credential: token_file, or the client-credentials trio. Err is ErrProfileBothCredentials or
+// ErrProfileNoCredential.
+type ProfileCredentialError struct {
+	Profile string
+	Err     error
+}
+
+func (e *ProfileCredentialError) Error() string {
+	return fmt.Sprintf("traust: profile %q %s", e.Profile, e.Err)
+}
+
+func (e *ProfileCredentialError) Unwrap() error { return e.Err }
 
 // ProfileOption tunes which profile LoadConfig selects.
 type ProfileOption func(*profileChoice)
@@ -46,8 +65,12 @@ func Profile(name string) ProfileOption {
 type profileChoice struct{ name string }
 
 type profileEntry struct {
-	URL       string `yaml:"url"`
-	TokenFile string `yaml:"token_file"`
+	URL              string   `yaml:"url"`
+	TokenFile        string   `yaml:"token_file"`
+	TokenURL         string   `yaml:"token_url"`
+	ClientID         string   `yaml:"client_id"`
+	ClientSecretFile string   `yaml:"client_secret_file"`
+	Scopes           []string `yaml:"scopes"`
 }
 
 type profileFile struct {
@@ -57,8 +80,12 @@ type profileFile struct {
 
 // LoadConfig builds a Config from a profile in ~/.traust/config.yaml: the one opts name (Profile),
 // else TRAUST_PROFILE, else the file's default. TRAUST_URL and TRAUST_TOKEN_FILE override the
-// profile, and with both set no file is needed. The token comes from FileTokenSource on the
-// profile's token_file (a leading ~/ expanded against the home directory).
+// profile, and with both set no file is needed; TRAUST_TOKEN_FILE selects the token-file
+// credential. The profile names exactly one credential: a token_file (a leading ~/ expanded,
+// served by FileTokenSource so rotated tokens just work), or a machine identity — token_url,
+// client_id and client_secret_file, with optional scopes — served by ClientCredentialsTokenSource.
+// The client secret is read from its file here (a leading ~/ expanded, a trailing newline
+// trimmed), never from the config file itself.
 func LoadConfig(opts ...ProfileOption) (Config, error) {
 	var choice profileChoice
 	for _, opt := range opts {
@@ -91,10 +118,11 @@ func LoadConfig(opts ...ProfileOption) (Config, error) {
 			url = entry.URL
 		}
 		if tokenFile == "" {
-			if entry.TokenFile == "" {
-				return Config{}, &ProfileKeyError{Profile: name, Key: "token_file"}
+			tokens, err := profileTokens(name, entry)
+			if err != nil {
+				return Config{}, err
 			}
-			tokenFile = entry.TokenFile
+			return Config{BaseURL: url, Tokens: tokens}, nil
 		}
 	}
 	tokenFile, err := expandHome(tokenFile)
@@ -102,6 +130,45 @@ func LoadConfig(opts ...ProfileOption) (Config, error) {
 		return Config{}, err
 	}
 	return Config{BaseURL: url, Tokens: FileTokenSource{Path: tokenFile}}, nil
+}
+
+// profileTokens builds the profile's one credential: token_file, or the client-credentials trio
+// (token_url, client_id, client_secret_file) built with NewClientCredentialsTokenSource so its
+// validation applies.
+func profileTokens(name string, entry profileEntry) (TokenSource, error) {
+	hasTrio := entry.TokenURL != "" || entry.ClientID != "" || entry.ClientSecretFile != ""
+	switch {
+	case entry.TokenFile != "" && hasTrio:
+		return nil, &ProfileCredentialError{Profile: name, Err: ErrProfileBothCredentials}
+	case entry.TokenFile != "":
+		path, err := expandHome(entry.TokenFile)
+		if err != nil {
+			return nil, err
+		}
+		return FileTokenSource{Path: path}, nil
+	case !hasTrio:
+		return nil, &ProfileCredentialError{Profile: name, Err: ErrProfileNoCredential}
+	case entry.TokenURL == "":
+		return nil, &ProfileKeyError{Profile: name, Key: "token_url"}
+	case entry.ClientID == "":
+		return nil, &ProfileKeyError{Profile: name, Key: "client_id"}
+	case entry.ClientSecretFile == "":
+		return nil, &ProfileKeyError{Profile: name, Key: "client_secret_file"}
+	}
+	secretPath, err := expandHome(entry.ClientSecretFile)
+	if err != nil {
+		return nil, err
+	}
+	raw, err := os.ReadFile(secretPath) // #nosec G304 -- the path is the profile's client_secret_file
+	if err != nil {
+		return nil, fmt.Errorf("traust: reading the client secret: %w", err)
+	}
+	return NewClientCredentialsTokenSource(ClientCredentialsTokenSource{
+		TokenURL:     entry.TokenURL,
+		ClientID:     entry.ClientID,
+		ClientSecret: strings.TrimRight(string(raw), "\r\n"),
+		Scopes:       entry.Scopes,
+	})
 }
 
 // readProfileFile decodes ~/.traust/config.yaml strictly: a key it does not know is an error.

@@ -4,6 +4,7 @@ import (
 	"errors"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"testing"
 )
@@ -19,16 +20,37 @@ profiles:
     token_file: /var/run/staging-token
 `
 
+// A machine identity: the client-credentials trio, optional scopes, the secret in a file.
+const identityConfig = `profiles:
+  ci:
+    url: https://core.example.com
+    token_url: https://issuer.example.com/token
+    client_id: ci-runner
+    client_secret_file: ~/client-secret
+    scopes:
+      - findings:read
+      - findings:write
+`
+
 func TestLoadConfigConnectsFromAProfile(t *testing.T) {
 	tests := []struct {
 		name      string
 		opts      []ProfileOption
 		env       map[string]string
 		file      string // config.yaml contents; "" writes none
+		secret    string // contents of ~/client-secret; "" writes none
 		wantURL   string
 		wantToken string // wantTokenFile, absolute
-		wantErr   error
-		wantKey   *ProfileKeyError
+		// wantCC: the wanted ClientCredentialsTokenSource fields.
+		wantTokenURL     string
+		wantClientID     string
+		wantClientSecret string
+		wantScopes       []string
+		wantErr          error
+		wantText         string // substring of the error message
+		wantPath         string // path (under home) the error message must name
+		wantKey          *ProfileKeyError
+		wantCred         *ProfileCredentialError
 	}{
 		{
 			name:      "both env vars set need no config file",
@@ -80,22 +102,72 @@ func TestLoadConfigConnectsFromAProfile(t *testing.T) {
 			wantToken: "/var/run/env-token",
 		},
 		{
+			name:      "TRAUST_TOKEN_FILE overrides the profile's client identity",
+			opts:      []ProfileOption{Profile("ci")},
+			env:       map[string]string{"TRAUST_TOKEN_FILE": "/var/run/env-token"},
+			file:      identityConfig,
+			wantURL:   "https://core.example.com",
+			wantToken: "/var/run/env-token",
+		},
+		{
+			name:             "a machine-identity profile builds a ClientCredentialsTokenSource",
+			opts:             []ProfileOption{Profile("ci")},
+			file:             identityConfig,
+			secret:           "ci-secret\n",
+			wantURL:          "https://core.example.com",
+			wantTokenURL:     "https://issuer.example.com/token",
+			wantClientID:     "ci-runner",
+			wantClientSecret: "ci-secret", // the trailing newline is trimmed
+			wantScopes:       []string{"findings:read", "findings:write"},
+		},
+		{
+			name:             "scopes are optional on a machine identity",
+			opts:             []ProfileOption{Profile("ci")},
+			file:             "profiles:\n  ci:\n    url: https://core.example.com\n    token_url: https://issuer.example.com/token\n    client_id: ci-runner\n    client_secret_file: ~/client-secret\n",
+			secret:           "ci-secret",
+			wantURL:          "https://core.example.com",
+			wantTokenURL:     "https://issuer.example.com/token",
+			wantClientID:     "ci-runner",
+			wantClientSecret: "ci-secret",
+		},
+		{
 			name:    "an unknown profile fails closed",
 			opts:    []ProfileOption{Profile("nope")},
 			file:    profileConfig,
 			wantErr: ErrUnknownProfile,
 		},
 		{
-			name:    "a missing token_file names the profile and the key",
-			opts:    []ProfileOption{Profile("broken")},
-			file:    "profiles:\n  broken:\n    url: https://core.example.com\n",
-			wantKey: &ProfileKeyError{Profile: "broken", Key: "token_file"},
+			name:     "a profile with no credential names the profile",
+			opts:     []ProfileOption{Profile("broken")},
+			file:     "profiles:\n  broken:\n    url: https://core.example.com\n",
+			wantCred: &ProfileCredentialError{Profile: "broken", Err: ErrProfileNoCredential},
 		},
 		{
-			name:    "a missing url names the profile and the key",
-			opts:    []ProfileOption{Profile("broken")},
-			file:    "profiles:\n  broken:\n    token_file: /var/run/token\n",
-			wantKey: &ProfileKeyError{Profile: "broken", Key: "url"},
+			name:     "a profile with both credentials names the profile",
+			opts:     []ProfileOption{Profile("both")},
+			file:     "profiles:\n  both:\n    url: https://core.example.com\n    token_file: /var/run/token\n    token_url: https://issuer.example.com/token\n    client_id: ci-runner\n    client_secret_file: ~/client-secret\n",
+			secret:   "ci-secret",
+			wantCred: &ProfileCredentialError{Profile: "both", Err: ErrProfileBothCredentials},
+		},
+		{
+			name:    "an incomplete client-credentials trio names the missing key",
+			opts:    []ProfileOption{Profile("ci")},
+			file:    "profiles:\n  ci:\n    url: https://core.example.com\n    token_url: https://issuer.example.com/token\n    client_id: ci-runner\n",
+			wantKey: &ProfileKeyError{Profile: "ci", Key: "client_secret_file"},
+		},
+		{
+			name:     "a missing client secret file names the path, never a secret",
+			opts:     []ProfileOption{Profile("ci")},
+			file:     "profiles:\n  ci:\n    url: https://core.example.com\n    token_url: https://issuer.example.com/token\n    client_id: ci-runner\n    client_secret_file: ~/client-secret\n",
+			wantErr:  os.ErrNotExist,
+			wantPath: "client-secret",
+		},
+		{
+			name:     "an http token_url off loopback is refused",
+			opts:     []ProfileOption{Profile("ci")},
+			file:     "profiles:\n  ci:\n    url: https://core.example.com\n    token_url: http://issuer.example.com/token\n    client_id: ci-runner\n    client_secret_file: ~/client-secret\n",
+			secret:   "ci-secret",
+			wantText: "must be https",
 		},
 		{
 			name: "an unknown key in the file fails closed",
@@ -139,6 +211,11 @@ func TestLoadConfigConnectsFromAProfile(t *testing.T) {
 					t.Fatal(err)
 				}
 			}
+			if tt.secret != "" {
+				if err := os.WriteFile(filepath.Join(home, "client-secret"), []byte(tt.secret), 0o600); err != nil {
+					t.Fatal(err)
+				}
+			}
 			cfg, err := LoadConfig(tt.opts...)
 			switch {
 			case tt.wantErr != nil:
@@ -152,6 +229,39 @@ func TestLoadConfigConnectsFromAProfile(t *testing.T) {
 				}
 				if *keyErr != *tt.wantKey {
 					t.Errorf("LoadConfig() key error = %+v, want %+v", *keyErr, *tt.wantKey)
+				}
+			case tt.wantCred != nil:
+				var credErr *ProfileCredentialError
+				if !errors.As(err, &credErr) {
+					t.Fatalf("LoadConfig() error = %v, want %v", err, tt.wantCred)
+				}
+				if *credErr != *tt.wantCred {
+					t.Errorf("LoadConfig() credential error = %+v, want %+v", *credErr, *tt.wantCred)
+				}
+			case tt.wantText != "":
+				if err == nil || !strings.Contains(err.Error(), tt.wantText) {
+					t.Fatalf("LoadConfig() error = %v, want it to mention %q", err, tt.wantText)
+				}
+			case tt.wantTokenURL != "":
+				if err != nil {
+					t.Fatalf("LoadConfig() error = %v", err)
+				}
+				if cfg.BaseURL != tt.wantURL {
+					t.Errorf("BaseURL = %q, want %q", cfg.BaseURL, tt.wantURL)
+				}
+				cc, ok := cfg.Tokens.(*ClientCredentialsTokenSource)
+				if !ok {
+					t.Fatalf("Tokens = %T, want *ClientCredentialsTokenSource", cfg.Tokens)
+				}
+				if cc.TokenURL != tt.wantTokenURL || cc.ClientID != tt.wantClientID || cc.ClientSecret != tt.wantClientSecret {
+					t.Errorf("token source = {%s %s %q}, want {%s %s %q}",
+						cc.TokenURL, cc.ClientID, cc.ClientSecret, tt.wantTokenURL, tt.wantClientID, tt.wantClientSecret)
+				}
+				if !slices.Equal(cc.Scopes, tt.wantScopes) {
+					t.Errorf("scopes = %v, want %v", cc.Scopes, tt.wantScopes)
+				}
+				if cc.cache == nil {
+					t.Error("token source was not built with NewClientCredentialsTokenSource")
 				}
 			case tt.wantURL == "" && tt.wantToken == "":
 				if err == nil {
@@ -175,6 +285,9 @@ func TestLoadConfigConnectsFromAProfile(t *testing.T) {
 				if tokens.Path != want {
 					t.Errorf("token file = %q, want %q", tokens.Path, want)
 				}
+			}
+			if tt.wantPath != "" && (err == nil || !strings.Contains(err.Error(), filepath.Join(home, tt.wantPath))) {
+				t.Errorf("LoadConfig() error = %v, want it to name %s", err, filepath.Join(home, tt.wantPath))
 			}
 		})
 	}

@@ -39,6 +39,9 @@ Every operation is a method named after core's operation — `client.GetReposito
 `Config` also takes your own `*http.Client`, the retry count and the backoff. Reads (GET)
 retry on 429, 502, 503, 504 and transport errors; writes are never retried.
 
+A `LoadConfig` profile can name a machine identity instead of a `token_file`: `token_url`, `client_id`,
+`client_secret_file` (a leading `~/` expands), optional `scopes` — the secret is read from the file, never the config.
+
 ## Read
 
 ```go
