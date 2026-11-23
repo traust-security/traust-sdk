@@ -36,6 +36,7 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /runs/{token}", web.SignedIn(h.runStatus))
 	mux.HandleFunc("GET /runs/{token}/detail", web.SignedIn(h.runDetail))
 	mux.HandleFunc("GET /repositories/{id}/runs", web.SignedIn(h.runHistory))
+	mux.HandleFunc("GET /activity", web.SignedIn(h.activity))
 }
 
 func (h *Handler) startRun(w http.ResponseWriter, r *http.Request) {

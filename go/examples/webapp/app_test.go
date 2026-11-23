@@ -1390,3 +1390,82 @@ func TestAdvisoryRefusalsKeepTheirStatus(t *testing.T) {
 		}
 	}
 }
+
+// the fixture's second page releases the product the first page's events are about.
+var (
+	product        = uuid.New()
+	productRelease = uuid.New()
+)
+
+// feedPage answers the feed as core would: the first page without a cursor, the second with one,
+// and nothing after that.
+func feedPage(t *testing.T, first traust.PageFeedEvent) http.Handler {
+	t.Helper()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("after") == "" {
+			traustest.JSON(http.StatusOK, first).ServeHTTP(w, r)
+			return
+		}
+		recorded := time.Unix(0, 0).UTC()
+		traustest.JSON(http.StatusOK, traust.PageFeedEvent{Items: []traust.FeedEvent{{
+			Release: &traust.Release{Id: &productRelease, ProductId: product, Version: "1.2.3", CreatedAt: &recorded},
+		}}}).ServeHTTP(w, r)
+	})
+}
+
+func TestTheActivityFeedShowsEachChangeAndPagesByCoresCursor(t *testing.T) {
+	core := traustest.New(t)
+	repo, order, examined, ref := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	ran, recorded := time.Unix(0, 0).UTC(), time.Unix(1, 0).UTC()
+	scan := anAssessment(t, examined, ref, traust.AssessmentKindScanner, "recorded")
+	scan.CreatedAt = &recorded
+	cursor := "next-page"
+	core.Handle("GET /v1/feed", onlyFor("ada", feedPage(t, traust.PageFeedEvent{
+		Items: []traust.FeedEvent{
+			{Order: &traust.RunOrder{Id: &order, Asset: "full_audit", RepositoryId: &repo, RequestedBy: "ada", State: traust.RunOrderStateSucceeded, UpdatedAt: &ran}},
+			{Assessment: &scan},
+		},
+		Next: &cursor,
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/activity", "ada", nil).Body.String()
+	for _, want := range []string{
+		`href="/activity"`,
+		"succeeded run of",
+		`<a href="/repositories/` + repo.String() + `/runs">full_audit</a>`,
+		"requested by ada",
+		`<a href="/assessments/` + examined.String() + `">scanner</a>`,
+		"assessment recorded · by webapp-fixture",
+		`hx-get="/activity?after=next-page"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("the feed's first page lacks %q:\n%s", want, page)
+		}
+	}
+	if assessment, run := strings.Index(page, "assessment recorded"), strings.Index(page, "succeeded run of"); assessment > run {
+		t.Fatalf("the feed lists the run before the later assessment:\n%s", page)
+	}
+	more := send(h, http.MethodGet, "/activity?after=next-page", "ada", nil)
+	if body := more.Body.String(); !strings.Contains(body, `<a href="/products/`+product.String()+`">1.2.3</a>`) || strings.Contains(body, ">More<") {
+		t.Fatalf("the feed's next page: %s, want the release and no further page", body)
+	}
+	var asked string
+	for _, req := range core.Requests() {
+		if req.Path == "/v1/feed" && req.Query.Get("after") == "next-page" {
+			asked = "next-page"
+		}
+	}
+	if asked != "next-page" {
+		t.Fatalf("core was asked %v, want the more link's cursor passed through", core.Requests())
+	}
+}
+
+func TestTheActivityFeedKeepsCoresRefusal(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/feed", traustest.Problem(http.StatusForbidden, "the feed is an admin's"))
+	w := send(newApp(t, core), http.MethodGet, "/activity", "ada", nil)
+	if w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "an admin&#39;s") {
+		t.Fatalf("a refused feed: %d %s, want core's refusal kept", w.Code, w.Body)
+	}
+}

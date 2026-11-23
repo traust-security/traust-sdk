@@ -1,0 +1,81 @@
+package runs
+
+import (
+	"time"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// activityPage is core's ops feed: every change it holds — an order stopping or finishing, an
+// assessment recorded, a release shipped — newest first, a page at a time.
+templ activityPage(page traust.PageFeedEvent) {
+	@web.Page("Activity") {
+		<h1>Activity</h1>
+		<ul>
+			@feedRows(page)
+		</ul>
+	}
+}
+
+// feedRows is one page of the feed, newest first, then the link that asks core for the next page
+// when it still has one.
+templ feedRows(page traust.PageFeedEvent) {
+	if len(page.Items) == 0 && page.Next == nil {
+		<li>Nothing has changed yet.</li>
+	}
+	for _, e := range newestFirst(page.Items) {
+		if e.Order != nil {
+			@orderEvent(e.Order)
+		}
+		if e.Assessment != nil {
+			@assessmentEvent(e.Assessment)
+		}
+		if e.Release != nil {
+			@releaseEvent(e.Release)
+		}
+	}
+	if page.Next != nil {
+		<li><button hx-get={ morePath(*page.Next) } hx-target="this" hx-swap="outerHTML">More</button></li>
+	}
+}
+
+// orderEvent is one order reaching a state core feeds on, by whoever asked for the run.
+templ orderEvent(o *traust.RunOrder) {
+	<li>
+		{ string(o.State) } run of
+		if o.RepositoryId != nil {
+			<a href={ templ.URL("/repositories/" + o.RepositoryId.String() + "/runs") }>{ o.Asset }</a>
+		} else {
+			{ o.Asset }
+		}
+		if reason := web.Text(o.Reason); reason != "" {
+			· { reason }
+		}
+		· requested by { o.RequestedBy }
+		if o.UpdatedAt != nil {
+			· { o.UpdatedAt.Format(time.RFC3339) }
+		}
+	</li>
+}
+
+// assessmentEvent is one recorded assessment, by whatever recorded it.
+templ assessmentEvent(a *traust.Assessment) {
+	<li>
+		<a href={ templ.URL("/assessments/" + a.Id.String()) }>{ assessmentKind(*a) }</a> assessment { a.Status } · by { a.Assessor }
+		if a.CreatedAt != nil {
+			· { a.CreatedAt.Format(time.RFC3339) }
+		}
+	</li>
+}
+
+// releaseEvent is one recorded release of a product.
+templ releaseEvent(rel *traust.Release) {
+	<li>
+		release <a href={ templ.URL("/products/" + rel.ProductId.String()) }>{ rel.Version }</a>
+		if rel.CreatedAt != nil {
+			· { rel.CreatedAt.Format(time.RFC3339) }
+		}
+	</li>
+}
