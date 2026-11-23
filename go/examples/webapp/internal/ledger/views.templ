@@ -24,6 +24,7 @@ templ ledger(repo string, layers []traust.Layer) {
 					} else {
 						unsigned
 					}
+					· <a href={ templ.URL("/layers/" + l.Id.String()) }>detail</a>
 					<button hx-post={ "/layers/" + l.Id.String() + "/verify" } hx-target="next .verdict">Verify</button>
 					<span class="verdict"></span>
 				</li>

@@ -1,0 +1,62 @@
+package ledger
+
+import (
+	"fmt"
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// layerTitle words a layer for the page's heading.
+func layerTitle(layer traust.Layer) string {
+	if line := web.Text(layer.Line); line != "" {
+		return line + " layer"
+	}
+	return "A ledger layer"
+}
+
+// layerPage is one layer of a repository's ledger: the seal core keeps it under, and the events
+// it holds, a page at a time.
+templ layerPage(id uuid.UUID, layer traust.Layer, page traust.PageEvent) {
+	@web.Page(layerTitle(layer)) {
+		<h1>{ layerTitle(layer) }</h1>
+		<p>
+			{ web.Text(layer.Line) } layer { fmt.Sprint(web.Value(layer.MerkleEpoch)) } ·
+			{ fmt.Sprint(web.Value(layer.MerkleSize)) } events · root { web.Short(layer.MerkleRoot) } ·
+			if layer.MerkleRootSignature != nil {
+				signed by { layer.MerkleSigningMethod }
+			} else {
+				unsigned
+			}
+			if layer.CreatedAt != nil {
+				· sealed { layer.CreatedAt.Format(time.RFC3339) }
+			}
+		</p>
+		<button hx-post={ "/layers/" + id.String() + "/verify" } hx-target="next .verdict">Verify</button>
+		<span class="verdict"></span>
+		<h2>Events</h2>
+		<ol class="events">
+			@layerEvents(id, page)
+		</ol>
+		<p><a href={ templ.URL("/repositories/" + layer.RepositoryId.String() + "/ledger") }>The repository's ledger</a></p>
+	}
+}
+
+// layerEvents is one page of the layer's events, then the link that asks core for the next when
+// it still has one.
+templ layerEvents(id uuid.UUID, page traust.PageEvent) {
+	for _, e := range page.Items {
+		<li>
+			#{ e.Seq } { e.EventPayload } on decision { e.DecisionId.String() }
+			if e.CreatedAt != nil {
+				· { e.CreatedAt.Format(time.RFC3339) }
+			}
+		</li>
+	}
+	if page.Next != nil {
+		<button hx-get={ eventsPath(id.String(), *page.Next) } hx-target="this" hx-swap="outerHTML">More events</button>
+	}
+}

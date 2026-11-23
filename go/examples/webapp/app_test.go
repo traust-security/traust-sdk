@@ -247,6 +247,71 @@ func TestTheLedgerVerifiesAndOnlyAnAdminCheckpoints(t *testing.T) {
 	}
 }
 
+// eventsPage answers the layer's events as core would: the first page without a cursor, the
+// second with one, and nothing after that.
+func eventsPage(t *testing.T, layer uuid.UUID, first traust.PageEvent) http.Handler {
+	t.Helper()
+	return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		if r.URL.Query().Get("cursor") == "" {
+			traustest.JSON(http.StatusOK, first).ServeHTTP(w, r)
+			return
+		}
+		traustest.JSON(http.StatusOK, traust.PageEvent{Items: []traust.Event{{Seq: 2, LayerId: layer, DecisionId: uuid.New(), EventPayload: "a severity restated"}}}).ServeHTTP(w, r)
+	})
+}
+
+func TestALayerPageShowsItsSealAndItsEventsAPageAtATime(t *testing.T) {
+	core := traustest.New(t)
+	repo, layer, decided := uuid.New(), uuid.New(), uuid.New()
+	line, epoch, size, root := "main", 3, 4, "abcdef0123456789"
+	signature, method, format := "f00d", "ed25519", 1
+	sealed := time.Unix(0, 0).UTC()
+	core.Handle("GET /v1/ledger/layers/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Layer{
+		Id: &layer, RepositoryId: repo, Line: &line, MerkleEpoch: &epoch, MerkleSize: &size, MerkleRoot: &root,
+		MerkleRootSignature: &signature, MerkleSigningMethod: method, MerkleSignatureFormat: &format, CreatedAt: &sealed,
+	})))
+	cursor := "next-page"
+	core.Handle("GET /v1/ledger/layers/{id}/events", onlyFor("ada", eventsPage(t, layer, traust.PageEvent{
+		Items: []traust.Event{{Seq: 1, LayerId: layer, DecisionId: decided, EventPayload: "a decision countersigned", CreatedAt: &sealed}},
+		Next:  &cursor,
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/layers/"+layer.String(), "ada", nil)
+	for _, want := range []string{
+		"main layer 3 · 4 events · root abcdef012345 · signed by ed25519",
+		"#1 a decision countersigned on decision " + decided.String(),
+		`hx-get="/layers/` + layer.String() + `/events?cursor=next-page"`,
+		`hx-post="/layers/` + layer.String() + `/verify"`,
+	} {
+		if !strings.Contains(page.Body.String(), want) {
+			t.Fatalf("layer page lacks %q:\n%s", want, page.Body)
+		}
+	}
+	more := send(h, http.MethodGet, "/layers/"+layer.String()+"/events?cursor=next-page", "ada", nil)
+	if body := more.Body.String(); !strings.Contains(body, "#2 a severity restated") || strings.Contains(body, "More events") {
+		t.Fatalf("the next page: %s, want the second page's events and no further page", body)
+	}
+	var asked string
+	for _, req := range core.Requests() {
+		if req.Path == "/v1/ledger/layers/"+layer.String()+"/events" && req.Query.Get("cursor") == "next-page" {
+			asked = "next-page"
+		}
+	}
+	if asked != "next-page" {
+		t.Fatalf("core was asked %v, want the more link's cursor passed through", core.Requests())
+	}
+}
+
+func TestALayerPageKeepsCoresRefusal(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/ledger/layers/{id}", traustest.Problem(http.StatusNotFound, "no such layer"))
+	w := send(newApp(t, core), http.MethodGet, "/layers/"+uuid.New().String(), "ada", nil)
+	if w.Code != http.StatusNotFound || !strings.Contains(w.Body.String(), "no such layer") {
+		t.Fatalf("a refused layer: %d %s, want core's refusal kept", w.Code, w.Body)
+	}
+}
+
 func TestAReportIsBuiltThenDownloaded(t *testing.T) {
 	core := traustest.New(t)
 	id := uuid.New()

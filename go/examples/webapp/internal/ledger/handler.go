@@ -20,6 +20,8 @@ func New(core *traust.Client) *Handler { return &Handler{core: core} }
 func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /repositories/{id}/ledger", web.SignedIn(h.ledger))
 	mux.HandleFunc("POST /repositories/{id}/checkpoint", web.SignedIn(h.checkpoint))
+	mux.HandleFunc("GET /layers/{id}", web.SignedIn(h.layer))
+	mux.HandleFunc("GET /layers/{id}/events", web.SignedIn(h.events))
 	mux.HandleFunc("POST /layers/{id}/verify", web.SignedIn(h.verify))
 }
 
