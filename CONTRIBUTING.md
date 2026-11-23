@@ -39,7 +39,7 @@ Use the language id as scope when the change is SDK-specific:
 ```
 feat(go): add harness provider interface
 fix(go): correct enum code generation
-ci: update shared gates              ← no language release required
+ci: update shared gates
 ```
 
 ## Hooks
@@ -51,25 +51,6 @@ ci: update shared gates              ← no language release required
 | `pre-push` | `go vet` + `go test ./...` | ~10s |
 
 Bypass: `--no-verify` on commit or push. CI still enforces.
-
-## Releasing
-
-Each language versions independently. Tag format: `{tag_prefix}/vX.Y.Z` (see `ci/languages.json`).
-
-If your PR has release-worthy commits (`feat`, `fix`, `perf`, or `!`) **for a language**:
-
-```bash
-make bump go minor
-make check-release
-git add go/VERSION
-git commit -m "chore(go): release X.Y.Z"
-```
-
-Only bump languages touched by the PR.
-
-CI/infra-only PRs: use `ci:` / `chore:` commits — no VERSION bump.
-
-Registry: `ci/languages.json`.
 
 ## CI pipeline
 

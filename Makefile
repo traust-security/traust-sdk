@@ -1,10 +1,7 @@
 PYTHON ?= python3
-RELEASE := ./release.py
 GO_DIR := go
-LANGS := go
-BUMP_PARTS := patch minor major
 
-.PHONY: help setup hooks lint lint-fix test test-integration security guardrails lean e2e check-release status bump $(LANGS) $(BUMP_PARTS)
+.PHONY: help setup hooks lint lint-fix test test-integration security guardrails lean e2e
 
 help:
 	@echo "Targets ($(notdir $(CURDIR))):"
@@ -18,9 +15,6 @@ help:
 	@echo "  make guardrails     — AGENTS.md rules a machine can check"
 	@echo "  make lean           — bloat gates vs LEAN_BASE: replace-is-delete, justified deps, generated-first"
 	@echo "  make e2e            — generated client vs traust-server at CORE_REF"
-	@echo "  make check-release  — per-language VERSION + CHANGELOG gate vs main"
-	@echo "  make status         — per-language version and tag state"
-	@echo "  make bump <lang> patch|minor|major — bump <lang>/VERSION"
 
 setup: hooks
 	@echo "ready — local hooks enabled (.githooks). Bypass: git commit --no-verify"
@@ -52,24 +46,3 @@ lean:
 
 e2e:
 	$(MAKE) -C $(GO_DIR) e2e
-
-check-release:
-	@base="$${RELEASE_BASE:-origin/main}"; \
-	head="$${RELEASE_HEAD:-HEAD}"; \
-	$(PYTHON) ci/gates.py mr "$$base" "$$head"
-
-$(LANGS) $(BUMP_PARTS):
-	@:
-
-status:
-	$(PYTHON) $(RELEASE) status
-
-bump:
-	@lang="$(filter $(LANGS),$(MAKECMDGOALS))"; \
-	part="$(filter $(BUMP_PARTS),$(MAKECMDGOALS))"; \
-	if [ -z "$$lang" ] || [ -z "$$part" ]; then \
-		echo "usage: make bump <lang> patch|minor|major" >&2; \
-		echo "langs: $(LANGS)" >&2; \
-		exit 1; \
-	fi; \
-	$(PYTHON) $(RELEASE) bump $$lang $$part

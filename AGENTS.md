@@ -33,6 +33,5 @@ CI runs each of these on every PR. A new `go/v1` package is added to `ci/guardra
 
 - A failing test means fix the code. Changing an assertion, deleting a test or adding `t.Skip` needs a person's OK and a **Changed tests** entry in the PR (test · old → new · why)
 - Commits: `type(scope): subject`, scope `go` for SDK changes
-- Releases: `go/VERSION`, tag `go/vX.Y.Z` (`ci/languages.json`)
 - `make setup` once per clone for the hooks; never `--no-verify`. More in [CONTRIBUTING.md](CONTRIBUTING.md)
 - Storage integration runs against a local PostgreSQL with fixed test-only credentials; [CONTRIBUTING.md](CONTRIBUTING.md#running-tests) starts it

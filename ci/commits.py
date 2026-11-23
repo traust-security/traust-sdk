@@ -4,7 +4,6 @@ from __future__ import annotations
 
 import re
 import subprocess
-from collections.abc import Iterable
 from dataclasses import dataclass
 from pathlib import Path
 
@@ -69,25 +68,3 @@ def validate_range(base: str, head: str, *, cwd: Path | None = None) -> str | No
         if err := validate_subject(commit.subject):
             return f"{commit.sha[:8]}: {err}"
     return None
-
-
-def bump_level(commits: Iterable[Commit]) -> str | None:
-    level: str | None = None
-    for commit in commits:
-        if MERGE_RE.match(commit.subject) or REVERT_RE.match(commit.subject):
-            continue
-        match = HEADER_RE.match(commit.subject)
-        if not match:
-            continue
-        if match.group("breaking") or "BREAKING CHANGE" in commit.body:
-            return "major"
-        typ = match.group("type")
-        if typ == "feat":
-            level = "minor"
-        elif typ in {"fix", "perf"} and level is None:
-            level = "patch"
-    return level
-
-
-def bump_between(base: str, head: str, *, cwd: Path | None = None) -> str | None:
-    return bump_level(log(f"{base}..{head}", cwd=cwd))
