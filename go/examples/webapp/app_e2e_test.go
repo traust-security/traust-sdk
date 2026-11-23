@@ -14,6 +14,7 @@ import (
 	"time"
 
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+	coreruns "github.com/traust-security/traust-sdk/go/v1/traust/runs"
 )
 
 // The repository the e2e harness's forge stand-in answers for; make webapp onboards real ones.
@@ -36,7 +37,7 @@ func newE2E(t *testing.T) e2e {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := machine.Submit(t.Context(), traust.SubmitRequest{Order: traust.OrderRequest{Asset: "full_audit"}}); !errors.Is(err, traust.ErrForbidden) {
+	if _, err := coreruns.New(machine).Submit(t.Context(), traust.SubmitRequest{Order: traust.OrderRequest{Asset: "full_audit"}}); !errors.Is(err, traust.ErrForbidden) {
 		t.Fatalf("a machine's own submit: %v, want ErrForbidden", err)
 	}
 	user := strings.TrimSpace(string(person))

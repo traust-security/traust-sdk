@@ -11,14 +11,18 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+	coreinsight "github.com/traust-security/traust-sdk/go/v1/traust/insight"
+	coreinventory "github.com/traust-security/traust-sdk/go/v1/traust/inventory"
 
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 )
 
 // Handler serves the person's repositories and their pages.
 type Handler struct {
-	core *traust.Client
-	sso  string
+	core          *traust.Client
+	coreInsight   *coreinsight.Client
+	coreInventory *coreinventory.Client
+	sso           string
 }
 
 // tally is one row of a count: a label and its number, as core answered them.
@@ -34,7 +38,9 @@ type card struct {
 }
 
 // New builds the feature's handler; sso links the sign-in page's SSO offer, "" for none.
-func New(core *traust.Client, sso string) *Handler { return &Handler{core: core, sso: sso} }
+func New(core *traust.Client, sso string) *Handler {
+	return &Handler{core: core, coreInsight: coreinsight.New(core), coreInventory: coreinventory.New(core), sso: sso}
+}
 
 // Routes registers the feature's pages.
 func (h *Handler) Routes(mux *http.ServeMux) {
@@ -77,7 +83,7 @@ func (h *Handler) home(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var repos []traust.Repository
-	for repo, err := range h.core.ListRepositoriesAll(ctx, nil) {
+	for repo, err := range h.coreInventory.ListRepositoriesAll(ctx, nil) {
 		if err != nil {
 			web.Fail(w, r, err)
 			return
@@ -115,7 +121,7 @@ func (h *Handler) dashboard(ctx context.Context, repos []traust.Repository) ([]c
 	}
 	cards := make([]card, 0, len(queries))
 	for _, q := range queries {
-		result, err := h.core.QueryDashboard(ctx, traust.DashboardQuery{
+		result, err := h.coreInsight.QueryDashboard(ctx, traust.DashboardQuery{
 			Subject: q.subject, Measures: []traust.Measure{q.measure}, GroupBy: &[]traust.Dimension{q.by}, RepositoryIds: &ids,
 		})
 		if err != nil {
@@ -124,10 +130,10 @@ func (h *Handler) dashboard(ctx context.Context, repos []traust.Repository) ([]c
 		c := card{Title: q.title}
 		for _, row := range result.Rows {
 			label, count := "none", "0"
-			if g := row.Group(q.by); g != nil {
+			if g := coreinsight.Group(row, q.by); g != nil {
 				label = *g
 			}
-			if n := row.Measure(q.measure); n != nil {
+			if n := coreinsight.Measure(row, q.measure); n != nil {
 				count = fmt.Sprint(*n)
 			}
 			c.Rows = append(c.Rows, tally{label, count})
@@ -160,7 +166,7 @@ func onboarding(r *http.Request) traust.OnboardingRequest {
 }
 
 func (h *Handler) planOnboarding(w http.ResponseWriter, r *http.Request) {
-	plan, err := h.core.PlanOnboarding(r.Context(), onboarding(r))
+	plan, err := h.coreInventory.PlanOnboarding(r.Context(), onboarding(r))
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -169,7 +175,7 @@ func (h *Handler) planOnboarding(w http.ResponseWriter, r *http.Request) {
 }
 
 func (h *Handler) onboard(w http.ResponseWriter, r *http.Request) {
-	if _, err := h.core.Onboard(r.Context(), onboarding(r)); err != nil {
+	if _, err := h.coreInventory.Onboard(r.Context(), onboarding(r)); err != nil {
 		web.Fail(w, r, err)
 		return
 	}
@@ -182,12 +188,12 @@ func (h *Handler) repository(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	repo, err := h.core.GetRepository(r.Context(), id)
+	repo, err := h.coreInventory.GetRepository(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
-	ref, err := h.core.GetCurrentDefaultRef(r.Context(), id)
+	ref, err := h.coreInventory.GetCurrentDefaultRef(r.Context(), id)
 	if err != nil && !errors.Is(err, traust.ErrNotFound) {
 		web.Fail(w, r, err)
 		return

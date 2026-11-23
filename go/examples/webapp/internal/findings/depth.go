@@ -29,7 +29,7 @@ type section struct {
 // up by its fingerprint.
 func (h *Handler) allFindings(w http.ResponseWriter, r *http.Request) {
 	var repos []traust.Repository
-	for repo, err := range h.core.ListRepositoriesAll(r.Context(), nil) {
+	for repo, err := range h.coreInventory.ListRepositoriesAll(r.Context(), nil) {
 		if err != nil {
 			web.Fail(w, r, err)
 			return
@@ -55,7 +55,7 @@ func (h *Handler) allFindings(w http.ResponseWriter, r *http.Request) {
 			exposure := traust.FindingExposure(state)
 			params.Exposure = &exposure
 		}
-		for f, err := range h.core.ListFindingsInAll(r.Context(), &params) {
+		for f, err := range h.coreFindings.ListFindingsInAll(r.Context(), &params) {
 			if err != nil {
 				web.Fail(w, r, err)
 				return
@@ -75,7 +75,7 @@ func (h *Handler) summary(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	rollups, err := h.core.SummarizeFindings(r.Context(), id, &traust.SummarizeFindingsParams{GroupBy: traust.FindingDimensionSeverity})
+	rollups, err := h.coreFindings.SummarizeFindings(r.Context(), id, &traust.SummarizeFindingsParams{GroupBy: traust.FindingDimensionSeverity})
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -90,7 +90,7 @@ func (h *Handler) timeline(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	series, err := h.core.FindingTimeline(r.Context(), id, nil)
+	series, err := h.coreFindings.FindingTimeline(r.Context(), id, nil)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -110,7 +110,7 @@ func (h *Handler) byFingerprint(w http.ResponseWriter, r *http.Request) {
 		web.Render(w, r, http.StatusBadRequest, web.Failure("A fingerprint is required."))
 		return
 	}
-	found, err := h.core.GetFindingByFingerprint(r.Context(), id, &traust.GetFindingByFingerprintParams{Fingerprint: fingerprint})
+	found, err := h.coreFindings.GetFindingByFingerprint(r.Context(), id, &traust.GetFindingByFingerprintParams{Fingerprint: fingerprint})
 	if err != nil {
 		if errors.Is(err, traust.ErrNotFound) {
 			web.Render(w, r, http.StatusNotFound, web.Failure("No finding matches that fingerprint."))

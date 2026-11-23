@@ -25,13 +25,13 @@ func (h *Handler) assessments(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	listed, err := h.core.ListRepositoryAssessments(r.Context(), id, nil)
+	listed, err := h.coreFindings.ListRepositoryAssessments(r.Context(), id, nil)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
 	var latest uuid.UUID
-	if recorded, err := h.core.GetLatestRecordedAssessment(r.Context(), id, &traust.GetLatestRecordedAssessmentParams{Kind: scanKind}); err == nil {
+	if recorded, err := h.coreFindings.GetLatestRecordedAssessment(r.Context(), id, &traust.GetLatestRecordedAssessmentParams{Kind: scanKind}); err == nil {
 		if recorded.Id != nil {
 			latest = *recorded.Id
 		}
@@ -49,17 +49,17 @@ func (h *Handler) assessment(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	found, err := h.core.GetAssessment(r.Context(), id)
+	found, err := h.coreFindings.GetAssessment(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
-	intake, err := h.core.GetAssessmentIntake(r.Context(), id)
+	intake, err := h.coreFindings.GetAssessmentIntake(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
-	artifacts, err := h.core.ListAssessmentArtifacts(r.Context(), id, nil)
+	artifacts, err := h.coreFindings.ListAssessmentArtifacts(r.Context(), id, nil)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -70,7 +70,7 @@ func (h *Handler) assessment(w http.ResponseWriter, r *http.Request) {
 // allAssessments is every assessment core recorded for the person, across their repositories.
 func (h *Handler) allAssessments(w http.ResponseWriter, r *http.Request) {
 	var listed []traust.Assessment
-	for a, err := range h.core.ListAssessmentsAll(r.Context(), nil) {
+	for a, err := range h.coreFindings.ListAssessmentsAll(r.Context(), nil) {
 		if err != nil {
 			web.Fail(w, r, err)
 			return
@@ -86,7 +86,7 @@ func (h *Handler) artifact(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	found, err := h.core.GetArtifact(r.Context(), id)
+	found, err := h.coreFindings.GetArtifact(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -100,12 +100,12 @@ func (h *Handler) artifactContent(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	found, err := h.core.GetArtifact(r.Context(), id)
+	found, err := h.coreFindings.GetArtifact(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
-	content, err := h.core.GetArtifactContent(r.Context(), id)
+	content, err := h.coreFindings.GetArtifactContent(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return

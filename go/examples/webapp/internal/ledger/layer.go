@@ -16,12 +16,12 @@ func (h *Handler) layer(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	found, err := h.core.GetLayer(r.Context(), id)
+	found, err := h.coreLedger.GetLayer(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
-	page, err := h.core.ListEvents(r.Context(), id, nil)
+	page, err := h.coreLedger.ListEvents(r.Context(), id, nil)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -40,7 +40,7 @@ func (h *Handler) events(w http.ResponseWriter, r *http.Request) {
 	if cursor := r.URL.Query().Get("cursor"); cursor != "" {
 		params = &traust.ListEventsParams{Cursor: &cursor}
 	}
-	page, err := h.core.ListEvents(r.Context(), id, params)
+	page, err := h.coreLedger.ListEvents(r.Context(), id, params)
 	if err != nil {
 		web.Fail(w, r, err)
 		return

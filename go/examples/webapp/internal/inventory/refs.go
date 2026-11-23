@@ -24,7 +24,7 @@ func (h *Handler) refs(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	refs, err := h.core.ListRefs(r.Context(), id, nil)
+	refs, err := h.coreInventory.ListRefs(r.Context(), id, nil)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -38,7 +38,7 @@ func (h *Handler) ref(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	found, err := h.core.GetRef(r.Context(), id)
+	found, err := h.coreInventory.GetRef(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -49,7 +49,7 @@ func (h *Handler) ref(w http.ResponseWriter, r *http.Request) {
 // recentRefs answers the home page's aside: the latest refs across the repositories it lists.
 func (h *Handler) recentRefs(w http.ResponseWriter, r *http.Request) {
 	ids := make([]uuid.UUID, 0)
-	for repo, err := range h.core.ListRepositoriesAll(r.Context(), nil) {
+	for repo, err := range h.coreInventory.ListRepositoriesAll(r.Context(), nil) {
 		if err != nil {
 			web.Fail(w, r, err)
 			return
@@ -62,7 +62,7 @@ func (h *Handler) recentRefs(w http.ResponseWriter, r *http.Request) {
 		web.Render(w, r, http.StatusOK, recentRefs(nil))
 		return
 	}
-	refs, err := h.core.ListRefsForRepositories(r.Context(), &traust.ListRefsForRepositoriesParams{RepositoryIds: &ids})
+	refs, err := h.coreInventory.ListRefsForRepositories(r.Context(), &traust.ListRefsForRepositoriesParams{RepositoryIds: &ids})
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -84,7 +84,7 @@ func (h *Handler) registerRef(w http.ResponseWriter, r *http.Request) {
 		web.Render(w, r, http.StatusBadRequest, web.Failure("A ref needs a kind (branch or tag), a name and a sha."))
 		return
 	}
-	if _, err := h.core.RegisterRef(r.Context(), id, traust.RefRegistration{Kind: &kind, Name: &name, Sha: sha}); err != nil {
+	if _, err := h.coreInventory.RegisterRef(r.Context(), id, traust.RefRegistration{Kind: &kind, Name: &name, Sha: sha}); err != nil {
 		web.Fail(w, r, err)
 		return
 	}
@@ -102,7 +102,7 @@ func (h *Handler) makeDefault(w http.ResponseWriter, r *http.Request) {
 		web.Render(w, r, http.StatusBadRequest, web.Failure("The branch is required."))
 		return
 	}
-	if _, err := h.core.MarkDefaultBranch(r.Context(), id, traust.DefaultRefNaming{Branch: branch, Sha: r.PostFormValue("sha")}); err != nil {
+	if _, err := h.coreInventory.MarkDefaultBranch(r.Context(), id, traust.DefaultRefNaming{Branch: branch, Sha: r.PostFormValue("sha")}); err != nil {
 		web.Fail(w, r, err)
 		return
 	}

@@ -15,7 +15,7 @@ func (h *Handler) decisions(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	decisions, err := h.core.ListRepositoryDecisions(r.Context(), id)
+	decisions, err := h.coreFindings.ListRepositoryDecisions(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -29,12 +29,12 @@ func (h *Handler) decision(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	d, err := h.core.GetDecision(r.Context(), id)
+	d, err := h.coreFindings.GetDecision(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
-	view, err := h.core.GetFinding(r.Context(), d.FindingId)
+	view, err := h.coreFindings.GetFinding(r.Context(), d.FindingId)
 	if err != nil {
 		web.Fail(w, r, err)
 		return

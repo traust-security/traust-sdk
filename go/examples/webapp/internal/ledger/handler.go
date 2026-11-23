@@ -6,15 +6,18 @@ import (
 	"net/http"
 
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+	coreledger "github.com/traust-security/traust-sdk/go/v1/traust/ledger"
 
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 )
 
 // Handler serves the app's ledgers.
-type Handler struct{ core *traust.Client }
+type Handler struct {
+	coreLedger *coreledger.Client
+}
 
 // New builds the feature's handler.
-func New(core *traust.Client) *Handler { return &Handler{core: core} }
+func New(core *traust.Client) *Handler { return &Handler{coreLedger: coreledger.New(core)} }
 
 // Routes registers the feature's pages.
 func (h *Handler) Routes(mux *http.ServeMux) {
@@ -30,7 +33,7 @@ func (h *Handler) ledger(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	layers, err := h.core.ListLayers(r.Context(), id)
+	layers, err := h.coreLedger.ListLayers(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -44,7 +47,7 @@ func (h *Handler) checkpoint(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	if _, err := h.core.Checkpoint(r.Context(), id); err != nil {
+	if _, err := h.coreLedger.Checkpoint(r.Context(), id); err != nil {
 		web.Fail(w, r, err)
 		return
 	}
@@ -56,7 +59,7 @@ func (h *Handler) verify(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	result, err := h.core.VerifyLayer(r.Context(), id)
+	result, err := h.coreLedger.VerifyLayer(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return

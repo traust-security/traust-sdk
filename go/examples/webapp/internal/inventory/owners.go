@@ -15,7 +15,7 @@ func (h *Handler) owners(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	teams, err := h.core.ListOwners(r.Context(), id)
+	teams, err := h.coreInventory.ListOwners(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -35,7 +35,7 @@ func (h *Handler) setOwners(w http.ResponseWriter, r *http.Request) {
 		web.Render(w, r, http.StatusBadRequest, web.Failure("Set owners needs at least one team."))
 		return
 	}
-	if _, err := h.core.SetOwners(r.Context(), id, traust.Owners{Teams: teams}); err != nil {
+	if _, err := h.coreInventory.SetOwners(r.Context(), id, traust.Owners{Teams: teams}); err != nil {
 		web.Fail(w, r, err)
 		return
 	}
@@ -59,14 +59,14 @@ func (h *Handler) team(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	ids, err := h.core.ListOwnedRepositories(r.Context(), id, nil)
+	ids, err := h.coreInventory.ListOwnedRepositories(r.Context(), id, nil)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
 	repos := make([]traust.Repository, 0, len(ids))
 	for _, repository := range ids {
-		found, err := h.core.GetRepository(r.Context(), repository)
+		found, err := h.coreInventory.GetRepository(r.Context(), repository)
 		if err != nil {
 			web.Fail(w, r, err)
 			return

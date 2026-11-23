@@ -11,7 +11,7 @@ import (
 // products answers the products page: core's whole catalogue.
 func (h *Handler) products(w http.ResponseWriter, r *http.Request) {
 	var products []traust.Product
-	for product, err := range h.core.ListProductsAll(r.Context(), nil) {
+	for product, err := range h.coreInventory.ListProductsAll(r.Context(), nil) {
 		if err != nil {
 			web.Fail(w, r, err)
 			return
@@ -27,12 +27,12 @@ func (h *Handler) product(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	found, err := h.core.GetProduct(r.Context(), id)
+	found, err := h.coreInventory.GetProduct(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
-	refs, err := h.core.ListProductRefs(r.Context(), id)
+	refs, err := h.coreInventory.ListProductRefs(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -47,7 +47,7 @@ func (h *Handler) productsOf(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	products, err := h.core.ListProductsOf(r.Context(), id)
+	products, err := h.coreInventory.ListProductsOf(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return

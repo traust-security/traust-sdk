@@ -6,18 +6,19 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+	coreruns "github.com/traust-security/traust-sdk/go/v1/traust/runs"
 
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 )
 
 // Handler serves the app's runs.
 type Handler struct {
-	core *traust.Client
+	coreRuns *coreruns.Client
 }
 
 // New builds the feature's handler; a run it starts is the box's claim worker's to run.
 func New(core *traust.Client) *Handler {
-	return &Handler{core: core}
+	return &Handler{coreRuns: coreruns.New(core)}
 }
 
 // Routes registers the feature's pages.
@@ -28,16 +29,16 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 }
 
 func (h *Handler) startRun(w http.ResponseWriter, r *http.Request) {
-	var opts []traust.RunOption
+	var opts []coreruns.RunOption
 	if repo := r.PostFormValue("repository_id"); repo != "" {
 		id, err := uuid.Parse(repo)
 		if err != nil {
 			web.Render(w, r, http.StatusBadRequest, web.Failure("That is not a repository."))
 			return
 		}
-		opts = append(opts, traust.ForRepository(id))
+		opts = append(opts, coreruns.ForRepository(id))
 	}
-	poller, err := h.core.BeginSkill(r.Context(), r.PostFormValue("asset"), opts...)
+	poller, err := h.coreRuns.BeginSkill(r.Context(), r.PostFormValue("asset"), opts...)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -48,7 +49,7 @@ func (h *Handler) startRun(w http.ResponseWriter, r *http.Request) {
 // runStatus answers a run's row; a finished run also tells the page, so lists that depend on it
 // (a repository's findings) refresh themselves.
 func (h *Handler) runStatus(w http.ResponseWriter, r *http.Request) {
-	poller, err := h.core.ResumeOrder(r.PathValue("token"))
+	poller, err := h.coreRuns.ResumeOrder(r.PathValue("token"))
 	if err != nil {
 		web.Render(w, r, http.StatusBadRequest, web.Failure("That is not a run."))
 		return
@@ -71,7 +72,7 @@ func (h *Handler) runHistory(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	limit := 10
-	page, err := h.core.ListOrders(r.Context(), &traust.ListOrdersParams{RepositoryId: &id, Limit: &limit})
+	page, err := h.coreRuns.ListOrders(r.Context(), &traust.ListOrdersParams{RepositoryId: &id, Limit: &limit})
 	if err != nil {
 		web.Fail(w, r, err)
 		return

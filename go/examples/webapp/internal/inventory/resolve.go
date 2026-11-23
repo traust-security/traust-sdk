@@ -16,7 +16,7 @@ func (h *Handler) resolve(w http.ResponseWriter, r *http.Request) {
 		web.Render(w, r, http.StatusBadRequest, web.Failure("Paste at least one repository URL."))
 		return
 	}
-	results, err := h.core.ResolveRepositories(r.Context(), traust.RepositoryResolutionRequest{Urls: urls})
+	results, err := h.coreInventory.ResolveRepositories(r.Context(), traust.RepositoryResolutionRequest{Urls: urls})
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -46,7 +46,7 @@ func (h *Handler) correctURL(w http.ResponseWriter, r *http.Request) {
 		web.Render(w, r, http.StatusBadRequest, web.Failure("The new URL is required."))
 		return
 	}
-	repo, err := h.core.CorrectRepositoryUrl(r.Context(), id, traust.UrlCorrection{Url: url})
+	repo, err := h.coreInventory.CorrectRepositoryUrl(r.Context(), id, traust.UrlCorrection{Url: url})
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -60,7 +60,7 @@ func (h *Handler) verify(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	verification, err := h.core.VerifyRepository(r.Context(), id)
+	verification, err := h.coreInventory.VerifyRepository(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return

@@ -7,15 +7,22 @@ import (
 	"strings"
 
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+	corefindings "github.com/traust-security/traust-sdk/go/v1/traust/findings"
+	coreinventory "github.com/traust-security/traust-sdk/go/v1/traust/inventory"
 
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 )
 
 // Handler serves the app's findings and their decisions.
-type Handler struct{ core *traust.Client }
+type Handler struct {
+	coreFindings  *corefindings.Client
+	coreInventory *coreinventory.Client
+}
 
 // New builds the feature's handler.
-func New(core *traust.Client) *Handler { return &Handler{core: core} }
+func New(core *traust.Client) *Handler {
+	return &Handler{coreFindings: corefindings.New(core), coreInventory: coreinventory.New(core)}
+}
 
 // Routes registers the feature's pages.
 func (h *Handler) Routes(mux *http.ServeMux) {
@@ -43,7 +50,7 @@ func (h *Handler) findings(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	var found []traust.FindingView
-	for f, err := range h.core.ListFindingsAll(r.Context(), id, nil) {
+	for f, err := range h.coreFindings.ListFindingsAll(r.Context(), id, nil) {
 		if err != nil {
 			web.Fail(w, r, err)
 			return
@@ -58,12 +65,12 @@ func (h *Handler) finding(w http.ResponseWriter, r *http.Request) {
 	if !ok {
 		return
 	}
-	f, err := h.core.GetFinding(r.Context(), id)
+	f, err := h.coreFindings.GetFinding(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
-	decisions, err := h.core.ListDecisions(r.Context(), id)
+	decisions, err := h.coreFindings.ListDecisions(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
@@ -77,7 +84,7 @@ func (h *Handler) decide(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	validity := traust.Validity(r.PostFormValue("validity"))
-	if _, err := h.core.Decide(r.Context(), id, traust.DecisionBody{
+	if _, err := h.coreFindings.Decide(r.Context(), id, traust.DecisionBody{
 		Validity: &validity, Rationale: strings.TrimSpace(r.PostFormValue("rationale")),
 	}); err != nil {
 		web.Fail(w, r, err)
@@ -92,7 +99,7 @@ func (h *Handler) restate(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	validity := traust.Validity(r.PostFormValue("validity"))
-	if _, err := h.core.Restate(r.Context(), id, traust.RestatementBody{
+	if _, err := h.coreFindings.Restate(r.Context(), id, traust.RestatementBody{
 		Validity: &validity, Reason: traust.RestatementReason(r.PostFormValue("reason")),
 		Ticket: strings.TrimSpace(r.PostFormValue("ticket")), Rationale: strings.TrimSpace(r.PostFormValue("rationale")),
 	}); err != nil {
@@ -105,7 +112,7 @@ func (h *Handler) restate(w http.ResponseWriter, r *http.Request) {
 // review is the countersign queue across the person's repositories.
 func (h *Handler) review(w http.ResponseWriter, r *http.Request) {
 	var cases []traust.ReviewCase
-	for c, err := range h.core.ReviewQueueAll(r.Context(), nil) {
+	for c, err := range h.coreFindings.ReviewQueueAll(r.Context(), nil) {
 		if err != nil {
 			web.Fail(w, r, err)
 			return
