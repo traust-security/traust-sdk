@@ -204,6 +204,9 @@ func copyOrder(order traust.RunOrder) traust.RunOrder {
 	order.Rule = copyPointer(order.Rule)
 	order.RunBatchId = copyPointer(order.RunBatchId)
 	order.StartedAt = copyPointer(order.StartedAt)
+	order.TargetModulePath = copyPointer(order.TargetModulePath)
+	order.TargetPurl = copyPointer(order.TargetPurl)
+	order.TargetSha = copyPointer(order.TargetSha)
 	order.UpdatedAt = copyPointer(order.UpdatedAt)
 	order.WorkItemId = copyPointer(order.WorkItemId)
 	return order

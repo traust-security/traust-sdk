@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 8f684d27d978e53c0ffc2b43af379fc1284c26eb. DO NOT EDIT.
 
 package types
 
@@ -30,6 +30,20 @@ type AsvsChapter struct {
 	HighestSeverity      *enums.Severity `json:"highest_severity,omitempty"`
 	RequirementsAssessed *int            `json:"requirements_assessed,omitempty"`
 	Violations           *int            `json:"violations,omitempty"`
+}
+
+type ComponentTarget struct {
+	Commit       string                      `json:"commit"`
+	ModulePath   string                      `json:"module_path"`
+	Purl         string                      `json:"purl"`
+	ReleaseRef   *string                     `json:"release_ref,omitempty"`
+	Repository   string                      `json:"repository"`
+	Verification ComponentTargetVerification `json:"verification"`
+}
+
+type ComponentTargetVerification struct {
+	ManifestPaths []string                      `json:"manifest_paths"`
+	Strategy      enums.ComponentTargetStrategy `json:"strategy"`
 }
 
 type DependencyAudit struct {
@@ -217,6 +231,7 @@ type ReportMetadata struct {
 	RefKind      *enums.RefKind              `json:"ref_kind,omitempty"`
 	Repository   *string                     `json:"repository,omitempty"`
 	Scope        string                      `json:"scope"`
+	Target       *ComponentTarget            `json:"target,omitempty"`
 	Tools        []string                    `json:"tools,omitempty"`
 }
 

@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 8f684d27d978e53c0ffc2b43af379fc1284c26eb. DO NOT EDIT.
 
 package enums
 
@@ -19,6 +19,7 @@ const (
 	RunOrderReasonLedgerUnconfigured   RunOrderReason = "ledger_unconfigured"
 	RunOrderReasonUpstreamStale        RunOrderReason = "upstream-stale"
 	RunOrderReasonWriteRejected        RunOrderReason = "write-rejected"
+	RunOrderReasonUnresolvedTarget     RunOrderReason = "unresolved-target"
 )
 
 // RunOrderReasonValues returns all valid RunOrderReason values.
@@ -37,5 +38,6 @@ func RunOrderReasonValues() []RunOrderReason {
 		RunOrderReasonLedgerUnconfigured,
 		RunOrderReasonUpstreamStale,
 		RunOrderReasonWriteRejected,
+		RunOrderReasonUnresolvedTarget,
 	}
 }

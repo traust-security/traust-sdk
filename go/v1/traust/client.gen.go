@@ -577,6 +577,7 @@ const (
 	RunOrderReasonSessionOutputInvalid RunOrderReason = "session-output-invalid"
 	RunOrderReasonSnapshotUnavailable  RunOrderReason = "snapshot_unavailable"
 	RunOrderReasonSourceUnavailable    RunOrderReason = "source_unavailable"
+	RunOrderReasonUnresolvedTarget     RunOrderReason = "unresolved-target"
 	RunOrderReasonUpstreamStale        RunOrderReason = "upstream-stale"
 	RunOrderReasonWriteRejected        RunOrderReason = "write-rejected"
 )
@@ -871,6 +872,7 @@ type Assessment struct {
 	RepositoryRefId      openapi_types.UUID  `json:"repository_ref_id"`
 	RunOrderId           *openapi_types.UUID `json:"run_order_id"`
 	Status               string              `json:"status"`
+	TargetPurl           *string             `json:"target_purl"`
 }
 
 // AssessmentKind1 defines model for .
@@ -1787,14 +1789,17 @@ type OrderQueryRequest struct {
 
 // OrderRequest What admission puts on the queue: one asset for one partition, routed or not.
 type OrderRequest struct {
-	Asset        string              `json:"asset"`
-	EventSource  *string             `json:"event_source"`
-	Lane         *string             `json:"lane"`
-	Priority     int                 `json:"priority"`
-	RepositoryId *openapi_types.UUID `json:"repository_id"`
-	Rule         *string             `json:"rule"`
-	RunBatchId   *openapi_types.UUID `json:"run_batch_id"`
-	WorkItemId   *openapi_types.UUID `json:"work_item_id"`
+	Asset            string              `json:"asset"`
+	EventSource      *string             `json:"event_source"`
+	Lane             *string             `json:"lane"`
+	Priority         int                 `json:"priority"`
+	RepositoryId     *openapi_types.UUID `json:"repository_id"`
+	Rule             *string             `json:"rule"`
+	RunBatchId       *openapi_types.UUID `json:"run_batch_id"`
+	TargetModulePath *string             `json:"target_module_path"`
+	TargetPurl       *string             `json:"target_purl"`
+	TargetSha        *string             `json:"target_sha"`
+	WorkItemId       *openapi_types.UUID `json:"work_item_id"`
 }
 
 // OrderSortBy defines model for OrderSortBy.
@@ -2246,28 +2251,31 @@ type RoleRouting struct {
 
 // RunOrder 4a · one unit of work; queued, leased by a worker, finished with an outcome.
 type RunOrder struct {
-	ArtifactId      *openapi_types.UUID `json:"artifact_id"`
-	Asset           string              `json:"asset"`
-	CreatedAt       *time.Time          `json:"created_at"`
-	EventSource     *string             `json:"event_source"`
-	FinishedAt      *time.Time          `json:"finished_at"`
-	ForkBranch      *string             `json:"fork_branch"`
-	ForkScheduledAt *time.Time          `json:"fork_scheduled_at"`
-	ForkUrl         *string             `json:"fork_url"`
-	Id              *openapi_types.UUID `json:"id"`
-	Lane            *string             `json:"lane"`
-	LeaseExpiresAt  *time.Time          `json:"lease_expires_at"`
-	LeaseHolder     *string             `json:"lease_holder"`
-	Priority        int                 `json:"priority"`
-	Reason          *string             `json:"reason"`
-	RepositoryId    *openapi_types.UUID `json:"repository_id"`
-	RequestedBy     string              `json:"requested_by"`
-	Rule            *string             `json:"rule"`
-	RunBatchId      *openapi_types.UUID `json:"run_batch_id"`
-	StartedAt       *time.Time          `json:"started_at"`
-	State           RunOrderState       `json:"state"`
-	UpdatedAt       *time.Time          `json:"updated_at"`
-	WorkItemId      *openapi_types.UUID `json:"work_item_id"`
+	ArtifactId       *openapi_types.UUID `json:"artifact_id"`
+	Asset            string              `json:"asset"`
+	CreatedAt        *time.Time          `json:"created_at"`
+	EventSource      *string             `json:"event_source"`
+	FinishedAt       *time.Time          `json:"finished_at"`
+	ForkBranch       *string             `json:"fork_branch"`
+	ForkScheduledAt  *time.Time          `json:"fork_scheduled_at"`
+	ForkUrl          *string             `json:"fork_url"`
+	Id               *openapi_types.UUID `json:"id"`
+	Lane             *string             `json:"lane"`
+	LeaseExpiresAt   *time.Time          `json:"lease_expires_at"`
+	LeaseHolder      *string             `json:"lease_holder"`
+	Priority         int                 `json:"priority"`
+	Reason           *string             `json:"reason"`
+	RepositoryId     *openapi_types.UUID `json:"repository_id"`
+	RequestedBy      string              `json:"requested_by"`
+	Rule             *string             `json:"rule"`
+	RunBatchId       *openapi_types.UUID `json:"run_batch_id"`
+	StartedAt        *time.Time          `json:"started_at"`
+	State            RunOrderState       `json:"state"`
+	TargetModulePath *string             `json:"target_module_path"`
+	TargetPurl       *string             `json:"target_purl"`
+	TargetSha        *string             `json:"target_sha"`
+	UpdatedAt        *time.Time          `json:"updated_at"`
+	WorkItemId       *openapi_types.UUID `json:"work_item_id"`
 }
 
 // RunOrderReason defines model for RunOrderReason.
@@ -2630,6 +2638,7 @@ type ListAssessmentsParams struct {
 	Status          *string               `form:"status,omitempty" json:"status,omitempty"`
 	Limit           *int                  `form:"limit,omitempty" json:"limit,omitempty"`
 	Cursor          *string               `form:"cursor,omitempty" json:"cursor,omitempty"`
+	TargetPurl      *string               `form:"target_purl,omitempty" json:"target_purl,omitempty"`
 }
 
 // ListAssessmentArtifactsParams defines parameters for ListAssessmentArtifacts.
@@ -2819,7 +2828,8 @@ type ListRepositoryAssessmentsParams struct {
 
 // GetLatestRecordedAssessmentParams defines parameters for GetLatestRecordedAssessment.
 type GetLatestRecordedAssessmentParams struct {
-	Kind AssessmentKind `form:"kind" json:"kind"`
+	Kind       AssessmentKind `form:"kind" json:"kind"`
+	TargetPurl *string        `form:"target_purl,omitempty" json:"target_purl,omitempty"`
 }
 
 // ListFindingsParams defines parameters for ListFindings.
@@ -6082,6 +6092,22 @@ func NewListAssessmentsRequest(server string, params *ListAssessmentsParams) (*h
 		if params.Cursor != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cursor", runtime.ParamLocationQuery, *params.Cursor); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
+		}
+
+		if params.TargetPurl != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "target_purl", runtime.ParamLocationQuery, *params.TargetPurl); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -9813,6 +9839,22 @@ func NewGetLatestRecordedAssessmentRequest(server string, repositoryId openapi_t
 					queryValues.Add(k, v2)
 				}
 			}
+		}
+
+		if params.TargetPurl != nil {
+
+			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "target_purl", runtime.ParamLocationQuery, *params.TargetPurl); err != nil {
+				return nil, err
+			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
+				return nil, err
+			} else {
+				for k, v := range parsed {
+					for _, v2 := range v {
+						queryValues.Add(k, v2)
+					}
+				}
+			}
+
 		}
 
 		queryURL.RawQuery = queryValues.Encode()
