@@ -30,7 +30,7 @@ func e2eCore(t *testing.T) *traust.Client {
 }
 
 func TestE2EBatchFindingsListingRefusesWithoutRepositories(t *testing.T) {
-	resp, err := e2eCore(t).ListFindingsInWithResponse(context.Background(), &traust.ListFindingsInParams{})
+	resp, err := e2eCore(t).Raw().ListFindingsInWithResponse(context.Background(), &traust.ListFindingsInParams{})
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -44,7 +44,7 @@ func TestE2EBatchFindingsListingRefusesWithoutRepositories(t *testing.T) {
 func TestE2EBatchFindingsListingPagesARepositorySet(t *testing.T) {
 	set := []uuid.UUID{uuid.New()}
 	var seen int
-	for _, err := range e2eClient(t).ListFindingsInAll(context.Background(), &traust.ListFindingsInParams{
+	for _, err := range findings.New(e2eCore(t)).ListFindingsInAll(context.Background(), &traust.ListFindingsInParams{
 		RepositoryIds: &set,
 	}) {
 		if err != nil {
@@ -60,7 +60,7 @@ func TestE2EBatchFindingsListingPagesARepositorySet(t *testing.T) {
 // The wave-f assessments read refuses without a named set exactly as the batch listing does:
 // a 422 problem with a request id, never a firehose of everything the server holds.
 func TestE2ESetScopedReadsRefuseWithoutRepositories(t *testing.T) {
-	client := e2eClient(t)
+	client := findings.New(e2eCore(t))
 	_, err := client.ListAssessments(context.Background(), &traust.ListAssessmentsParams{})
 	var problem *traust.ProblemError
 	if !errors.As(err, &problem) || problem.StatusCode != http.StatusUnprocessableEntity || problem.Problem == nil || problem.Problem.RequestId == "" {
@@ -71,7 +71,7 @@ func TestE2ESetScopedReadsRefuseWithoutRepositories(t *testing.T) {
 // The wave-f assessments read over a repository set the fresh server does not know decodes as
 // an empty page: the refusal, parse and decode branches all take their success paths.
 func TestE2ESetScopedReadsListARepositorySet(t *testing.T) {
-	client := e2eClient(t)
+	client := findings.New(e2eCore(t))
 	set := []uuid.UUID{uuid.New()}
 	found, err := client.ListAssessments(context.Background(), &traust.ListAssessmentsParams{RepositoryIds: &set})
 	if err != nil {

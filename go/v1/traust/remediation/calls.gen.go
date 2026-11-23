@@ -30,7 +30,7 @@ func New(core *traust.Client) *Client { return &Client{core: core} }
 
 // CreateRemediation is POST /v1/remediations: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) CreateRemediation(ctx context.Context, body traust.CreateRemediationJSONRequestBody) (*traust.ScheduledEffort, error) {
-	raw, err := c.core.ClientInterface.CreateRemediation(ctx, body)
+	raw, err := c.core.Raw().CreateRemediation(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("CreateRemediation: %w", err)
 	}
@@ -50,7 +50,7 @@ func (c *Client) CreateRemediation(ctx context.Context, body traust.CreateRemedi
 
 // GetRemediation is GET /v1/remediations/{workItemId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetRemediation(ctx context.Context, workItemId openapi_types.UUID) (*traust.ScheduledEffort, error) {
-	raw, err := c.core.ClientInterface.GetRemediation(ctx, workItemId)
+	raw, err := c.core.Raw().GetRemediation(ctx, workItemId)
 	if err != nil {
 		return nil, fmt.Errorf("GetRemediation(%s): %w", workItemId, err)
 	}
@@ -70,7 +70,7 @@ func (c *Client) GetRemediation(ctx context.Context, workItemId openapi_types.UU
 
 // ListRemediations is GET /v1/remediations: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRemediations(ctx context.Context, params *traust.ListRemediationsParams) (*traust.PageScheduledEffort, error) {
-	raw, err := c.core.ClientInterface.ListRemediations(ctx, params)
+	raw, err := c.core.Raw().ListRemediations(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListRemediations: %w", err)
 	}
@@ -107,7 +107,7 @@ func (c *Client) ListRemediationsAll(ctx context.Context, params *traust.ListRem
 
 // ListVerifications is GET /v1/repositories/{repositoryId}/verifications: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListVerifications(ctx context.Context, repositoryId openapi_types.UUID, params *traust.ListVerificationsParams) (*traust.PageVerification, error) {
-	raw, err := c.core.ClientInterface.ListVerifications(ctx, repositoryId, params)
+	raw, err := c.core.Raw().ListVerifications(ctx, repositoryId, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListVerifications(%s): %w", repositoryId, err)
 	}
@@ -144,7 +144,7 @@ func (c *Client) ListVerificationsAll(ctx context.Context, repositoryId openapi_
 
 // ListWorkItems is GET /v1/repositories/{repositoryId}/work-items: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListWorkItems(ctx context.Context, repositoryId openapi_types.UUID, params *traust.ListWorkItemsParams) (*traust.PageWorkItem, error) {
-	raw, err := c.core.ClientInterface.ListWorkItems(ctx, repositoryId, params)
+	raw, err := c.core.Raw().ListWorkItems(ctx, repositoryId, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListWorkItems(%s): %w", repositoryId, err)
 	}
@@ -181,7 +181,7 @@ func (c *Client) ListWorkItemsAll(ctx context.Context, repositoryId openapi_type
 
 // PrepareRemediation is GET /v1/work-items/{workItemId}/remediation-input: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareRemediation(ctx context.Context, workItemId openapi_types.UUID) (*traust.RemediationInput, error) {
-	raw, err := c.core.ClientInterface.PrepareRemediation(ctx, workItemId)
+	raw, err := c.core.Raw().PrepareRemediation(ctx, workItemId)
 	if err != nil {
 		return nil, fmt.Errorf("PrepareRemediation(%s): %w", workItemId, err)
 	}
@@ -201,7 +201,7 @@ func (c *Client) PrepareRemediation(ctx context.Context, workItemId openapi_type
 
 // PrepareVerification is GET /v1/work-items/{workItemId}/verification-input: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareVerification(ctx context.Context, workItemId openapi_types.UUID) (*traust.VerificationInput, error) {
-	raw, err := c.core.ClientInterface.PrepareVerification(ctx, workItemId)
+	raw, err := c.core.Raw().PrepareVerification(ctx, workItemId)
 	if err != nil {
 		return nil, fmt.Errorf("PrepareVerification(%s): %w", workItemId, err)
 	}
@@ -221,7 +221,7 @@ func (c *Client) PrepareVerification(ctx context.Context, workItemId openapi_typ
 
 // RecordRemediation is POST /v1/remediation-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordRemediation(ctx context.Context, body traust.RecordRemediationJSONRequestBody) (*traust.WorkItem, error) {
-	raw, err := c.core.ClientInterface.RecordRemediation(ctx, body)
+	raw, err := c.core.Raw().RecordRemediation(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("RecordRemediation: %w", err)
 	}
@@ -241,7 +241,7 @@ func (c *Client) RecordRemediation(ctx context.Context, body traust.RecordRemedi
 
 // RecordRemediationProgress is POST /v1/remediations/{workItemId}/progress: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordRemediationProgress(ctx context.Context, workItemId openapi_types.UUID, body traust.RecordRemediationProgressJSONRequestBody) (*traust.WorkItem, error) {
-	raw, err := c.core.ClientInterface.RecordRemediationProgress(ctx, workItemId, body)
+	raw, err := c.core.Raw().RecordRemediationProgress(ctx, workItemId, body)
 	if err != nil {
 		return nil, fmt.Errorf("RecordRemediationProgress(%s): %w", workItemId, err)
 	}
@@ -261,7 +261,7 @@ func (c *Client) RecordRemediationProgress(ctx context.Context, workItemId opena
 
 // RecordRemediationPullRequest is POST /v1/remediations/{workItemId}/pull-request: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordRemediationPullRequest(ctx context.Context, workItemId openapi_types.UUID, body traust.RecordRemediationPullRequestJSONRequestBody) (*traust.WorkItem, error) {
-	raw, err := c.core.ClientInterface.RecordRemediationPullRequest(ctx, workItemId, body)
+	raw, err := c.core.Raw().RecordRemediationPullRequest(ctx, workItemId, body)
 	if err != nil {
 		return nil, fmt.Errorf("RecordRemediationPullRequest(%s): %w", workItemId, err)
 	}
@@ -281,7 +281,7 @@ func (c *Client) RecordRemediationPullRequest(ctx context.Context, workItemId op
 
 // RecordVerification is POST /v1/verification-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordVerification(ctx context.Context, body traust.RecordVerificationJSONRequestBody) (*traust.Verification, error) {
-	raw, err := c.core.ClientInterface.RecordVerification(ctx, body)
+	raw, err := c.core.Raw().RecordVerification(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("RecordVerification: %w", err)
 	}

@@ -29,7 +29,7 @@ func New(core *traust.Client) *Client { return &Client{core: core} }
 
 // GetReport is GET /v1/reports/{orderId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetReport(ctx context.Context, orderId openapi_types.UUID) (*traust.Report, error) {
-	raw, err := c.core.ClientInterface.GetReport(ctx, orderId)
+	raw, err := c.core.Raw().GetReport(ctx, orderId)
 	if err != nil {
 		return nil, fmt.Errorf("GetReport(%s): %w", orderId, err)
 	}
@@ -49,7 +49,7 @@ func (c *Client) GetReport(ctx context.Context, orderId openapi_types.UUID) (*tr
 
 // GetReportFile is GET /v1/reports/{orderId}/file: the exact stored bytes, or a *ProblemError.
 func (c *Client) GetReportFile(ctx context.Context, orderId openapi_types.UUID) ([]byte, error) {
-	raw, err := c.core.ClientInterface.GetReportFile(ctx, orderId)
+	raw, err := c.core.Raw().GetReportFile(ctx, orderId)
 	if err != nil {
 		return nil, fmt.Errorf("GetReportFile(%s): %w", orderId, err)
 	}
@@ -70,7 +70,7 @@ func (c *Client) GetReportFile(ctx context.Context, orderId openapi_types.UUID) 
 
 // QueryDashboard is POST /v1/dashboards:query: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) QueryDashboard(ctx context.Context, body traust.QueryDashboardJSONRequestBody) (*traust.DashboardResults, error) {
-	raw, err := c.core.ClientInterface.QueryDashboard(ctx, body)
+	raw, err := c.core.Raw().QueryDashboard(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("QueryDashboard: %w", err)
 	}
@@ -90,7 +90,7 @@ func (c *Client) QueryDashboard(ctx context.Context, body traust.QueryDashboardJ
 
 // RequestReport is POST /v1/reports: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RequestReport(ctx context.Context, body traust.RequestReportJSONRequestBody) (*traust.Report, error) {
-	raw, err := c.core.ClientInterface.RequestReport(ctx, body)
+	raw, err := c.core.Raw().RequestReport(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("RequestReport: %w", err)
 	}

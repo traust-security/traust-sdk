@@ -30,7 +30,7 @@ func New(core *traust.Client) *Client { return &Client{core: core} }
 
 // Checkpoint is POST /v1/repositories/{repositoryId}/ledger/checkpoint: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Checkpoint(ctx context.Context, repositoryId openapi_types.UUID) (*traust.Checkpoint, error) {
-	raw, err := c.core.ClientInterface.Checkpoint(ctx, repositoryId)
+	raw, err := c.core.Raw().Checkpoint(ctx, repositoryId)
 	if err != nil {
 		return nil, fmt.Errorf("Checkpoint(%s): %w", repositoryId, err)
 	}
@@ -50,7 +50,7 @@ func (c *Client) Checkpoint(ctx context.Context, repositoryId openapi_types.UUID
 
 // GetLayer is GET /v1/ledger/layers/{layerId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetLayer(ctx context.Context, layerId openapi_types.UUID) (*traust.Layer, error) {
-	raw, err := c.core.ClientInterface.GetLayer(ctx, layerId)
+	raw, err := c.core.Raw().GetLayer(ctx, layerId)
 	if err != nil {
 		return nil, fmt.Errorf("GetLayer(%s): %w", layerId, err)
 	}
@@ -70,7 +70,7 @@ func (c *Client) GetLayer(ctx context.Context, layerId openapi_types.UUID) (*tra
 
 // ListEvents is GET /v1/ledger/layers/{layerId}/events: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListEvents(ctx context.Context, layerId openapi_types.UUID, params *traust.ListEventsParams) (*traust.PageEvent, error) {
-	raw, err := c.core.ClientInterface.ListEvents(ctx, layerId, params)
+	raw, err := c.core.Raw().ListEvents(ctx, layerId, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListEvents(%s): %w", layerId, err)
 	}
@@ -107,7 +107,7 @@ func (c *Client) ListEventsAll(ctx context.Context, layerId openapi_types.UUID, 
 
 // ListLayers is GET /v1/repositories/{repositoryId}/ledger/layers: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListLayers(ctx context.Context, repositoryId openapi_types.UUID) ([]traust.Layer, error) {
-	raw, err := c.core.ClientInterface.ListLayers(ctx, repositoryId)
+	raw, err := c.core.Raw().ListLayers(ctx, repositoryId)
 	if err != nil {
 		return nil, fmt.Errorf("ListLayers(%s): %w", repositoryId, err)
 	}
@@ -130,7 +130,7 @@ func (c *Client) ListLayers(ctx context.Context, repositoryId openapi_types.UUID
 
 // VerifyLayer is GET /v1/ledger/layers/{layerId}/verification: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) VerifyLayer(ctx context.Context, layerId openapi_types.UUID) (*traust.VerifyResult, error) {
-	raw, err := c.core.ClientInterface.VerifyLayer(ctx, layerId)
+	raw, err := c.core.Raw().VerifyLayer(ctx, layerId)
 	if err != nil {
 		return nil, fmt.Errorf("VerifyLayer(%s): %w", layerId, err)
 	}

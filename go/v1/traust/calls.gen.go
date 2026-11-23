@@ -21,7 +21,7 @@ var (
 
 // Healthz is GET /v1/healthz: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Healthz(ctx context.Context) (*Health, error) {
-	raw, err := c.ClientInterface.Healthz(ctx)
+	raw, err := c.raw.Healthz(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("Healthz: %w", err)
 	}
@@ -41,7 +41,7 @@ func (c *Client) Healthz(ctx context.Context) (*Health, error) {
 
 // Whoami is GET /v1/whoami: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Whoami(ctx context.Context) (*Principal, error) {
-	raw, err := c.ClientInterface.Whoami(ctx)
+	raw, err := c.raw.Whoami(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("Whoami: %w", err)
 	}

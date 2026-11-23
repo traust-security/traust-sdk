@@ -151,7 +151,7 @@ func TestWithResponseDecodesCoreProblemMediaAndValidationErrors(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			verification, err := client.PrepareVerificationWithResponse(context.Background(), uuid.New())
+			verification, err := client.Raw().PrepareVerificationWithResponse(context.Background(), uuid.New())
 			if err != nil || verification == nil || verification.StatusCode() != http.StatusUnprocessableEntity || verification.JSON422 == nil {
 				t.Fatalf("problem media did not populate typed 422: response=%+v err=%v", verification, err)
 			}

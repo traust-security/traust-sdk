@@ -30,7 +30,7 @@ func New(core *traust.Client) *Client { return &Client{core: core} }
 
 // CorrectRepositoryUrl is PUT /v1/repositories/{repositoryId}/url: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) CorrectRepositoryUrl(ctx context.Context, repositoryId openapi_types.UUID, body traust.CorrectRepositoryUrlJSONRequestBody) (*traust.Repository, error) {
-	raw, err := c.core.ClientInterface.CorrectRepositoryUrl(ctx, repositoryId, body)
+	raw, err := c.core.Raw().CorrectRepositoryUrl(ctx, repositoryId, body)
 	if err != nil {
 		return nil, fmt.Errorf("CorrectRepositoryUrl(%s): %w", repositoryId, err)
 	}
@@ -50,7 +50,7 @@ func (c *Client) CorrectRepositoryUrl(ctx context.Context, repositoryId openapi_
 
 // GetCurrentDefaultRef is GET /v1/repositories/{repositoryId}/refs/current-default: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetCurrentDefaultRef(ctx context.Context, repositoryId openapi_types.UUID) (*traust.RepositoryRef, error) {
-	raw, err := c.core.ClientInterface.GetCurrentDefaultRef(ctx, repositoryId)
+	raw, err := c.core.Raw().GetCurrentDefaultRef(ctx, repositoryId)
 	if err != nil {
 		return nil, fmt.Errorf("GetCurrentDefaultRef(%s): %w", repositoryId, err)
 	}
@@ -70,7 +70,7 @@ func (c *Client) GetCurrentDefaultRef(ctx context.Context, repositoryId openapi_
 
 // GetProduct is GET /v1/products/{productId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetProduct(ctx context.Context, productId openapi_types.UUID) (*traust.Product, error) {
-	raw, err := c.core.ClientInterface.GetProduct(ctx, productId)
+	raw, err := c.core.Raw().GetProduct(ctx, productId)
 	if err != nil {
 		return nil, fmt.Errorf("GetProduct(%s): %w", productId, err)
 	}
@@ -90,7 +90,7 @@ func (c *Client) GetProduct(ctx context.Context, productId openapi_types.UUID) (
 
 // GetRef is GET /v1/refs/{repositoryRefId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetRef(ctx context.Context, repositoryRefId openapi_types.UUID) (*traust.RepositoryRef, error) {
-	raw, err := c.core.ClientInterface.GetRef(ctx, repositoryRefId)
+	raw, err := c.core.Raw().GetRef(ctx, repositoryRefId)
 	if err != nil {
 		return nil, fmt.Errorf("GetRef(%s): %w", repositoryRefId, err)
 	}
@@ -110,7 +110,7 @@ func (c *Client) GetRef(ctx context.Context, repositoryRefId openapi_types.UUID)
 
 // GetRepository is GET /v1/repositories/{repositoryId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetRepository(ctx context.Context, repositoryId openapi_types.UUID) (*traust.Repository, error) {
-	raw, err := c.core.ClientInterface.GetRepository(ctx, repositoryId)
+	raw, err := c.core.Raw().GetRepository(ctx, repositoryId)
 	if err != nil {
 		return nil, fmt.Errorf("GetRepository(%s): %w", repositoryId, err)
 	}
@@ -130,7 +130,7 @@ func (c *Client) GetRepository(ctx context.Context, repositoryId openapi_types.U
 
 // ListOwnedRepositories is GET /v1/teams/{teamId}/repositories: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListOwnedRepositories(ctx context.Context, teamId openapi_types.UUID, params *traust.ListOwnedRepositoriesParams) ([]openapi_types.UUID, error) {
-	raw, err := c.core.ClientInterface.ListOwnedRepositories(ctx, teamId, params)
+	raw, err := c.core.Raw().ListOwnedRepositories(ctx, teamId, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListOwnedRepositories(%s): %w", teamId, err)
 	}
@@ -153,7 +153,7 @@ func (c *Client) ListOwnedRepositories(ctx context.Context, teamId openapi_types
 
 // ListOwners is GET /v1/repositories/{repositoryId}/owners: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListOwners(ctx context.Context, repositoryId openapi_types.UUID) ([]traust.Team, error) {
-	raw, err := c.core.ClientInterface.ListOwners(ctx, repositoryId)
+	raw, err := c.core.Raw().ListOwners(ctx, repositoryId)
 	if err != nil {
 		return nil, fmt.Errorf("ListOwners(%s): %w", repositoryId, err)
 	}
@@ -176,7 +176,7 @@ func (c *Client) ListOwners(ctx context.Context, repositoryId openapi_types.UUID
 
 // ListProductRefs is GET /v1/products/{productId}/refs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListProductRefs(ctx context.Context, productId openapi_types.UUID) ([]traust.RepositoryRef, error) {
-	raw, err := c.core.ClientInterface.ListProductRefs(ctx, productId)
+	raw, err := c.core.Raw().ListProductRefs(ctx, productId)
 	if err != nil {
 		return nil, fmt.Errorf("ListProductRefs(%s): %w", productId, err)
 	}
@@ -199,7 +199,7 @@ func (c *Client) ListProductRefs(ctx context.Context, productId openapi_types.UU
 
 // ListProducts is GET /v1/products: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListProducts(ctx context.Context, params *traust.ListProductsParams) (*traust.PageProduct, error) {
-	raw, err := c.core.ClientInterface.ListProducts(ctx, params)
+	raw, err := c.core.Raw().ListProducts(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListProducts: %w", err)
 	}
@@ -236,7 +236,7 @@ func (c *Client) ListProductsAll(ctx context.Context, params *traust.ListProduct
 
 // ListProductsOf is GET /v1/repositories/{repositoryId}/products: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListProductsOf(ctx context.Context, repositoryId openapi_types.UUID) ([]traust.Product, error) {
-	raw, err := c.core.ClientInterface.ListProductsOf(ctx, repositoryId)
+	raw, err := c.core.Raw().ListProductsOf(ctx, repositoryId)
 	if err != nil {
 		return nil, fmt.Errorf("ListProductsOf(%s): %w", repositoryId, err)
 	}
@@ -259,7 +259,7 @@ func (c *Client) ListProductsOf(ctx context.Context, repositoryId openapi_types.
 
 // ListRefs is GET /v1/repositories/{repositoryId}/refs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRefs(ctx context.Context, repositoryId openapi_types.UUID, params *traust.ListRefsParams) ([]traust.RepositoryRef, error) {
-	raw, err := c.core.ClientInterface.ListRefs(ctx, repositoryId, params)
+	raw, err := c.core.Raw().ListRefs(ctx, repositoryId, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListRefs(%s): %w", repositoryId, err)
 	}
@@ -282,7 +282,7 @@ func (c *Client) ListRefs(ctx context.Context, repositoryId openapi_types.UUID, 
 
 // ListRefsForRepositories is GET /v1/refs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRefsForRepositories(ctx context.Context, params *traust.ListRefsForRepositoriesParams) ([]traust.RepositoryRef, error) {
-	raw, err := c.core.ClientInterface.ListRefsForRepositories(ctx, params)
+	raw, err := c.core.Raw().ListRefsForRepositories(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListRefsForRepositories: %w", err)
 	}
@@ -305,7 +305,7 @@ func (c *Client) ListRefsForRepositories(ctx context.Context, params *traust.Lis
 
 // ListRepositories is GET /v1/repositories: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRepositories(ctx context.Context, params *traust.ListRepositoriesParams) (*traust.PageRepository, error) {
-	raw, err := c.core.ClientInterface.ListRepositories(ctx, params)
+	raw, err := c.core.Raw().ListRepositories(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListRepositories: %w", err)
 	}
@@ -342,7 +342,7 @@ func (c *Client) ListRepositoriesAll(ctx context.Context, params *traust.ListRep
 
 // MarkDefaultBranch is POST /v1/repositories/{repositoryId}/refs/default: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) MarkDefaultBranch(ctx context.Context, repositoryId openapi_types.UUID, body traust.MarkDefaultBranchJSONRequestBody) (*traust.RepositoryRef, error) {
-	raw, err := c.core.ClientInterface.MarkDefaultBranch(ctx, repositoryId, body)
+	raw, err := c.core.Raw().MarkDefaultBranch(ctx, repositoryId, body)
 	if err != nil {
 		return nil, fmt.Errorf("MarkDefaultBranch(%s): %w", repositoryId, err)
 	}
@@ -362,7 +362,7 @@ func (c *Client) MarkDefaultBranch(ctx context.Context, repositoryId openapi_typ
 
 // Onboard is POST /v1/onboarding: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Onboard(ctx context.Context, body traust.OnboardJSONRequestBody) (*traust.OnboardingResult, error) {
-	raw, err := c.core.ClientInterface.Onboard(ctx, body)
+	raw, err := c.core.Raw().Onboard(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("Onboard: %w", err)
 	}
@@ -382,7 +382,7 @@ func (c *Client) Onboard(ctx context.Context, body traust.OnboardJSONRequestBody
 
 // PlanOnboarding is POST /v1/onboarding/plan: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PlanOnboarding(ctx context.Context, body traust.PlanOnboardingJSONRequestBody) (*traust.OnboardingPlan, error) {
-	raw, err := c.core.ClientInterface.PlanOnboarding(ctx, body)
+	raw, err := c.core.Raw().PlanOnboarding(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("PlanOnboarding: %w", err)
 	}
@@ -402,7 +402,7 @@ func (c *Client) PlanOnboarding(ctx context.Context, body traust.PlanOnboardingJ
 
 // RegisterRef is POST /v1/repositories/{repositoryId}/refs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RegisterRef(ctx context.Context, repositoryId openapi_types.UUID, body traust.RegisterRefJSONRequestBody) (*traust.RepositoryRef, error) {
-	raw, err := c.core.ClientInterface.RegisterRef(ctx, repositoryId, body)
+	raw, err := c.core.Raw().RegisterRef(ctx, repositoryId, body)
 	if err != nil {
 		return nil, fmt.Errorf("RegisterRef(%s): %w", repositoryId, err)
 	}
@@ -422,7 +422,7 @@ func (c *Client) RegisterRef(ctx context.Context, repositoryId openapi_types.UUI
 
 // ResolveRepositories is POST /v1/repositories:resolve: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ResolveRepositories(ctx context.Context, body traust.ResolveRepositoriesJSONRequestBody) ([]traust.RepositoryResolution, error) {
-	raw, err := c.core.ClientInterface.ResolveRepositories(ctx, body)
+	raw, err := c.core.Raw().ResolveRepositories(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("ResolveRepositories: %w", err)
 	}
@@ -445,7 +445,7 @@ func (c *Client) ResolveRepositories(ctx context.Context, body traust.ResolveRep
 
 // ResolveRole is GET /v1/registry/resolve: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ResolveRole(ctx context.Context, params *traust.ResolveRoleParams) (*traust.RoleRouting, error) {
-	raw, err := c.core.ClientInterface.ResolveRole(ctx, params)
+	raw, err := c.core.Raw().ResolveRole(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ResolveRole: %w", err)
 	}
@@ -465,7 +465,7 @@ func (c *Client) ResolveRole(ctx context.Context, params *traust.ResolveRolePara
 
 // SetOwners is PUT /v1/repositories/{repositoryId}/owners: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) SetOwners(ctx context.Context, repositoryId openapi_types.UUID, body traust.SetOwnersJSONRequestBody) (*traust.SyncReport, error) {
-	raw, err := c.core.ClientInterface.SetOwners(ctx, repositoryId, body)
+	raw, err := c.core.Raw().SetOwners(ctx, repositoryId, body)
 	if err != nil {
 		return nil, fmt.Errorf("SetOwners(%s): %w", repositoryId, err)
 	}
@@ -485,7 +485,7 @@ func (c *Client) SetOwners(ctx context.Context, repositoryId openapi_types.UUID,
 
 // VerifyRepository is POST /v1/repositories/{repositoryId}/verify: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) VerifyRepository(ctx context.Context, repositoryId openapi_types.UUID) (*traust.RepositoryVerification, error) {
-	raw, err := c.core.ClientInterface.VerifyRepository(ctx, repositoryId)
+	raw, err := c.core.Raw().VerifyRepository(ctx, repositoryId)
 	if err != nil {
 		return nil, fmt.Errorf("VerifyRepository(%s): %w", repositoryId, err)
 	}

@@ -338,7 +338,7 @@ func TestWithResponseDecodesCoreProblemMediaAndValidationErrors(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			caller, err := client.WhoamiWithResponse(context.Background())
+			caller, err := client.Raw().WhoamiWithResponse(context.Background())
 			if err != nil || caller == nil || caller.StatusCode() != http.StatusUnauthorized || caller.JSON401 == nil {
 				t.Fatalf("problem media did not populate typed 401: response=%+v err=%v", caller, err)
 			}

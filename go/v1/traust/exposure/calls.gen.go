@@ -30,7 +30,7 @@ func New(core *traust.Client) *Client { return &Client{core: core} }
 
 // AdvisoriesFor is GET /v1/findings/{findingId}/advisories: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) AdvisoriesFor(ctx context.Context, findingId openapi_types.UUID) ([]traust.Advisory, error) {
-	raw, err := c.core.ClientInterface.AdvisoriesFor(ctx, findingId)
+	raw, err := c.core.Raw().AdvisoriesFor(ctx, findingId)
 	if err != nil {
 		return nil, fmt.Errorf("AdvisoriesFor(%s): %w", findingId, err)
 	}
@@ -53,7 +53,7 @@ func (c *Client) AdvisoriesFor(ctx context.Context, findingId openapi_types.UUID
 
 // Affected is GET /v1/advisories/{advisoryId}/affected: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([]traust.AffectedDependency, error) {
-	raw, err := c.core.ClientInterface.Affected(ctx, advisoryId)
+	raw, err := c.core.Raw().Affected(ctx, advisoryId)
 	if err != nil {
 		return nil, fmt.Errorf("Affected(%s): %w", advisoryId, err)
 	}
@@ -76,7 +76,7 @@ func (c *Client) Affected(ctx context.Context, advisoryId openapi_types.UUID) ([
 
 // Dependencies is GET /v1/refs/{repositoryRefId}/dependencies: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Dependencies(ctx context.Context, repositoryRefId openapi_types.UUID) ([]traust.RefDependency, error) {
-	raw, err := c.core.ClientInterface.Dependencies(ctx, repositoryRefId)
+	raw, err := c.core.Raw().Dependencies(ctx, repositoryRefId)
 	if err != nil {
 		return nil, fmt.Errorf("Dependencies(%s): %w", repositoryRefId, err)
 	}
@@ -99,7 +99,7 @@ func (c *Client) Dependencies(ctx context.Context, repositoryRefId openapi_types
 
 // Dependents is GET /v1/packages/{packageId}/dependents: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Dependents(ctx context.Context, packageId openapi_types.UUID, params *traust.DependentsParams) ([]openapi_types.UUID, error) {
-	raw, err := c.core.ClientInterface.Dependents(ctx, packageId, params)
+	raw, err := c.core.Raw().Dependents(ctx, packageId, params)
 	if err != nil {
 		return nil, fmt.Errorf("Dependents(%s): %w", packageId, err)
 	}
@@ -122,7 +122,7 @@ func (c *Client) Dependents(ctx context.Context, packageId openapi_types.UUID, p
 
 // ExportAdvisoryImpacts is GET /v1/advisories/{advisoryId}/impact-report: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ExportAdvisoryImpacts(ctx context.Context, advisoryId openapi_types.UUID) (*traust.ImpactExport, error) {
-	raw, err := c.core.ClientInterface.ExportAdvisoryImpacts(ctx, advisoryId)
+	raw, err := c.core.Raw().ExportAdvisoryImpacts(ctx, advisoryId)
 	if err != nil {
 		return nil, fmt.Errorf("ExportAdvisoryImpacts(%s): %w", advisoryId, err)
 	}
@@ -142,7 +142,7 @@ func (c *Client) ExportAdvisoryImpacts(ctx context.Context, advisoryId openapi_t
 
 // ExposureTimeline is GET /v1/exposure/timeline: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ExposureTimeline(ctx context.Context, params *traust.ExposureTimelineParams) ([]traust.ExposureSeriesPoint, error) {
-	raw, err := c.core.ClientInterface.ExposureTimeline(ctx, params)
+	raw, err := c.core.Raw().ExposureTimeline(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ExposureTimeline: %w", err)
 	}
@@ -165,7 +165,7 @@ func (c *Client) ExposureTimeline(ctx context.Context, params *traust.ExposureTi
 
 // FeedStatuses is GET /v1/feeds: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FeedStatuses(ctx context.Context) ([]traust.FeedStatus, error) {
-	raw, err := c.core.ClientInterface.FeedStatuses(ctx)
+	raw, err := c.core.Raw().FeedStatuses(ctx)
 	if err != nil {
 		return nil, fmt.Errorf("FeedStatuses: %w", err)
 	}
@@ -188,7 +188,7 @@ func (c *Client) FeedStatuses(ctx context.Context) ([]traust.FeedStatus, error) 
 
 // FindAdvisory is GET /v1/advisories: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FindAdvisory(ctx context.Context, params *traust.FindAdvisoryParams) (*traust.AdvisoryRecord, error) {
-	raw, err := c.core.ClientInterface.FindAdvisory(ctx, params)
+	raw, err := c.core.Raw().FindAdvisory(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("FindAdvisory: %w", err)
 	}
@@ -208,7 +208,7 @@ func (c *Client) FindAdvisory(ctx context.Context, params *traust.FindAdvisoryPa
 
 // FindPackage is GET /v1/packages: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FindPackage(ctx context.Context, params *traust.FindPackageParams) (*traust.Package, error) {
-	raw, err := c.core.ClientInterface.FindPackage(ctx, params)
+	raw, err := c.core.Raw().FindPackage(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("FindPackage: %w", err)
 	}
@@ -228,7 +228,7 @@ func (c *Client) FindPackage(ctx context.Context, params *traust.FindPackagePara
 
 // GetAdvisory is GET /v1/advisories/{advisoryId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetAdvisory(ctx context.Context, advisoryId openapi_types.UUID) (*traust.Advisory, error) {
-	raw, err := c.core.ClientInterface.GetAdvisory(ctx, advisoryId)
+	raw, err := c.core.Raw().GetAdvisory(ctx, advisoryId)
 	if err != nil {
 		return nil, fmt.Errorf("GetAdvisory(%s): %w", advisoryId, err)
 	}
@@ -248,7 +248,7 @@ func (c *Client) GetAdvisory(ctx context.Context, advisoryId openapi_types.UUID)
 
 // ListImpacts is GET /v1/impacts: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListImpacts(ctx context.Context, params *traust.ListImpactsParams) (*traust.PageImpactAnalysis, error) {
-	raw, err := c.core.ClientInterface.ListImpacts(ctx, params)
+	raw, err := c.core.Raw().ListImpacts(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListImpacts: %w", err)
 	}
@@ -285,7 +285,7 @@ func (c *Client) ListImpactsAll(ctx context.Context, params *traust.ListImpactsP
 
 // PackagesAffected is GET /v1/advisories/{advisoryId}/packages: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PackagesAffected(ctx context.Context, advisoryId openapi_types.UUID) ([]traust.AdvisoryPackage, error) {
-	raw, err := c.core.ClientInterface.PackagesAffected(ctx, advisoryId)
+	raw, err := c.core.Raw().PackagesAffected(ctx, advisoryId)
 	if err != nil {
 		return nil, fmt.Errorf("PackagesAffected(%s): %w", advisoryId, err)
 	}
@@ -308,7 +308,7 @@ func (c *Client) PackagesAffected(ctx context.Context, advisoryId openapi_types.
 
 // PrepareAdvisoryImpacts is GET /v1/advisories/{advisoryId}/impact-inputs: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareAdvisoryImpacts(ctx context.Context, advisoryId openapi_types.UUID, params *traust.PrepareAdvisoryImpactsParams) ([]traust.ImpactInput, error) {
-	raw, err := c.core.ClientInterface.PrepareAdvisoryImpacts(ctx, advisoryId, params)
+	raw, err := c.core.Raw().PrepareAdvisoryImpacts(ctx, advisoryId, params)
 	if err != nil {
 		return nil, fmt.Errorf("PrepareAdvisoryImpacts(%s): %w", advisoryId, err)
 	}
@@ -331,7 +331,7 @@ func (c *Client) PrepareAdvisoryImpacts(ctx context.Context, advisoryId openapi_
 
 // SummarizeExposure is GET /v1/exposure/summary: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) SummarizeExposure(ctx context.Context, params *traust.SummarizeExposureParams) ([]traust.ExposureRollup, error) {
-	raw, err := c.core.ClientInterface.SummarizeExposure(ctx, params)
+	raw, err := c.core.Raw().SummarizeExposure(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("SummarizeExposure: %w", err)
 	}

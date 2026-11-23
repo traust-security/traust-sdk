@@ -49,7 +49,7 @@ func TestE2EPagingDecodesAnEmptyInventory(t *testing.T) {
 }
 
 func TestE2EUnknownResourceIsATypedProblem(t *testing.T) {
-	resp, err := e2eCore(t).GetRepositoryWithResponse(context.Background(), uuid.New())
+	resp, err := e2eCore(t).Raw().GetRepositoryWithResponse(context.Background(), uuid.New())
 	if err != nil {
 		t.Fatal(err)
 	}

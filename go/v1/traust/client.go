@@ -85,8 +85,12 @@ type Config struct {
 // Client is traust-core's client: the transport — auth, retries, typed errors — the domain
 // clients call through, with the health and identity reads.
 type Client struct {
-	*ClientWithResponses
+	raw *ClientWithResponses
 }
+
+// Raw is the generated client under the typed calls: raw HTTP responses, for the domain
+// packages and the rare caller that needs a response's headers.
+func (c *Client) Raw() *ClientWithResponses { return c.raw }
 
 // NewClient validates cfg and connects to traust-core.
 func NewClient(cfg Config) (*Client, error) {
@@ -136,7 +140,7 @@ func NewClient(cfg Config) (*Client, error) {
 	if err != nil {
 		return nil, fmt.Errorf("traust: building client: %w", err)
 	}
-	return &Client{ClientWithResponses: generated}, nil
+	return &Client{raw: generated}, nil
 }
 
 // CheckResponse returns nil for a 2xx response, otherwise its *ProblemError: the RFC 7807

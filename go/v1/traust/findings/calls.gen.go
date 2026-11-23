@@ -30,7 +30,7 @@ func New(core *traust.Client) *Client { return &Client{core: core} }
 
 // Decide is POST /v1/findings/{findingId}/decisions: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Decide(ctx context.Context, findingId openapi_types.UUID, body traust.DecideJSONRequestBody) (*traust.Decision, error) {
-	raw, err := c.core.ClientInterface.Decide(ctx, findingId, body)
+	raw, err := c.core.Raw().Decide(ctx, findingId, body)
 	if err != nil {
 		return nil, fmt.Errorf("Decide(%s): %w", findingId, err)
 	}
@@ -50,7 +50,7 @@ func (c *Client) Decide(ctx context.Context, findingId openapi_types.UUID, body 
 
 // FindingTimeline is GET /v1/repositories/{repositoryId}/findings/timeline: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) FindingTimeline(ctx context.Context, repositoryId openapi_types.UUID, params *traust.FindingTimelineParams) ([]traust.FindingSeriesPoint, error) {
-	raw, err := c.core.ClientInterface.FindingTimeline(ctx, repositoryId, params)
+	raw, err := c.core.Raw().FindingTimeline(ctx, repositoryId, params)
 	if err != nil {
 		return nil, fmt.Errorf("FindingTimeline(%s): %w", repositoryId, err)
 	}
@@ -73,7 +73,7 @@ func (c *Client) FindingTimeline(ctx context.Context, repositoryId openapi_types
 
 // GetArtifact is GET /v1/artifacts/{artifactId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetArtifact(ctx context.Context, artifactId openapi_types.UUID) (*traust.Artifact, error) {
-	raw, err := c.core.ClientInterface.GetArtifact(ctx, artifactId)
+	raw, err := c.core.Raw().GetArtifact(ctx, artifactId)
 	if err != nil {
 		return nil, fmt.Errorf("GetArtifact(%s): %w", artifactId, err)
 	}
@@ -93,7 +93,7 @@ func (c *Client) GetArtifact(ctx context.Context, artifactId openapi_types.UUID)
 
 // GetArtifactContent is GET /v1/artifacts/{artifactId}/content: the exact stored bytes, or a *ProblemError.
 func (c *Client) GetArtifactContent(ctx context.Context, artifactId openapi_types.UUID) ([]byte, error) {
-	raw, err := c.core.ClientInterface.GetArtifactContent(ctx, artifactId)
+	raw, err := c.core.Raw().GetArtifactContent(ctx, artifactId)
 	if err != nil {
 		return nil, fmt.Errorf("GetArtifactContent(%s): %w", artifactId, err)
 	}
@@ -114,7 +114,7 @@ func (c *Client) GetArtifactContent(ctx context.Context, artifactId openapi_type
 
 // GetAssessment is GET /v1/assessments/{assessmentId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetAssessment(ctx context.Context, assessmentId openapi_types.UUID) (*traust.Assessment, error) {
-	raw, err := c.core.ClientInterface.GetAssessment(ctx, assessmentId)
+	raw, err := c.core.Raw().GetAssessment(ctx, assessmentId)
 	if err != nil {
 		return nil, fmt.Errorf("GetAssessment(%s): %w", assessmentId, err)
 	}
@@ -134,7 +134,7 @@ func (c *Client) GetAssessment(ctx context.Context, assessmentId openapi_types.U
 
 // GetAssessmentIntake is GET /v1/assessments/{assessmentId}/intake: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetAssessmentIntake(ctx context.Context, assessmentId openapi_types.UUID) (*traust.AssessmentIntakeBindings, error) {
-	raw, err := c.core.ClientInterface.GetAssessmentIntake(ctx, assessmentId)
+	raw, err := c.core.Raw().GetAssessmentIntake(ctx, assessmentId)
 	if err != nil {
 		return nil, fmt.Errorf("GetAssessmentIntake(%s): %w", assessmentId, err)
 	}
@@ -154,7 +154,7 @@ func (c *Client) GetAssessmentIntake(ctx context.Context, assessmentId openapi_t
 
 // GetDecision is GET /v1/decisions/{decisionId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetDecision(ctx context.Context, decisionId openapi_types.UUID) (*traust.Decision, error) {
-	raw, err := c.core.ClientInterface.GetDecision(ctx, decisionId)
+	raw, err := c.core.Raw().GetDecision(ctx, decisionId)
 	if err != nil {
 		return nil, fmt.Errorf("GetDecision(%s): %w", decisionId, err)
 	}
@@ -174,7 +174,7 @@ func (c *Client) GetDecision(ctx context.Context, decisionId openapi_types.UUID)
 
 // GetFinding is GET /v1/findings/{findingId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetFinding(ctx context.Context, findingId openapi_types.UUID) (*traust.FindingView, error) {
-	raw, err := c.core.ClientInterface.GetFinding(ctx, findingId)
+	raw, err := c.core.Raw().GetFinding(ctx, findingId)
 	if err != nil {
 		return nil, fmt.Errorf("GetFinding(%s): %w", findingId, err)
 	}
@@ -194,7 +194,7 @@ func (c *Client) GetFinding(ctx context.Context, findingId openapi_types.UUID) (
 
 // GetFindingByFingerprint is GET /v1/repositories/{repositoryId}/findings/by-fingerprint: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetFindingByFingerprint(ctx context.Context, repositoryId openapi_types.UUID, params *traust.GetFindingByFingerprintParams) (*traust.FindingView, error) {
-	raw, err := c.core.ClientInterface.GetFindingByFingerprint(ctx, repositoryId, params)
+	raw, err := c.core.Raw().GetFindingByFingerprint(ctx, repositoryId, params)
 	if err != nil {
 		return nil, fmt.Errorf("GetFindingByFingerprint(%s): %w", repositoryId, err)
 	}
@@ -214,7 +214,7 @@ func (c *Client) GetFindingByFingerprint(ctx context.Context, repositoryId opena
 
 // GetLatestRecordedAssessment is GET /v1/repositories/{repositoryId}/assessments/latest: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetLatestRecordedAssessment(ctx context.Context, repositoryId openapi_types.UUID, params *traust.GetLatestRecordedAssessmentParams) (*traust.Assessment, error) {
-	raw, err := c.core.ClientInterface.GetLatestRecordedAssessment(ctx, repositoryId, params)
+	raw, err := c.core.Raw().GetLatestRecordedAssessment(ctx, repositoryId, params)
 	if err != nil {
 		return nil, fmt.Errorf("GetLatestRecordedAssessment(%s): %w", repositoryId, err)
 	}
@@ -234,7 +234,7 @@ func (c *Client) GetLatestRecordedAssessment(ctx context.Context, repositoryId o
 
 // ListAssessmentArtifacts is GET /v1/assessments/{assessmentId}/artifacts: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListAssessmentArtifacts(ctx context.Context, assessmentId openapi_types.UUID, params *traust.ListAssessmentArtifactsParams) ([]traust.Artifact, error) {
-	raw, err := c.core.ClientInterface.ListAssessmentArtifacts(ctx, assessmentId, params)
+	raw, err := c.core.Raw().ListAssessmentArtifacts(ctx, assessmentId, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListAssessmentArtifacts(%s): %w", assessmentId, err)
 	}
@@ -257,7 +257,7 @@ func (c *Client) ListAssessmentArtifacts(ctx context.Context, assessmentId opena
 
 // ListAssessments is GET /v1/assessments: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListAssessments(ctx context.Context, params *traust.ListAssessmentsParams) (*traust.PageAssessment, error) {
-	raw, err := c.core.ClientInterface.ListAssessments(ctx, params)
+	raw, err := c.core.Raw().ListAssessments(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListAssessments: %w", err)
 	}
@@ -294,7 +294,7 @@ func (c *Client) ListAssessmentsAll(ctx context.Context, params *traust.ListAsse
 
 // ListDecisions is GET /v1/findings/{findingId}/decisions: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListDecisions(ctx context.Context, findingId openapi_types.UUID) ([]traust.Decision, error) {
-	raw, err := c.core.ClientInterface.ListDecisions(ctx, findingId)
+	raw, err := c.core.Raw().ListDecisions(ctx, findingId)
 	if err != nil {
 		return nil, fmt.Errorf("ListDecisions(%s): %w", findingId, err)
 	}
@@ -317,7 +317,7 @@ func (c *Client) ListDecisions(ctx context.Context, findingId openapi_types.UUID
 
 // ListFindings is GET /v1/repositories/{repositoryId}/findings: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListFindings(ctx context.Context, repositoryId openapi_types.UUID, params *traust.ListFindingsParams) (*traust.PageFindingView, error) {
-	raw, err := c.core.ClientInterface.ListFindings(ctx, repositoryId, params)
+	raw, err := c.core.Raw().ListFindings(ctx, repositoryId, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListFindings(%s): %w", repositoryId, err)
 	}
@@ -354,7 +354,7 @@ func (c *Client) ListFindingsAll(ctx context.Context, repositoryId openapi_types
 
 // ListFindingsIn is GET /v1/findings: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListFindingsIn(ctx context.Context, params *traust.ListFindingsInParams) (*traust.PageFindingView, error) {
-	raw, err := c.core.ClientInterface.ListFindingsIn(ctx, params)
+	raw, err := c.core.Raw().ListFindingsIn(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListFindingsIn: %w", err)
 	}
@@ -391,7 +391,7 @@ func (c *Client) ListFindingsInAll(ctx context.Context, params *traust.ListFindi
 
 // ListOrderAssessments is GET /v1/orders/{orderId}/assessments: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListOrderAssessments(ctx context.Context, orderId openapi_types.UUID) ([]traust.Assessment, error) {
-	raw, err := c.core.ClientInterface.ListOrderAssessments(ctx, orderId)
+	raw, err := c.core.Raw().ListOrderAssessments(ctx, orderId)
 	if err != nil {
 		return nil, fmt.Errorf("ListOrderAssessments(%s): %w", orderId, err)
 	}
@@ -414,7 +414,7 @@ func (c *Client) ListOrderAssessments(ctx context.Context, orderId openapi_types
 
 // ListRepositoryAssessments is GET /v1/repositories/{repositoryId}/assessments: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRepositoryAssessments(ctx context.Context, repositoryId openapi_types.UUID, params *traust.ListRepositoryAssessmentsParams) ([]traust.Assessment, error) {
-	raw, err := c.core.ClientInterface.ListRepositoryAssessments(ctx, repositoryId, params)
+	raw, err := c.core.Raw().ListRepositoryAssessments(ctx, repositoryId, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListRepositoryAssessments(%s): %w", repositoryId, err)
 	}
@@ -437,7 +437,7 @@ func (c *Client) ListRepositoryAssessments(ctx context.Context, repositoryId ope
 
 // ListRepositoryDecisions is GET /v1/repositories/{repositoryId}/decisions: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListRepositoryDecisions(ctx context.Context, repositoryId openapi_types.UUID) ([]traust.Decision, error) {
-	raw, err := c.core.ClientInterface.ListRepositoryDecisions(ctx, repositoryId)
+	raw, err := c.core.Raw().ListRepositoryDecisions(ctx, repositoryId)
 	if err != nil {
 		return nil, fmt.Errorf("ListRepositoryDecisions(%s): %w", repositoryId, err)
 	}
@@ -460,7 +460,7 @@ func (c *Client) ListRepositoryDecisions(ctx context.Context, repositoryId opena
 
 // ListValidationAttempts is GET /v1/validation-attempts: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListValidationAttempts(ctx context.Context, params *traust.ListValidationAttemptsParams) (*traust.PageValidationAttempt, error) {
-	raw, err := c.core.ClientInterface.ListValidationAttempts(ctx, params)
+	raw, err := c.core.Raw().ListValidationAttempts(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListValidationAttempts: %w", err)
 	}
@@ -497,7 +497,7 @@ func (c *Client) ListValidationAttemptsAll(ctx context.Context, params *traust.L
 
 // PrepareTriage is GET /v1/assessments/{assessmentId}/triage-input: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) PrepareTriage(ctx context.Context, assessmentId openapi_types.UUID) (*traust.TriageInput, error) {
-	raw, err := c.core.ClientInterface.PrepareTriage(ctx, assessmentId)
+	raw, err := c.core.Raw().PrepareTriage(ctx, assessmentId)
 	if err != nil {
 		return nil, fmt.Errorf("PrepareTriage(%s): %w", assessmentId, err)
 	}
@@ -517,7 +517,7 @@ func (c *Client) PrepareTriage(ctx context.Context, assessmentId openapi_types.U
 
 // RecordAssessment is POST /v1/assessment-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordAssessment(ctx context.Context, body traust.RecordAssessmentJSONRequestBody) (*traust.AssessmentRecordResult, error) {
-	raw, err := c.core.ClientInterface.RecordAssessment(ctx, body)
+	raw, err := c.core.Raw().RecordAssessment(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("RecordAssessment: %w", err)
 	}
@@ -537,7 +537,7 @@ func (c *Client) RecordAssessment(ctx context.Context, body traust.RecordAssessm
 
 // RecordOccurrenceClaims is POST /v1/occurrence-claims: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordOccurrenceClaims(ctx context.Context, body traust.RecordOccurrenceClaimsJSONRequestBody) (*traust.OccurrenceClaimReport, error) {
-	raw, err := c.core.ClientInterface.RecordOccurrenceClaims(ctx, body)
+	raw, err := c.core.Raw().RecordOccurrenceClaims(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("RecordOccurrenceClaims: %w", err)
 	}
@@ -557,7 +557,7 @@ func (c *Client) RecordOccurrenceClaims(ctx context.Context, body traust.RecordO
 
 // RecordTriage is POST /v1/assessments/{assessmentId}/triage-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordTriage(ctx context.Context, assessmentId openapi_types.UUID, body traust.RecordTriageJSONRequestBody) (*traust.TriageRecordResult, error) {
-	raw, err := c.core.ClientInterface.RecordTriage(ctx, assessmentId, body)
+	raw, err := c.core.Raw().RecordTriage(ctx, assessmentId, body)
 	if err != nil {
 		return nil, fmt.Errorf("RecordTriage(%s): %w", assessmentId, err)
 	}
@@ -577,7 +577,7 @@ func (c *Client) RecordTriage(ctx context.Context, assessmentId openapi_types.UU
 
 // RecordValidation is POST /v1/validation-records: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) RecordValidation(ctx context.Context, body traust.RecordValidationJSONRequestBody) (*traust.ValidationRecordResult, error) {
-	raw, err := c.core.ClientInterface.RecordValidation(ctx, body)
+	raw, err := c.core.Raw().RecordValidation(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("RecordValidation: %w", err)
 	}
@@ -597,7 +597,7 @@ func (c *Client) RecordValidation(ctx context.Context, body traust.RecordValidat
 
 // Restate is POST /v1/decisions/{decisionId}/restatement: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Restate(ctx context.Context, decisionId openapi_types.UUID, body traust.RestateJSONRequestBody) (*traust.Decision, error) {
-	raw, err := c.core.ClientInterface.Restate(ctx, decisionId, body)
+	raw, err := c.core.Raw().Restate(ctx, decisionId, body)
 	if err != nil {
 		return nil, fmt.Errorf("Restate(%s): %w", decisionId, err)
 	}
@@ -617,7 +617,7 @@ func (c *Client) Restate(ctx context.Context, decisionId openapi_types.UUID, bod
 
 // ReviewQueue is GET /v1/findings/review-queue: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ReviewQueue(ctx context.Context, params *traust.ReviewQueueParams) (*traust.PageReviewCase, error) {
-	raw, err := c.core.ClientInterface.ReviewQueue(ctx, params)
+	raw, err := c.core.Raw().ReviewQueue(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ReviewQueue: %w", err)
 	}
@@ -654,7 +654,7 @@ func (c *Client) ReviewQueueAll(ctx context.Context, params *traust.ReviewQueueP
 
 // SummarizeFindings is GET /v1/repositories/{repositoryId}/findings/summary: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) SummarizeFindings(ctx context.Context, repositoryId openapi_types.UUID, params *traust.SummarizeFindingsParams) ([]traust.FindingRollup, error) {
-	raw, err := c.core.ClientInterface.SummarizeFindings(ctx, repositoryId, params)
+	raw, err := c.core.Raw().SummarizeFindings(ctx, repositoryId, params)
 	if err != nil {
 		return nil, fmt.Errorf("SummarizeFindings(%s): %w", repositoryId, err)
 	}

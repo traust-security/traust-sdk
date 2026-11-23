@@ -30,7 +30,7 @@ func New(core *traust.Client) *Client { return &Client{core: core} }
 
 // Approve is POST /v1/orders/{orderId}/approve: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Approve(ctx context.Context, orderId openapi_types.UUID) (*traust.RunOrder, error) {
-	raw, err := c.core.ClientInterface.Approve(ctx, orderId)
+	raw, err := c.core.Raw().Approve(ctx, orderId)
 	if err != nil {
 		return nil, fmt.Errorf("Approve(%s): %w", orderId, err)
 	}
@@ -51,7 +51,7 @@ func (c *Client) Approve(ctx context.Context, orderId openapi_types.UUID) (*trau
 // Claim is POST /v1/orders/claim: the decoded body, or a *ProblemError when core refuses.
 // It returns nil, nil when core answers 204 No Content.
 func (c *Client) Claim(ctx context.Context, body traust.ClaimJSONRequestBody) (*traust.RunOrder, error) {
-	raw, err := c.core.ClientInterface.Claim(ctx, body)
+	raw, err := c.core.Raw().Claim(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("Claim: %w", err)
 	}
@@ -74,7 +74,7 @@ func (c *Client) Claim(ctx context.Context, body traust.ClaimJSONRequestBody) (*
 
 // Complete is POST /v1/orders/{orderId}/complete: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Complete(ctx context.Context, orderId openapi_types.UUID, body traust.CompleteJSONRequestBody) (*traust.RunOrder, error) {
-	raw, err := c.core.ClientInterface.Complete(ctx, orderId, body)
+	raw, err := c.core.Raw().Complete(ctx, orderId, body)
 	if err != nil {
 		return nil, fmt.Errorf("Complete(%s): %w", orderId, err)
 	}
@@ -94,7 +94,7 @@ func (c *Client) Complete(ctx context.Context, orderId openapi_types.UUID, body 
 
 // GetOrder is GET /v1/orders/{orderId}: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetOrder(ctx context.Context, orderId openapi_types.UUID) (*traust.RunOrder, error) {
-	raw, err := c.core.ClientInterface.GetOrder(ctx, orderId)
+	raw, err := c.core.Raw().GetOrder(ctx, orderId)
 	if err != nil {
 		return nil, fmt.Errorf("GetOrder(%s): %w", orderId, err)
 	}
@@ -114,7 +114,7 @@ func (c *Client) GetOrder(ctx context.Context, orderId openapi_types.UUID) (*tra
 
 // GetOrderManifest is GET /v1/orders/{orderId}/manifest: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetOrderManifest(ctx context.Context, orderId openapi_types.UUID) (*traust.OrderManifest, error) {
-	raw, err := c.core.ClientInterface.GetOrderManifest(ctx, orderId)
+	raw, err := c.core.Raw().GetOrderManifest(ctx, orderId)
 	if err != nil {
 		return nil, fmt.Errorf("GetOrderManifest(%s): %w", orderId, err)
 	}
@@ -134,7 +134,7 @@ func (c *Client) GetOrderManifest(ctx context.Context, orderId openapi_types.UUI
 
 // Heartbeat is POST /v1/orders/{orderId}/heartbeat: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Heartbeat(ctx context.Context, orderId openapi_types.UUID, body traust.HeartbeatJSONRequestBody) (*traust.RunOrder, error) {
-	raw, err := c.core.ClientInterface.Heartbeat(ctx, orderId, body)
+	raw, err := c.core.Raw().Heartbeat(ctx, orderId, body)
 	if err != nil {
 		return nil, fmt.Errorf("Heartbeat(%s): %w", orderId, err)
 	}
@@ -154,7 +154,7 @@ func (c *Client) Heartbeat(ctx context.Context, orderId openapi_types.UUID, body
 
 // ListOrders is GET /v1/orders: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ListOrders(ctx context.Context, params *traust.ListOrdersParams) (*traust.PageRunOrder, error) {
-	raw, err := c.core.ClientInterface.ListOrders(ctx, params)
+	raw, err := c.core.Raw().ListOrders(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListOrders: %w", err)
 	}
@@ -191,7 +191,7 @@ func (c *Client) ListOrdersAll(ctx context.Context, params *traust.ListOrdersPar
 
 // Preflight is POST /v1/preflight: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Preflight(ctx context.Context, body traust.PreflightJSONRequestBody) (*traust.PreflightResult, error) {
-	raw, err := c.core.ClientInterface.Preflight(ctx, body)
+	raw, err := c.core.Raw().Preflight(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("Preflight: %w", err)
 	}
@@ -211,7 +211,7 @@ func (c *Client) Preflight(ctx context.Context, body traust.PreflightJSONRequest
 
 // QueryOrders is POST /v1/orders/query: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) QueryOrders(ctx context.Context, body traust.QueryOrdersJSONRequestBody) (*traust.OrderQueryPage, error) {
-	raw, err := c.core.ClientInterface.QueryOrders(ctx, body)
+	raw, err := c.core.Raw().QueryOrders(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("QueryOrders: %w", err)
 	}
@@ -245,7 +245,7 @@ func (c *Client) QueryOrdersAll(ctx context.Context, body traust.QueryOrdersJSON
 
 // ReadFeed is GET /v1/feed: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ReadFeed(ctx context.Context, params *traust.ReadFeedParams) (*traust.PageFeedEvent, error) {
-	raw, err := c.core.ClientInterface.ReadFeed(ctx, params)
+	raw, err := c.core.Raw().ReadFeed(ctx, params)
 	if err != nil {
 		return nil, fmt.Errorf("ReadFeed: %w", err)
 	}
@@ -282,7 +282,7 @@ func (c *Client) ReadFeedAll(ctx context.Context, params *traust.ReadFeedParams)
 
 // Start is POST /v1/orders/start: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Start(ctx context.Context, body traust.StartJSONRequestBody) (*traust.RunOrder, error) {
-	raw, err := c.core.ClientInterface.Start(ctx, body)
+	raw, err := c.core.Raw().Start(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("Start: %w", err)
 	}
@@ -302,7 +302,7 @@ func (c *Client) Start(ctx context.Context, body traust.StartJSONRequestBody) (*
 
 // Submit is POST /v1/orders: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) Submit(ctx context.Context, body traust.SubmitJSONRequestBody) (*traust.RunOrder, error) {
-	raw, err := c.core.ClientInterface.Submit(ctx, body)
+	raw, err := c.core.Raw().Submit(ctx, body)
 	if err != nil {
 		return nil, fmt.Errorf("Submit: %w", err)
 	}

@@ -25,7 +25,7 @@ func e2eClient(t *testing.T) *Client {
 }
 
 func TestE2ECallerIsVerified(t *testing.T) {
-	resp, err := e2eClient(t).WhoamiWithResponse(context.Background())
+	resp, err := e2eClient(t).Raw().WhoamiWithResponse(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -43,7 +43,7 @@ func TestE2EUnverifiedTokenIsUnauthorized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp, err := c.WhoamiWithResponse(context.Background())
+	resp, err := c.Raw().WhoamiWithResponse(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
