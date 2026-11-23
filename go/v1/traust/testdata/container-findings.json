@@ -56,7 +56,20 @@
           "score": "7.5",
           "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
           "severity": "high",
-          "basis": "computed"
+          "basis": "computed",
+          "authority_scores": [],
+          "selected": {
+            "source": "scanner",
+            "version": "3.1",
+            "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+            "score": "7.5",
+            "band": "high",
+            "scored_by": null,
+            "document": "occurrence:00000000-0000-4000-8000-000000000004",
+            "acquired_at": null,
+            "reason": "precedence"
+          },
+          "conflict": false
         },
         "sla_due": null,
         "first_reported_at": "2026-11-16T00:00:00Z",

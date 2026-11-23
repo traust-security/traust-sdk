@@ -74,8 +74,10 @@ def normalize_problems(spec: dict) -> None:
 # Enums whose constants carry their type name, so a value shared with another enum never renames
 # existing constants (SourceType beside SourceChannel; RunOrderReason's not_found, bad_request;
 # FindingSort's severity beside the Severity type itself; ExecutivePanel's pqc beside the pqc
-# view name; ReportFormat's bare html and csv, before any other enum takes them).
+# view name; ReportFormat's bare html and csv, before any other enum takes them; Ecosystem's,
+# which lost their prefix when core's enums stopped sharing a value with it).
 NAMESPACED = (
+    "Ecosystem",
     "SourceType",
     "RunOrderReason",
     "FindingSort",

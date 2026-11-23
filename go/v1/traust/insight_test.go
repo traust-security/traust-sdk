@@ -320,3 +320,82 @@ func TestContainerFindingsDecodeIntoTheSharedFindingRecords(t *testing.T) {
 func ptr(v int) *int { return &v }
 
 func sameInt(a, b *int) bool { return (a == nil) == (b == nil) && (a == nil || *a == *b) }
+
+func TestAFindingsCvssDecodesTheSelectedAuthorityAndEveryStatement(t *testing.T) {
+	statement := `"source": "nist", "version": "3.1",
+		"vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", "score": "9.8",
+		"band": "critical", "scored_by": "nvd@nist.gov", "document": "nvd:CVE-2026-0001",
+		"acquired_at": "2026-11-16T00:00:00Z"`
+	raw := `{"score": "7.5", "vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:N/A:N",
+		"severity": "high", "basis": "authority", "conflict": false,
+		"authority_scores": [{` + statement + `}],
+		"selected": {` + statement + `, "reason": "precedence"}}`
+	var cvss traust.FindingRecordsInsightFindingCvss
+	if err := json.Unmarshal([]byte(raw), &cvss); err != nil {
+		t.Fatal(err)
+	}
+	t.Run("the selected statement", func(t *testing.T) {
+		selected := cvss.Selected
+		if cvss.Basis != traust.FindingRecordsInsightFindingCvssBasisAuthority || selected == nil ||
+			selected.Source != traust.FindingRecordsInsightSelectedCvssSourceNist || selected.Score != "9.8" ||
+			selected.Band != traust.FindingRecordsInsightSelectedCvssBandCritical ||
+			selected.Reason != traust.FindingRecordsInsightSelectedCvssReasonPrecedence {
+			t.Fatalf("cvss = %+v, selected = %+v", cvss, selected)
+		}
+	})
+	t.Run("every authority's statement", func(t *testing.T) {
+		if len(cvss.AuthorityScores) != 1 || cvss.AuthorityScores[0].Document != "nvd:CVE-2026-0001" || cvss.Conflict {
+			t.Fatalf("authority = %+v, conflict = %v", cvss.AuthorityScores, cvss.Conflict)
+		}
+	})
+	t.Run("the report's own score beside it", func(t *testing.T) {
+		if cvss.Score == nil || *cvss.Score != "7.5" {
+			t.Fatalf("score = %v", cvss.Score)
+		}
+	})
+}
+
+func TestATopFindingNamesWhoStatedItsScore(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		raw  string
+		want *traust.FindingsRollupInsightTopFindingCvssSource
+	}{
+		{"an authority stated it", `"cvss_score": "9.8", "cvss_source": "nist"`, ptrTo(traust.FindingsRollupInsightTopFindingCvssSourceNist)},
+		{"unscored names no one", `"cvss_score": null, "cvss_source": null`, nil},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			var top traust.FindingsRollupInsightTopFinding
+			raw := `{"finding_id": "00000000-0000-4000-8000-000000000001", "repository_url": "https://forge.example/org/repo",
+				"title": "t", "severity": "critical", "execution_proven": false, "sla_due": null, ` + tt.raw + `}`
+			if err := json.Unmarshal([]byte(raw), &top); err != nil {
+				t.Fatal(err)
+			}
+			if (top.CvssSource == nil) != (tt.want == nil) || (tt.want != nil && *top.CvssSource != *tt.want) {
+				t.Fatalf("source = %v", top.CvssSource)
+			}
+		})
+	}
+}
+
+// Regeneration keeps the exported constant names consumers compile against.
+func TestEcosystemConstantsKeepTheirNames(t *testing.T) {
+	for _, tt := range []struct {
+		name string
+		got  traust.Ecosystem
+		want string
+	}{
+		{"docker", traust.EcosystemDocker, "docker"},
+		{"go", traust.EcosystemGo, "go"},
+		{"npm", traust.EcosystemNpm, "npm"},
+		{"ruby", traust.EcosystemRuby, "ruby"},
+	} {
+		t.Run(tt.name, func(t *testing.T) {
+			if string(tt.got) != tt.want {
+				t.Fatalf("%s = %q", tt.name, tt.got)
+			}
+		})
+	}
+}
+
+func ptrTo[T any](v T) *T { return &v }
