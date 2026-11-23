@@ -28,6 +28,8 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /findings/{id}", web.SignedIn(h.finding))
 	mux.HandleFunc("POST /findings/{id}/decide", web.SignedIn(h.decide))
 	mux.HandleFunc("POST /decisions/{id}/restate", web.SignedIn(h.restate))
+	mux.HandleFunc("GET /repositories/{id}/decisions", web.SignedIn(h.decisions))
+	mux.HandleFunc("GET /decisions/{id}", web.SignedIn(h.decision))
 	mux.HandleFunc("GET /review", web.SignedIn(h.review))
 }
 

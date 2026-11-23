@@ -569,6 +569,88 @@ func TestRecentRefsSpanTheRepositoriesTheHomePageLists(t *testing.T) {
 	}
 }
 
+func TestARepositorysDecisionsAreListedWithTheRestatedMarked(t *testing.T) {
+	core := traustest.New(t)
+	repo, found := uuid.New(), uuid.New()
+	decision, correction, earlier := uuid.New(), uuid.New(), uuid.New()
+	actor, why, ticket := "triage", "a fixture verdict", "SEC-1"
+	var verdict traust.Decision_Validity
+	if err := verdict.FromValidity(traust.ValidityTruePositive); err != nil {
+		t.Fatal(err)
+	}
+	var reason traust.Decision_Reason
+	if err := reason.FromDecisionReason(traust.DecisionReasonOperatorError); err != nil {
+		t.Fatal(err)
+	}
+	core.Handle("GET /v1/repositories/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Repository{Id: &repo, Url: "https://forge.example/org/a"})))
+	core.Handle("GET /v1/repositories/{id}/refs/current-default", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{RepositoryId: repo, Sha: "4c7f0b9"})))
+	core.Handle("GET /v1/repositories/{id}/decisions", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Decision{
+		{Id: &decision, FindingId: found, Actor: &actor, Rationale: &why, Validity: &verdict, OccurredAt: time.Now()},
+		{Id: &correction, FindingId: found, Actor: &actor, Rationale: &why, Validity: &verdict, RestatesId: &earlier, Reason: &reason, Ticket: &ticket, OccurredAt: time.Now()},
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/repositories/"+repo.String(), "ada", nil).Body.String()
+	if !strings.Contains(page, `hx-get="/repositories/`+repo.String()+`/decisions"`) {
+		t.Fatalf("repository page lacks the decisions section:\n%s", page)
+	}
+	list := send(h, http.MethodGet, "/repositories/"+repo.String()+"/decisions", "ada", nil).Body.String()
+	for _, want := range []string{
+		`href="/decisions/` + decision.String() + `">true_positive</a> by triage`,
+		`href="/decisions/` + correction.String() + `">true_positive</a> by triage`,
+		"restates an earlier decision",
+	} {
+		if !strings.Contains(list, want) {
+			t.Fatalf("decisions list lacks %q:\n%s", want, list)
+		}
+	}
+}
+
+func TestADecisionPageRendersAndLinksItsFinding(t *testing.T) {
+	core := traustest.New(t)
+	found, decision, earlier := uuid.New(), uuid.New(), uuid.New()
+	actor, why, ticket := "triage", "a fixture verdict", "SEC-1"
+	var verdict traust.Decision_Validity
+	if err := verdict.FromValidity(traust.ValidityTruePositive); err != nil {
+		t.Fatal(err)
+	}
+	var reason traust.Decision_Reason
+	if err := reason.FromDecisionReason(traust.DecisionReasonOperatorError); err != nil {
+		t.Fatal(err)
+	}
+	core.Handle("GET /v1/decisions/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Decision{
+		Id: &decision, FindingId: found, Actor: &actor, Rationale: &why, Validity: &verdict,
+		RestatesId: &earlier, Reason: &reason, Ticket: &ticket, OccurredAt: time.Now(),
+	})))
+	core.Handle("GET /v1/findings/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.FindingView{
+		Finding: traust.Finding{Id: &found, RepositoryId: uuid.New(), Title: "SQL built from input"},
+	})))
+
+	page := send(newApp(t, core), http.MethodGet, "/decisions/"+decision.String(), "ada", nil).Body.String()
+	for _, want := range []string{
+		"true_positive by triage", "a fixture verdict", "operator_error",
+		`href="/findings/` + found.String() + `">SQL built from input</a>`,
+		"It restates an earlier decision", "ticket SEC-1",
+		`hx-post="/decisions/` + decision.String() + `/restate"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("decision page lacks %q:\n%s", want, page)
+		}
+	}
+}
+
+func TestDecisionRefusalsKeepTheirStatus(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/repositories/{id}/decisions", traustest.Problem(http.StatusForbidden, "a repository's decisions are an admin's"))
+	core.Handle("GET /v1/decisions/{id}", traustest.Problem(http.StatusForbidden, "a decision's page is an admin's"))
+	h := newApp(t, core)
+	for _, path := range []string{"/repositories/" + uuid.NewString() + "/decisions", "/decisions/" + uuid.NewString()} {
+		if w := send(h, http.MethodGet, path, "ada", nil); w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "an admin&#39;s") {
+			t.Fatalf("%s: %d %s, want core's refusal shown", path, w.Code, w.Body)
+		}
+	}
+}
+
 func TestRefAdministrationRefusalKeepsItsStatus(t *testing.T) {
 	core := traustest.New(t)
 	core.Handle("POST /v1/repositories/{id}/refs", traustest.Problem(http.StatusForbidden, "registering a ref is an admin's"))

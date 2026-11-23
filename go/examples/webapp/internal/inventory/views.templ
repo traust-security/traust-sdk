@@ -112,6 +112,8 @@ templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/findings" } hx-trigger="load, run-finished from:body"></div>
 		<h2>Assessments</h2>
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/assessments" } hx-trigger="load, run-finished from:body"></div>
+		<h2>Decisions</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/decisions" } hx-trigger="load"></div>
 		<h2>Ledger</h2>
 		<div id="ledger" hx-get={ "/repositories/" + repo.Id.String() + "/ledger" } hx-trigger="load"></div>
 	}
