@@ -1,12 +1,3 @@
-CONTRACTS_REPO := https://github.com/traust-security/traust-contracts.git
-CONTRACTS_REF := 31d0d884672149e606934c2844ffcbf3bdd4b925
-CONTRACTS_CACHE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/contracts
-CONTRACTS_SOURCE := $(CONTRACTS_CACHE)/checkout-$(CONTRACTS_REF)
-ENUMS_DIR := $(CONTRACTS_SOURCE)/enums/v1
-SCHEMAS_DIR := $(CONTRACTS_SOURCE)/artifacts_schema/v1
-# storage/ is frozen at the pre-db/v1 layout: the storage generator reads queries/ dirs the
-# db/v1 restructure dropped. Regenerating it is the G6 layout adaptation (plan 28), and plan 05
-# retires the package; until then v1/storage/ is hand-maintained and checked by drift.
 CORE_REPO := https://github.com/traust-security/traust-core.git
 CORE_REF := 264736f36a45a471f46dd6abf68b9dc646091ca0
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
@@ -20,12 +11,11 @@ TRAUST_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/harness/check
 # The box's Claude login, kept across runs: log in once with CLAUDE_CONFIG_DIR=$(CLAUDE_RUNNER) claude, or set ANTHROPIC_API_KEY.
 CLAUDE_RUNNER ?= $(or $(XDG_CONFIG_HOME),$(HOME)/.config)/traust-sdk/claude-runner
 OPENAPI_DIR := ./internal/generate/openapi
-OUT_DIR := ./v1/enums
 ROOT := ..
 GO_CI := python3 $(ROOT)/ci/lang/go/ci.py
 export PATH := $(shell go env GOPATH)/bin:$(PATH)
 
-.PHONY: contracts core engine harness generate api-generate e2e webapp test webapp-generate test-integration check-drift fmt fmt-check vet lint security tools
+.PHONY: core engine harness api-generate e2e webapp test webapp-generate check-drift fmt fmt-check vet lint security tools
 
 # checkout pins $(1) to commit $(3) of $(2), fetching only that commit; $(4) are git clean's flags.
 define checkout
@@ -36,12 +26,6 @@ define checkout
 	git -C "$(1)" clean $(4)
 endef
 
-contracts:
-	$(call checkout,$(CONTRACTS_SOURCE),$(CONTRACTS_REPO),$(CONTRACTS_REF),-ffdqx)
-
-generate: contracts
-	go run ./internal/generate -enums "$(ENUMS_DIR)" -out "$(OUT_DIR)" -schemas "$(SCHEMAS_DIR)" -types ./v1/types -validate ./v1/validate/schemas_gen.go -contracts-ref "$(CONTRACTS_REF)"
-
 test:
 	go test ./...
 	cd examples/webapp && go test ./...
@@ -50,11 +34,8 @@ test:
 webapp-generate:
 	cd examples/webapp && go tool templ generate
 
-test-integration:
-	go test -count=1 -v ./v1/storage/...
-
-check-drift: generate api-generate webapp-generate engine harness
-	@git diff --exit-code -- './examples/webapp/*_templ.go' $(OUT_DIR) ./v1/types/ ./v1/validate/schemas_gen.go ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go ./v1/ops/pack.schema.json || (echo "ERROR: generated files are out of date; run 'make generate api-generate' and commit" && exit 1)
+check-drift: api-generate webapp-generate engine harness
+	@git diff --exit-code -- './examples/webapp/*_templ.go' ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go || (echo "ERROR: generated files are out of date; run 'make api-generate webapp-generate' and commit" && exit 1)
 	$(CORE_PYTHON) "$(CURDIR)/internal/pack_drift.py" --webapp "$(CURDIR)/examples/webapp/pack.yaml" --shipped "$(TRAUST_SOURCE)/packs/security/assets.yaml"
 
 core:
@@ -75,8 +56,8 @@ harness: core
 	@cd "$(CORE_SOURCE)" && uv pip install --quiet --no-deps "$(TRAUST_SOURCE)"
 
 # Everything the SDK knows about core comes from core at CORE_REF: the client from its OpenAPI
-# (built, used once, deleted), the Go types of the Insight view contracts core validates its
-# views with, and the pack schema from the contracts core validates packs with.
+# (built, used once, deleted) and the Go types of the Insight view contracts core validates its
+# views with.
 api-generate: core
 	@set -eu; \
 	tmp="$$(mktemp -d)"; trap 'rm -rf "$$tmp"' EXIT; \
@@ -86,20 +67,18 @@ api-generate: core
 	go run ./internal/generate/calls ./v1/traust/client.gen.go "$$tmp/openapi.json" ./v1/traust/calls.gen.go; \
 	($(CORE_PYTHON) "$(CURDIR)/$(OPENAPI_DIR)/views.py" "$$tmp/views.json"); \
 	go tool oapi-codegen --config $(OPENAPI_DIR)/views.yaml "$$tmp/views.json"; \
-	go run ./internal/generate/insights ./v1/traust/client.gen.go "$$tmp/views.json" ./v1/traust/insights.gen.go; \
-	($(CORE_PYTHON) -c "import json; from traust_core.v1.contracts import config_schema; print(json.dumps(config_schema('pack'), indent=2))") > ./v1/ops/pack.schema.json
+	go run ./internal/generate/insights ./v1/traust/client.gen.go "$$tmp/views.json" ./v1/traust/insights.gen.go
 
 # A local-issuer token for the e2e server: $(1) identity, $(2) machine (True/False), $(3) file.
 mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context import Config, Context; print(Context(Config.from_file(Path('$$home/traust.yaml'))).local_issuer.mint('$(1)', machine=$(2)).token.get_secret_value())") > "$$home/$(3)"
 
-# The generated client and the runner against traust-server built from core at CORE_REF.
+# The generated client against traust-server built from core at CORE_REF.
 # The suite never leaves localhost: the vocabulary test onboards one repository, and
 # onboarding reads its visibility at the forge, so the e2eforge mock stands in for the
 # forge. Core reaches a gitlab-kind host at https://{host}/api/v4 — scheme and port are
 # fixed — so e2eforge is an HTTPS_PROXY CONNECT proxy answering with its own TLS (an
 # ephemeral self-signed certificate, trusted through SSL_CERT_FILE), and the e2e config
 # maps the mock's host to the gitlab kind in forge_hosts.
-# One package at a time: both share the server, and ops onboards what v1/traust expects empty.
 # provision is what a deployment does to a fresh configured database, the sequence core runs
 # itself for a fresh local store: the contracts' baseline DDL, the whole upgrade channel, then
 # the data channel.
@@ -169,7 +148,7 @@ e2e: engine harness
 	command -v cosign >/dev/null || { echo "make e2e signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
 	$(core_up); \
 	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_ADMIN_TOKEN_FILE="$$home/admin" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; \
-	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/ ./v1/ops/; \
+	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/; \
 	cp "$(TRAUST_SOURCE)/config/model-registry.yaml" "$$home/model-registry.yaml"; \
 	(cd "$(CORE_SOURCE)" && exec env PATH="$(CURDIR)/internal/e2eclaude:$$PATH" TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" $$proxy uv run --quiet traust-engine claim --loop --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --worker e2e-box --label llm --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml") > "$$home/claim.log" 2>&1 & pids="$$pids $$!"; \
 	(cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .) || { echo "--- claim.log"; tail -40 "$$home/claim.log"; echo "--- e2eclaude.log"; cat "$$home/e2eclaude.log" 2>/dev/null; exit 1; }

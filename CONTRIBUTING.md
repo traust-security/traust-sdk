@@ -12,21 +12,14 @@ Enables git hooks. One time per clone. Go SDK requires **Go 1.26+** (`toolchain`
 ## Regenerating
 
 ```bash
-make -C go api-generate  # client, calls and pack schema from core at CORE_REF
-make -C go generate      # the legacy contracts-generated packages at CONTRACTS_REF
+make -C go api-generate  # the client, its calls and the insight views from core at CORE_REF
 make -C go check-drift   # regenerates everything, fails when committed output is stale
 ```
 
 `api-generate` builds core's OpenAPI at `CORE_REF` (`go/Makefile`), generates
-`v1/traust/client.gen.go` and the `(T, error)` calls and `…All` iterators in
-`v1/traust/calls.gen.go`, writes `v1/ops/pack.schema.json`, and deletes the spec.
-
-`generate` fetches the canonical `traust-contracts` repository at the immutable `CONTRACTS_REF`
-pinned in `go/Makefile` — never latest `main` — and validates that the checkout matches it
-exactly; no sibling checkout is required. The verified checkout is reused from `CONTRACTS_CACHE`
-(by default the user cache) at `CONTRACTS_SOURCE`. `CONTRACTS_REF`, `CONTRACTS_REPO`,
-`CONTRACTS_CACHE` and `CONTRACTS_SOURCE` are all caller-overridable for fork, CI-cache and
-pinned-ref workflows.
+`v1/traust/client.gen.go`, the `(T, error)` calls and `…All` iterators in
+`v1/traust/calls.gen.go`, and the insight views in `v1/traust/views.gen.go` and
+`v1/traust/insights.gen.go`, and deletes the spec.
 
 ## Commit messages
 
@@ -60,9 +53,8 @@ GitHub Actions (`.github/workflows/ci.yml`) on every PR, in the merge queue and 
 |-----|------|
 | `lint` | `make lint` |
 | `test` | `go test -race ./...` |
-| `integration` | `make test-integration` on PostgreSQL 16 |
 | `security` | `make security` |
-| `drift` | `make -C go check-drift`: generated code matches the pinned contracts and core commits |
+| `drift` | `make -C go check-drift`: generated code matches the pinned core commit |
 | `e2e` | `make e2e`: the generated client against `traust-server` built from core at `CORE_REF` |
 | `guardrails` | `make guardrails`: the AGENTS.md rules a machine can check, plus commit subjects |
 
@@ -72,21 +64,7 @@ GitHub Actions (`.github/workflows/ci.yml`) on every PR, in the merge queue and 
 
 ```bash
 make test              # network-free unit tests
-make test-integration  # SQLite plus optional local PostgreSQL storage coverage
 make security          # govulncheck + gosec (required in CI)
 make e2e               # generated client vs traust-server at CORE_REF (needs uv)
 make guardrails        # AGENTS.md rules a machine can check
 ```
-
-`make test-integration` uses one fixed local PostgreSQL test DSN, disables the Go test cache so
-availability is checked on every run, recreates `traust_storage` for each test, and verifies that
-same-named application tables remain untouched. Start the database with:
-
-```bash
-podman run --name traust-postgres --rm -d -e POSTGRES_USER=traust -e POSTGRES_PASSWORD=traust-test-only -e POSTGRES_DB=traust_test -p 127.0.0.1:5432:5432 -v traust-postgres-data:/var/lib/postgresql/data docker.io/library/postgres:16
-```
-
-These are fixed local test-only credentials, **not deployed credentials or
-secrets**, and no DSN override is supported. If PostgreSQL is absent, unreachable,
-or rejects authentication, its test reports a skip while SQLite still runs. Once a
-connection succeeds, Open, initialization, and protocol failures fail the suite.

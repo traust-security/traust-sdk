@@ -1,7 +1,7 @@
 PYTHON ?= python3
 GO_DIR := go
 
-.PHONY: help setup hooks lint lint-fix test test-integration security guardrails lean e2e
+.PHONY: help setup hooks lint lint-fix test security guardrails lean e2e
 
 help:
 	@echo "Targets ($(notdir $(CURDIR))):"
@@ -10,7 +10,6 @@ help:
 	@echo "  make lint           — go vet + gofmt check (go/)"
 	@echo "  make lint-fix       — gofmt -w (go/)"
 	@echo "  make test           — go test ./... (go/)"
-	@echo "  make test-integration — storage tests: SQLite + optional local PostgreSQL"
 	@echo "  make security       — govulncheck + gosec (go/)"
 	@echo "  make guardrails     — AGENTS.md rules a machine can check"
 	@echo "  make lean           — bloat gates vs LEAN_BASE: replace-is-delete, justified deps, generated-first"
@@ -31,9 +30,6 @@ lint-fix:
 
 test:
 	$(MAKE) -C $(GO_DIR) test
-
-test-integration:
-	$(MAKE) -C $(GO_DIR) test-integration
 
 security:
 	$(MAKE) -C $(GO_DIR) security

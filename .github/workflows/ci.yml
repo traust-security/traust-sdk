@@ -39,30 +39,6 @@ jobs:
       - run: go test -race ./...
         working-directory: go/examples/webapp
 
-  integration:
-    runs-on: ubuntu-latest
-    services:
-      postgres:
-        image: postgres:16
-        env:
-          POSTGRES_USER: traust
-          POSTGRES_PASSWORD: traust-test-only
-          POSTGRES_DB: traust_test
-        ports:
-          - 5432:5432
-        options: >-
-          --health-cmd "pg_isready -U traust"
-          --health-interval 5s
-          --health-timeout 5s
-          --health-retries 10
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go/go.mod
-          cache-dependency-path: go/go.sum
-      - run: make test-integration
-
   security:
     runs-on: ubuntu-latest
     steps:
@@ -73,7 +49,7 @@ jobs:
           cache-dependency-path: go/go.sum
       - run: make security
 
-  # Generated code matches the pinned CONTRACTS_REF and CORE_REF and was never hand-edited.
+  # Generated code matches the pinned CORE_REF and was never hand-edited.
   drift:
     runs-on: ubuntu-latest
     steps:

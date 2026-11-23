@@ -3,10 +3,9 @@
 set -euo pipefail
 cd "$(git rev-parse --show-toplevel)"
 
-# Framework packages (go/README.md "Legacy packages") and the frozen ones. A new package is a design
-# change: add it here in the same PR, which routes the PR to a code owner.
-framework="traust ops feed"
-frozen="enums ledger skills storage types validate"
+# Framework packages (go/README.md). A new package is a design change: add it here in the same
+# PR, which routes the PR to a code owner.
+framework="traust"
 
 fail=0
 rule() { echo "guardrail: $1" >&2; fail=1; }
@@ -17,7 +16,7 @@ fi
 
 for dir in go/v1/*/; do
   pkg=$(basename "$dir")
-  case " $framework $frozen " in *" $pkg "*) ;; *) rule "go/v1/$pkg is not a package in AGENTS.md" ;; esac
+  case " $framework " in *" $pkg "*) ;; *) rule "go/v1/$pkg is not a package in AGENTS.md" ;; esac
 done
 
 for pkg in $framework; do
