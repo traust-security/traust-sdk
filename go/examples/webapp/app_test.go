@@ -99,6 +99,22 @@ func TestHomeShowsThePersonAndTheirRepositories(t *testing.T) {
 	}
 }
 
+func TestEachPageAsksWhoIsSignedInAndWatchesCoreHealth(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/whoami", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Principal{Display: "Ada"})))
+	core.Handle("GET /v1/repositories", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageRepository{})))
+	h := newApp(t, core)
+
+	for _, path := range []string{"/", "/onboard"} {
+		page := send(h, http.MethodGet, path, "ada", nil).Body.String()
+		for _, want := range []string{`hx-get="/whoami"`, `hx-get="/health"`} {
+			if !strings.Contains(page, want) {
+				t.Fatalf("%s lacks %q, want the layout asking after the page shows:\n%s", path, want, page)
+			}
+		}
+	}
+}
+
 func TestARunPollsUntilCoreFinishesIt(t *testing.T) {
 	core := traustest.New(t)
 	id := uuid.New()

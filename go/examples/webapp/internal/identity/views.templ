@@ -1,0 +1,38 @@
+package identity
+
+import (
+	"strings"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// person names who core says is signed in, with the roles core gives them: the layout's
+// header ask.
+templ person(me traust.Principal) {
+	Signed in as { me.Display }
+	if r := roles(web.Items(me.Roles)); r != "" {
+		({ r })
+	}
+	<form method="post" action="/sign-out"><button>Sign out</button></form>
+}
+
+// health words core's health as core reports it: the layout's footer ask.
+templ health(status string) {
+	Core: { status }
+}
+
+// unreachable words a core that won't answer.
+templ unreachable() {
+	Core: unreachable
+}
+
+// roles words the person's roles as core reports them; none is empty.
+func roles(list []traust.Role) string {
+	words := make([]string, len(list))
+	for i, role := range list {
+		words[i] = string(role)
+	}
+	return strings.Join(words, ", ")
+}

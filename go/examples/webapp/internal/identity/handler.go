@@ -19,6 +19,28 @@ func New(core *traust.Client) *Handler { return &Handler{core: core} }
 func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /sign-in", h.signIn)
 	mux.HandleFunc("POST /sign-out", h.signOut)
+	mux.HandleFunc("GET /health", h.healthz)
+	mux.HandleFunc("GET /whoami", web.SignedIn(h.whoami))
+}
+
+// whoami answers the layout's ask: who core says is signed in.
+func (h *Handler) whoami(w http.ResponseWriter, r *http.Request) {
+	me, err := h.core.Whoami(r.Context())
+	if err != nil {
+		web.Fail(w, r, err)
+		return
+	}
+	web.Render(w, r, http.StatusOK, person(*me))
+}
+
+// healthz answers the layout's ask: core's health, no sign-in needed. A core that won't answer
+// is said to be unreachable, never mistaken for healthy.
+func (h *Handler) healthz(w http.ResponseWriter, r *http.Request) {
+	if core, err := h.core.Healthz(r.Context()); err == nil {
+		web.Render(w, r, http.StatusOK, health(core.Status))
+		return
+	}
+	web.Render(w, r, http.StatusOK, unreachable())
 }
 
 func (h *Handler) signIn(w http.ResponseWriter, r *http.Request) {

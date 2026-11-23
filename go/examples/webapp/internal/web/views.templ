@@ -12,9 +12,11 @@ templ Page(title string) {
 		</head>
 		<body>
 			<nav><a class="brand" href="/">ᛏ traust</a><a href="/onboard">Onboard</a><a href="/review">Review</a></nav>
+			<div hx-get="/whoami" hx-trigger="load"></div>
 			<main>
 				{ children... }
 			</main>
+			<div hx-get="/health" hx-trigger="load"></div>
 		</body>
 	</html>
 }
