@@ -1078,3 +1078,104 @@ func TestFindingsDepthRefusalsKeepTheirStatus(t *testing.T) {
 		}
 	}
 }
+
+func TestTheRunsPagePassesItsFiltersThrough(t *testing.T) {
+	core := traustest.New(t)
+	repo, order := uuid.New(), uuid.New()
+	core.Handle("POST /v1/orders/query", onlyFor("ada", traustest.JSON(http.StatusOK, traust.OrderQueryPage{
+		Items: []traust.OrderQueryItem{{Order: traust.RunOrder{Id: &order, Asset: "full_audit", State: traust.RunOrderStateSucceeded, RequestedBy: "engine"}}},
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/runs?state=succeeded&asset=full_audit&repository="+repo.String(), "ada", nil).Body.String()
+	for _, want := range []string{
+		"<h1>Runs</h1>", `action="/runs"`, `name="asset"`, `name="state"`, `name="repository"`,
+		`href="/runs/` + order.String() + `/detail">full_audit</a>`, "succeeded, requested by engine",
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("runs page lacks %q:\n%s", want, page)
+		}
+	}
+	var asked traust.OrderQueryRequest
+	if err := json.Unmarshal(core.Requests()[0].Body, &asked); err != nil ||
+		*asked.Asset != "full_audit" || *asked.RepositoryId != repo ||
+		len(*asked.States) != 1 || (*asked.States)[0] != traust.RunOrderStateSucceeded {
+		t.Fatalf("core was asked %+v %v, want the state, asset and repository passed through", asked, err)
+	}
+}
+
+func TestARunPageShowsItsOrderItsManifestItsAssessmentsAndItsModel(t *testing.T) {
+	core := traustest.New(t)
+	id, found := uuid.New(), uuid.New()
+	created := time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC)
+	lane, rule, reason := "security", "2", "a fixture reason"
+	core.Handle("GET /v1/orders/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RunOrder{
+		Id: &id, Asset: "full_audit", State: traust.RunOrderStateSucceeded, RequestedBy: "engine", Priority: 3,
+		Lane: &lane, Rule: &rule, Reason: &reason, CreatedAt: &created,
+	})))
+	core.Handle("GET /v1/orders/{id}/manifest", onlyFor("ada", traustest.JSON(http.StatusOK, traust.OrderManifest{
+		"role":     "deep-audit",
+		"config":   []any{map[string]any{"name": "pack:security", "digest": "4c7f0b9"}},
+		"approval": map[string]any{"approver": "ada", "approved_at": "2026-02-03T04:05:06Z"},
+	})))
+	core.Handle("GET /v1/orders/{id}/assessments", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Assessment{
+		anAssessment(t, found, uuid.New(), traust.AssessmentKindSecureCode1, "recorded"),
+	})))
+	core.Handle("GET /v1/registry/resolve", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RoleRouting{
+		Model: "claude-mythos-5-1", Provider: "anthropic",
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/runs/"+id.String()+"/detail", "ada", nil).Body.String()
+	for _, want := range []string{
+		"<h1>full_audit</h1>", "succeeded · requested by engine · priority 3", "lane security", "rule 2",
+		"a fixture reason", "created 2026-02-03T04:05:06Z", "<dt>config</dt>", "<dt>approval</dt>",
+		`href="/assessments/` + found.String() + `"`, "claude-mythos-5-1",
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("run page lacks %q:\n%s", want, page)
+		}
+	}
+	if role := core.Requests()[3].Query.Get("role"); role != "deep-audit" {
+		t.Fatalf("core resolved role %q, want the manifest's role", role)
+	}
+}
+
+func TestARunPageWithoutARoleSaysSo(t *testing.T) {
+	core := traustest.New(t)
+	id := uuid.New()
+	core.Handle("GET /v1/orders/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RunOrder{Id: &id, Asset: "smoke", State: traust.RunOrderStateSucceeded, RequestedBy: "ada"})))
+	core.Handle("GET /v1/orders/{id}/manifest", onlyFor("ada", traustest.JSON(http.StatusOK, traust.OrderManifest{})))
+	core.Handle("GET /v1/orders/{id}/assessments", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Assessment{})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/runs/"+id.String()+"/detail", "ada", nil).Body.String()
+	if !strings.Contains(page, "Neither the order nor its manifest names a role.") {
+		t.Fatalf("run page without a role:\n%s", page)
+	}
+	if n := len(core.Requests()); n != 3 {
+		t.Fatalf("core saw %d requests, want no role resolved", n)
+	}
+}
+
+func TestTheRunsPagesRefusalsKeepTheirStatus(t *testing.T) {
+	for _, page := range []struct{ path, route string }{
+		{"/runs", "POST /v1/orders/query"},
+		{"/runs/" + uuid.NewString() + "/detail", "GET /v1/orders/{id}"},
+	} {
+		for core, want := range map[int]int{
+			http.StatusForbidden:           http.StatusForbidden,
+			http.StatusNotFound:            http.StatusNotFound,
+			http.StatusUnprocessableEntity: http.StatusUnprocessableEntity,
+			http.StatusInternalServerError: http.StatusBadGateway,
+		} {
+			t.Run(page.path+" "+http.StatusText(core), func(t *testing.T) {
+				fake := traustest.New(t)
+				fake.Handle(page.route, traustest.Problem(core, "refused"))
+				if w := send(newApp(t, fake), http.MethodGet, page.path, "ada", nil); w.Code != want {
+					t.Fatalf("core %d: app %d, want %d", core, w.Code, want)
+				}
+			})
+		}
+	}
+}

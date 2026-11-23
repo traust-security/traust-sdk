@@ -1,0 +1,109 @@
+package runs
+
+import (
+	"time"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// runsPage is the Runs page: every order core records, narrowed by the state, asset and
+// repository asked for, each linking to its own page.
+templ runsPage(orders []traust.OrderQueryItem) {
+	@web.Page("Runs") {
+		<h1>Runs</h1>
+		<form method="get" action="/runs">
+			<label>Asset <input name="asset"/></label>
+			<label>
+				State
+				<select name="state">
+					<option value="">any</option>
+					for _, s := range orderStates {
+						<option value={ string(s) }>{ string(s) }</option>
+					}
+				</select>
+			</label>
+			<label>Repository <input name="repository" placeholder="its id"/></label>
+			<button>Narrow</button>
+		</form>
+		if len(orders) == 0 {
+			<p>No runs recorded yet.</p>
+		}
+		<ul>
+			for _, item := range orders {
+				<li>
+					@runLink(item.Order)
+					: { string(item.Order.State) }, requested by { item.Order.RequestedBy }
+					if item.RepositoryUrl != nil {
+						· { web.Text(item.RepositoryUrl) }
+					}
+				</li>
+			}
+		</ul>
+	}
+}
+
+// runLink is one order on the Runs page, to its own page when core gave it an id.
+templ runLink(order traust.RunOrder) {
+	if order.Id != nil {
+		<a href={ templ.URL("/runs/" + order.Id.String() + "/detail") }>{ order.Asset }</a>
+	} else {
+		{ order.Asset }
+	}
+}
+
+// runDetail is one order's page: what core recorded of it, the manifest it was planned with,
+// the assessments it produced, and the model its asset's role resolves to.
+templ runDetail(order traust.RunOrder, manifest traust.OrderManifest, assessments []traust.Assessment, role string, model *traust.RoleRouting) {
+	@web.Page(order.Asset) {
+		<h1>{ order.Asset }</h1>
+		<p>{ string(order.State) } · requested by { order.RequestedBy } · priority { order.Priority }</p>
+		if order.Lane != nil {
+			<p>lane { web.Text(order.Lane) }</p>
+		}
+		if order.Rule != nil {
+			<p>rule { web.Text(order.Rule) }</p>
+		}
+		if order.Reason != nil {
+			<p>{ web.Text(order.Reason) }</p>
+		}
+		if order.CreatedAt != nil {
+			<p>created { order.CreatedAt.Format(time.RFC3339) }</p>
+		}
+		if order.StartedAt != nil {
+			<p>started { order.StartedAt.Format(time.RFC3339) }</p>
+		}
+		if order.FinishedAt != nil {
+			<p>finished { order.FinishedAt.Format(time.RFC3339) }</p>
+		}
+		<h2>Manifest</h2>
+		if len(manifest) == 0 {
+			<p>Core recorded no manifest for it.</p>
+		}
+		<dl>
+			for _, key := range manifestKeys(manifest) {
+				<dt>{ key }</dt>
+				<dd><code>{ manifestValue(manifest, key) }</code></dd>
+			}
+		</dl>
+		<h2>Assessments</h2>
+		if len(assessments) == 0 {
+			<p>It produced no assessments.</p>
+		}
+		<ul>
+			for _, a := range assessments {
+				<li>
+					<a href={ templ.URL("/assessments/" + a.Id.String()) }>{ assessmentKind(a) }</a> { a.Status } · { a.Assessor }
+					· { a.OccurredAt.Format(time.DateOnly) }
+				</li>
+			}
+		</ul>
+		<h2>Model</h2>
+		if model != nil {
+			<p>Its asset's role, { role }, resolves to { model.Model } at { model.Provider }.</p>
+		} else {
+			<p>Neither the order nor its manifest names a role.</p>
+		}
+	}
+}

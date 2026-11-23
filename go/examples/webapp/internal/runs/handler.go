@@ -6,6 +6,8 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+	corefindings "github.com/traust-security/traust-sdk/go/v1/traust/findings"
+	coreinventory "github.com/traust-security/traust-sdk/go/v1/traust/inventory"
 	coreruns "github.com/traust-security/traust-sdk/go/v1/traust/runs"
 
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
@@ -13,18 +15,26 @@ import (
 
 // Handler serves the app's runs.
 type Handler struct {
-	coreRuns *coreruns.Client
+	coreRuns      *coreruns.Client
+	coreFindings  *corefindings.Client
+	coreInventory *coreinventory.Client
 }
 
 // New builds the feature's handler; a run it starts is the box's claim worker's to run.
 func New(core *traust.Client) *Handler {
-	return &Handler{coreRuns: coreruns.New(core)}
+	return &Handler{
+		coreRuns:      coreruns.New(core),
+		coreFindings:  corefindings.New(core),
+		coreInventory: coreinventory.New(core),
+	}
 }
 
 // Routes registers the feature's pages.
 func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /runs", web.SignedIn(h.startRun))
+	mux.HandleFunc("GET /runs", web.SignedIn(h.allRuns))
 	mux.HandleFunc("GET /runs/{token}", web.SignedIn(h.runStatus))
+	mux.HandleFunc("GET /runs/{token}/detail", web.SignedIn(h.runDetail))
 	mux.HandleFunc("GET /repositories/{id}/runs", web.SignedIn(h.runHistory))
 }
 
