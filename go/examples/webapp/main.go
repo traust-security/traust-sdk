@@ -45,10 +45,11 @@ func main() {
 }
 
 func run(ctx context.Context, addr string, forgeHosts []string) error {
-	core, err := traust.NewClient(traust.Config{
-		BaseURL: os.Getenv("TRAUST_URL"),
-		Tokens:  traust.FileTokenSource{Path: os.Getenv("TRAUST_TOKEN_FILE")},
-	})
+	cfg, err := traust.LoadConfig()
+	if err != nil {
+		return err
+	}
+	core, err := traust.NewClient(cfg)
 	if err != nil {
 		return err
 	}
