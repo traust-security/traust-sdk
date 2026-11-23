@@ -102,8 +102,8 @@ templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/products" } hx-trigger="load"></div>
 		<h2>Owners</h2>
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/owners" } hx-trigger="load"></div>
-		for _, asset := range []string{"scan", "triage"} {
-			<button hx-post="/runs" hx-vals={ `{"asset":"` + asset + `","repository_id":"` + repo.Id.String() + `"}` } hx-target="#runs" hx-swap="afterbegin">Run { asset }</button>
+		for _, asset := range []struct{ Name, Label string }{{"full_audit", "Full audit"}, {"sci_triage", "Triage"}} {
+			<button hx-post="/runs" hx-vals={ `{"asset":"` + asset.Name + `","repository_id":"` + repo.Id.String() + `"}` } hx-target="#runs" hx-swap="afterbegin">{ asset.Label }</button>
 		}
 		<ul id="runs"></ul>
 		<h2>Run history</h2>

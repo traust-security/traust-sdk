@@ -295,10 +295,8 @@ identity available for reconciliation and does not complete.
 blank core: onboard repositories (with a dry-run preview), scan one and triage it, settle what the
 triage leaves in the review queue, decide and restate findings, watch the dashboard count it all,
 verify (and, as an admin, checkpoint) each repository's ledger, and build and download a report. It acts as each signed-in person
-with `OnBehalfOf`, records scans and triages with `ops.AssessDefaultRef` and `ops.TriageLatest`,
-follows runs and report builds with `Poller`, and runs its pack's work in the same binary. Its
-skills are fixtures (canned, contracts-valid findings and verdicts, labelled as such) so it plays
-without an agent or a model key.
+with `OnBehalfOf`, submits runs by asset name with `BeginSkill`, follows runs and report builds
+with `Poller`; the box's claim worker, not the app, runs the work.
 
 `make webapp` runs the whole stack locally: traust-server (reaching real forges), its report
 builder, and traust-engine, which plans a scan of each repository under the app's pack. Sign in
@@ -308,8 +306,7 @@ It needs `uv` and `cosign` (the local ledger is signed). `make webapp STORE=byos
 storage the way a deployment does, Postgres for records and an S3 store for artifacts, in throwaway
 containers (needs `podman`). `make e2e` runs the same flows end to end against a forge stand-in.
 
-To run real skills, give the pack's assets their model roles and swap the app's `fixtureSkills`
-executor for `ops.ProcessExecutor{}`: each order then runs the pack's command, the traust
+The box runs the pack's real skills already: each order runs the pack's command, the traust
 harness's skill session, which needs a harness checkout and a logged-in agent on the worker.
 
 ## Test your code

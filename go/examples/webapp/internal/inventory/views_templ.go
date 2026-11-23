@@ -488,28 +488,28 @@ func repository(repo traust.Repository, ref *traust.RepositoryRef) templ.Compone
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			for _, asset := range []string{"scan", "triage"} {
+			for _, asset := range []struct{ Name, Label string }{{"full_audit", "Full audit"}, {"sci_triage", "Triage"}} {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<button hx-post=\"/runs\" hx-vals=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var25 string
-				templ_7745c5c3_Var25, templ_7745c5c3_Err = templruntime.NewAttributeExpression(`{"asset":"` + asset + `","repository_id":"` + repo.Id.String() + `"}`).Resolve(ctx)
+				templ_7745c5c3_Var25, templ_7745c5c3_Err = templruntime.NewAttributeExpression(`{"asset":"` + asset.Name + `","repository_id":"` + repo.Id.String() + `"}`).Resolve(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/inventory/views.templ`, Line: 106, Col: 107}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/inventory/views.templ`, Line: 106, Col: 112}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var25)
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
-				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\" hx-target=\"#runs\" hx-swap=\"afterbegin\">Run ")
+				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 43, "\" hx-target=\"#runs\" hx-swap=\"afterbegin\">")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err
 				}
 				var templ_7745c5c3_Var26 string
-				templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(asset)
+				templ_7745c5c3_Var26, templ_7745c5c3_Err = templ.JoinStringErrs(asset.Label)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/inventory/views.templ`, Line: 106, Col: 160}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/inventory/views.templ`, Line: 106, Col: 167}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var26))
 				if templ_7745c5c3_Err != nil {

@@ -13,18 +13,13 @@ import (
 
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/identity"
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
-	"github.com/traust-security/traust-sdk/go/v1/ops"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 	"github.com/traust-security/traust-sdk/go/v1/traust/traustest"
 )
 
 func newApp(t *testing.T, core *traustest.Server) http.Handler {
 	t.Helper()
-	pack, err := ops.LoadPack(packYAML)
-	if err != nil {
-		t.Fatal(err)
-	}
-	return routes(core.Client(), pack.Pin(), nil)
+	return routes(core.Client(), nil)
 }
 
 // send makes one request, signed in when token is set.
@@ -85,15 +80,11 @@ func TestSignInKeepsOnlyATokenCoreAccepts(t *testing.T) {
 func TestHomeOffersSSOOnlyWhenAnIssuerIsConfigured(t *testing.T) {
 	core := traustest.New(t)
 	core.Handle("GET /v1/whoami", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Principal{Display: "Ada"})))
-	pack, err := ops.LoadPack(packYAML)
-	if err != nil {
-		t.Fatal(err)
-	}
 	sso, err := identity.NewSSO("https://issuer.example", "webapp", "test-only-secret", "http://app.test/sso/callback")
 	if err != nil {
 		t.Fatal(err)
 	}
-	offers := send(routes(core.Client(), pack.Pin(), sso), http.MethodGet, "/", "", nil).Body.String()
+	offers := send(routes(core.Client(), sso), http.MethodGet, "/", "", nil).Body.String()
 	for _, want := range []string{`href="/sso"`, "Sign in with SSO"} {
 		if !strings.Contains(offers, want) {
 			t.Fatalf("home with an issuer lacks %q:\n%s", want, offers)
@@ -165,8 +156,8 @@ func TestARunPollsUntilCoreFinishesIt(t *testing.T) {
 		t.Fatalf("start: %d %s, want a row that polls", started.Code, started.Body)
 	}
 	var submitted traust.SubmitRequest
-	if err := json.Unmarshal(core.Requests()[0].Body, &submitted); err != nil || submitted.Order.Asset != "smoke" || submitted.Config == nil {
-		t.Fatalf("submitted %+v %v, want smoke pinned to the pack", submitted, err)
+	if err := json.Unmarshal(core.Requests()[0].Body, &submitted); err != nil || submitted.Order.Asset != "smoke" || submitted.Config != nil {
+		t.Fatalf("submitted %+v %v, want smoke with no pack pin", submitted, err)
 	}
 	done := send(h, http.MethodGet, "/runs/"+id.String(), "ada", nil)
 	if !strings.Contains(done.Body.String(), "succeeded") || strings.Contains(done.Body.String(), "hx-trigger") || done.Header().Get("HX-Trigger") != "run-finished" {
@@ -214,10 +205,10 @@ func TestARepositoryShowsItsBranchAndItsFindingsAreDecided(t *testing.T) {
 	core.Handle("GET /v1/findings/{id}/decisions", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Decision{{Id: &decision, FindingId: found, Actor: &actor, Rationale: &why, Validity: &verdict}})))
 	core.Handle("POST /v1/decisions/{id}/restatement", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Decision{})))
 	core.Handle("GET /v1/orders", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageRunOrder{
-		Items: []traust.RunOrder{{Asset: "scan", State: traust.RunOrderStateSucceeded, RequestedBy: "engine"}},
+		Items: []traust.RunOrder{{Asset: "full_audit", State: traust.RunOrderStateSucceeded, RequestedBy: "engine"}},
 	})))
 	h := newApp(t, core)
-	if runs := send(h, http.MethodGet, "/repositories/"+repo.String()+"/runs", "ada", nil).Body.String(); !strings.Contains(runs, "scan: succeeded, requested by engine") {
+	if runs := send(h, http.MethodGet, "/repositories/"+repo.String()+"/runs", "ada", nil).Body.String(); !strings.Contains(runs, "full_audit: succeeded, requested by engine") {
 		t.Fatalf("run history: %s, want the engine's scan", runs)
 	}
 	if q := core.Requests()[0].Query; q.Get("repository_id") != repo.String() {

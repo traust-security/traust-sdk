@@ -13,12 +13,11 @@ import (
 // Handler serves the app's runs.
 type Handler struct {
 	core *traust.Client
-	pack traust.ConfigDigest
 }
 
-// New builds the feature's handler; a run it starts is pinned to the pack.
-func New(core *traust.Client, pack traust.ConfigDigest) *Handler {
-	return &Handler{core: core, pack: pack}
+// New builds the feature's handler; a run it starts is the box's claim worker's to run.
+func New(core *traust.Client) *Handler {
+	return &Handler{core: core}
 }
 
 // Routes registers the feature's pages.
@@ -29,16 +28,16 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 }
 
 func (h *Handler) startRun(w http.ResponseWriter, r *http.Request) {
-	order := traust.OrderRequest{Asset: r.PostFormValue("asset"), Priority: 1}
+	var opts []traust.RunOption
 	if repo := r.PostFormValue("repository_id"); repo != "" {
 		id, err := uuid.Parse(repo)
 		if err != nil {
 			web.Render(w, r, http.StatusBadRequest, web.Failure("That is not a repository."))
 			return
 		}
-		order.RepositoryId = &id
+		opts = append(opts, traust.ForRepository(id))
 	}
-	poller, err := h.core.BeginSubmit(r.Context(), traust.SubmitRequest{Order: order, Config: &[]traust.ConfigDigest{h.pack}})
+	poller, err := h.core.BeginSkill(r.Context(), r.PostFormValue("asset"), opts...)
 	if err != nil {
 		web.Fail(w, r, err)
 		return

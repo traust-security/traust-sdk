@@ -176,8 +176,8 @@ e2e: core
 # pack is the shipped one (route_on, approvers and every asset copied verbatim from traust at
 # TRAUST_REF; check-drift refuses a copy that drifts), so the box needs what a deployment's
 # runner needs: gitleaks for observation, cosign for the ledger, and a Claude login for the
-# sessions (CLAUDE_RUNNER above). The model registry is the shipped one at TRAUST_REF. The webapp's own
-# fixture-skill runner still runs beside the claim worker until the chunk that drops it.
+# sessions (CLAUDE_RUNNER above). The model registry is the shipped one at TRAUST_REF. The app
+# itself only serves pages; every order, the claim worker runs.
 webapp: engine harness
 	@set -eu; port=18080; complete=yes; \
 	command -v cosign >/dev/null || { echo "make webapp signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
