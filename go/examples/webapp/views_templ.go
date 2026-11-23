@@ -486,7 +486,7 @@ func onboardPlan(plan traust.OnboardingPlan) templ.Component {
 			return templ_7745c5c3_Err
 		}
 		if len(items(plan.Gaps)) == 0 {
-			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<button hx-post=\"/onboard\" hx-include=\"closest body form\">Onboard</button>")
+			templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 37, "<button hx-post=\"/onboard\" hx-include=\"body form\">Onboard</button>")
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}

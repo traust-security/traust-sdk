@@ -129,7 +129,7 @@ templ onboardPlan(plan traust.OnboardingPlan) {
 			}
 		</ul>
 		if len(items(plan.Gaps)) == 0 {
-			<button hx-post="/onboard" hx-include="closest body form">Onboard</button>
+			<button hx-post="/onboard" hx-include="body form">Onboard</button>
 		}
 	</section>
 }
