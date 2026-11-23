@@ -1,4 +1,4 @@
-package traust_test
+package insight_test
 
 import (
 	"context"
@@ -12,6 +12,7 @@ import (
 	"github.com/google/uuid"
 
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+	"github.com/traust-security/traust-sdk/go/v1/traust/insight"
 	"github.com/traust-security/traust-sdk/go/v1/traust/traustest"
 )
 
@@ -59,7 +60,7 @@ func TestReportViewAsksForTheViewItsTypeDecodes(t *testing.T) {
 	}
 	core := traustest.New(t)
 	core.Handle("GET /v1/reports/{id}/file", traustest.JSON(http.StatusOK, fixture))
-	view, err := traust.ReportView[traust.FindingsRollupInsight](context.Background(), core.Client(), ready("findings-rollup"))
+	view, err := insight.ReportView[traust.FindingsRollupInsight](context.Background(), insight.New(core.Client()), ready("findings-rollup"))
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -75,70 +76,70 @@ func TestReportViewAsksForTheViewItsTypeDecodes(t *testing.T) {
 func TestEveryContractedViewDecodesFromItsReport(t *testing.T) {
 	tests := []struct {
 		route string
-		get   func(context.Context, *traust.Client) error
+		get   func(context.Context, *insight.Client) error
 	}{
-		{"findings-rollup", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.FindingsRollupInsight](ctx, c, ready("findings-rollup"))
+		{"findings-rollup", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.FindingsRollupInsight](ctx, c, ready("findings-rollup"))
 			return err
 		}},
-		{"findings-trend", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.FindingsTrendInsight](ctx, c, ready("findings-trend"))
+		{"findings-trend", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.FindingsTrendInsight](ctx, c, ready("findings-trend"))
 			return err
 		}},
-		{"coverage", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.CoverageInsight](ctx, c, ready("coverage"))
+		{"coverage", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.CoverageInsight](ctx, c, ready("coverage"))
 			return err
 		}},
-		{"remediation-index", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.RemediationIndexInsight](ctx, c, ready("remediation-index"))
+		{"remediation-index", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.RemediationIndexInsight](ctx, c, ready("remediation-index"))
 			return err
 		}},
-		{"critical-misses", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.CriticalMissesInsight](ctx, c, ready("critical-misses"))
+		{"critical-misses", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.CriticalMissesInsight](ctx, c, ready("critical-misses"))
 			return err
 		}},
-		{"pqc-worklist", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.PqcWorklistInsight](ctx, c, ready("pqc-worklist"))
+		{"pqc-worklist", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.PqcWorklistInsight](ctx, c, ready("pqc-worklist"))
 			return err
 		}},
-		{"compliance-precision", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.CompliancePrecisionInsight](ctx, c, ready("compliance-precision"))
+		{"compliance-precision", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.CompliancePrecisionInsight](ctx, c, ready("compliance-precision"))
 			return err
 		}},
-		{"benchmark-scorecards", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.BenchmarkScorecardsInsight](ctx, c, ready("benchmark-scorecards"))
+		{"benchmark-scorecards", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.BenchmarkScorecardsInsight](ctx, c, ready("benchmark-scorecards"))
 			return err
 		}},
-		{"inventory-export", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.InventoryExportInsight](ctx, c, ready("inventory-export"))
+		{"inventory-export", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.InventoryExportInsight](ctx, c, ready("inventory-export"))
 			return err
 		}},
-		{"sla", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.SlaInsight](ctx, c, ready("sla"))
+		{"sla", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.SlaInsight](ctx, c, ready("sla"))
 			return err
 		}},
-		{"census", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.CensusInsight](ctx, c, ready("census"))
+		{"census", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.CensusInsight](ctx, c, ready("census"))
 			return err
 		}},
-		{"attack-coverage", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.AttackCoverageInsight](ctx, c, ready("attack-coverage"))
+		{"attack-coverage", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.AttackCoverageInsight](ctx, c, ready("attack-coverage"))
 			return err
 		}},
-		{"pqc-portfolio", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.PqcPortfolioInsight](ctx, c, ready("pqc-portfolio"))
+		{"pqc-portfolio", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.PqcPortfolioInsight](ctx, c, ready("pqc-portfolio"))
 			return err
 		}},
-		{"threat-register", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.ThreatRegisterInsight](ctx, c, ready("threat-register"))
+		{"threat-register", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.ThreatRegisterInsight](ctx, c, ready("threat-register"))
 			return err
 		}},
-		{"exposure", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.ExposureInsight](ctx, c, ready("exposure"))
+		{"exposure", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.ExposureInsight](ctx, c, ready("exposure"))
 			return err
 		}},
-		{"executive-summary", func(ctx context.Context, c *traust.Client) error {
-			_, err := traust.ReportView[traust.ExecutiveSummaryInsight](ctx, c, ready("executive-summary"))
+		{"executive-summary", func(ctx context.Context, c *insight.Client) error {
+			_, err := insight.ReportView[traust.ExecutiveSummaryInsight](ctx, c, ready("executive-summary"))
 			return err
 		}},
 	}
@@ -146,7 +147,7 @@ func TestEveryContractedViewDecodesFromItsReport(t *testing.T) {
 		t.Run(tt.route, func(t *testing.T) {
 			core := traustest.New(t)
 			core.Handle("GET /v1/reports/{id}/file", traustest.JSON(http.StatusOK, map[string]any{}))
-			if err := tt.get(context.Background(), core.Client()); err != nil {
+			if err := tt.get(context.Background(), insight.New(core.Client())); err != nil {
 				t.Fatalf("the %s report: %v", tt.route, err)
 			}
 			requests := core.Requests()
@@ -162,7 +163,7 @@ func TestReportViewRefusesAFieldOutsideTheContract(t *testing.T) {
 	body["unexpected"] = 1
 	core := traustest.New(t)
 	core.Handle("GET /v1/reports/{id}/file", traustest.JSON(http.StatusOK, body))
-	view, err := traust.ReportView[traust.FindingsRollupInsight](context.Background(), core.Client(), ready("findings-rollup"))
+	view, err := insight.ReportView[traust.FindingsRollupInsight](context.Background(), insight.New(core.Client()), ready("findings-rollup"))
 	if err == nil || view != nil {
 		t.Fatalf("view = %+v, err = %v; want an error and no view", view, err)
 	}
@@ -171,8 +172,14 @@ func TestReportViewRefusesAFieldOutsideTheContract(t *testing.T) {
 func TestReportViewRefusesAMalformedBody(t *testing.T) {
 	core := traustest.New(t)
 	core.Handle("GET /v1/reports/{id}/file", traustest.JSON(http.StatusOK, map[string]any{"total": "many"}))
-	if _, err := traust.ReportView[traust.FindingsRollupInsight](context.Background(), core.Client(), ready("findings-rollup")); err == nil {
+	if _, err := insight.ReportView[traust.FindingsRollupInsight](context.Background(), insight.New(core.Client()), ready("findings-rollup")); err == nil {
 		t.Fatal("want a decode error")
+	}
+}
+
+func TestReportViewRefusesATypeNoContractNames(t *testing.T) {
+	if _, err := insight.ReportView[traust.Report](context.Background(), insight.New(traustest.New(t).Client()), ready("findings-rollup")); err == nil {
+		t.Fatal("ReportView accepted a type no view contract names")
 	}
 }
 
@@ -192,10 +199,10 @@ func TestReportViewReturnsCoresRefusalAsAProblem(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			core := traustest.New(t)
 			core.Handle("GET /v1/reports/{id}/file", tt.handler)
-			view, err := traust.ReportView[traust.CoverageInsight](context.Background(), core.Client(), ready("coverage"))
+			view, err := insight.ReportView[traust.CoverageInsight](context.Background(), insight.New(core.Client()), ready("coverage"))
 			var problem *traust.ProblemError
 			if view != nil || !errors.As(err, &problem) || problem.StatusCode != tt.status {
-				t.Fatalf("view = %v, err = %v; want no view and a ProblemError with status %d", view, err, tt.status)
+				t.Fatalf("view = %v, err = %v, want no view and a ProblemError with status %d", view, err, tt.status)
 			}
 			if !strings.Contains(err.Error(), "coverage report") {
 				t.Fatalf("err = %v; want it to name the view", err)
@@ -209,8 +216,8 @@ func TestReportViewHonoursCancellation(t *testing.T) {
 	core.Handle("GET /v1/reports/{id}/file", traustest.JSON(http.StatusOK, map[string]any{}))
 	ctx, cancel := context.WithCancel(context.Background())
 	cancel()
-	if _, err := traust.ReportView[traust.CoverageInsight](ctx, core.Client(), ready("coverage")); !errors.Is(err, context.Canceled) {
-		t.Fatalf("err = %v; want context.Canceled", err)
+	if _, err := insight.ReportView[traust.CoverageInsight](ctx, insight.New(core.Client()), ready("coverage")); !errors.Is(err, context.Canceled) {
+		t.Fatalf("err = %v, want context.Canceled", err)
 	}
 }
 
@@ -227,7 +234,7 @@ func TestReportViewRefusesAReportThatIsNotItsReadyJSONView(t *testing.T) {
 		"still building": {OrderId: uuid.New(), Report: traust.FindingsRollup, Format: traust.ReportFormatJson, Status: traust.ReportStatusBuilding},
 	}
 	for name, report := range wrong {
-		if _, err := traust.ReportView[traust.FindingsRollupInsight](context.Background(), core.Client(), report); err == nil {
+		if _, err := insight.ReportView[traust.FindingsRollupInsight](context.Background(), insight.New(core.Client()), report); err == nil {
 			t.Fatalf("%s: decoded, want a refusal", name)
 		}
 	}
@@ -258,7 +265,7 @@ func TestTheExecutiveSummaryDecodesIntoItsComponentViews(t *testing.T) {
 	}
 	core := traustest.New(t)
 	core.Handle("GET /v1/reports/{id}/file", traustest.JSON(http.StatusOK, json.RawMessage(body)))
-	summary, err := traust.ReportView[traust.ExecutiveSummaryInsight](context.Background(), core.Client(), ready("executive-summary"))
+	summary, err := insight.ReportView[traust.ExecutiveSummaryInsight](context.Background(), insight.New(core.Client()), ready("executive-summary"))
 	if err != nil {
 		t.Fatalf("ReportView: %v", err)
 	}
@@ -293,7 +300,7 @@ func TestContainerFindingsDecodeIntoTheSharedFindingRecords(t *testing.T) {
 	}
 	core := traustest.New(t)
 	core.Handle("GET /v1/reports/{id}/file", traustest.JSON(http.StatusOK, json.RawMessage(body)))
-	found, err := traust.ReportView[traust.ContainerFindingsInsight](context.Background(), core.Client(), ready("container-findings"))
+	found, err := insight.ReportView[traust.ContainerFindingsInsight](context.Background(), insight.New(core.Client()), ready("container-findings"))
 	if err != nil {
 		t.Fatalf("ReportView: %v", err)
 	}

@@ -1,4 +1,4 @@
-package traust
+package runs_test
 
 import (
 	"context"
@@ -10,11 +10,24 @@ import (
 	"testing"
 
 	"github.com/google/uuid"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+	"github.com/traust-security/traust-sdk/go/v1/traust/runs"
 )
+
+func problem(w http.ResponseWriter, status int, detail string) {
+	w.Header().Set("Content-Type", "application/problem+json")
+	w.WriteHeader(status)
+	_ = json.NewEncoder(w).Encode(traust.Problem{
+		Type: "about:blank", Title: http.StatusText(status), Status: status,
+		Detail: detail, RequestId: "req-test",
+	})
+}
 
 func TestQueryOrdersAllFollowsPageCursorsAndStops(t *testing.T) {
 	first := uuid.MustParse("00000000-0000-4000-8000-000000000001")
 	second := uuid.MustParse("00000000-0000-4000-8000-000000000002")
+	new := func(s string) *string { return &s }
 	for _, tt := range []struct {
 		name       string
 		start      *string
@@ -33,7 +46,7 @@ func TestQueryOrdersAllFollowsPageCursorsAndStops(t *testing.T) {
 			calls := 0
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 				calls++
-				var query OrderQueryRequest
+				var query traust.OrderQueryRequest
 				if err := json.NewDecoder(r.Body).Decode(&query); err != nil {
 					t.Error(err)
 					w.WriteHeader(400)
@@ -45,7 +58,7 @@ func TestQueryOrdersAllFollowsPageCursorsAndStops(t *testing.T) {
 				}
 				w.Header().Set("Content-Type", "application/json")
 				if query.Cursor == nil {
-					_ = json.NewEncoder(w).Encode(OrderQueryPage{Items: []OrderQueryItem{{Order: RunOrder{Id: &first}, Cursor: "item-one"}}, Next: new("batch-two")})
+					_ = json.NewEncoder(w).Encode(traust.OrderQueryPage{Items: []traust.OrderQueryItem{{Order: traust.RunOrder{Id: &first}, Cursor: "item-one"}}, Next: new("batch-two")})
 					return
 				}
 				if *query.Cursor != "batch-two" {
@@ -56,16 +69,16 @@ func TestQueryOrdersAllFollowsPageCursorsAndStops(t *testing.T) {
 					problem(w, 403, "access revoked")
 					return
 				}
-				_ = json.NewEncoder(w).Encode(OrderQueryPage{Items: []OrderQueryItem{{Order: RunOrder{Id: &second}, Cursor: "item-two"}}})
+				_ = json.NewEncoder(w).Encode(traust.OrderQueryPage{Items: []traust.OrderQueryItem{{Order: traust.RunOrder{Id: &second}, Cursor: "item-two"}}})
 			}))
 			defer server.Close()
-			client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("fixture-token")})
+			client, err := traust.NewClient(traust.Config{BaseURL: server.URL, Tokens: traust.StaticToken("fixture-token")})
 			if err != nil {
 				t.Fatal(err)
 			}
 			var found []uuid.UUID
 			var lastError error
-			for item, err := range client.QueryOrdersAll(context.Background(), OrderQueryRequest{Q: new("matching-scope"), Cursor: tt.start}) {
+			for item, err := range runs.New(client).QueryOrdersAll(context.Background(), traust.OrderQueryRequest{Q: new("matching-scope"), Cursor: tt.start}) {
 				if err != nil {
 					lastError = err
 					break
@@ -83,7 +96,7 @@ func TestQueryOrdersAllFollowsPageCursorsAndStops(t *testing.T) {
 					t.Fatal(lastError)
 				}
 			} else {
-				var problem *ProblemError
+				var problem *traust.ProblemError
 				if !errors.As(lastError, &problem) || problem.StatusCode != tt.wantStatus {
 					t.Fatalf("lost iteration refusal: %v", lastError)
 				}

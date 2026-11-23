@@ -2,11 +2,8 @@ package traust
 
 import (
 	"context"
-	"errors"
 	"fmt"
 	"time"
-
-	"github.com/google/uuid"
 )
 
 // Poller follows work core finishes later. Keep its ResumeToken to pick the work up again
@@ -14,6 +11,12 @@ import (
 type Poller[T any] struct {
 	token string
 	poll  func(context.Context) (T, bool, error)
+}
+
+// NewPoller builds a Poller for work a resume token names; poll asks core once for the
+// latest state and whether the work has finished. The domain pollers are built on it.
+func NewPoller[T any](token string, poll func(context.Context) (T, bool, error)) *Poller[T] {
+	return &Poller[T]{token: token, poll: poll}
 }
 
 // ResumeToken names the work; for an order it is the order id.
@@ -41,32 +44,4 @@ func (p *Poller[T]) Wait(ctx context.Context, every time.Duration) (T, error) {
 		case <-ticker.C:
 		}
 	}
-}
-
-// BeginSubmit submits an order and follows it until core finishes it.
-func (c *Client) BeginSubmit(ctx context.Context, body SubmitRequest) (*Poller[RunOrder], error) {
-	order, err := c.Submit(ctx, body)
-	if err != nil {
-		return nil, err
-	}
-	if order.Id == nil {
-		return nil, errors.New("traust: Submit answered an order without an id")
-	}
-	return c.ResumeOrder(order.Id.String())
-}
-
-// ResumeOrder follows the order a resume token names. Core's finished_at, not a local list of
-// states, says when it has finished.
-func (c *Client) ResumeOrder(token string) (*Poller[RunOrder], error) {
-	id, err := uuid.Parse(token)
-	if err != nil {
-		return nil, fmt.Errorf("traust: resume token: %w", err)
-	}
-	return &Poller[RunOrder]{token: token, poll: func(ctx context.Context) (RunOrder, bool, error) {
-		order, err := c.GetOrder(ctx, id)
-		if err != nil {
-			return RunOrder{}, false, err
-		}
-		return *order, order.FinishedAt != nil, nil
-	}}, nil
 }

@@ -7,27 +7,13 @@ import (
 	"io"
 	"net/http"
 	"net/http/httptest"
-	"net/url"
 	"os"
 	"path/filepath"
 	"strings"
 	"sync/atomic"
 	"testing"
 	"time"
-
-	"github.com/google/uuid"
 )
-
-func products(client *Client, limit int) ([]Product, error) {
-	var found []Product
-	for p, err := range client.ListProductsAll(context.Background(), &ListProductsParams{Limit: &limit}) {
-		if err != nil {
-			return found, err
-		}
-		found = append(found, p)
-	}
-	return found, nil
-}
 
 func writeFile(t *testing.T, path, content string) {
 	t.Helper()
@@ -47,7 +33,7 @@ func TestFileTokenSourceRotates(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		seen = append(seen, r.Header.Get("Authorization"))
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(PageProduct{})
+		_ = json.NewEncoder(w).Encode(Principal{Identity: "machine"})
 	}))
 	defer server.Close()
 
@@ -57,7 +43,7 @@ func TestFileTokenSourceRotates(t *testing.T) {
 	}
 	for _, want := range []string{"first-token", "second-token"} {
 		writeFile(t, tokenPath, want)
-		if _, err := products(client, 1); err != nil {
+		if _, err := client.Whoami(context.Background()); err != nil {
 			t.Fatal(err)
 		}
 	}
@@ -65,45 +51,6 @@ func TestFileTokenSourceRotates(t *testing.T) {
 		if seen[i] != want {
 			t.Fatalf("request %d sent %q, want %q", i, seen[i], want)
 		}
-	}
-}
-
-func TestListProductsAllFollowsCursorAndReportsProblems(t *testing.T) {
-	dir := t.TempDir()
-	tokenPath := filepath.Join(dir, "token")
-	writeFile(t, tokenPath, "t")
-
-	page := func(items []Product, next *string) PageProduct {
-		return PageProduct{Items: items, Next: next}
-	}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		if r.Header.Get("Authorization") != "Bearer t" {
-			problem(w, http.StatusUnauthorized, "a bearer token is required")
-			return
-		}
-		w.Header().Set("Content-Type", "application/json")
-		if r.URL.Query().Get("cursor") == "" {
-			_ = json.NewEncoder(w).Encode(page([]Product{{Slug: "a"}, {Slug: "b"}}, strp("c2")))
-			return
-		}
-		_ = json.NewEncoder(w).Encode(page([]Product{{Slug: "c"}}, nil))
-	}))
-	defer server.Close()
-
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: FileTokenSource{Path: tokenPath}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	found, err := products(client, 2)
-	if err != nil {
-		t.Fatal(err)
-	}
-	var slugs []string
-	for _, p := range found {
-		slugs = append(slugs, p.Slug)
-	}
-	if len(slugs) != 3 || slugs[0] != "a" || slugs[2] != "c" {
-		t.Fatalf("walked %v, want [a b c]", slugs)
 	}
 }
 
@@ -121,7 +68,7 @@ func TestProblemErrorCarriesTheDocument(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = products(client, 10)
+	_, err = client.Whoami(context.Background())
 	var problemErr *ProblemError
 	if !errors.As(err, &problemErr) {
 		t.Fatalf("got %v (%T), want *ProblemError", err, err)
@@ -137,7 +84,7 @@ func TestProblemErrorCarriesTheDocument(t *testing.T) {
 	}
 }
 
-// A transient 503 on a GET is retried; the walk succeeds without the
+// A transient 503 on a GET is retried; the read succeeds without the
 // consumer knowing.
 func TestRetryAbsorbsTransientFailures(t *testing.T) {
 	dir := t.TempDir()
@@ -151,7 +98,7 @@ func TestRetryAbsorbsTransientFailures(t *testing.T) {
 			return
 		}
 		w.Header().Set("Content-Type", "application/json")
-		_ = json.NewEncoder(w).Encode(PageProduct{Items: []Product{{Slug: "a"}}})
+		_ = json.NewEncoder(w).Encode(Principal{Identity: "machine"})
 	}))
 	defer server.Close()
 
@@ -159,178 +106,11 @@ func TestRetryAbsorbsTransientFailures(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	found, err := products(client, 10)
-	if err != nil {
+	if _, err := client.Whoami(context.Background()); err != nil {
 		t.Fatal(err)
 	}
-	count := len(found)
-	if count != 1 || atomic.LoadInt32(&calls) != 2 {
-		t.Fatalf("items=%d calls=%d, want 1 item over 2 calls", count, calls)
-	}
-}
-
-// The scheduling door's refusal is a problem+json document: the typed deny
-// code and its issues ride ProblemError so a caller can branch on them
-// without parsing the detail string.
-func TestPreflightSurfacesTheDenyProblem(t *testing.T) {
-	dir := t.TempDir()
-	tokenPath := filepath.Join(dir, "token")
-	writeFile(t, tokenPath, "t")
-
-	var method, path string
-	code := RoleDenied
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		method, path = r.Method, r.URL.Path
-		w.Header().Set("Content-Type", "application/problem+json")
-		w.WriteHeader(http.StatusForbidden)
-		_ = json.NewEncoder(w).Encode(Problem{
-			Type:      "about:blank",
-			Title:     "Forbidden",
-			Status:    http.StatusForbidden,
-			Detail:    "the stage may not run on this subject now",
-			Code:      &code,
-			Issues:    &[]DenyIssue{{Code: RoleDenied, Detail: "the lane's role may not run this stage"}},
-			RequestId: "req-test",
-		})
-	}))
-	defer server.Close()
-
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: FileTokenSource{Path: tokenPath}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = client.Preflight(context.Background(), PreflightRequest{Asset: "repository"})
-	var problemErr *ProblemError
-	if !errors.As(err, &problemErr) {
-		t.Fatalf("got %v (%T), want *ProblemError", err, err)
-	}
-	if method != http.MethodPost || path != "/v1/preflight" {
-		t.Fatalf("request %s %s, want POST /v1/preflight", method, path)
-	}
-	if problemErr.StatusCode != http.StatusForbidden {
-		t.Fatalf("status %d, want 403", problemErr.StatusCode)
-	}
-	if problemErr.Problem.Code == nil || *problemErr.Problem.Code != RoleDenied {
-		t.Fatalf("code %v, want %q", problemErr.Problem.Code, RoleDenied)
-	}
-	if problemErr.Problem.Issues == nil || len(*problemErr.Problem.Issues) != 1 || (*problemErr.Problem.Issues)[0].Code != RoleDenied {
-		t.Fatalf("issues %+v, want one %q issue", problemErr.Problem.Issues, RoleDenied)
-	}
-}
-
-// The re-keyed read names the work item in the path, and an effort core
-// refuses (here: none for that work item) reads as *ProblemError, never a
-// zero-value effort.
-func TestGetRemediationNamesTheWorkItemAndRefusesAbsence(t *testing.T) {
-	dir := t.TempDir()
-	tokenPath := filepath.Join(dir, "token")
-	writeFile(t, tokenPath, "t")
-
-	var path string
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		path = r.URL.Path
-		problem(w, http.StatusNotFound, "no remediation effort names this work item")
-	}))
-	defer server.Close()
-
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: FileTokenSource{Path: tokenPath}})
-	if err != nil {
-		t.Fatal(err)
-	}
-	id := uuid.New()
-	_, err = client.GetRemediation(context.Background(), id)
-	var problemErr *ProblemError
-	if !errors.As(err, &problemErr) {
-		t.Fatalf("got %v (%T), want *ProblemError", err, err)
-	}
-	if path != "/v1/remediations/"+id.String() {
-		t.Fatalf("requested %s, want /v1/remediations/%s", path, id)
-	}
-	if problemErr.StatusCode != http.StatusNotFound {
-		t.Fatalf("status %d, want 404", problemErr.StatusCode)
-	}
-}
-
-func TestPrepareVerificationPreservesTypedRefusals(t *testing.T) {
-	for _, tc := range []struct {
-		name        string
-		contentType string
-		body        string
-		problem     bool
-	}{
-		{
-			name:        "core problem instead of validation errors",
-			contentType: "application/problem+json",
-			body:        `{"type":"about:blank","title":"Unprocessable Entity","status":422,"detail":"verification requires a closed work item","request_id":"req-verification"}`,
-			problem:     true,
-		},
-		{
-			name:        "malformed problem document",
-			contentType: "application/problem+json",
-			body:        `{"title":"Unprocessable Entity","detail":`,
-		},
-		{
-			name:        "non-JSON refusal",
-			contentType: "text/plain",
-			body:        "verification refused\n",
-		},
-	} {
-		t.Run(tc.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				w.Header().Set("Content-Type", tc.contentType)
-				w.WriteHeader(http.StatusUnprocessableEntity)
-				_, _ = w.Write([]byte(tc.body))
-			}))
-			defer server.Close()
-
-			client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
-			if err != nil {
-				t.Fatal(err)
-			}
-			got, err := client.PrepareVerification(context.Background(), uuid.New())
-			var refusal *ProblemError
-			if !errors.As(err, &refusal) || got != nil {
-				t.Fatalf("got=%v err=%v (%T), want nil and *ProblemError", got, err, err)
-			}
-			if refusal.StatusCode != http.StatusUnprocessableEntity || refusal.Body != tc.body {
-				t.Fatalf("status=%d body=%q, want 422 and %q", refusal.StatusCode, refusal.Body, tc.body)
-			}
-			if !tc.problem {
-				if refusal.Problem != nil {
-					t.Fatalf("problem=%+v, want no decoded problem", refusal.Problem)
-				}
-				return
-			}
-			document := refusal.Problem
-			if document == nil || document.Type != "about:blank" || document.Title != "Unprocessable Entity" ||
-				document.Status != http.StatusUnprocessableEntity || document.Detail != "verification requires a closed work item" ||
-				document.RequestId != "req-verification" {
-				t.Fatalf("problem=%+v, want the original core refusal document", document)
-			}
-		})
-	}
-}
-
-func TestMalformedRefusalCannotLeakBodyOrForgeLogLines(t *testing.T) {
-	const body = "{invalid\nsensitive-refusal-marker\r\nFORGED EVENT\x1b[31m"
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.WriteHeader(http.StatusUnprocessableEntity)
-		_, _ = w.Write([]byte(body))
-	}))
-	defer server.Close()
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
-	if err != nil {
-		t.Fatal(err)
-	}
-	_, err = client.PrepareVerification(context.Background(), uuid.New())
-	var refusal *ProblemError
-	if !errors.As(err, &refusal) || refusal.StatusCode != http.StatusUnprocessableEntity || refusal.Body != body {
-		t.Fatalf("original refusal is unavailable for explicit inspection: %v", err)
-	}
-	formatted := err.Error()
-	if strings.Contains(formatted, "sensitive-refusal-marker") || strings.Contains(formatted, "FORGED EVENT") || strings.ContainsAny(formatted, "\r\n\x1b") {
-		t.Fatalf("formatted refusal leaked untrusted response text: %q", formatted)
+	if atomic.LoadInt32(&calls) != 2 {
+		t.Fatalf("calls=%d, want 2", calls)
 	}
 }
 
@@ -355,12 +135,12 @@ func TestCallerHTTPClientPolicySurvives(t *testing.T) {
 
 	var targetHits int32
 	mux := http.NewServeMux()
-	mux.HandleFunc("/v1/products", func(w http.ResponseWriter, r *http.Request) {
+	mux.HandleFunc("/v1/whoami", func(w http.ResponseWriter, r *http.Request) {
 		http.Redirect(w, r, "/elsewhere", http.StatusFound)
 	})
 	mux.HandleFunc("/elsewhere", func(w http.ResponseWriter, r *http.Request) {
 		atomic.AddInt32(&targetHits, 1)
-		_ = json.NewEncoder(w).Encode(PageProduct{})
+		_ = json.NewEncoder(w).Encode(Principal{Identity: "machine"})
 	})
 	server := httptest.NewServer(mux)
 	defer server.Close()
@@ -376,7 +156,7 @@ func TestCallerHTTPClientPolicySurvives(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	_, err = products(client, 10)
+	_, err = client.Whoami(context.Background())
 	if err == nil {
 		t.Fatal("302 surfaced as success; CheckRedirect was dropped")
 	}
@@ -445,19 +225,110 @@ func TestDecode(t *testing.T) {
 	}
 }
 
+// closeTracker records the one close a refusal owes the connection.
+type closeTracker struct {
+	io.Reader
+	closed bool
+}
+
+func (c *closeTracker) Close() error { c.closed = true; return nil }
+
+// Refusal hands back the typed problem and closes the body it read; a 2xx passes untouched.
+func TestRefusal(t *testing.T) {
+	body := &closeTracker{Reader: strings.NewReader(`{"title":"Forbidden","status":403}`)}
+	refusal := &http.Response{
+		StatusCode: http.StatusForbidden,
+		Header:     http.Header{"Content-Type": {"application/problem+json"}},
+		Body:       body,
+	}
+	err := Refusal(refusal)
+	var problem *ProblemError
+	if !errors.As(err, &problem) || problem.StatusCode != http.StatusForbidden || problem.Problem == nil || problem.Problem.Title != "Forbidden" {
+		t.Fatalf("refusal = %v, want the typed problem document", err)
+	}
+	if !body.closed {
+		t.Fatal("the refusal's body was left open")
+	}
+	if err := Refusal(&http.Response{StatusCode: http.StatusOK, Body: http.NoBody}); err != nil {
+		t.Fatalf("a 2xx refused: %v", err)
+	}
+}
+
+// Pages walks one fetch per page until no next cursor, stops at the first error, and stops
+// fetching when the consumer stops.
+func TestPages(t *testing.T) {
+	var fetches int
+	var found []string
+	for item, err := range Pages(func(cursor *string) ([]string, *string, error) {
+		fetches++
+		if cursor == nil {
+			return []string{"a", "b"}, strp("two"), nil
+		}
+		return []string{"c"}, nil, nil
+	}, nil) {
+		if err != nil {
+			t.Fatal(err)
+		}
+		found = append(found, item)
+	}
+	if fetches != 2 || strings.Join(found, "") != "abc" {
+		t.Fatalf("%d fetches walked %v, want 2 over [a b c]", fetches, found)
+	}
+	for _, err := range Pages(func(*string) ([]string, *string, error) {
+		return nil, nil, ErrForbidden
+	}, nil) {
+		if !errors.Is(err, ErrForbidden) {
+			t.Fatalf("the fetch's error was lost: %v", err)
+		}
+	}
+	fetches = 0
+	for range Pages(func(cursor *string) ([]string, *string, error) {
+		fetches++
+		return []string{"a"}, strp("two"), nil
+	}, nil) {
+		break
+	}
+	if fetches != 1 {
+		t.Fatalf("%d fetches after the consumer stopped, want 1", fetches)
+	}
+}
+
+// NewPoller names the work its token does and polls until the work finishes.
+func TestNewPoller(t *testing.T) {
+	var polls int
+	poller := NewPoller("an-order", func(context.Context) (string, bool, error) {
+		polls++
+		if polls < 2 {
+			return "building", false, nil
+		}
+		return "done", true, nil
+	})
+	if poller.ResumeToken() != "an-order" {
+		t.Fatalf("token %q, want an-order", poller.ResumeToken())
+	}
+	latest, done, err := poller.Poll(context.Background())
+	if err != nil || done || latest != "building" {
+		t.Fatalf("poll %q done %v err %v, want the work unfinished", latest, done, err)
+	}
+	if _, err := poller.Wait(context.Background(), 0); err == nil {
+		t.Fatal("Wait accepted a zero interval")
+	}
+	final, err := poller.Wait(context.Background(), time.Millisecond)
+	if err != nil || final != "done" {
+		t.Fatalf("wait %q err %v, want the finished work", final, err)
+	}
+}
+
+// The generated client's response types decode core's problem media, whatever its parameters.
 func TestWithResponseDecodesCoreProblemMediaAndValidationErrors(t *testing.T) {
 	for _, contentType := range []string{"application/problem+json", "application/problem+json; charset=utf-8", "application/json"} {
 		t.Run(contentType, func(t *testing.T) {
 			code := RoleDenied
 			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				status := http.StatusUnauthorized
-				if strings.HasSuffix(r.URL.Path, "/verification-input") {
-					status = http.StatusUnprocessableEntity
-				}
 				w.Header().Set("Content-Type", contentType)
-				w.WriteHeader(status)
+				w.WriteHeader(http.StatusUnauthorized)
 				_ = json.NewEncoder(w).Encode(Problem{
-					Type: "about:blank", Title: http.StatusText(status), Status: status,
+					Type: "about:blank", Title: http.StatusText(http.StatusUnauthorized), Status: http.StatusUnauthorized,
 					Detail: "typed refusal", RequestId: "req-with-response", Code: &code,
 					Issues: &[]DenyIssue{{Code: code, Detail: "typed issue"}},
 				})
@@ -467,520 +338,15 @@ func TestWithResponseDecodesCoreProblemMediaAndValidationErrors(t *testing.T) {
 			if err != nil {
 				t.Fatal(err)
 			}
-			repository, err := client.GetRepositoryWithResponse(context.Background(), uuid.New())
-			if err != nil || repository == nil || repository.StatusCode() != http.StatusUnauthorized || repository.JSON401 == nil {
-				t.Fatalf("problem media did not populate typed 401: response=%+v err=%v", repository, err)
+			caller, err := client.WhoamiWithResponse(context.Background())
+			if err != nil || caller == nil || caller.StatusCode() != http.StatusUnauthorized || caller.JSON401 == nil {
+				t.Fatalf("problem media did not populate typed 401: response=%+v err=%v", caller, err)
 			}
-			verification, err := client.PrepareVerificationWithResponse(context.Background(), uuid.New())
-			if err != nil || verification == nil || verification.StatusCode() != http.StatusUnprocessableEntity || verification.JSON422 == nil {
-				t.Fatalf("problem media did not populate typed 422: response=%+v err=%v", verification, err)
-			}
-			for _, problem := range []*Problem{repository.JSON401, verification.JSON422} {
-				if problem.Detail != "typed refusal" || problem.RequestId != "req-with-response" ||
-					problem.Code == nil || *problem.Code != code || problem.Issues == nil || len(*problem.Issues) != 1 {
-					t.Fatalf("typed problem was decoded as an empty or validation-error body: %+v", problem)
-				}
+			problem := caller.JSON401
+			if problem.Detail != "typed refusal" || problem.RequestId != "req-with-response" ||
+				problem.Code == nil || *problem.Code != code || problem.Issues == nil || len(*problem.Issues) != 1 {
+				t.Fatalf("typed problem was decoded as an empty or validation-error body: %+v", problem)
 			}
 		})
-	}
-}
-
-// The set-scoped reads decode a non-empty page and an empty one, and the repository set
-// rides the request as one exploded query value per id — the encoding core's bound reads.
-// The assessments read rides its collection (GET /v1/assessments?repository_ids=...) and
-// decodes the collection's own page shape (items plus cursor); the refs read rides the
-// refs collection (GET /v1/refs?repository_ids=...) and decodes its bare listing.
-func TestSetScopedReadsDecodeTheirPages(t *testing.T) {
-	set := []uuid.UUID{uuid.New(), uuid.New()}
-	reads := []struct {
-		name  string
-		page  string
-		empty string
-		read  func(*Client) (int, error)
-	}{
-		{"ListAssessments", `{"items":[{"id":"` + uuid.New().String() + `","occurred_at":"2026-01-01T00:00:00Z","repository_ref_id":"` + uuid.New().String() + `","assessor":"scanner","assessor_version":"1.0","kind":"sbom","status":"recorded"}],"next":null}`, `{"items":[],"next":null}`, func(c *Client) (int, error) {
-			found, err := c.ListAssessments(context.Background(), &ListAssessmentsParams{RepositoryIds: &set})
-			if found == nil {
-				return 0, err
-			}
-			return len(found.Items), err
-		}},
-		{"ListRefsForRepositories", `[{"id":"` + uuid.New().String() + `","repository_id":"` + uuid.New().String() + `","sha":"4c7f0b9a","name":"main"}]`, `[]`, func(c *Client) (int, error) {
-			found, err := c.ListRefsForRepositories(context.Background(), &ListRefsForRepositoriesParams{RepositoryIds: &set})
-			return len(found), err
-		}},
-	}
-	for _, read := range reads {
-		t.Run(read.name, func(t *testing.T) {
-			for _, page := range []struct {
-				name string
-				body string
-				want int
-			}{
-				{"a non-empty page", read.page, 1},
-				{"an empty page", read.empty, 0},
-			} {
-				t.Run(page.name, func(t *testing.T) {
-					var query url.Values
-					server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						query = r.URL.Query()
-						w.Header().Set("Content-Type", "application/json")
-						_, _ = w.Write([]byte(page.body))
-					}))
-					defer server.Close()
-
-					client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("t")})
-					if err != nil {
-						t.Fatal(err)
-					}
-					count, err := read.read(client)
-					if err != nil {
-						t.Fatal(err)
-					}
-					if count != page.want {
-						t.Fatalf("decoded %d rows from %s, want %d", count, page.body, page.want)
-					}
-					if ids := query["repository_ids"]; len(ids) != len(set) || ids[0] != set[0].String() || ids[1] != set[1].String() {
-						t.Fatalf("the request carried repository_ids=%v, want one value per id of %v", ids, set)
-					}
-				})
-			}
-		})
-	}
-}
-
-// The set-scoped reads fail closed on their documented edges: a 5xx is retried and then
-// passes through as a typed problem, a malformed 2xx body is an error and never a
-// zero-value page, and a problem code the generated set does not name still decodes its
-// document.
-func TestSetScopedReadsFailClosed(t *testing.T) {
-	set := []uuid.UUID{uuid.New(), uuid.New()}
-	reads := []struct {
-		name string
-		read func(*Client) (int, error)
-	}{
-		{"ListAssessments", func(c *Client) (int, error) {
-			found, err := c.ListAssessments(context.Background(), &ListAssessmentsParams{RepositoryIds: &set})
-			if found == nil {
-				return 0, err
-			}
-			return len(found.Items), err
-		}},
-		{"ListRefsForRepositories", func(c *Client) (int, error) {
-			found, err := c.ListRefsForRepositories(context.Background(), &ListRefsForRepositoriesParams{RepositoryIds: &set})
-			return len(found), err
-		}},
-	}
-	for _, read := range reads {
-		t.Run(read.name, func(t *testing.T) {
-			for _, edge := range []struct {
-				name        string
-				status      int
-				contentType string
-				body        string
-				attempts    int32 // round trips the edge takes, retries included
-				problem     bool  // a *ProblemError, else a decode error
-				document    bool  // the problem document decoded
-				code        string
-			}{
-				{
-					name: "a 503 passes through once the retries exhaust", status: http.StatusServiceUnavailable,
-					contentType: "text/plain", body: "unavailable\n", attempts: 2, problem: true,
-				},
-				{
-					name: "a malformed body on 200", status: http.StatusOK,
-					contentType: "application/json", body: `{"items":[{"id":`, attempts: 1,
-				},
-				{
-					name: "an unrecognized problem code", status: http.StatusConflict,
-					contentType: "application/problem+json",
-					body:        `{"type":"about:blank","title":"Conflict","status":409,"code":"unrecognized","request_id":"req-set"}`,
-					attempts:    1, problem: true, document: true, code: "unrecognized",
-				},
-			} {
-				t.Run(edge.name, func(t *testing.T) {
-					var hits int32
-					var query url.Values
-					server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-						atomic.AddInt32(&hits, 1)
-						query = r.URL.Query()
-						w.Header().Set("Content-Type", edge.contentType)
-						w.WriteHeader(edge.status)
-						_, _ = w.Write([]byte(edge.body))
-					}))
-					defer server.Close()
-
-					client, err := NewClient(Config{
-						BaseURL: server.URL, Tokens: StaticToken("t"),
-						Retries: 1, Backoff: time.Millisecond,
-					})
-					if err != nil {
-						t.Fatal(err)
-					}
-					count, err := read.read(client)
-					if err == nil || count != 0 {
-						t.Fatalf("the read returned %d items and %v; every refusal must fail closed", count, err)
-					}
-					if ids := query["repository_ids"]; len(ids) != len(set) || ids[0] != set[0].String() || ids[1] != set[1].String() {
-						t.Fatalf("the request carried repository_ids=%v, want one value per id of %v", ids, set)
-					}
-					if atomic.LoadInt32(&hits) != edge.attempts {
-						t.Fatalf("the edge took %d round trips, want %d", hits, edge.attempts)
-					}
-					var problem *ProblemError
-					if errors.As(err, &problem) != edge.problem {
-						t.Fatalf("got %v (%T), want a typed problem: %v", err, err, edge.problem)
-					}
-					if !edge.problem {
-						return
-					}
-					if problem.StatusCode != edge.status || (problem.Problem != nil) != edge.document {
-						t.Fatalf("status=%d document=%+v, want %d documented=%v", problem.StatusCode, problem.Problem, edge.status, edge.document)
-					}
-					if edge.code != "" && (problem.Problem.Code == nil || *problem.Problem.Code != DenyCode(edge.code) || problem.Problem.RequestId != "req-set") {
-						t.Fatalf("problem=%+v, want code %q and its request id", problem.Problem, edge.code)
-					}
-				})
-			}
-		})
-	}
-}
-
-func TestQueryOrdersPreservesNullAndEmptyIDs(t *testing.T) {
-	empty := []uuid.UUID{}
-	for _, tt := range []struct {
-		name string
-		ids  *[]uuid.UUID
-		want string
-	}{
-		{name: "unrestricted", ids: nil, want: "null"},
-		{name: "empty", ids: &empty, want: "[]"},
-	} {
-		t.Run(tt.name, func(t *testing.T) {
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				if r.Method != http.MethodPost || r.URL.Path != "/v1/orders/query" || r.URL.RawQuery != "" {
-					t.Errorf("unexpected query transport: %s %s", r.Method, r.URL)
-				}
-				var body map[string]json.RawMessage
-				if err := json.NewDecoder(r.Body).Decode(&body); err != nil {
-					t.Error(err)
-				}
-				if string(body["ids"]) != tt.want {
-					t.Errorf("ids = %s, want %s", body["ids"], tt.want)
-				}
-				w.Header().Set("Content-Type", "application/json")
-				_ = json.NewEncoder(w).Encode(OrderQueryPage{Items: []OrderQueryItem{}})
-			}))
-			defer server.Close()
-			client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("test-token")})
-			if err != nil {
-				t.Fatal(err)
-			}
-			page, err := client.QueryOrders(context.Background(), OrderQueryRequest{Ids: tt.ids})
-			if err != nil {
-				t.Fatal(err)
-			}
-			if len(page.Items) != 0 || page.Next != nil {
-				t.Fatalf("unexpected empty page: %+v", page)
-			}
-		})
-	}
-}
-
-func TestQueryOrdersKeepsPerItemCursorsAndTypedProblems(t *testing.T) {
-	tests := []struct {
-		name        string
-		status      int
-		contentType string
-		body        string
-		request     OrderQueryRequest
-		success     bool
-		problem     bool
-		code        DenyCode
-		cancelled   bool
-	}{
-		{
-			name: "per-item cursors and unknown repository", status: http.StatusOK,
-			contentType: "application/json",
-			body: `{"items":[
-				{"order":{"id":"00000000-0000-4000-8000-000000000001"},"repository_url":"https://forge.example/a","cursor":"first"},
-				{"order":{"id":"00000000-0000-4000-8000-000000000002"},"repository_url":null,"cursor":"second"}
-			],"next":"second"}`,
-			success: true,
-		},
-		{
-			name: "invalid cursor", status: http.StatusUnprocessableEntity,
-			contentType: "application/problem+json",
-			body:        `{"type":"about:blank","title":"Unprocessable Entity","status":422,"detail":"invalid or mismatched order query cursor","request_id":"req-query"}`,
-			request:     OrderQueryRequest{Cursor: strp("invalid")}, problem: true,
-		},
-		{
-			name: "malformed successful body", status: http.StatusOK,
-			contentType: "application/json", body: `{"items":[{"order":`,
-		},
-		{
-			name: "non-JSON successful body", status: http.StatusOK,
-			contentType: "text/plain", body: "not a page\n",
-		},
-		{
-			name: "null page", status: http.StatusOK,
-			contentType: "application/json", body: "null",
-		},
-		{
-			name: "missing page", status: http.StatusOK,
-			contentType: "application/json",
-		},
-		{
-			name: "raw service unavailable", status: http.StatusServiceUnavailable,
-			contentType: "text/plain", body: "unavailable\n", problem: true,
-		},
-		{
-			name: "typed unauthorized", status: http.StatusUnauthorized,
-			contentType: "application/problem+json",
-			body:        `{"type":"about:blank","title":"Unauthorized","status":401,"code":"role_denied","request_id":"req-query"}`,
-			problem:     true, code: RoleDenied,
-		},
-		{
-			name: "unknown problem code", status: http.StatusConflict,
-			contentType: "application/problem+json",
-			body:        `{"type":"about:blank","title":"Conflict","status":409,"code":"unrecognized","request_id":"req-query"}`,
-			problem:     true, code: DenyCode("unrecognized"),
-		},
-		{
-			name: "already cancelled context", status: http.StatusOK,
-			contentType: "application/json", body: `{"items":[],"next":null}`, cancelled: true,
-		},
-	}
-	for _, tt := range tests {
-		t.Run(tt.name, func(t *testing.T) {
-			var hits int32
-			server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-				atomic.AddInt32(&hits, 1)
-				w.Header().Set("Content-Type", tt.contentType)
-				w.WriteHeader(tt.status)
-				_, _ = w.Write([]byte(tt.body))
-			}))
-			defer server.Close()
-			client, err := NewClient(Config{
-				BaseURL: server.URL, Tokens: StaticToken("test-token"),
-				Retries: 1, Backoff: time.Millisecond,
-			})
-			if err != nil {
-				t.Fatal(err)
-			}
-			ctx, cancel := context.WithCancel(context.Background())
-			defer cancel()
-			if tt.cancelled {
-				cancel()
-			}
-			page, err := client.QueryOrders(ctx, tt.request)
-			wantHits := int32(1)
-			if tt.cancelled {
-				wantHits = 0
-			}
-			if got := atomic.LoadInt32(&hits); got != wantHits {
-				t.Fatalf("got %d round trips, want %d", got, wantHits)
-			}
-			if tt.success {
-				if err != nil || page == nil {
-					t.Fatalf("page=%+v err=%v, want a successful page", page, err)
-				}
-				if len(page.Items) != 2 || page.Items[0].Cursor != "first" || page.Items[1].Cursor != "second" {
-					t.Fatalf("item positions lost: %+v", page)
-				}
-				if page.Next == nil || *page.Next != "second" || page.Items[1].RepositoryUrl != nil {
-					t.Fatalf("page boundary or unknown repository changed: %+v", page)
-				}
-				return
-			}
-			if err == nil || page != nil {
-				t.Fatalf("page=%+v err=%v, want no successful page and an error", page, err)
-			}
-			if tt.cancelled {
-				if !errors.Is(err, context.Canceled) {
-					t.Fatalf("got %v, want context.Canceled", err)
-				}
-				return
-			}
-			var refused *ProblemError
-			if errors.As(err, &refused) != tt.problem {
-				t.Fatalf("got %v (%T), want typed problem=%v", err, err, tt.problem)
-			}
-			if !tt.problem {
-				return
-			}
-			if refused.StatusCode != tt.status || refused.Body != tt.body {
-				t.Fatalf("status=%d body=%q, want %d and %q", refused.StatusCode, refused.Body, tt.status, tt.body)
-			}
-			if tt.contentType == "text/plain" {
-				if refused.Problem != nil {
-					t.Fatalf("problem=%+v, want no decoded problem", refused.Problem)
-				}
-				return
-			}
-			document := refused.Problem
-			if document == nil || document.Status != tt.status || document.RequestId != "req-query" {
-				t.Fatalf("problem=%+v, want status %d and request id req-query", document, tt.status)
-			}
-			if tt.code != "" && (document.Code == nil || *document.Code != tt.code) {
-				t.Fatalf("problem=%+v, want code %q", document, tt.code)
-			}
-		})
-	}
-}
-
-// The repository disposition doors (foundry plan repo-unreachable): the URL correction
-// and the verify reach core's routes with the typed bodies, the listing carries the
-// dispositioned filter, and the answer decodes the disposition fields core serves.
-func TestRepositoryDispositionDoorsRoundTrip(t *testing.T) {
-	var seen []struct {
-		method string
-		path   string
-		query  url.Values
-		body   []byte
-	}
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		body, _ := readAll(r)
-		seen = append(seen, struct {
-			method string
-			path   string
-			query  url.Values
-			body   []byte
-		}{r.Method, r.URL.Path, r.URL.Query(), body})
-		w.Header().Set("Content-Type", "application/json")
-		switch {
-		case r.URL.Path == "/v1/repositories" && r.Method == http.MethodGet:
-			_ = json.NewEncoder(w).Encode(PageRepository{Items: []Repository{{
-				Id:         of(uuid.New()),
-				Url:        "https://github.com/org/repo",
-				Archived:   of(false),
-				UpstreamId: of(uuid.New()),
-				Public:     true,
-				CreatedAt:  of(time.Date(2026, 11, 15, 12, 0, 0, 0, time.UTC)),
-				GoneStreak: of(2),
-			}}})
-		case strings.HasSuffix(r.URL.Path, "/url") && r.Method == http.MethodPut:
-			disposition := RepoUnreachable
-			reason := GoneReasonGone
-			evidence := "the forge reports no such repository"
-			_ = json.NewEncoder(w).Encode(Repository{
-				Id: of(uuid.New()), Url: "https://github.com/org/relocated",
-				Disposition: &disposition, DispositionReason: &reason, DispositionEvidence: &evidence,
-			})
-		case strings.HasSuffix(r.URL.Path, "/verify") && r.Method == http.MethodPost:
-			status := ComparisonStatusOk
-			_ = json.NewEncoder(w).Encode(RepositoryVerification{
-				Facts:      ForgeFacts{Status: status},
-				Repository: Repository{Id: of(uuid.New()), Url: "https://github.com/org/repo"},
-			})
-		default:
-			http.NotFound(w, r)
-		}
-	}))
-	defer server.Close()
-
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("t")})
-	if err != nil {
-		t.Fatal(err)
-	}
-	ctx := context.Background()
-
-	repositoryID := uuid.New()
-	corrected, err := client.CorrectRepositoryUrl(ctx, repositoryID, UrlCorrection{
-		Url: "https://github.com/org/relocated",
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if corrected.Url != "https://github.com/org/relocated" || corrected.Disposition == nil ||
-		*corrected.Disposition != RepoUnreachable || *corrected.DispositionReason != GoneReasonGone {
-		t.Fatalf("the correction's answer drifted: %+v", corrected)
-	}
-
-	answer, err := client.VerifyRepository(ctx, repositoryID)
-	if err != nil {
-		t.Fatal(err)
-	}
-	if answer.Facts.Status != ComparisonStatusOk || answer.Repository.Id == nil {
-		t.Fatalf("the verify's answer drifted: %+v", answer)
-	}
-
-	active := true
-	paged, err := client.ListRepositories(ctx, &ListRepositoriesParams{Dispositioned: &active})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if len(paged.Items) != 1 || paged.Items[0].Url != "https://github.com/org/repo" {
-		t.Fatalf("the listing's answer drifted: %+v", paged)
-	}
-
-	if len(seen) != 3 {
-		t.Fatalf("calls %d, want the three doors", len(seen))
-	}
-	for _, call := range seen {
-		switch {
-		case call.method == http.MethodPut:
-			if call.path != "/v1/repositories/"+repositoryID.String()+"/url" ||
-				string(call.body) != `{"url":"https://github.com/org/relocated"}` {
-				t.Fatalf("the correction was sent wrong: %s %s %s", call.method, call.path, call.body)
-			}
-		case call.method == http.MethodPost:
-			if call.path != "/v1/repositories/"+repositoryID.String()+"/verify" || len(call.body) != 0 {
-				t.Fatalf("the verify was sent wrong: %s %s %s", call.method, call.path, call.body)
-			}
-		case call.method == http.MethodGet:
-			if call.path != "/v1/repositories" || call.query.Get("dispositioned") != "true" {
-				t.Fatalf("the listing was sent wrong: %s %s %s", call.method, call.path, call.query)
-			}
-		default:
-			t.Fatalf("an unexpected door was called: %s %s", call.method, call.path)
-		}
-	}
-}
-
-func readAll(r *http.Request) ([]byte, error) {
-	if r.Body == nil {
-		return nil, nil
-	}
-	defer r.Body.Close()
-	return io.ReadAll(r.Body)
-}
-
-func of[T any](value T) *T { return &value }
-
-// The doors' failure paths (Qodo #77): a refusal surfaces as the *ProblemError core
-// sent, wrapped with the call's name and the repository it concerns — a caller
-// triaging several repositories can tell which one failed.
-func TestRepositoryDispositionDoorsNameTheFailedRepository(t *testing.T) {
-	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/problem+json")
-		w.WriteHeader(http.StatusConflict)
-		_ = json.NewEncoder(w).Encode(Problem{
-			Type: "about:blank", Title: "the URL is occupied", Detail: "already another repository",
-			Status: http.StatusConflict, RequestId: "r1",
-		})
-	}))
-	defer server.Close()
-
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("t")})
-	if err != nil {
-		t.Fatal(err)
-	}
-	repositoryID := uuid.New()
-	_, err = client.CorrectRepositoryUrl(context.Background(), repositoryID, UrlCorrection{
-		Url: "https://github.com/other/seat",
-	})
-	if err == nil {
-		t.Fatal("the occupied-URL refusal must surface")
-	}
-	var problem *ProblemError
-	if !errors.As(err, &problem) || problem.StatusCode != http.StatusConflict {
-		t.Fatalf("the refusal lost its problem shape: %v", err)
-	}
-	if !strings.Contains(err.Error(), "CorrectRepositoryUrl("+repositoryID.String()) {
-		t.Fatalf("the error does not name the repository it concerns: %v", err)
-	}
-	if !strings.Contains(err.Error(), "already another repository") {
-		t.Fatalf("the error lost core's words: %v", err)
 	}
 }

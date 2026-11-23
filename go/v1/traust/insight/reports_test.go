@@ -1,4 +1,4 @@
-package traust
+package insight_test
 
 import (
 	"encoding/json"
@@ -9,16 +9,19 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+	"github.com/traust-security/traust-sdk/go/v1/traust/insight"
 )
 
 // fakeReports serves POST /v1/reports (202, the build queued) and GET /v1/reports/{id}; the
 // build ends as status on the second read.
-func fakeReports(t *testing.T, status ReportStatus) *Client {
+func fakeReports(t *testing.T, status traust.ReportStatus) *insight.Client {
 	t.Helper()
 	id := uuid.New()
 	var reads atomic.Int32
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-		report := Report{OrderId: id, Report: FindingsRollup, Format: ReportFormatMarkdown, Status: ReportStatusQueued}
+		report := traust.Report{OrderId: id, Report: traust.FindingsRollup, Format: traust.ReportFormatMarkdown, Status: traust.ReportStatusQueued}
 		code := http.StatusOK
 		switch {
 		case r.Method == http.MethodPost && r.URL.Path == "/v1/reports":
@@ -36,17 +39,17 @@ func fakeReports(t *testing.T, status ReportStatus) *Client {
 		_ = json.NewEncoder(w).Encode(report)
 	}))
 	t.Cleanup(server.Close)
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("t")})
+	client, err := traust.NewClient(traust.Config{BaseURL: server.URL, Tokens: traust.StaticToken("t")})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return client
+	return insight.New(client)
 }
 
 func TestBeginRequestReportFollowsTheBuildToItsEnd(t *testing.T) {
-	for _, status := range []ReportStatus{ReportStatusReady, ReportStatusFailed} {
+	for _, status := range []traust.ReportStatus{traust.ReportStatusReady, traust.ReportStatusFailed} {
 		t.Run(string(status), func(t *testing.T) {
-			poller, err := fakeReports(t, status).BeginRequestReport(t.Context(), ReportRequest{Report: FindingsRollup})
+			poller, err := fakeReports(t, status).BeginRequestReport(t.Context(), traust.ReportRequest{Report: traust.FindingsRollup})
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -59,7 +62,7 @@ func TestBeginRequestReportFollowsTheBuildToItsEnd(t *testing.T) {
 }
 
 func TestResumeReportRefusesATokenThatNamesNoBuild(t *testing.T) {
-	if _, err := fakeReports(t, ReportStatusReady).ResumeReport("not-a-build"); err == nil {
+	if _, err := fakeReports(t, traust.ReportStatusReady).ResumeReport("not-a-build"); err == nil {
 		t.Fatal("ResumeReport accepted a token that names no build")
 	}
 }

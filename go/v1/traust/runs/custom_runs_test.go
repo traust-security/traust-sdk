@@ -1,4 +1,4 @@
-package traust
+package runs_test
 
 import (
 	"encoding/json"
@@ -10,11 +10,14 @@ import (
 	"time"
 
 	"github.com/google/uuid"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+	"github.com/traust-security/traust-sdk/go/v1/traust/runs"
 )
 
 // fakeSkill serves POST /v1/orders, recording the decoded submit body, and
 // GET /v1/orders/{id} for the order it queued; the order has already finished.
-func fakeSkill(t *testing.T) (*Client, func() map[string]any) {
+func fakeSkill(t *testing.T) (*runs.Client, func() map[string]any) {
 	t.Helper()
 	id := uuid.New()
 	var mu sync.Mutex
@@ -27,22 +30,22 @@ func fakeSkill(t *testing.T) (*Client, func() map[string]any) {
 			_ = json.NewDecoder(r.Body).Decode(&submitted)
 			mu.Unlock()
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(RunOrder{Id: &id, Asset: "scan", State: RunOrderStateQueued})
+			_ = json.NewEncoder(w).Encode(traust.RunOrder{Id: &id, Asset: "scan", State: traust.RunOrderStateQueued})
 		case r.Method == http.MethodGet && r.URL.Path == "/v1/orders/"+id.String():
 			finished := time.Now()
 			w.Header().Set("Content-Type", "application/json")
-			_ = json.NewEncoder(w).Encode(RunOrder{Id: &id, Asset: "scan", State: RunOrderStateSucceeded, FinishedAt: &finished})
+			_ = json.NewEncoder(w).Encode(traust.RunOrder{Id: &id, Asset: "scan", State: traust.RunOrderStateSucceeded, FinishedAt: &finished})
 		default:
 			w.WriteHeader(http.StatusNotFound)
 			return
 		}
 	}))
 	t.Cleanup(server.Close)
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("machine")})
+	client, err := traust.NewClient(traust.Config{BaseURL: server.URL, Tokens: traust.StaticToken("machine")})
 	if err != nil {
 		t.Fatal(err)
 	}
-	return client, func() map[string]any {
+	return runs.New(client), func() map[string]any {
 		mu.Lock()
 		defer mu.Unlock()
 		return submitted
@@ -53,11 +56,11 @@ func TestBeginSkillSubmitsTheAssetByName(t *testing.T) {
 	repo := uuid.New()
 	tests := []struct {
 		name     string
-		opts     []RunOption
+		opts     []runs.RunOption
 		wantRepo any
 	}{
 		{name: "no options", opts: nil, wantRepo: nil},
-		{name: "for one repository", opts: []RunOption{ForRepository(repo)}, wantRepo: repo.String()},
+		{name: "for one repository", opts: []runs.RunOption{runs.ForRepository(repo)}, wantRepo: repo.String()},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
@@ -93,7 +96,7 @@ func TestBeginSkillSubmitsTheAssetByName(t *testing.T) {
 				}
 			}
 			finished, done, err := poller.Poll(t.Context())
-			if err != nil || !done || finished.State != RunOrderStateSucceeded || poller.ResumeToken() != finished.Id.String() {
+			if err != nil || !done || finished.State != traust.RunOrderStateSucceeded || poller.ResumeToken() != finished.Id.String() {
 				t.Fatalf("poll order %+v done %v err %v, want the submitted order finished by its id", finished, done, err)
 			}
 		})
@@ -111,14 +114,14 @@ func TestBeginSkillPassesCoreRefusalsThrough(t *testing.T) {
 	server := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/problem+json")
 		w.WriteHeader(http.StatusForbidden)
-		_ = json.NewEncoder(w).Encode(Problem{Title: "Forbidden"})
+		_ = json.NewEncoder(w).Encode(traust.Problem{Title: "Forbidden"})
 	}))
 	t.Cleanup(server.Close)
-	client, err := NewClient(Config{BaseURL: server.URL, Tokens: StaticToken("machine")})
+	client, err := traust.NewClient(traust.Config{BaseURL: server.URL, Tokens: traust.StaticToken("machine")})
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := client.BeginSkill(t.Context(), "scan"); !errors.Is(err, ErrForbidden) {
+	if _, err := runs.New(client).BeginSkill(t.Context(), "scan"); !errors.Is(err, traust.ErrForbidden) {
 		t.Fatalf("a refused submit: %v, want ErrForbidden", err)
 	}
 }

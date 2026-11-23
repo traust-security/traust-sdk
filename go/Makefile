@@ -35,7 +35,7 @@ webapp-generate:
 	cd examples/webapp && go tool templ generate
 
 check-drift: api-generate webapp-generate engine harness
-	@git diff --exit-code -- './examples/webapp/*_templ.go' ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go || (echo "ERROR: generated files are out of date; run 'make api-generate webapp-generate' and commit" && exit 1)
+	@git diff --exit-code -- './examples/webapp/*_templ.go' ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go './v1/traust/*/*.gen.go' || (echo "ERROR: generated files are out of date; run 'make api-generate webapp-generate' and commit" && exit 1)
 	$(CORE_PYTHON) "$(CURDIR)/internal/pack_drift.py" --webapp "$(CURDIR)/examples/webapp/pack.yaml" --shipped "$(TRAUST_SOURCE)/packs/security/assets.yaml"
 
 core:
@@ -64,10 +64,10 @@ api-generate: core
 	$(MAKE) -s -C "$(CORE_SOURCE)" api-check; \
 	python3 $(OPENAPI_DIR)/normalize.py "$(CORE_SOURCE)/.openapi/openapi.json" "$$tmp/openapi.json"; \
 	go tool oapi-codegen --config $(OPENAPI_DIR)/oapi-codegen.yaml "$$tmp/openapi.json"; \
-	go run ./internal/generate/calls ./v1/traust/client.gen.go "$$tmp/openapi.json" ./v1/traust/calls.gen.go; \
+	go run ./internal/generate/calls ./v1/traust/client.gen.go "$$tmp/openapi.json" ./v1/traust; \
 	($(CORE_PYTHON) "$(CURDIR)/$(OPENAPI_DIR)/views.py" "$$tmp/views.json"); \
 	go tool oapi-codegen --config $(OPENAPI_DIR)/views.yaml "$$tmp/views.json"; \
-	go run ./internal/generate/insights ./v1/traust/client.gen.go "$$tmp/views.json" ./v1/traust/insights.gen.go
+	go run ./internal/generate/insights ./v1/traust/client.gen.go "$$tmp/views.json" ./v1/traust/insights.gen.go ./v1/traust/insight/insights.gen.go
 
 # A local-issuer token for the e2e server: $(1) identity, $(2) machine (True/False), $(3) file.
 mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context import Config, Context; print(Context(Config.from_file(Path('$$home/traust.yaml'))).local_issuer.mint('$(1)', machine=$(2)).token.get_secret_value())") > "$$home/$(3)"
@@ -148,7 +148,7 @@ e2e: engine harness
 	command -v cosign >/dev/null || { echo "make e2e signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
 	$(core_up); \
 	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_ADMIN_TOKEN_FILE="$$home/admin" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; \
-	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/; \
+	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/...; \
 	cp "$(TRAUST_SOURCE)/config/model-registry.yaml" "$$home/model-registry.yaml"; \
 	(cd "$(CORE_SOURCE)" && exec env PATH="$(CURDIR)/internal/e2eclaude:$$PATH" TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" $$proxy uv run --quiet traust-engine claim --loop --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --worker e2e-box --label llm --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml") > "$$home/claim.log" 2>&1 & pids="$$pids $$!"; \
 	(cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .) || { echo "--- claim.log"; tail -40 "$$home/claim.log"; echo "--- e2eclaude.log"; cat "$$home/e2eclaude.log" 2>/dev/null; exit 1; }

@@ -12,12 +12,12 @@ commits into the range. ci/lean.py <base> <head> overrides both for probing.
   justified-deps      a require gained by go/go.mod or the example webapp's
                       go.mod needs a `deps: <module> — <why>` line in a commit
                       in the range
-  generated-first     a hand-written type under go/v1/traust that
-                      client.gen.go already declares is a hand-edit of
-                      generated ground
+  generated-first     a hand-written type under go/v1/traust/… — the root or
+                      one of its domain clients — that client.gen.go already
+                      declares is a hand-edit of generated ground
   used-export         an exported func, type, var, const or method on an
                       exported type, added to a hand-written file under
-                      go/v1/, that nothing in go/examples/ or a _test.go
+                      go/v1/…, that nothing in go/examples/ or a _test.go
                       references: an export exists for a caller
 
 A go.mod that first appears in the range is measured from the commit that

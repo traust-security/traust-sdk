@@ -355,7 +355,7 @@ func TestClientCredentialsIsUsableAsATokenSource(t *testing.T) {
 		w.Header().Set("Content-Type", "application/json")
 		_, _ = w.Write([]byte(`{"items":[],"next":null}`))
 	})
-	if _, err := products(client, 1); err != nil {
+	if _, err := client.Whoami(context.Background()); err != nil {
 		t.Fatal(err)
 	}
 	if got := seen.Load().(string); got != "Bearer tok-1" {

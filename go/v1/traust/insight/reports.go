@@ -1,4 +1,4 @@
-package traust
+package insight
 
 import (
 	"bytes"
@@ -7,17 +7,13 @@ import (
 	"fmt"
 
 	"github.com/google/uuid"
-)
 
-// insightView is a generated …Insight type: one view's contracts ViewModel.
-type insightView[T any] interface {
-	*T
-	insightName() ViewName
-}
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+)
 
 // BeginRequestReport asks core to build a report and follows the build; a ready or failed
 // report has finished.
-func (c *Client) BeginRequestReport(ctx context.Context, body ReportRequest) (*Poller[Report], error) {
+func (c *Client) BeginRequestReport(ctx context.Context, body traust.ReportRequest) (*traust.Poller[traust.Report], error) {
 	report, err := c.RequestReport(ctx, body)
 	if err != nil {
 		return nil, err
@@ -26,26 +22,29 @@ func (c *Client) BeginRequestReport(ctx context.Context, body ReportRequest) (*P
 }
 
 // ResumeReport follows the report build a resume token names.
-func (c *Client) ResumeReport(token string) (*Poller[Report], error) {
+func (c *Client) ResumeReport(token string) (*traust.Poller[traust.Report], error) {
 	id, err := uuid.Parse(token)
 	if err != nil {
-		return nil, fmt.Errorf("traust: resume token: %w", err)
+		return nil, fmt.Errorf("insight: resume token: %w", err)
 	}
-	return &Poller[Report]{token: token, poll: func(ctx context.Context) (Report, bool, error) {
+	return traust.NewPoller(token, func(ctx context.Context) (traust.Report, bool, error) {
 		report, err := c.GetReport(ctx, id)
 		if err != nil {
-			return Report{}, false, err
+			return traust.Report{}, false, err
 		}
-		return *report, report.Status == ReportStatusReady || report.Status == ReportStatusFailed, nil
-	}}, nil
+		return *report, report.Status == traust.ReportStatusReady || report.Status == traust.ReportStatusFailed, nil
+	}), nil
 }
 
 // ReportView decodes a ready json report as its contracted view T (a generated …Insight type,
 // such as FindingsRollupInsight). A field outside the contract is an error, never dropped.
-func ReportView[T any, PT insightView[T]](ctx context.Context, c *Client, report Report) (*T, error) {
-	name := PT(nil).insightName()
-	if report.Report != name || report.Format != ReportFormatJson || report.Status != ReportStatusReady {
-		return nil, fmt.Errorf("traust: report %s is a %s %s %s, not a ready json %s", report.OrderId, report.Status, report.Format, report.Report, name)
+func ReportView[T any](ctx context.Context, c *Client, report traust.Report) (*T, error) {
+	name := viewName(*new(T))
+	if name == "" {
+		return nil, fmt.Errorf("insight: %T is not a contracted view type", *new(T))
+	}
+	if report.Report != name || report.Format != traust.ReportFormatJson || report.Status != traust.ReportStatusReady {
+		return nil, fmt.Errorf("insight: report %s is a %s %s %s, not a ready json %s", report.OrderId, report.Status, report.Format, report.Report, name)
 	}
 	body, err := c.GetReportFile(ctx, report.OrderId)
 	if err != nil {

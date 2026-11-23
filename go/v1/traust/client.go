@@ -1,8 +1,8 @@
 package traust
 
 // Bindings over the generated client: bearer-token auth, bounded retries on transient
-// failures, typed problem errors and cursor paging. calls.gen.go builds the `(T, error)` calls
-// and `…All` iterators on top of these.
+// failures, typed problem errors and cursor paging. The generated calls — root's and every
+// domain package's — build the `(T, error)` calls and `…All` iterators on top of these.
 
 import (
 	"bytes"
@@ -82,8 +82,8 @@ type Config struct {
 	Now        func() time.Time // clock for tests; default time.Now
 }
 
-// Client is traust-core's client: every operation as a `(T, error)` call and every paged listing
-// as an `…All` iterator, with auth, retries and typed errors.
+// Client is traust-core's client: the transport — auth, retries, typed errors — the domain
+// clients call through, with the health and identity reads.
 type Client struct {
 	*ClientWithResponses
 }
@@ -155,7 +155,9 @@ func CheckResponse(statusCode int, body []byte, contentType string) error {
 	return out
 }
 
-func checkRefusal(response *http.Response) error {
+// Refusal returns nil for a 2xx response, otherwise its *ProblemError with the body read and
+// closed. The generated calls check every raw response with it before decoding.
+func Refusal(response *http.Response) error {
 	if response.StatusCode >= 200 && response.StatusCode < 300 {
 		return nil
 	}
@@ -221,8 +223,9 @@ func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {
 	return resp, err
 }
 
-// pages iterates a cursor-paged listing, one fetch per page, until core returns no next cursor.
-func pages[T any](fetch func(cursor *string) ([]T, *string, error), start *string) iter.Seq2[T, error] {
+// Pages iterates a cursor-paged listing, one fetch per page, until core returns no next
+// cursor. The generated `…All` iterators are built on it.
+func Pages[T any](fetch func(cursor *string) ([]T, *string, error), start *string) iter.Seq2[T, error] {
 	return func(yield func(T, error) bool) {
 		cursor := start
 		for {

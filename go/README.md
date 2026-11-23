@@ -11,23 +11,26 @@ go get github.com/traust-security/traust-sdk/go
 ## Quickstart
 
 ```go
-import "github.com/traust-security/traust-sdk/go/v1/traust"
+import (
+    "github.com/traust-security/traust-sdk/go/v1/traust"
+    "github.com/traust-security/traust-sdk/go/v1/traust/inventory"
+)
 
 client, err := traust.NewClient(traust.Config{
     BaseURL: "https://traust-core.example.com",
     Tokens:  traust.FileTokenSource{Path: "/var/run/secrets/traust-core/token"},
 })
+repos := inventory.New(client)
 
 url := "https://github.com/example/api"
-repos, err := client.ListRepositories(ctx, &traust.ListRepositoriesParams{Url: &url})
-repo := repos.Items[0]
-
-counts, err := client.SummarizeFindings(ctx, *repo.Id,
-    &traust.SummarizeFindingsParams{GroupBy: traust.FindingDimensionSeverity})
+page, err := repos.ListRepositories(ctx, &traust.ListRepositoriesParams{Url: &url})
+repo := page.Items[0]
 ```
 
-Every operation is a method named after core's operation — `client.GetRepository(ctx, id)` returns
-`(*traust.Repository, error)`; `go doc ./v1/traust` shows every signature and the runnable examples.
+`traust.NewClient` builds the one client — transport, auth, retries, typed errors — and one
+package per domain carries the calls. Every operation is a method named after core's operation:
+`repos.GetRepository(ctx, id)` returns `(*traust.Repository, error)`; `go doc` on a domain
+package shows every signature, and the runnable examples.
 
 ## Connect
 
@@ -42,12 +45,29 @@ retry on 429, 502, 503, 504 and transport errors; writes are never retried.
 A `LoadConfig` profile can name a machine identity instead of a `token_file`: `token_url`, `client_id`,
 `client_secret_file` (a leading `~/` expands), optional `scopes` — the secret is read from the file, never the config.
 
+## The domains
+
+Each domain is a client over the one root client, `inventory.New(client)` and friends:
+
+| Package | What it covers |
+|---|---|
+| `inventory` | products, repositories, refs and owners — core's portfolio and registry routes |
+| `runs` | orders: submit, claim, run and complete work, query history — core's ops routes |
+| `findings` | findings, assessments, artifacts and validation |
+| `remediation` | remediation efforts, work items and their verification |
+| `exposure` | advisories, packages, dependencies and the reach of both |
+| `ledger` | ledger layers, events and their verification |
+| `insight` | dashboards and reports |
+
+The root keeps the transport, `Poller`, the errors and the generated models (`traust.Repository`
+and every other type a call takes or returns), plus `Whoami` and `Healthz`.
+
 ## Read
 
 ```go
-finding, err := client.GetFinding(ctx, id)            // one resource
-page, err := client.ListFindings(ctx, repoID, nil)     // one page
-for f, err := range client.ListFindingsAll(ctx, repoID, nil) { … } // every page
+finding, err := findings.New(client).GetFinding(ctx, id)            // one resource
+page, err := findings.New(client).ListFindings(ctx, repoID, nil)     // one page
+for f, err := range findings.New(client).ListFindingsAll(ctx, repoID, nil) { … } // every page
 ```
 
 Each paged listing has an `…All` iterator that follows the cursor and stops at the first error. Counts and dashboards
@@ -59,14 +79,14 @@ One query answers a dashboard card: what to count, broken down by up to three di
 the repositories (or products, teams) the person may see. Rows read by typed key:
 
 ```go
-result, err := client.QueryDashboard(ctx, traust.DashboardQuery{
+result, err := insight.New(client).QueryDashboard(ctx, traust.DashboardQuery{
     Subject:       traust.SubjectFindings,
     Measures:      []traust.Measure{traust.MeasureFindings},
     GroupBy:       &[]traust.Dimension{traust.DimensionSeverity},
     RepositoryIds: &repoIDs,
 })
 for _, row := range result.Rows {
-    severity, count := row.Group(traust.DimensionSeverity), row.Measure(traust.MeasureFindings)
+    severity, count := insight.Group(row, traust.DimensionSeverity), insight.Measure(row, traust.MeasureFindings)
 }
 ```
 
@@ -78,11 +98,12 @@ outside the contract:
 
 ```go
 format := traust.ReportFormatMarkdown
-poller, err := client.BeginRequestReport(ctx, traust.ReportRequest{Report: traust.FindingsRollup, Format: &format})
-report, err := poller.Wait(ctx, 2*time.Second)         // ready or failed; ResumeReport(token) after a restart
-file, err := client.GetReportFile(ctx, report.OrderId) // the stored bytes, whatever the format
+reports := insight.New(client)
+poller, err := reports.BeginRequestReport(ctx, traust.ReportRequest{Report: traust.FindingsRollup, Format: &format})
+report, err := poller.Wait(ctx, 2*time.Second)       // ready or failed; ResumeReport(token) after a restart
+file, err := reports.GetReportFile(ctx, report.OrderId) // the stored bytes, whatever the format
 
-rollup, err := traust.ReportView[traust.FindingsRollupInsight](ctx, client, report) // a ready json report
+rollup, err := insight.ReportView[traust.FindingsRollupInsight](ctx, reports, report) // a ready json report
 ```
 
 A view composed from others uses their types: `ExecutiveSummaryInsight.Rollup` is a
@@ -94,7 +115,7 @@ contract definitions generate once and are reused: the finding records views emb
 
 ### Query orders
 
-`client.QueryOrders(ctx, traust.OrderQueryRequest{…})` posts filters, search, sort and bounded
+`runs.New(client).QueryOrders(ctx, traust.OrderQueryRequest{…})` posts filters, search, sort and bounded
 paging to `POST /v1/orders/query`. Each item contains the order, its repository URL (nullable)
 and an opaque cursor. Follow the page's `Next` for a whole page, or the last consumed item's
 `Cursor` when merging only part of a page with another source. Keep filters and sorting
@@ -111,7 +132,7 @@ between pages: these cursors are not transactional snapshots.
 Use these server-side queries rather than walking order history to filter or sort it.
 As a POST, `QueryOrders` is not automatically retried.
 
-`client.QueryOrdersAll(ctx, request)` iterates the remaining matching items
+`QueryOrdersAll(ctx, request)` iterates the remaining matching items
 from `request.Cursor`, following page boundaries and yielding the first error.
 It stops fetching when the consumer stops. Use it for intentional full-history
 processing; interactive tables and mixed-source merges should keep using
@@ -120,9 +141,10 @@ bounded `QueryOrders` pages rather than draining this iterator before rendering.
 ## Keep inventory current
 
 ```go
-client.Onboard(ctx, traust.OnboardingRequest{…})                     // product, repositories, refs, teams
-client.RegisterRef(ctx, repoID, traust.RefRegistration{Sha: sha})     // a commit you're about to scan
-client.SetOwners(ctx, repoID, traust.Owners{Teams: []string{"red"}})  // the teams your source reports
+inv := inventory.New(client)
+inv.Onboard(ctx, traust.OnboardingRequest{…})                     // product, repositories, refs, teams
+inv.RegisterRef(ctx, repoID, traust.RefRegistration{Sha: sha})     // a commit you're about to scan
+inv.SetOwners(ctx, repoID, traust.Owners{Teams: []string{"red"}})  // the teams your source reports
 ```
 
 Writes are idempotent: re-sending the same request changes nothing. Core stamps when ownership
@@ -146,7 +168,7 @@ user's calls as that user, so core authorizes and attributes them to the person:
 
 ```go
 ctx := traust.OnBehalfOf(r.Context(), userToken) // an empty token is an error, never a fallback
-order, err := client.Submit(ctx, req)
+order, err := runs.New(client).Submit(ctx, req)
 ```
 
 ## Example app
@@ -184,4 +206,3 @@ sent := core.Requests()
 
 An unregistered route answers with a 404 problem. Use `traustest.Start()` (and `Close`) outside a test,
 as the runnable examples do. `make e2e` runs the SDK itself against a real `traust-server`.
-
