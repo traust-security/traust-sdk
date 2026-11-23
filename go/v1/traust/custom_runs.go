@@ -21,7 +21,7 @@ func (c *Client) BeginSkill(ctx context.Context, asset string, opts ...RunOption
 	if asset == "" {
 		return nil, fmt.Errorf("traust: BeginSkill: asset is required")
 	}
-	// Core requires a priority; 1 is a person's normal ask (0 is core's own ask-now lanes).
+	// Core requires a priority and claims the lowest first; 1 is what a person's submit has used.
 	order := OrderRequest{Asset: asset, Priority: 1}
 	for _, opt := range opts {
 		opt(&order)
