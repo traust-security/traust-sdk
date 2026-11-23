@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Lean gate: the SDK gets smaller or stays the same size.
 
-Compares HEAD against a base and fails on three kinds of growth. The base is
+Compares HEAD against a base and fails on four kinds of growth. The base is
 LEAN_BASE when set, else origin/development; the diff starts at that ref's
 merge-base with HEAD, so a base tip that moved on doesn't spill its own
 commits into the range. ci/lean.py <base> <head> overrides both for probing.
@@ -15,11 +15,21 @@ commits into the range. ci/lean.py <base> <head> overrides both for probing.
   generated-first     a hand-written type under go/v1/traust that
                       client.gen.go already declares is a hand-edit of
                       generated ground
+  used-export         an exported func, type, var, const or method on an
+                      exported type, added to a hand-written file under
+                      go/v1/, that nothing in go/examples/ or a _test.go
+                      references: an export exists for a caller
 
 A go.mod that first appears in the range is measured from the commit that
 introduced it: a new module's initial require set ships with the module in
 one review, and the gate stops it growing afterwards. `// indirect` requires
 are the tree a chosen dep brings; only the dep a person chose carries a line.
+Declarations are read by a token scan of the source with comments and strings
+blanked, not a grep. A new export is used when its name — `.Name(` for a
+method — appears in go/examples/ or a _test.go; a type is used the same way
+when one of its methods is called, since a type returned and used only
+through inference never appears by name. `*.gen.go` files declare, never
+count, and stay out of scope.
 
 Exit 0 when lean, 1 on any finding.
 """
@@ -49,6 +59,8 @@ SELF = Path(__file__).resolve()
 GO_MODS = ("go/go.mod", "go/examples/webapp/go.mod")
 GEN_CLIENT = "go/v1/traust/client.gen.go"
 TRAUST_DIR = "go/v1/traust"
+GO_V1 = "go/v1"
+EXAMPLES = "go/examples"
 
 DEPRECATED_RE = re.compile(r"deprecated:", re.IGNORECASE)
 ALIAS_RE = re.compile(r"\b(?:compat|shim|legacy alias)\b", re.IGNORECASE)
@@ -57,12 +69,31 @@ HUNK_RE = re.compile(r"^@@ -\d+(?:,\d+)? \+(\d+)(?:,\d+)? @@")
 IDENT_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*")
 TOKEN_RE = re.compile(r"[A-Za-z_][A-Za-z0-9_]*|[{}()\[\];\n]|\S")
 
+DECL_KEYWORDS = frozenset(("type", "var", "const", "func"))
+#: The idents a var or const entry may sit beside: `PhaseMarshal Phase =
+#: "marshal"` names one const, not a second one called Phase.
+BUILTIN_TYPES = frozenset((
+    "any", "bool", "byte", "comparable", "complex64", "complex128", "error",
+    "float32", "float64", "int", "int8", "int16", "int32", "int64", "rune",
+    "string", "uint", "uint8", "uint16", "uint32", "uint64", "uintptr",
+))
+
 
 @dataclass(frozen=True)
 class AddedLine:
     path: str
     line: int
     text: str
+
+
+@dataclass(frozen=True)
+class Decl:
+    """A top-level declaration in a Go file."""
+
+    kind: str  # func, method, type, var or const
+    name: str
+    line: int
+    recv: str = ""  # the receiver's type name, for methods
 
 
 def _resolve_base(base: str, head: str) -> str:
@@ -220,54 +251,134 @@ def _blanked(source: str) -> str:
     return "".join(chars)
 
 
-def _declared_types(source: str) -> dict[str, int]:
-    """The type names a Go file declares, with line numbers — a token scan of
-    the blanked source tracking nesting, not a grep for `^type `."""
-    names: dict[str, int] = {}
+def _recv_type(tokens: list[str]) -> str:
+    """The receiver's type name from the tokens inside its parens."""
+    stop = tokens.index("[") if "[" in tokens else len(tokens)
+    for tok in reversed(tokens[:stop]):
+        if IDENT_RE.fullmatch(tok):
+            return tok
+    return ""
+
+
+def _declarations(
+    source: str, known_types: frozenset[str] = frozenset()
+) -> list[Decl]:
+    """Top-level declarations — funcs, methods, types, vars and consts — with
+    line numbers: a token scan of the blanked source tracking nesting, not a
+    grep for `^func `. known_types carries the type names the package
+    declares elsewhere, so a var or const entry like `PhaseMarshal Phase =
+    "marshal"` yields the name only, not the type beside it."""
+    decls: list[Decl] = []
     line = 1
     paren = brace = bracket = 0
-    in_group = False  # inside a `type (` block
-    entry_pending = False  # the next ident at the group's top level is a name
-    after_type = False  # a top-level `type` keyword, awaiting its name or `(`
+    keyword = ""  # a top-level decl keyword, awaiting its name or `(`
+    kw_line = 0
+    in_decl = False  # a named decl, done at its line's or body's end
+    group = ""  # the decl keyword whose `(...)` block is open
+    entry: list[str] = []  # tokens of the current group entry
+    entry_line = 0
+    entry_closed = False  # past the entry's `=`, until the next line or `;`
+    recv: list[str] = []  # tokens inside a method receiver's parens
+    in_recv = False
+    after_recv = ""  # the receiver's type, awaiting the method's name
+
+    def flush() -> None:
+        nonlocal entry, entry_closed
+        if group == "type" and entry and IDENT_RE.fullmatch(entry[0]):
+            decls.append(Decl("type", entry[0], entry_line))
+        elif group in ("var", "const") and entry:
+            stop = entry.index("=") if "=" in entry else len(entry)
+            for tok in entry[:stop]:
+                if (
+                    IDENT_RE.fullmatch(tok)
+                    and tok not in BUILTIN_TYPES
+                    and tok not in known_types
+                ):
+                    decls.append(Decl(group, tok, entry_line))
+        entry = []
+        entry_closed = False
+
     for match in TOKEN_RE.finditer(_blanked(source)):
         tok = match.group(0)
         if tok == "\n":
             line += 1
-            if in_group and paren == 1 and brace == bracket == 0:
-                entry_pending = True
+            if group and paren == 1 and brace == bracket == 0:
+                flush()
+            elif in_decl and paren == brace == bracket == 0:
+                in_decl = False
             continue
+        top = paren == brace == bracket == 0
         if IDENT_RE.fullmatch(tok):
-            if tok == "type" and not in_group and paren == brace == bracket == 0:
-                after_type = True
-            elif after_type:
-                after_type = False
-                names.setdefault(tok, line)
-            elif in_group and entry_pending and paren == 1 and brace == bracket == 0:
-                if tok != "type":
-                    names.setdefault(tok, line)
-                    entry_pending = False
+            if in_recv:
+                recv.append(tok)
+            elif after_recv and top:
+                decls.append(Decl("method", tok, kw_line, after_recv))
+                after_recv = ""
+                in_decl = True
+            elif group and paren == 1 and brace == bracket == 0 and not entry_closed:
+                if not entry:
+                    entry_line = line
+                entry.append(tok)
+            elif keyword and top:
+                decls.append(Decl(keyword, tok, kw_line))
+                keyword = ""
+                in_decl = True
+            elif top and not in_decl and tok in DECL_KEYWORDS:
+                keyword = tok
+                kw_line = line
             continue
         if tok == "(":
-            if after_type:
-                in_group = True
-                entry_pending = True
-                after_type = False
+            if keyword and top:
+                if keyword == "func":
+                    in_recv = True
+                    recv = []
+                else:
+                    group = keyword
+                    entry = []
+                    entry_closed = False
+                keyword = ""
             paren += 1
         elif tok == ")":
-            if in_group and paren == 1:
-                in_group = False
-                entry_pending = False
+            if in_recv and paren == 1:
+                in_recv = False
+                after_recv = _recv_type(recv)
+            elif group and paren == 1:
+                flush()
+                group = ""
             paren -= 1
+        elif tok == "=" and group and paren == 1 and brace == bracket == 0:
+            flush()
+            entry_closed = True
+        elif tok == ";":
+            if group and paren == 1 and brace == bracket == 0:
+                flush()
+            elif top:
+                in_decl = False
         elif tok == "{":
             brace += 1
         elif tok == "}":
             brace -= 1
+            if in_decl and brace == bracket == paren == 0:
+                in_decl = False
         elif tok == "[":
             bracket += 1
+            if in_recv:
+                recv.append(tok)
         elif tok == "]":
             bracket -= 1
-        elif tok == ";" and in_group and paren == 1 and brace == bracket == 0:
-            entry_pending = True
+            if in_recv:
+                recv.append(tok)
+        elif in_recv and tok not in "()":
+            recv.append(tok)
+    return decls
+
+
+def _declared_types(source: str) -> dict[str, int]:
+    """The type names a Go file declares, with line numbers."""
+    names: dict[str, int] = {}
+    for decl in _declarations(source):
+        if decl.kind == "type":
+            names.setdefault(decl.name, decl.line)
     return names
 
 
@@ -288,6 +399,92 @@ def _generated_first() -> list[str]:
     return findings
 
 
+def _go_files(rev: str, prefix: str) -> list[str]:
+    """The .go files under a directory at a revision."""
+    return [
+        path
+        for path in git("ls-tree", "-r", "--name-only", rev, "--", prefix).split()
+        if path.endswith(".go")
+    ]
+
+
+def _handwritten(rev: str) -> dict[str, str]:
+    """Hand-written (not `*.gen.go`, not `_test.go`) sources under go/v1/, by
+    path, at a revision."""
+    return {
+        path: _git_show(f"{rev}:{path}")
+        for path in _go_files(rev, GO_V1)
+        if not path.endswith((".gen.go", "_test.go"))
+    }
+
+
+def _usage_corpus(head: str) -> str:
+    """go/examples/ and every _test.go under go/, comments and strings
+    blanked: where a new export has to show up to earn its name."""
+    paths = [
+        path
+        for path in _go_files(head, "go")
+        if path.startswith(EXAMPLES) or path.endswith("_test.go")
+    ]
+    return "\n".join(_blanked(_git_show(f"{head}:{path}")) for path in paths)
+
+
+def _used_exports(base: str, head: str) -> list[str]:
+    """Exports added to hand-written go/v1/ files in the range that nothing
+    in go/examples/ or a _test.go references."""
+    known_types = frozenset(
+        decl.name
+        for rev in (base, head)
+        for path in _go_files(rev, GO_V1)
+        for decl in _declarations(_git_show(f"{rev}:{path}"))
+        if decl.kind == "type"
+    )
+    base_files = _handwritten(base)
+    head_files = _handwritten(head)
+    before = {
+        (decl.kind, decl.recv, decl.name)
+        for src in base_files.values()
+        for decl in _declarations(src, known_types)
+    }
+    #: A type reached only through inference — `poller, err := client.F()` —
+    #: is used when its methods are; methods live in the same package dir.
+    methods: dict[tuple[str, str], list[str]] = {}
+    for path, src in head_files.items():
+        for decl in _declarations(src, known_types):
+            if decl.kind == "method":
+                methods.setdefault((path.rsplit("/", 1)[0], decl.recv), []).append(
+                    decl.name
+                )
+    corpus = _usage_corpus(head)
+    findings = []
+    for path, src in sorted(head_files.items()):
+        for decl in _declarations(src, known_types):
+            if not decl.name[:1].isupper():
+                continue
+            if decl.kind == "method" and not decl.recv[:1].isupper():
+                continue  # a method on an unexported type is package-private
+            if (decl.kind, decl.recv, decl.name) in before:
+                continue
+            used = re.search(
+                rf"\.{decl.name}\s*\(" if decl.kind == "method" else rf"\b{decl.name}\b",
+                corpus,
+            )
+            if not used and decl.kind == "type":
+                used = any(
+                    re.search(rf"\.{name}\s*\(", corpus)
+                    for name in methods.get((path.rsplit("/", 1)[0], decl.name), ())
+                )
+            if used:
+                continue
+            findings.append(
+                f"used-export {path}:{decl.line}: {decl.name} — exported and"
+                f" added in {base[:8]}..{head}, but nothing in go/examples/ or"
+                " any _test.go references it: an export someone must call, or"
+                " keep it unexported"
+            )
+    return findings
+
+
 def main(argv: list[str] | None = None) -> int:
     args = argv if argv is not None else sys.argv[1:]
     if len(args) > 2:
@@ -299,6 +496,7 @@ def main(argv: list[str] | None = None) -> int:
         base = _resolve_base(base, head)
         findings = _replace_is_delete(base, head)
         findings += _justified_deps(base, head)
+        findings += _used_exports(base, head)
     except GitError as exc:
         print(f"lean: {exc}", file=sys.stderr)
         return 1
