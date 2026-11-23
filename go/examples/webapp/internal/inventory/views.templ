@@ -44,6 +44,10 @@ templ home(me traust.Principal, repos []traust.Repository, cards []card) {
 			</ul>
 		</section>
 		<section>
+			<h2>Recent refs across your repositories</h2>
+			<div hx-get="/refs" hx-trigger="load"></div>
+		</section>
+		<section>
 			<h2>Reports</h2>
 			<button hx-post="/reports" hx-vals={ `{"report":"findings-rollup"}` } hx-target="#reports" hx-swap="afterbegin">Build the findings rollup</button>
 			<ul id="reports"></ul>
@@ -92,6 +96,8 @@ templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
 			<p>Default branch { web.Text(ref.Name) } at { ref.Sha }</p>
 		}
 		@admin(repo)
+		<h2>Refs</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/refs" } hx-trigger="load"></div>
 		for _, asset := range []string{"scan", "triage"} {
 			<button hx-post="/runs" hx-vals={ `{"asset":"` + asset + `","repository_id":"` + repo.Id.String() + `"}` } hx-target="#runs" hx-swap="afterbegin">Run { asset }</button>
 		}

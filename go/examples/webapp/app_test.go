@@ -391,3 +391,119 @@ func TestTheStylesheetNeedsNoSignIn(t *testing.T) {
 		t.Fatalf("stylesheet: %d", w.Code)
 	}
 }
+
+func TestARepositorysRefsAreListedRegisteredAndReDefaulted(t *testing.T) {
+	core := traustest.New(t)
+	repo, mainRef, releaseRef := uuid.New(), uuid.New(), uuid.New()
+	branchKind, tagKind, main, release := "branch", "tag", "main", "v1.0.0"
+	isDefault := true
+	core.Handle("GET /v1/repositories/{id}/refs", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.RepositoryRef{
+		{Id: &mainRef, RepositoryId: repo, Kind: &branchKind, Name: &main, Sha: "4c7f0b9", IsDefault: &isDefault},
+		{Id: &releaseRef, RepositoryId: repo, Kind: &tagKind, Name: &release, Sha: "9a1b2c3"},
+	})))
+	core.Handle("POST /v1/repositories/{id}/refs", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{
+		Id: &releaseRef, RepositoryId: repo, Kind: &tagKind, Name: &release, Sha: "5d6e7f8",
+	})))
+	core.Handle("POST /v1/repositories/{id}/refs/default", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{
+		Id: &releaseRef, RepositoryId: repo, Kind: &branchKind, Name: &main, Sha: "9a1b2c3", IsDefault: &isDefault,
+	})))
+	h := newApp(t, core)
+
+	list := send(h, http.MethodGet, "/repositories/"+repo.String()+"/refs", "ada", nil).Body.String()
+	for _, want := range []string{
+		`href="/refs/` + mainRef.String() + `">branch main</a> at 4c7f0b9 · default`,
+		`href="/refs/` + releaseRef.String() + `">tag ` + release + `</a> at 9a1b2c3`,
+		`hx-post="/repositories/` + repo.String() + `/refs/default"`,
+		`name="branch" value="main"`, `name="sha" value="4c7f0b9"`, "Make default",
+		`hx-post="/repositories/` + repo.String() + `/refs"`, "Register a ref",
+	} {
+		if !strings.Contains(list, want) {
+			t.Fatalf("refs list lacks %q:\n%s", want, list)
+		}
+	}
+
+	seen := len(core.Requests())
+	registered := send(h, http.MethodPost, "/repositories/"+repo.String()+"/refs", "ada", url.Values{"kind": {"tag"}, "name": {release}, "sha": {"5d6e7f8"}})
+	var sent traust.RefRegistration
+	if err := json.Unmarshal(core.Requests()[seen].Body, &sent); err != nil || registered.Code != http.StatusOK ||
+		*sent.Kind != traust.Tag || *sent.Name != release || sent.Sha != "5d6e7f8" {
+		t.Fatalf("register: %d %+v %v, want the form's kind, name and sha", registered.Code, sent, err)
+	}
+	if !strings.Contains(registered.Body.String(), "tag "+release+"</a> at 9a1b2c3") {
+		t.Fatalf("register: %s, want the section re-listed with the ref", registered.Body)
+	}
+
+	seen = len(core.Requests())
+	made := send(h, http.MethodPost, "/repositories/"+repo.String()+"/refs/default", "ada", url.Values{"branch": {"main"}, "sha": {"4c7f0b9"}})
+	var naming traust.DefaultRefNaming
+	if err := json.Unmarshal(core.Requests()[seen].Body, &naming); err != nil || made.Code != http.StatusOK ||
+		naming.Branch != "main" || naming.Sha != "4c7f0b9" {
+		t.Fatalf("make default: %d %+v %v, want the branch and its sha", made.Code, naming, err)
+	}
+	if !strings.Contains(made.Body.String(), "branch main</a> at 4c7f0b9 · default") {
+		t.Fatalf("make default: %s, want the section re-listed with the default marked", made.Body)
+	}
+}
+
+func TestARefPageRendersTheRefItself(t *testing.T) {
+	core := traustest.New(t)
+	repo, ref := uuid.New(), uuid.New()
+	kind, name, isDefault := "branch", "main", true
+	core.Handle("GET /v1/refs/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{
+		Id: &ref, RepositoryId: repo, Kind: &kind, Name: &name, Sha: "4c7f0b9", IsDefault: &isDefault,
+	})))
+
+	page := send(newApp(t, core), http.MethodGet, "/refs/"+ref.String(), "ada", nil).Body.String()
+	for _, want := range []string{
+		"<h1>branch main</h1>", "branch at 4c7f0b9", "· the repository's default",
+		`href="/repositories/` + repo.String() + `"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("ref page lacks %q:\n%s", want, page)
+		}
+	}
+}
+
+func TestRecentRefsSpanTheRepositoriesTheHomePageLists(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/whoami", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Principal{Display: "Ada"})))
+	repo, ref := uuid.New(), uuid.New()
+	kind, name, isDefault := "branch", "main", true
+	core.Handle("GET /v1/repositories", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageRepository{
+		Items: []traust.Repository{{Id: &repo, Url: "https://forge.example/org/a"}},
+	})))
+	core.Handle("POST /v1/dashboards:query", onlyFor("ada", traustest.JSON(http.StatusOK, traust.DashboardResults{})))
+	core.Handle("GET /v1/refs", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.RepositoryRef{
+		{Id: &ref, RepositoryId: repo, Kind: &kind, Name: &name, Sha: "4c7f0b9", IsDefault: &isDefault},
+	})))
+	h := newApp(t, core)
+
+	home := send(h, http.MethodGet, "/", "ada", nil).Body.String()
+	if !strings.Contains(home, "Recent refs across your repositories") || !strings.Contains(home, `hx-get="/refs"`) {
+		t.Fatalf("home lacks the recent refs fragment:\n%s", home)
+	}
+	fragment := send(h, http.MethodGet, "/refs", "ada", nil)
+	if q := core.Requests()[len(core.Requests())-1].Query; q["repository_ids"][0] != repo.String() {
+		t.Fatalf("recent refs asked for %v, want them scoped to the person's repositories", q)
+	}
+	if !strings.Contains(fragment.Body.String(), `href="/refs/`+ref.String()+`">branch main</a> at 4c7f0b9 · default`) {
+		t.Fatalf("recent refs: %s, want the ref listed", fragment.Body)
+	}
+}
+
+func TestRefAdministrationRefusalKeepsItsStatus(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("POST /v1/repositories/{id}/refs", traustest.Problem(http.StatusForbidden, "registering a ref is an admin's"))
+	core.Handle("POST /v1/repositories/{id}/refs/default", traustest.Problem(http.StatusForbidden, "naming a default is an admin's"))
+	h := newApp(t, core)
+	repo := uuid.NewString()
+	for _, call := range [][2]string{
+		{http.MethodPost, "/repositories/" + repo + "/refs"},
+		{http.MethodPost, "/repositories/" + repo + "/refs/default"},
+	} {
+		form := url.Values{"kind": {"branch"}, "name": {"main"}, "sha": {"4c7f0b9"}, "branch": {"main"}}
+		if w := send(h, call[0], call[1], "ada", form); w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "an admin&#39;s") {
+			t.Fatalf("%s %s: %d %s, want core's refusal shown", call[0], call[1], w.Code, w.Body)
+		}
+	}
+}

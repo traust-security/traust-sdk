@@ -1,0 +1,84 @@
+package inventory
+
+import (
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// refList is a repository's refs: its branches and tags, the default marked, each linking to its
+// own page. The section re-lists after either admin action.
+templ refList(repo string, refs []traust.RepositoryRef) {
+	<div id="refs">
+		if len(refs) == 0 {
+			<p>No refs known yet.</p>
+		}
+		<ul>
+			for _, ref := range refs {
+				<li>
+					<a href={ templ.URL("/refs/" + ref.Id.String()) }>{ refName(ref) }</a> at { ref.Sha }
+					if web.Value(ref.IsDefault) {
+						· default
+					}
+					if web.Text(ref.Kind) == string(traust.Branch) {
+						<form hx-post={ "/repositories/" + repo + "/refs/default" } hx-target="#refs" hx-swap="outerHTML">
+							<input type="hidden" name="branch" value={ web.Text(ref.Name) }/>
+							<input type="hidden" name="sha" value={ ref.Sha }/>
+							<button>Make default</button>
+						</form>
+					}
+				</li>
+			}
+		</ul>
+		@refForm(repo)
+	</div>
+}
+
+// refForm registers a ref; core decides who may.
+templ refForm(repo string) {
+	<form hx-post={ "/repositories/" + repo + "/refs" } hx-target="#refs" hx-swap="outerHTML">
+		<h3>Register a ref</h3>
+		<label>Kind
+			<select name="kind">
+				<option value={ string(traust.Branch) }>branch</option>
+				<option value={ string(traust.Tag) }>tag</option>
+			</select>
+		</label>
+		<label>Name <input name="name" required placeholder="main"/></label>
+		<label>Sha <input name="sha" required placeholder="4c7f0b9"/></label>
+		<button>Register</button>
+	</form>
+}
+
+// refDetail is a ref's page: the branch or tag itself, and the repository it belongs to.
+templ refDetail(ref traust.RepositoryRef) {
+	@web.Page(refName(ref)) {
+		<h1>{ refName(ref) }</h1>
+		<p>
+			{ web.Text(ref.Kind) } at { ref.Sha }
+			if web.Value(ref.IsDefault) {
+				· the repository's default
+			}
+		</p>
+		<p><a href={ templ.URL("/repositories/" + ref.RepositoryId.String()) }>Its repository</a></p>
+	}
+}
+
+// recentRefs is the home page's aside: the latest refs across the person's repositories.
+templ recentRefs(refs []traust.RepositoryRef) {
+	<div id="recent-refs">
+		if len(refs) == 0 {
+			<p>Nothing yet.</p>
+		}
+		<ul>
+			for _, ref := range refs {
+				<li>
+					<a href={ templ.URL("/refs/" + ref.Id.String()) }>{ refName(ref) }</a> at { ref.Sha }
+					if web.Value(ref.IsDefault) {
+						· default
+					}
+				</li>
+			}
+		</ul>
+	</div>
+}
