@@ -28,6 +28,13 @@ templ finding(f traust.FindingView, decisions []traust.Decision) {
 			<p>{ *f.Description }</p>
 		}
 		@decideForm(f)
+		<form id="fix" hx-post={ "/findings/" + f.Finding.Id.String() + "/fix" } hx-swap="outerHTML">
+			<h2>Fix this</h2>
+			<input type="hidden" name="repository_id" value={ f.Finding.RepositoryId.String() }/>
+			<label>Fork URL <input name="fork_url" required placeholder="https://forge.example/org/a-fork"/></label>
+			<label>Fork branch <input name="fork_branch" required placeholder="traust/fix-4c7f0b9"/></label>
+			<button>Fix this</button>
+		</form>
 		<h2>Decisions</h2>
 		<ol>
 			for _, d := range decisions {

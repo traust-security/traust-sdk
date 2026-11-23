@@ -1179,3 +1179,115 @@ func TestTheRunsPagesRefusalsKeepTheirStatus(t *testing.T) {
 		}
 	}
 }
+func TestFixingAFindingSchedulesTheWorkItemCoreRuns(t *testing.T) {
+	core := traustest.New(t)
+	repo, ref, found, item, order := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	high := traust.SeverityHigh
+	view := traust.FindingView{Finding: traust.Finding{Id: &found, RepositoryId: repo, Title: "SQL built from input"}, EffectiveSeverity: &high}
+	core.Handle("GET /v1/findings/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, view)))
+	core.Handle("GET /v1/findings/{id}/decisions", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Decision{})))
+	core.Handle("GET /v1/repositories/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Repository{Id: &repo, Url: "https://forge.example/org/a"})))
+	core.Handle("GET /v1/repositories/{id}/refs/current-default", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{Id: &ref, RepositoryId: repo})))
+	core.Handle("POST /v1/remediations", onlyFor("ada", traustest.JSON(http.StatusOK, anEffort(item, order, found, repo, ref, traust.Candidate))))
+	h := newApp(t, core)
+
+	detail := send(h, http.MethodGet, "/findings/"+found.String(), "ada", nil).Body.String()
+	if !strings.Contains(detail, `hx-post="/findings/`+found.String()+`/fix"`) || !strings.Contains(detail, `name="repository_id" value="`+repo.String()) {
+		t.Fatalf("finding page: %s, want a fix button carrying the finding's repository", detail)
+	}
+	page := send(h, http.MethodGet, "/repositories/"+repo.String(), "ada", nil).Body.String()
+	if !strings.Contains(page, `hx-get="/repositories/`+repo.String()+`/work-items"`) {
+		t.Fatalf("repository page: %s, want a work items section", page)
+	}
+
+	fixed := send(h, http.MethodPost, "/findings/"+found.String()+"/fix", "ada", url.Values{
+		"repository_id": {repo.String()},
+		"fork_url":      {"https://forge.example/org/a-fork"},
+		"fork_branch":   {"traust/fix-4c7f0b9"},
+	})
+	var asked traust.RemediationRequest
+	if err := json.Unmarshal(core.Requests()[4].Body, &asked); err != nil || fixed.Code != http.StatusOK ||
+		asked.ForkUrl != "https://forge.example/org/a-fork" || asked.ForkBranch != "traust/fix-4c7f0b9" ||
+		len(asked.Findings) != 1 || asked.Findings[0].FindingId != found || asked.Findings[0].RepositoryId != repo {
+		t.Fatalf("fix: %d %+v %v, want the finding and the fork the person named", fixed.Code, asked, err)
+	}
+	if !strings.Contains(fixed.Body.String(), `href="/work-items/`+item.String()) || !strings.Contains(fixed.Body.String(), "candidate") {
+		t.Fatalf("fix: %s, want the work item's row", fixed.Body)
+	}
+	for _, req := range core.Requests() {
+		if req.Method == http.MethodPost && req.Path == "/v1/orders" {
+			t.Fatalf("the app submitted a fix order itself; core's scheduling door owns it")
+		}
+	}
+}
+
+func TestWorkItemsListDetailAndRepositorySectionRender(t *testing.T) {
+	core := traustest.New(t)
+	repo, ref, found, item, order := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	effort := anEffort(item, order, found, repo, ref, traust.PrOpened)
+	effort.WorkItem.Tracker = &traust.ExternalRef{Ref: "https://forge.example/org/a/pull/7", System: "forge"}
+	effort.WorkItem.FixCommit = ptr("9a1b2c3d4e5f6a7b")
+	core.Handle("GET /v1/remediations", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageScheduledEffort{Items: []traust.ScheduledEffort{effort}})))
+	core.Handle("GET /v1/remediations/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, effort)))
+	core.Handle("GET /v1/orders/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RunOrder{Id: &order, State: traust.RunOrderStateLeased})))
+	core.Handle("GET /v1/repositories/{id}/work-items", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageWorkItem{Items: []traust.WorkItem{effort.WorkItem}})))
+	h := newApp(t, core)
+
+	list := send(h, http.MethodGet, "/work-items", "ada", nil).Body.String()
+	if !strings.Contains(list, `<h1>Work items</h1>`) || !strings.Contains(list, `href="/work-items/`+item.String()) || !strings.Contains(list, "pr_opened") {
+		t.Fatalf("work items: %s, want the effort's row", list)
+	}
+	detail := send(h, http.MethodGet, "/work-items/"+item.String(), "ada", nil).Body.String()
+	for _, want := range []string{
+		"pr_opened", `href="/findings/` + found.String(), "https://forge.example/org/a/pull/7", "Fix run: leased",
+	} {
+		if !strings.Contains(detail, want) {
+			t.Fatalf("work item: %s, want %q", detail, want)
+		}
+	}
+	section := send(h, http.MethodGet, "/repositories/"+repo.String()+"/work-items", "ada", nil).Body.String()
+	if !strings.Contains(section, `href="/work-items/`+item.String()) || !strings.Contains(section, "pr_opened") {
+		t.Fatalf("repository work items: %s, want the item's row", section)
+	}
+}
+
+func TestAFixCoreRefusesKeepsItsStatus(t *testing.T) {
+	for refused, want := range map[int]int{
+		http.StatusForbidden:           http.StatusForbidden,
+		http.StatusNotFound:            http.StatusNotFound,
+		http.StatusUnprocessableEntity: http.StatusUnprocessableEntity,
+		http.StatusInternalServerError: http.StatusBadGateway,
+	} {
+		t.Run(http.StatusText(refused), func(t *testing.T) {
+			core := traustest.New(t)
+			core.Handle("POST /v1/remediations", traustest.Problem(refused, "refused"))
+			form := url.Values{"repository_id": {uuid.NewString()}, "fork_url": {"https://forge.example/org/a-fork"}, "fork_branch": {"traust/fix-4c7f0b9"}}
+			if w := send(newApp(t, core), http.MethodPost, "/findings/"+uuid.NewString()+"/fix", "ada", form); w.Code != want {
+				t.Fatalf("core %d: app %d, want %d", refused, w.Code, want)
+			}
+		})
+	}
+	core := traustest.New(t)
+	form := url.Values{"fork_url": {"https://forge.example/org/a-fork"}, "fork_branch": {"traust/fix-4c7f0b9"}}
+	if w := send(newApp(t, core), http.MethodPost, "/findings/"+uuid.NewString()+"/fix", "ada", form); w.Code != http.StatusBadRequest {
+		t.Fatalf("a fix without a repository: %d, want 400", w.Code)
+	}
+	if n := len(core.Requests()); n != 0 {
+		t.Fatalf("core saw %d requests, want none", n)
+	}
+}
+
+// anEffort is a scheduled effort core would answer, as core's door builds one.
+func anEffort(item, order, found, repo, ref uuid.UUID, status traust.RemediationStatus) traust.ScheduledEffort {
+	return traust.ScheduledEffort{
+		WorkItem: traust.WorkItem{
+			WorkItemId: item, FindingIds: []uuid.UUID{found}, RepositoryRefId: ref, Status: status,
+			OpenedAt: time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC),
+		},
+		RepositoryId: repo, ForkUrl: "https://forge.example/org/a-fork", ForkBranch: "traust/fix-4c7f0b9",
+		Status: status, OrderId: &order,
+	}
+}
+
+// ptr words a fixture's optional string.
+func ptr(s string) *string { return &s }

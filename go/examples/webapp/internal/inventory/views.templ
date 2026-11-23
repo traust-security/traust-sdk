@@ -108,6 +108,8 @@ templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
 		<ul id="runs"></ul>
 		<h2>Run history</h2>
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/runs" } hx-trigger="load, run-finished from:body"></div>
+		<h2>Work items</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/work-items" } hx-trigger="load, run-finished from:body"></div>
 		<h2>Findings</h2>
 		<div hx-get={ "/repositories/" + repo.Id.String() + "/findings" } hx-trigger="load, run-finished from:body"></div>
 		<h2>Findings summary</h2>

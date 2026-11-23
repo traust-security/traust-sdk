@@ -1,0 +1,81 @@
+package remediation
+
+import (
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+templ workItemList(efforts []traust.ScheduledEffort) {
+	@web.Page("Work items") {
+		<h1>Work items</h1>
+		if len(efforts) == 0 {
+			<p>No fixes scheduled yet.</p>
+		}
+		<ul>
+			for _, e := range efforts {
+				@effortRow(e)
+			}
+		</ul>
+	}
+}
+
+templ effortRow(e traust.ScheduledEffort) {
+	<li>
+		<a href={ templ.URL("/work-items/" + e.WorkItem.WorkItemId.String()) }>work item { e.WorkItem.WorkItemId.String() }</a>
+		{ string(e.Status) } · { len(e.WorkItem.FindingIds) } findings · on { e.ForkUrl }
+	</li>
+}
+
+// fixed is the answer to a finding's fix button: core opened the work item and queued the
+// order that runs it.
+templ fixed(e traust.ScheduledEffort) {
+	<p id="fix">
+		Fix scheduled: <a href={ templ.URL("/work-items/" + e.WorkItem.WorkItemId.String()) }>work item { e.WorkItem.WorkItemId.String() }</a>
+		is { string(e.Status) }. <a href="">Reload</a> to see the finding's repository's work items.
+	</p>
+}
+
+templ workItem(e traust.ScheduledEffort, order *traust.RunOrder) {
+	@web.Page("Work item " + e.WorkItem.WorkItemId.String()) {
+		<h1>Work item { e.WorkItem.WorkItemId.String() }</h1>
+		<p>{ string(e.Status) }</p>
+		<h2>Findings</h2>
+		<ul>
+			for _, f := range e.WorkItem.FindingIds {
+				<li><a href={ templ.URL("/findings/" + f.String()) }>{ f.String() }</a></li>
+			}
+		</ul>
+		<h2>The fix</h2>
+		<dl>
+			<dt>Fork</dt>
+			<dd>{ e.ForkUrl }</dd>
+			<dt>Branch</dt>
+			<dd>{ e.ForkBranch }</dd>
+			if e.WorkItem.FixCommit != nil {
+				<dt>Fix commit</dt>
+				<dd>{ web.Short(e.WorkItem.FixCommit) }</dd>
+			}
+		</dl>
+		if t := e.WorkItem.Tracker; t != nil {
+			<p>Pull request <a href={ templ.URL(t.Ref) }>{ t.Ref }</a> ({ t.System })</p>
+		}
+		if order != nil {
+			<p>Fix run: { string(order.State) }</p>
+		}
+	}
+}
+
+templ repositoryWorkItems(items []traust.WorkItem) {
+	if len(items) == 0 {
+		<p>No fixes scheduled.</p>
+	}
+	<ul>
+		for _, item := range items {
+			<li>
+				<a href={ templ.URL("/work-items/" + item.WorkItemId.String()) }>{ item.WorkItemId.String() }</a>
+				{ string(item.Status) }
+			</li>
+		}
+	</ul>
+}

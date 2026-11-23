@@ -23,6 +23,7 @@ import (
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/insight"
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/inventory"
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/ledger"
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/remediation"
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/runs"
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
@@ -87,6 +88,7 @@ func routes(core *traust.Client, sso *identity.SSO) http.Handler {
 		runs.New(core).Routes,
 		findings.New(core).Routes,
 		ledger.New(core).Routes,
+		remediation.New(core).Routes,
 		insight.New(core).Routes,
 	)
 }
