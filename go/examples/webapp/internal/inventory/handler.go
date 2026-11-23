@@ -40,6 +40,9 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /onboard/plan", web.SignedIn(h.planOnboarding))
 	mux.HandleFunc("POST /onboard", web.SignedIn(h.onboard))
 	mux.HandleFunc("GET /repositories/{id}", web.SignedIn(h.repository))
+	mux.HandleFunc("POST /repositories/resolve", web.SignedIn(h.resolve))
+	mux.HandleFunc("POST /repositories/{id}/url", web.SignedIn(h.correctURL))
+	mux.HandleFunc("POST /repositories/{id}/verify", web.SignedIn(h.verify))
 }
 
 func (h *Handler) home(w http.ResponseWriter, r *http.Request) {

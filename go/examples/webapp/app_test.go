@@ -255,6 +255,86 @@ func TestAReportIsBuiltThenDownloaded(t *testing.T) {
 	}
 }
 
+func TestFindingARepositoryAnswersEachPastedURL(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/whoami", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Principal{Display: "Ada"})))
+	core.Handle("GET /v1/repositories", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageRepository{})))
+	repo := uuid.New()
+	core.Handle("POST /v1/repositories:resolve", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.RepositoryResolution{
+		{Url: "https://forge.example/org/a", Repository: &traust.Repository{Id: &repo, Url: "https://forge.example/org/a"}},
+		{Url: "https://forge.example/org/missing"},
+	})))
+	h := newApp(t, core)
+
+	home := send(h, http.MethodGet, "/", "ada", nil).Body.String()
+	if !strings.Contains(home, "Find a repository") || !strings.Contains(home, `hx-post="/repositories/resolve"`) {
+		t.Fatalf("home lacks the find box:\n%s", home)
+	}
+	answer := send(h, http.MethodPost, "/repositories/resolve", "ada", url.Values{"urls": {"https://forge.example/org/a\n\n https://forge.example/org/missing \n"}}).Body.String()
+	var asked traust.RepositoryResolutionRequest
+	if err := json.Unmarshal(core.Requests()[len(core.Requests())-1].Body, &asked); err != nil || len(asked.Urls) != 2 ||
+		asked.Urls[0] != "https://forge.example/org/a" || asked.Urls[1] != "https://forge.example/org/missing" {
+		t.Fatalf("resolve asked %+v %v, want the two pasted URLs", asked, err)
+	}
+	if !strings.Contains(answer, `href="/repositories/`+repo.String()) || !strings.Contains(answer, "not in inventory") {
+		t.Fatalf("resolve: %s, want the found repository and the honest absence", answer)
+	}
+}
+
+func TestACorrectedURLShowsTheRepositoryItBecomes(t *testing.T) {
+	core := traustest.New(t)
+	repo := uuid.New()
+	core.Handle("GET /v1/repositories/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Repository{Id: &repo, Url: "https://forge.example/org/a"})))
+	core.Handle("GET /v1/repositories/{id}/refs/current-default", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{RepositoryId: repo, Sha: "4c7f0b9"})))
+	core.Handle("PUT /v1/repositories/{id}/url", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Repository{Id: &repo, Url: "https://forge.example/org/renamed"})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/repositories/"+repo.String(), "ada", nil).Body.String()
+	if !strings.Contains(page, "Correct URL") || !strings.Contains(page, `hx-post="/repositories/`+repo.String()+`/url"`) ||
+		!strings.Contains(page, `hx-post="/repositories/`+repo.String()+`/verify"`) {
+		t.Fatalf("repository page lacks the administration actions:\n%s", page)
+	}
+	answered := send(h, http.MethodPost, "/repositories/"+repo.String()+"/url", "ada", url.Values{"url": {" https://forge.example/org/renamed "}})
+	var sent traust.UrlCorrection
+	if err := json.Unmarshal(core.Requests()[len(core.Requests())-1].Body, &sent); err != nil || sent.Url != "https://forge.example/org/renamed" {
+		t.Fatalf("correction sent %+v %v, want the new URL", sent, err)
+	}
+	if !strings.Contains(answered.Body.String(), "https://forge.example/org/renamed") {
+		t.Fatalf("correction: %s, want the repository's new URL", answered.Body)
+	}
+}
+
+func TestVerifyingARepositoryRendersCoresAnswer(t *testing.T) {
+	core := traustest.New(t)
+	repo := uuid.New()
+	disposition := traust.RepoUnreachable
+	core.Handle("POST /v1/repositories/{id}/verify", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryVerification{
+		Facts:      traust.ForgeFacts{Status: traust.ComparisonStatusOk},
+		Repository: traust.Repository{Id: &repo, Url: "https://forge.example/org/a", Disposition: &disposition},
+	})))
+	answer := send(newApp(t, core), http.MethodPost, "/repositories/"+repo.String()+"/verify", "ada", nil).Body.String()
+	if !strings.Contains(answer, "ok") || !strings.Contains(answer, "unreachable") {
+		t.Fatalf("verify: %s, want the facts' status and the repository's standing", answer)
+	}
+}
+
+func TestRepositoryAdministrationRefusalKeepsItsStatus(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("PUT /v1/repositories/{id}/url", traustest.Problem(http.StatusForbidden, "a correction is an admin's"))
+	core.Handle("POST /v1/repositories/{id}/verify", traustest.Problem(http.StatusForbidden, "a verification is an admin's"))
+	h := newApp(t, core)
+	repo := uuid.NewString()
+	for _, call := range [][2]string{
+		{http.MethodPost, "/repositories/" + repo + "/url"},
+		{http.MethodPost, "/repositories/" + repo + "/verify"},
+	} {
+		form := url.Values{"url": {"https://forge.example/org/b"}}
+		if w := send(h, call[0], call[1], "ada", form); w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "an admin&#39;s") {
+			t.Fatalf("%s %s: %d %s, want core's refusal shown", call[0], call[1], w.Code, w.Body)
+		}
+	}
+}
+
 func TestWorkNeedsASignedInPerson(t *testing.T) {
 	core := traustest.New(t)
 	h := newApp(t, core)

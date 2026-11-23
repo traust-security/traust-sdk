@@ -1,0 +1,67 @@
+package inventory
+
+import (
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// findForm is the home page's lookup: paste repository URLs, core answers for each.
+templ findForm() {
+	<form hx-post="/repositories/resolve" hx-target="#resolutions">
+		<label>Repository URLs, one per line <textarea name="urls" rows="2" required placeholder="https://forge.example/org/a"></textarea></label>
+		<button>Find</button>
+	</form>
+	<div id="resolutions"></div>
+}
+
+// resolutions is core's answer to the lookup: each URL's repository, or its honest absence.
+templ resolutions(results []traust.RepositoryResolution) {
+	<ul>
+		for _, res := range results {
+			<li>
+				{ res.Url }:
+				if res.Repository != nil {
+					<a href={ templ.URL("/repositories/" + res.Repository.Id.String()) }>{ res.Repository.Url }</a>
+				} else if len(web.Items(res.Candidates)) > 0 {
+					for _, c := range web.Items(res.Candidates) {
+						<a href={ templ.URL("/repositories/" + c.Id.String()) }>{ c.Url }</a>
+					}
+				} else {
+					not in inventory
+				}
+			</li>
+		}
+	</ul>
+}
+
+// admin is a repository page's administrator actions; core decides who may take either.
+templ admin(repo traust.Repository) {
+	<section>
+		<h2>Administration</h2>
+		<form hx-post={ "/repositories/" + repo.Id.String() + "/url" } hx-target="#correction">
+			<label>New URL <input name="url" required placeholder="https://forge.example/org/renamed"/></label>
+			<button>Correct URL</button>
+		</form>
+		<div id="correction"></div>
+		<button hx-post={ "/repositories/" + repo.Id.String() + "/verify" } hx-target="#verification" hx-swap="innerHTML">Verify</button>
+		<div id="verification"></div>
+	</section>
+}
+
+// corrected is core's answer to a URL correction: the repository under its new spelling.
+templ corrected(repo traust.Repository) {
+	<p>The repository now lives at <a href={ templ.URL("/repositories/" + repo.Id.String()) }>{ repo.Url }</a>.</p>
+}
+
+// verified is core's answer to a verify: the facts' status and error, and the repository's
+// standing after them.
+templ verified(v traust.RepositoryVerification) {
+	<p>
+		{ string(v.Facts.Status) }
+		if v.Facts.Error != nil {
+			: { *v.Facts.Error }
+		}
+	</p>
+	<p>Repository standing: { standing(v.Repository.Disposition) }</p>
+}

@@ -29,6 +29,10 @@ templ home(me traust.Principal, repos []traust.Repository, cards []card) {
 		}
 		</div>
 		<section>
+			<h2>Find a repository</h2>
+			@findForm()
+		</section>
+		<section>
 			<h2>Repositories</h2>
 			if len(repos) == 0 {
 				<p>Nothing onboarded yet. <a href="/onboard">Onboard a repository.</a></p>
@@ -87,6 +91,7 @@ templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
 		if ref != nil {
 			<p>Default branch { web.Text(ref.Name) } at { ref.Sha }</p>
 		}
+		@admin(repo)
 		for _, asset := range []string{"scan", "triage"} {
 			<button hx-post="/runs" hx-vals={ `{"asset":"` + asset + `","repository_id":"` + repo.Id.String() + `"}` } hx-target="#runs" hx-swap="afterbegin">Run { asset }</button>
 		}
