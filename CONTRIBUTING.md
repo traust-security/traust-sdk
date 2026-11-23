@@ -60,12 +60,8 @@ If your PR has release-worthy commits (`feat`, `fix`, `perf`, or `!`) **for a la
 
 ```bash
 make bump go minor
-# add to go/CHANGELOG.md:
-#   ## [X.Y.Z]
-#   ### Added
-#   - ...
 make check-release
-git add go/VERSION go/CHANGELOG.md
+git add go/VERSION
 git commit -m "chore(go): release X.Y.Z"
 ```
 

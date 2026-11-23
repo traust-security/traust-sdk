@@ -20,7 +20,6 @@ Before writing Go, load `.agents/skills/go-patterns/SKILL.md`. `.claude/skills` 
 
 - Code explains itself. A comment only for a non-obvious *why*, one line. Doc comments 1–2 lines, no parameter lists or narration
 - READMEs say how to use what exists. No status, review notes, delivery plans or PR history; those go in the PR
-- `go/CHANGELOG.md`: one bullet per consumer-visible change
 - No new markdown files
 - Public repo: no deployment-specific hostnames, figures or internal URLs (the pre-commit check enforces part of this)
 
@@ -34,6 +33,6 @@ CI runs each of these on every PR. A new `go/v1` package is added to `ci/guardra
 
 - A failing test means fix the code. Changing an assertion, deleting a test or adding `t.Skip` needs a person's OK and a **Changed tests** entry in the PR (test · old → new · why)
 - Commits: `type(scope): subject`, scope `go` for SDK changes
-- Releases: `go/VERSION`, `## [X.Y.Z]` in `go/CHANGELOG.md`, tag `go/vX.Y.Z` (`ci/languages.json`)
+- Releases: `go/VERSION`, tag `go/vX.Y.Z` (`ci/languages.json`)
 - `make setup` once per clone for the hooks; never `--no-verify`. More in [CONTRIBUTING.md](CONTRIBUTING.md)
 - Storage integration runs against a local PostgreSQL with fixed test-only credentials; [CONTRIBUTING.md](CONTRIBUTING.md#running-tests) starts it
