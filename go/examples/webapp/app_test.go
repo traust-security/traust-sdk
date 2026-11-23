@@ -49,6 +49,19 @@ func onlyFor(token string, answer http.Handler) http.Handler {
 	})
 }
 
+// anAssessment is a recorded assessment of kind, as core would answer one.
+func anAssessment(t *testing.T, id, ref uuid.UUID, kind traust.AssessmentKind, status string) traust.Assessment {
+	t.Helper()
+	a := traust.Assessment{
+		Id: &id, RepositoryRefId: ref, Status: status, Assessor: "webapp-fixture", AssessorVersion: "fixture",
+		OccurredAt: time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC),
+	}
+	if err := a.Kind.FromAssessmentKind(kind); err != nil {
+		t.Fatal(err)
+	}
+	return a
+}
+
 func TestSignInKeepsOnlyATokenCoreAccepts(t *testing.T) {
 	core := traustest.New(t)
 	core.Handle("GET /v1/whoami", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Principal{Display: "Ada"})))
@@ -673,5 +686,146 @@ func TestOwnerAdministrationRefusalKeepsItsStatus(t *testing.T) {
 	w := send(newApp(t, core), http.MethodPost, "/repositories/"+uuid.NewString()+"/owners", "ada", url.Values{"teams": {"payments"}})
 	if w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "an admin&#39;s") {
 		t.Fatalf("set owners: %d %s, want core's refusal shown", w.Code, w.Body)
+	}
+}
+
+func TestARepositorysAssessmentsMarkTheLatestScan(t *testing.T) {
+	core := traustest.New(t)
+	repo, ref, older, latest := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	core.Handle("GET /v1/repositories/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Repository{Id: &repo, Url: "https://forge.example/org/a"})))
+	core.Handle("GET /v1/repositories/{id}/refs/current-default", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{Id: &ref, RepositoryId: repo})))
+	core.Handle("GET /v1/repositories/{id}/assessments", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Assessment{
+		anAssessment(t, older, ref, traust.AssessmentKindSecureCode1, "superseded"),
+		anAssessment(t, latest, ref, traust.AssessmentKindSecureCode1, "recorded"),
+	})))
+	core.Handle("GET /v1/repositories/{id}/assessments/latest", onlyFor("ada", traustest.JSON(http.StatusOK,
+		anAssessment(t, latest, ref, traust.AssessmentKindSecureCode1, "recorded"))))
+	h := newApp(t, core)
+	page := send(h, http.MethodGet, "/repositories/"+repo.String(), "ada", nil).Body.String()
+	if !strings.Contains(page, "<h2>Assessments</h2>") || !strings.Contains(page, `hx-get="/repositories/`+repo.String()+`/assessments"`) {
+		t.Fatalf("repository page lacks the assessments section:\n%s", page)
+	}
+	section := send(h, http.MethodGet, "/repositories/"+repo.String()+"/assessments", "ada", nil).Body.String()
+	if !strings.Contains(section, `href="/assessments/`+older.String()+`"`) || !strings.Contains(section, `href="/assessments/`+latest.String()+`"`) {
+		t.Fatalf("assessments: %s, want each assessment linked", section)
+	}
+	var marked []string
+	for _, row := range strings.Split(section, "<li>") {
+		if strings.Contains(row, "the latest scan") {
+			marked = append(marked, row)
+		}
+	}
+	if len(marked) != 1 || !strings.Contains(marked[0], latest.String()) {
+		t.Fatalf("assessments: %s, want only the latest scan marked", section)
+	}
+	if q := core.Requests()[len(core.Requests())-1].Query["kind"][0]; q != string(traust.AssessmentKindSecureCode1) {
+		t.Fatalf("latest asked for kind %q, want the app's scans", q)
+	}
+}
+
+func TestAnAssessmentPageShowsItsIntakeAndEvidence(t *testing.T) {
+	core := traustest.New(t)
+	examined, ref, finding, evidence := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	core.Handle("GET /v1/assessments/{id}", onlyFor("ada", traustest.JSON(http.StatusOK,
+		anAssessment(t, examined, ref, traust.AssessmentKindSecureCode1, "recorded"))))
+	core.Handle("GET /v1/assessments/{id}/intake", onlyFor("ada", traustest.JSON(http.StatusOK, traust.AssessmentIntakeBindings{
+		Findings: map[string]uuid.UUID{"ORG-A-4C7F0B9-001": finding},
+	})))
+	core.Handle("GET /v1/assessments/{id}/artifacts", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Artifact{{
+		Id: &evidence, AssessmentId: &examined, Kind: "report", Digest: "4c7f0b9e2a1c3d4f",
+		Uri: "artifacts/report/4c7f0b9e2a1c3d4f.json",
+	}})))
+	page := send(newApp(t, core), http.MethodGet, "/assessments/"+examined.String(), "ada", nil).Body.String()
+	for _, want := range []string{
+		"<h1>secure_code</h1>", "recorded · webapp-fixture fixture",
+		`href="/refs/` + ref.String() + `"`,
+		"<dt>ORG-A-4C7F0B9-001</dt>", `href="/findings/` + finding.String() + `"`,
+		`href="/artifacts/` + evidence.String() + `">report</a> · 4c7f0b9e2a1c`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("assessment page lacks %q:\n%s", want, page)
+		}
+	}
+}
+
+func TestAllAssessmentsSpanThePersonsRepositories(t *testing.T) {
+	core := traustest.New(t)
+	ref, scan, triage := uuid.New(), uuid.New(), uuid.New()
+	core.Handle("GET /v1/assessments", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageAssessment{Items: []traust.Assessment{
+		anAssessment(t, scan, ref, traust.AssessmentKindSecureCode1, "recorded"),
+		anAssessment(t, triage, ref, traust.AssessmentKindTriage, "recorded"),
+	}})))
+	page := send(newApp(t, core), http.MethodGet, "/assessments", "ada", nil).Body.String()
+	if !strings.Contains(page, `href="/assessments/`+scan.String()+`"`) || !strings.Contains(page, "triage") {
+		t.Fatalf("all assessments: %s, want the person's assessments listed", page)
+	}
+}
+
+func TestAnArtifactsEvidenceDownloadsUnderItsName(t *testing.T) {
+	evidence, assessment := uuid.New(), uuid.New()
+	tests := []struct {
+		name        string
+		artifact    traust.Artifact
+		disposition string
+		mediaType   string
+	}{
+		{
+			name: "a report whose uri names json",
+			artifact: traust.Artifact{Id: &evidence, AssessmentId: &assessment, Kind: "report",
+				Digest: "4c7f0b9e2a1c3d4f", Uri: "artifacts/report/4c7f0b9e2a1c3d4f.json"},
+			disposition: `attachment; filename="report-4c7f0b9e2a1c.json"`,
+			mediaType:   "application/json",
+		},
+		{
+			name: "a companion core left untyped",
+			artifact: traust.Artifact{Id: &evidence, AssessmentId: &assessment, Kind: "findings_layer",
+				Digest: "4c7f0b9e2a1c3d4f", Uri: "artifacts/report/4c7f0b9e2a1c3d4f-findings_layer"},
+			disposition: `attachment; filename="findings_layer-4c7f0b9e2a1c"`,
+			mediaType:   "application/octet-stream",
+		},
+	}
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			core := traustest.New(t)
+			core.Handle("GET /v1/artifacts/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, tt.artifact)))
+			core.Handle("GET /v1/artifacts/{id}/content", onlyFor("ada", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				_, _ = w.Write([]byte(`{"title": "Fixture audit"}`))
+			})))
+			h := newApp(t, core)
+			page := send(h, http.MethodGet, "/artifacts/"+evidence.String(), "ada", nil).Body.String()
+			if !strings.Contains(page, `href="/artifacts/`+evidence.String()+`/content"`) || !strings.Contains(page, tt.artifact.Digest) {
+				t.Fatalf("artifact page: %s, want its digest and a download link", page)
+			}
+			download := send(h, http.MethodGet, "/artifacts/"+evidence.String()+"/content", "ada", nil)
+			if download.Code != http.StatusOK || download.Body.String() != `{"title": "Fixture audit"}` {
+				t.Fatalf("download: %d %s, want core's bytes", download.Code, download.Body)
+			}
+			if ct := download.Header().Get("Content-Type"); ct != tt.mediaType {
+				t.Fatalf("download content type: %q, want %q", ct, tt.mediaType)
+			}
+			if cd := download.Header().Get("Content-Disposition"); cd != tt.disposition {
+				t.Fatalf("download disposition: %q, want %q", cd, tt.disposition)
+			}
+		})
+	}
+}
+
+func TestAssessmentRefusalsKeepTheirStatus(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/repositories/{id}/assessments", traustest.Problem(http.StatusForbidden, "assessments are an admin's"))
+	core.Handle("GET /v1/assessments/{id}", traustest.Problem(http.StatusForbidden, "assessments are an admin's"))
+	core.Handle("GET /v1/artifacts/{id}", traustest.Problem(http.StatusForbidden, "evidence is an admin's"))
+	core.Handle("GET /v1/artifacts/{id}/content", traustest.Problem(http.StatusForbidden, "evidence is an admin's"))
+	h := newApp(t, core)
+	id := uuid.NewString()
+	for _, path := range []string{
+		"/repositories/" + id + "/assessments",
+		"/assessments/" + id,
+		"/artifacts/" + id,
+		"/artifacts/" + id + "/content",
+	} {
+		if w := send(h, http.MethodGet, path, "ada", nil); w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "admin&#39;s") {
+			t.Fatalf("%s: %d %s, want core's refusal shown", path, w.Code, w.Body)
+		}
 	}
 }
