@@ -1,4 +1,6 @@
-package main
+// Package inventory is the app's home: the person's dashboard, onboarding repositories, and a
+// repository's page.
+package inventory
 
 import (
 	"context"
@@ -8,45 +10,73 @@ import (
 	"strings"
 
 	"github.com/google/uuid"
-
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 )
 
-func (a *app) home(w http.ResponseWriter, r *http.Request) {
-	cookie, err := r.Cookie(sessionCookie)
+// Handler serves the person's repositories and their pages.
+type Handler struct{ core *traust.Client }
+
+// tally is one row of a count: a label and its number, as core answered them.
+type tally struct {
+	Label string
+	Count string
+}
+
+// card is one dashboard query's answer.
+type card struct {
+	Title string
+	Rows  []tally
+}
+
+// New builds the feature's handler.
+func New(core *traust.Client) *Handler { return &Handler{core: core} }
+
+// Routes registers the feature's pages.
+func (h *Handler) Routes(mux *http.ServeMux) {
+	mux.HandleFunc("GET /{$}", h.home)
+	mux.HandleFunc("GET /onboard", web.SignedIn(h.onboardForm))
+	mux.HandleFunc("POST /onboard/plan", web.SignedIn(h.planOnboarding))
+	mux.HandleFunc("POST /onboard", web.SignedIn(h.onboard))
+	mux.HandleFunc("GET /repositories/{id}", web.SignedIn(h.repository))
+}
+
+func (h *Handler) home(w http.ResponseWriter, r *http.Request) {
+	cookie, err := r.Cookie(web.SessionCookie)
 	if err != nil {
-		render(w, r, http.StatusOK, signIn(""))
+		web.Render(w, r, http.StatusOK, web.SignIn(""))
 		return
 	}
 	ctx := traust.OnBehalfOf(r.Context(), cookie.Value)
-	me, err := a.core.Whoami(ctx)
+	me, err := h.core.Whoami(ctx)
 	if errors.Is(err, traust.ErrUnauthorized) {
-		http.SetCookie(w, &http.Cookie{Name: sessionCookie, MaxAge: -1})
-		render(w, r, http.StatusUnauthorized, signIn("Your session ended. Sign in again."))
+		http.SetCookie(w, &http.Cookie{Name: web.SessionCookie, MaxAge: -1})
+		web.Render(w, r, http.StatusUnauthorized, web.SignIn("Your session ended. Sign in again."))
 		return
 	}
 	if err != nil {
-		fail(w, r, err)
+		web.Fail(w, r, err)
 		return
 	}
 	var repos []traust.Repository
-	for repo, err := range a.core.ListRepositoriesAll(ctx, nil) {
+	for repo, err := range h.core.ListRepositoriesAll(ctx, nil) {
 		if err != nil {
-			fail(w, r, err)
+			web.Fail(w, r, err)
 			return
 		}
 		repos = append(repos, repo)
 	}
-	cards, err := a.dashboard(ctx, repos)
+	cards, err := h.dashboard(ctx, repos)
 	if err != nil {
-		fail(w, r, err)
+		web.Fail(w, r, err)
 		return
 	}
-	render(w, r, http.StatusOK, home(*me, repos, cards))
+	web.Render(w, r, http.StatusOK, home(*me, repos, cards))
 }
 
 // dashboard is the home page's cards: one dashboard query each, over the person's repositories.
-func (a *app) dashboard(ctx context.Context, repos []traust.Repository) ([]card, error) {
+func (h *Handler) dashboard(ctx context.Context, repos []traust.Repository) ([]card, error) {
 	ids := make([]uuid.UUID, 0, len(repos))
 	for _, repo := range repos {
 		if repo.Id != nil {
@@ -68,7 +98,7 @@ func (a *app) dashboard(ctx context.Context, repos []traust.Repository) ([]card,
 	}
 	cards := make([]card, 0, len(queries))
 	for _, q := range queries {
-		result, err := a.core.QueryDashboard(ctx, traust.DashboardQuery{
+		result, err := h.core.QueryDashboard(ctx, traust.DashboardQuery{
 			Subject: q.subject, Measures: []traust.Measure{q.measure}, GroupBy: &[]traust.Dimension{q.by}, RepositoryIds: &ids,
 		})
 		if err != nil {
@@ -90,8 +120,8 @@ func (a *app) dashboard(ctx context.Context, repos []traust.Repository) ([]card,
 	return cards, nil
 }
 
-func (a *app) onboardForm(w http.ResponseWriter, r *http.Request) {
-	render(w, r, http.StatusOK, onboardForm())
+func (h *Handler) onboardForm(w http.ResponseWriter, r *http.Request) {
+	web.Render(w, r, http.StatusOK, onboardForm())
 }
 
 // onboarding reads the form: a product, its label when new, and one repository URL per line.
@@ -112,38 +142,38 @@ func onboarding(r *http.Request) traust.OnboardingRequest {
 	return request
 }
 
-func (a *app) planOnboarding(w http.ResponseWriter, r *http.Request) {
-	plan, err := a.core.PlanOnboarding(r.Context(), onboarding(r))
+func (h *Handler) planOnboarding(w http.ResponseWriter, r *http.Request) {
+	plan, err := h.core.PlanOnboarding(r.Context(), onboarding(r))
 	if err != nil {
-		fail(w, r, err)
+		web.Fail(w, r, err)
 		return
 	}
-	render(w, r, http.StatusOK, onboardPlan(*plan))
+	web.Render(w, r, http.StatusOK, onboardPlan(*plan))
 }
 
-func (a *app) onboard(w http.ResponseWriter, r *http.Request) {
-	if _, err := a.core.Onboard(r.Context(), onboarding(r)); err != nil {
-		fail(w, r, err)
+func (h *Handler) onboard(w http.ResponseWriter, r *http.Request) {
+	if _, err := h.core.Onboard(r.Context(), onboarding(r)); err != nil {
+		web.Fail(w, r, err)
 		return
 	}
 	w.Header().Set("HX-Redirect", "/")
 	w.WriteHeader(http.StatusNoContent)
 }
 
-func (a *app) repository(w http.ResponseWriter, r *http.Request) {
-	id, ok := pathID(w, r, "id")
+func (h *Handler) repository(w http.ResponseWriter, r *http.Request) {
+	id, ok := web.PathID(w, r, "id")
 	if !ok {
 		return
 	}
-	repo, err := a.core.GetRepository(r.Context(), id)
+	repo, err := h.core.GetRepository(r.Context(), id)
 	if err != nil {
-		fail(w, r, err)
+		web.Fail(w, r, err)
 		return
 	}
-	ref, err := a.core.GetCurrentDefaultRef(r.Context(), id)
+	ref, err := h.core.GetCurrentDefaultRef(r.Context(), id)
 	if err != nil && !errors.Is(err, traust.ErrNotFound) {
-		fail(w, r, err)
+		web.Fail(w, r, err)
 		return
 	}
-	render(w, r, http.StatusOK, repository(*repo, ref))
+	web.Render(w, r, http.StatusOK, repository(*repo, ref))
 }

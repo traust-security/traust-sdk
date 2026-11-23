@@ -11,6 +11,7 @@ import (
 
 	"github.com/google/uuid"
 
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 	"github.com/traust-security/traust-sdk/go/v1/ops"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 	"github.com/traust-security/traust-sdk/go/v1/traust/traustest"
@@ -22,7 +23,7 @@ func newApp(t *testing.T, core *traustest.Server) http.Handler {
 	if err != nil {
 		t.Fatal(err)
 	}
-	return (&app{core.Client(), pack.Pin()}).routes()
+	return routes(core.Client(), pack.Pin())
 }
 
 // send makes one request, signed in when token is set.
@@ -30,7 +31,7 @@ func send(h http.Handler, method, path, token string, form url.Values) *httptest
 	r := httptest.NewRequest(method, path, strings.NewReader(form.Encode()))
 	r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
 	if token != "" {
-		r.AddCookie(&http.Cookie{Name: sessionCookie, Value: token})
+		r.AddCookie(&http.Cookie{Name: web.SessionCookie, Value: token})
 	}
 	w := httptest.NewRecorder()
 	h.ServeHTTP(w, r)

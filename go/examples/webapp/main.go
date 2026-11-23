@@ -19,6 +19,13 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/findings"
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/identity"
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/insight"
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/inventory"
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/ledger"
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/runs"
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 	"github.com/traust-security/traust-sdk/go/v1/ops"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 )
@@ -53,8 +60,20 @@ func run(ctx context.Context, addr string, forgeHosts []string) error {
 	if err != nil {
 		return err
 	}
-	server := &http.Server{Addr: addr, Handler: (&app{core, pack.Pin()}).routes(), ReadHeaderTimeout: 10 * time.Second}
+	server := &http.Server{Addr: addr, Handler: routes(core, pack.Pin()), ReadHeaderTimeout: 10 * time.Second}
 	return serve(ctx, server, runner)
+}
+
+// routes wires the web app: the shared server, then each feature's pages.
+func routes(core *traust.Client, pack traust.ConfigDigest) http.Handler {
+	return web.Handler(
+		identity.New(core).Routes,
+		inventory.New(core).Routes,
+		runs.New(core, pack).Routes,
+		findings.New(core).Routes,
+		ledger.New(core).Routes,
+		insight.New(core).Routes,
+	)
 }
 
 // worker claims the pack's orders and runs the fixture skills: a scan records as an assessment of

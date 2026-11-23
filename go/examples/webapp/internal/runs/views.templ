@@ -1,0 +1,25 @@
+package runs
+
+import (
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// runHistory is what ran for a repository and who asked: a person, or the engine on its trigger.
+templ runHistory(orders []traust.RunOrder) {
+	if len(orders) == 0 {
+		<p>No runs yet.</p>
+	}
+	<ul>
+		for _, o := range orders {
+			<li>{ o.Asset }: { string(o.State) }, requested by { o.RequestedBy }</li>
+		}
+	</ul>
+}
+
+templ runRow(token string, state traust.RunOrderState, done bool) {
+	@web.Job("/runs/"+token, done) {
+		run { token }: { string(state) }
+	}
+}

@@ -50,7 +50,7 @@ func newE2E(t *testing.T) e2e {
 		t.Fatal(err)
 	}
 	user := strings.TrimSpace(string(person))
-	h := (&app{machine, pack.Pin()}).routes()
+	h := routes(machine, pack.Pin())
 	if w := send(h, http.MethodPost, "/sign-in", "", url.Values{"token": {user}}); w.Code != http.StatusSeeOther {
 		t.Fatalf("sign in: %d %s", w.Code, w.Body)
 	}

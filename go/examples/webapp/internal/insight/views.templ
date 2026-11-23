@@ -1,0 +1,16 @@
+package insight
+
+import (
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+templ reportRow(token string, report traust.Report, done bool) {
+	@web.Job("/reports/"+token, done) {
+		{ string(report.Report) } report: { string(report.Status) }
+		if report.Status == traust.ReportStatusReady {
+			<a href={ templ.URL("/reports/" + token + "/file") } download>download</a>
+		}
+	}
+}
