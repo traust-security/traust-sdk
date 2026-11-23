@@ -27,6 +27,8 @@ templ finding(f traust.FindingView, decisions []traust.Decision) {
 		if f.Description != nil {
 			<p>{ *f.Description }</p>
 		}
+		<h2>Advisories</h2>
+		<div hx-get={ "/findings/" + f.Finding.Id.String() + "/advisories" } hx-trigger="load"></div>
 		@decideForm(f)
 		<form id="fix" hx-post={ "/findings/" + f.Finding.Id.String() + "/fix" } hx-swap="outerHTML">
 			<h2>Fix this</h2>

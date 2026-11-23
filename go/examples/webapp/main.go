@@ -18,6 +18,7 @@ import (
 	"syscall"
 	"time"
 
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/exposure"
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/findings"
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/identity"
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/insight"
@@ -87,6 +88,7 @@ func routes(core *traust.Client, sso *identity.SSO) http.Handler {
 		inventory.New(core, sso.Link()).Routes,
 		runs.New(core).Routes,
 		findings.New(core).Routes,
+		exposure.New(core).Routes,
 		ledger.New(core).Routes,
 		remediation.New(core).Routes,
 		insight.New(core).Routes,

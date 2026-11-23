@@ -1291,3 +1291,102 @@ func anEffort(item, order, found, repo, ref uuid.UUID, status traust.Remediation
 
 // ptr words a fixture's optional string.
 func ptr(s string) *string { return &s }
+
+func TestAdvisorySearchPassesTheQueryThrough(t *testing.T) {
+	core := traustest.New(t)
+	stored, high, summary := uuid.New(), "high", "A fixture advisory summary"
+	core.Handle("GET /v1/advisories", onlyFor("ada", traustest.JSON(http.StatusOK, traust.AdvisoryRecord{
+		AdvisoryId: &stored, Identifier: "GHSA-1111-2222-3333", Source: "osv",
+		DeclaredSeverity: &high, Summary: &summary,
+		Affected: &[]traust.AffectedPackage{{Ecosystem: "npm", Name: "left-pad"}},
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/advisories?q=GHSA-1111-2222-3333", "ada", nil).Body.String()
+	if q := core.Requests()[0].Query.Get("identifier"); q != "GHSA-1111-2222-3333" {
+		t.Fatalf("search asked for %q, want the query passed through", q)
+	}
+	for _, want := range []string{
+		"<h1>Advisories</h1>", "GHSA-1111-2222-3333", "high · osv", summary, "npm · left-pad",
+		`href="/advisories/` + stored.String() + `"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("search page lacks %q:\n%s", want, page)
+		}
+	}
+}
+
+func TestAnAdvisoryPageRendersItsRecordPackagesAndReach(t *testing.T) {
+	core := traustest.New(t)
+	advisory, pkg, ref := uuid.New(), uuid.New(), uuid.New()
+	high, summary, reference := "high", "Rejected input reaches a sink.", "https://osv.dev/vulnerability/GHSA-1111-2222-3333"
+	dependency := traust.Dependency{PackageId: pkg, SbomId: uuid.New(), Version: "1.2.3"}
+	core.Handle("GET /v1/advisories/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Advisory{
+		Id: &advisory, Identifier: "GHSA-1111-2222-3333",
+	})))
+	core.Handle("GET /v1/advisories", onlyFor("ada", traustest.JSON(http.StatusOK, traust.AdvisoryRecord{
+		Identifier: "GHSA-1111-2222-3333", DeclaredSeverity: &high, Summary: &summary,
+		References: &[]string{reference},
+	})))
+	core.Handle("GET /v1/advisories/{id}/packages", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.AdvisoryPackage{
+		{AdvisoryId: advisory, PackageId: pkg},
+	})))
+	core.Handle("GET /v1/advisories/{id}/affected", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.AffectedDependency{
+		{RepositoryRefId: &ref, Dependency: dependency, Vulnerable: true},
+		{ImageId: &advisory, Dependency: dependency},
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/advisories/"+advisory.String(), "ada", nil).Body.String()
+	if q := core.Requests()[1].Query.Get("identifier"); q != "GHSA-1111-2222-3333" {
+		t.Fatalf("advisory page looked the record up by %q, want the advisory's identifier", q)
+	}
+	for _, want := range []string{
+		"<h1>GHSA-1111-2222-3333</h1>", "high", summary,
+		`href="` + reference + `"`, "package " + pkg.String(),
+		`href="/refs/` + ref.String() + `"`, "1.2.3 · vulnerable", "an image with no declared ref · 1.2.3 · leads to a vulnerable package",
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("advisory page lacks %q:\n%s", want, page)
+		}
+	}
+}
+
+func TestAFindingsAdvisoriesAreListedOnItsPage(t *testing.T) {
+	core := traustest.New(t)
+	found, tied := uuid.New(), uuid.New()
+	core.Handle("GET /v1/findings/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.FindingView{
+		Finding: traust.Finding{Id: &found, RepositoryId: uuid.New(), Title: "SQL built from input"},
+	})))
+	core.Handle("GET /v1/findings/{id}/decisions", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Decision{})))
+	core.Handle("GET /v1/findings/{id}/advisories", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Advisory{
+		{Id: &tied, Identifier: "CVE-2026-1234"},
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/findings/"+found.String(), "ada", nil).Body.String()
+	if !strings.Contains(page, `hx-get="/findings/`+found.String()+`/advisories"`) {
+		t.Fatalf("finding page: %s, want the lazy advisory section", page)
+	}
+	section := send(h, http.MethodGet, "/findings/"+found.String()+"/advisories", "ada", nil).Body.String()
+	if !strings.Contains(section, `href="/advisories/`+tied.String()+`">CVE-2026-1234</a>`) {
+		t.Fatalf("finding's advisories: %s, want the tied advisory linked", section)
+	}
+}
+
+func TestAdvisoryRefusalsKeepTheirStatus(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/advisories", traustest.Problem(http.StatusForbidden, "advisories are an admin's"))
+	core.Handle("GET /v1/advisories/{id}", traustest.Problem(http.StatusForbidden, "an advisory's page is an admin's"))
+	core.Handle("GET /v1/findings/{id}/advisories", traustest.Problem(http.StatusForbidden, "a finding's advisories are an admin's"))
+	h := newApp(t, core)
+	for _, path := range []string{
+		"/advisories?q=CVE-2026-1234",
+		"/advisories/" + uuid.NewString(),
+		"/findings/" + uuid.NewString() + "/advisories",
+	} {
+		if w := send(h, http.MethodGet, path, "ada", nil); w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "admin&#39;s") {
+			t.Fatalf("%s: %d %s, want core's refusal shown", path, w.Code, w.Body)
+		}
+	}
+}
