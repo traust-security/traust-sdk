@@ -144,7 +144,7 @@ endef
 # The webapp's e2e runs through the box: the engine's claim worker and the real harness, with
 # internal/e2eclaude standing in for claude (canned work, recorded through the harness's doors).
 e2e: engine harness
-	@set -eu; port=18080; forge=stand-in; complete=yes; \
+	@set -eu; port=$$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'); forge=stand-in; complete=yes; \
 	command -v cosign >/dev/null || { echo "make e2e signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
 	$(core_up); \
 	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_ADMIN_TOKEN_FILE="$$home/admin" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; \
@@ -163,7 +163,7 @@ e2e: engine harness
 # sessions (CLAUDE_RUNNER above). The model registry is the shipped one at TRAUST_REF. The app
 # itself only serves pages; every order, the claim worker runs.
 webapp: engine harness
-	@set -eu; port=18080; complete=yes; \
+	@set -eu; port=$$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'); complete=yes; \
 	command -v cosign >/dev/null || { echo "make webapp signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
 	command -v claude >/dev/null || { echo "make webapp runs the pack's skill sessions with claude: install Claude Code (https://claude.com/claude-code)" >&2; exit 1; }; \
 	$(core_up); \
