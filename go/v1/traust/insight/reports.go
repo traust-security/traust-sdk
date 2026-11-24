@@ -1,9 +1,7 @@
 package insight
 
 import (
-	"bytes"
 	"context"
-	"encoding/json"
 	"fmt"
 
 	"github.com/google/uuid"
@@ -34,30 +32,4 @@ func (c *Client) ResumeReport(token string) (*traust.Poller[traust.Report], erro
 		}
 		return *report, report.Status == traust.ReportStatusReady || report.Status == traust.ReportStatusFailed, nil
 	}), nil
-}
-
-// ReportView decodes a ready json report as its contracted view T (a generated …Insight type,
-// such as FindingsRollupInsight). A field outside the contract is an error, never dropped.
-func ReportView[T any](ctx context.Context, c *Client, report traust.Report) (*T, error) {
-	name := viewName(*new(T))
-	if name == "" {
-		return nil, fmt.Errorf("insight: %T is not a contracted view type", *new(T))
-	}
-	if report.Report != name || report.Format != traust.ReportFormatJson || report.Status != traust.ReportStatusReady {
-		return nil, fmt.Errorf("insight: report %s is a %s %s %s, not a ready json %s", report.OrderId, report.Status, report.Format, report.Report, name)
-	}
-	body, err := c.GetReportFile(ctx, report.OrderId)
-	if err != nil {
-		return nil, fmt.Errorf("getting the %s report: %w", name, err)
-	}
-	if bytes.Equal(bytes.TrimSpace(body), []byte("null")) {
-		return nil, fmt.Errorf("traust-core: the %s report is empty", name)
-	}
-	var view T
-	decoder := json.NewDecoder(bytes.NewReader(body))
-	decoder.DisallowUnknownFields()
-	if err := decoder.Decode(&view); err != nil {
-		return nil, fmt.Errorf("decoding the %s report: %w", name, err)
-	}
-	return &view, nil
 }

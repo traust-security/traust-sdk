@@ -32,16 +32,14 @@ checkouts:
 	$(call checkout,$(ENGINE_SOURCE),$(call pin,engine,repo),$(ENGINE_REF),-ffdq)
 	$(call checkout,$(TRAUST_SOURCE),$(call pin,traust,repo),$(TRAUST_REF),-ffdq)
 
-# api-generate — everything the SDK knows about core, from core at its pin: the client from its OpenAPI (built, used once, deleted) and the Insight view contracts' Go types.
+# api-generate — everything the SDK knows about core, from core at its pin: the client from its OpenAPI (built, used once, deleted) (the SDK's only source of types).
 api-generate: checkouts
 	@set -eu; tmp="$$(mktemp -d)"; trap 'rm -rf "$$tmp"' EXIT; $(MAKE) -s -C "$(CORE_SOURCE)" api-check; \
-	python3 $(OPENAPI_DIR)/normalize.py "$(CORE_SOURCE)/.openapi/openapi.json" "$$tmp/openapi.json"; go tool oapi-codegen --config $(OPENAPI_DIR)/oapi-codegen.yaml "$$tmp/openapi.json"; go run ./internal/generate/calls ./v1/traust/client.gen.go "$$tmp/openapi.json" ./v1/traust; \
-	(cd "$(CORE_SOURCE)" && exec uv run --quiet python "$(CURDIR)/$(OPENAPI_DIR)/views.py" "$$tmp/views.json"); \
-	go tool oapi-codegen --config $(OPENAPI_DIR)/views.yaml "$$tmp/views.json"; go run ./internal/generate/insights ./v1/traust/client.gen.go "$$tmp/views.json" ./v1/traust/insights.gen.go ./v1/traust/insight/insights.gen.go
+	python3 $(OPENAPI_DIR)/normalize.py "$(CORE_SOURCE)/.openapi/openapi.json" "$$tmp/openapi.json"; go tool oapi-codegen --config $(OPENAPI_DIR)/oapi-codegen.yaml "$$tmp/openapi.json"; go run ./internal/generate/calls ./v1/traust/client.gen.go "$$tmp/openapi.json" ./v1/traust;
 
 # check-drift — regenerate everything, fail when committed output is stale.
 check-drift: api-generate generate
-	@git diff --exit-code -- './examples/webapp/*_templ.go' ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go ./v1/traust/insight/insights.gen.go './v1/traust/*/*.gen.go' || (echo "ERROR: generated files are out of date; run 'make api-generate generate' and commit" && exit 1)
+	@git diff --exit-code -- './examples/webapp/*_templ.go' ./v1/traust/client.gen.go ./v1/traust/calls.gen.go './v1/traust/*/*.gen.go' || (echo "ERROR: generated files are out of date; run 'make api-generate generate' and commit" && exit 1)
 
 # generate — the example app's templ templates (its own module: no web deps in the SDK's go.mod); test — the network-free unit suites, SDK and example app.
 generate: ; cd examples/webapp && go tool templ generate

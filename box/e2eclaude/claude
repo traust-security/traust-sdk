@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Workaround: stands in for an agent the harness should ship as a fixture. Delete when traust
+# ships one.
 """A stand-in for `claude -p --output-format json` in make e2e: the box runs the real `traust
 session run`, and this answers the two skills the webapp drives with canned, contracts-valid
 work recorded through the harness's own record doors. Anything else is an error result."""

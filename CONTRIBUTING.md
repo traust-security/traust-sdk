@@ -19,8 +19,8 @@ make -C go check-drift      # regenerates everything, fails when committed outpu
 
 `api-generate` builds core's OpenAPI at the pinned core commit, generates
 `v1/traust/client.gen.go`, the `(T, error)` calls and `…All` iterators in one `calls.gen.go`
-per domain package under `v1/traust/`, and the insight views in `v1/traust/views.gen.go`,
-`v1/traust/insights.gen.go` and `v1/traust/insight/insights.gen.go`, and deletes the spec.
+per domain package under `v1/traust/`, and deletes the spec. Core's OpenAPI is the SDK's only
+source of types.
 
 The pins — core, engine and traust, each a full commit sha with a one-line why — live in
 `pins.yaml` at the repo root: every language SDK reads that one file and starts the one box

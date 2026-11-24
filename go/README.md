@@ -134,8 +134,7 @@ for _, row := range result.Rows {
 Counts come from `QueryDashboard`, `SummarizeFindings` and `SummarizeExposure`, never from
 listings.
 
-A report is a job core builds; follow the build, then download the file. A `json` report is
-the view itself; `ReportView` decodes it as its generated `…Insight` type:
+A report is a job core builds; follow the build, then download the file:
 
 ```go
 format := traust.ReportFormatMarkdown
@@ -143,11 +142,7 @@ reports := insight.New(client)
 poller, err := reports.BeginRequestReport(ctx, traust.ReportRequest{Report: traust.FindingsRollup, Format: &format})
 report, err := poller.Wait(ctx, 2*time.Second)          // ready or failed; ResumeReport(token) after a restart
 file, err := reports.GetReportFile(ctx, report.OrderId) // the stored bytes, whatever the format
-rollup, err := insight.ReportView[traust.FindingsRollupInsight](ctx, reports, report)
 ```
-
-A view composed from others uses their types (`ExecutiveSummaryInsight.Rollup` is a
-`FindingsRollupInsight`); shared contract definitions generate once and are reused.
 
 ## Errors
 

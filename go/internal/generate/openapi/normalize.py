@@ -1,4 +1,6 @@
 #!/usr/bin/env python3
+# Workaround: rewrites core's OpenAPI into a client-ready 3.0 shape. Delete when core publishes
+# a client-ready spec.
 """Normalize core's OpenAPI 3.1 document to 3.0 for oapi-codegen.
 
 kin-openapi (behind oapi-codegen v2) reads the 3.0 shapes. Two 3.1-isms

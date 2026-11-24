@@ -11,7 +11,7 @@ The SDK is a library other teams import: every exported symbol is a promise. Sma
 
 ```text
 go/
-├── v1/traust/              generated client (client.gen.go, calls.gen.go, views.gen.go, insights.gen.go) + bindings (client.go); traustest
+├── v1/traust/              generated client (client.gen.go, calls.gen.go per domain package) + bindings (client.go); traustest
 └── internal/generate/      codegen only; nothing under v1/ imports it
 ```
 
