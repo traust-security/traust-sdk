@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"net/http/httptest"
 	"net/url"
+	"slices"
 	"strings"
 	"testing"
 	"time"
@@ -1467,5 +1468,125 @@ func TestTheActivityFeedKeepsCoresRefusal(t *testing.T) {
 	w := send(newApp(t, core), http.MethodGet, "/activity", "ada", nil)
 	if w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "an admin&#39;s") {
 		t.Fatalf("a refused feed: %d %s, want core's refusal kept", w.Code, w.Body)
+	}
+}
+
+// anAttempt is one validation attempt core would answer for a finding, made by the run that
+// recorded it.
+func anAttempt(finding, run uuid.UUID, verdict traust.ValidationVerdict) traust.ValidationAttempt {
+	return traust.ValidationAttempt{
+		AttemptId: uuid.New(), FindingId: finding, RunId: run, Verdict: verdict,
+		OccurredAt: time.Date(2026, 2, 4, 5, 6, 7, 0, time.UTC),
+	}
+}
+
+func TestAWorkItemsVerificationsAndValidationAttemptsRender(t *testing.T) {
+	core := traustest.New(t)
+	repo, ref, found, other, item, order := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	effort := anEffort(item, order, found, repo, ref, traust.PrOpened)
+	effort.WorkItem.FindingIds = []uuid.UUID{found, other}
+	verified := time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC)
+	core.Handle("GET /v1/remediations/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, effort)))
+	core.Handle("GET /v1/orders/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RunOrder{Id: &order, State: traust.RunOrderStateLeased})))
+	core.Handle("GET /v1/repositories/{id}/verifications", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageVerification{Items: []traust.Verification{{
+		VerificationId: uuid.New(), RepositoryRefId: ref, VerifiedAt: verified,
+		Verdicts: []traust.FindingVerdict{{FindingId: found, Verdict: traust.VerificationVerdict("fixed")}},
+	}}})))
+	core.Handle("GET /v1/validation-attempts", onlyFor("ada", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		asked, err := uuid.Parse(r.URL.Query().Get("finding_id"))
+		if err != nil {
+			t.Errorf("core was asked for %q, want a finding", r.URL.RawQuery)
+			return
+		}
+		traustest.JSON(http.StatusOK, traust.PageValidationAttempt{Items: []traust.ValidationAttempt{
+			anAttempt(asked, order, traust.ValidationVerdict("confirmed")),
+		}}).ServeHTTP(w, r)
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/work-items/"+item.String(), "ada", nil).Body.String()
+	for _, want := range []string{
+		`hx-get="/work-items/` + item.String() + `/verifications"`,
+		`hx-get="/work-items/` + item.String() + `/validation-attempts"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("work item page lacks %q:\n%s", want, page)
+		}
+	}
+
+	section := send(h, http.MethodGet, "/work-items/"+item.String()+"/verifications", "ada", nil).Body.String()
+	for _, want := range []string{
+		`id="verifications"`, "2026-02-03T04:05:06Z", `href="/findings/` + found.String() + `">fixed</a>`,
+	} {
+		if !strings.Contains(section, want) {
+			t.Fatalf("verifications section lacks %q:\n%s", want, section)
+		}
+	}
+	var repoAsked, itemFilter string
+	for _, req := range core.Requests() {
+		if req.Path == "/v1/repositories/"+repo.String()+"/verifications" {
+			repoAsked, itemFilter = req.Path, req.Query.Get("work_item_id")
+		}
+	}
+	if repoAsked == "" {
+		t.Fatalf("core was never asked for the work item's repository's verifications: %v", core.Requests())
+	}
+	if itemFilter != item.String() {
+		t.Fatalf("core was asked for %q, want the verifications narrowed to this work item", itemFilter)
+	}
+
+	attempts := send(h, http.MethodGet, "/work-items/"+item.String()+"/validation-attempts", "ada", nil).Body.String()
+	for _, want := range []string{
+		`id="validation-attempts"`, "confirmed · 2026-02-04T05:06:07Z",
+		`href="/runs/` + order.String() + `/detail">run ` + order.String() + `</a>`,
+	} {
+		if !strings.Contains(attempts, want) {
+			t.Fatalf("validation attempts section lacks %q:\n%s", want, attempts)
+		}
+	}
+	var asked []string
+	for _, req := range core.Requests() {
+		if req.Path == "/v1/validation-attempts" {
+			asked = append(asked, req.Query.Get("finding_id"))
+		}
+	}
+	if len(asked) != 2 || !slices.Contains(asked, found.String()) || !slices.Contains(asked, other.String()) {
+		t.Fatalf("core was asked %v, want one listing per finding the work item fixes", asked)
+	}
+}
+
+func TestAWorkItemsLazySectionsKeepCoresRefusal(t *testing.T) {
+	item, repo, ref, found, order := uuid.New(), uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	effort := anEffort(item, order, found, repo, ref, traust.PrOpened)
+	sections := []string{
+		"/work-items/" + item.String() + "/verifications",
+		"/work-items/" + item.String() + "/validation-attempts",
+	}
+	for refused, want := range map[int]int{
+		http.StatusForbidden:           http.StatusForbidden,
+		http.StatusNotFound:            http.StatusNotFound,
+		http.StatusUnprocessableEntity: http.StatusUnprocessableEntity,
+		http.StatusInternalServerError: http.StatusBadGateway,
+	} {
+		t.Run(http.StatusText(refused), func(t *testing.T) {
+			core := traustest.New(t)
+			core.Handle("GET /v1/remediations/{id}", traustest.JSON(http.StatusOK, effort))
+			core.Handle("GET /v1/repositories/{id}/verifications", traustest.Problem(refused, "refused"))
+			core.Handle("GET /v1/validation-attempts", traustest.Problem(refused, "refused"))
+			h := newApp(t, core)
+			for _, path := range sections {
+				if w := send(h, http.MethodGet, path, "ada", nil); w.Code != want {
+					t.Fatalf("%s: core %d, app %d, want %d", path, refused, w.Code, want)
+				}
+			}
+		})
+	}
+	core := traustest.New(t)
+	core.Handle("GET /v1/remediations/{id}", traustest.Problem(http.StatusForbidden, "refused"))
+	h := newApp(t, core)
+	for _, path := range sections {
+		if w := send(h, http.MethodGet, path, "ada", nil); w.Code != http.StatusForbidden {
+			t.Fatalf("%s: app %d, want the work item's refusal kept", path, w.Code)
+		}
 	}
 }

@@ -8,6 +8,7 @@ import (
 
 	"github.com/google/uuid"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+	corefindings "github.com/traust-security/traust-sdk/go/v1/traust/findings"
 	coreremediation "github.com/traust-security/traust-sdk/go/v1/traust/remediation"
 	coreruns "github.com/traust-security/traust-sdk/go/v1/traust/runs"
 
@@ -18,12 +19,17 @@ import (
 type Handler struct {
 	coreRemediation *coreremediation.Client
 	coreRuns        *coreruns.Client
+	coreFindings    *corefindings.Client
 }
 
 // New builds the feature's handler; the order that fixes a work item is core's scheduling
 // door's, queued by the same call that opens the item.
 func New(core *traust.Client) *Handler {
-	return &Handler{coreRemediation: coreremediation.New(core), coreRuns: coreruns.New(core)}
+	return &Handler{
+		coreRemediation: coreremediation.New(core),
+		coreRuns:        coreruns.New(core),
+		coreFindings:    corefindings.New(core),
+	}
 }
 
 // Routes registers the feature's pages.
@@ -31,6 +37,8 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("POST /findings/{id}/fix", web.SignedIn(h.fix))
 	mux.HandleFunc("GET /work-items", web.SignedIn(h.workItems))
 	mux.HandleFunc("GET /work-items/{id}", web.SignedIn(h.workItem))
+	mux.HandleFunc("GET /work-items/{id}/verifications", web.SignedIn(h.verifications))
+	mux.HandleFunc("GET /work-items/{id}/validation-attempts", web.SignedIn(h.validationAttempts))
 	mux.HandleFunc("GET /repositories/{id}/work-items", web.SignedIn(h.repositoryWorkItems))
 }
 

@@ -63,6 +63,10 @@ templ workItem(e traust.ScheduledEffort, order *traust.RunOrder) {
 		if order != nil {
 			<p>Fix run: { string(order.State) }</p>
 		}
+		<h2>Verifications</h2>
+		<div hx-get={ "/work-items/" + e.WorkItem.WorkItemId.String() + "/verifications" } hx-trigger="load"></div>
+		<h2>Validation attempts</h2>
+		<div hx-get={ "/work-items/" + e.WorkItem.WorkItemId.String() + "/validation-attempts" } hx-trigger="load"></div>
 	}
 }
 
