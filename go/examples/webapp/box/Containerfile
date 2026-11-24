@@ -7,7 +7,7 @@
 #   podman build --build-context core=$CORE_SOURCE --build-context engine=$ENGINE_SOURCE \
 #     --build-context harness=$TRAUST_SOURCE -f examples/webapp/box/Containerfile examples/webapp
 #
-# The context is the example app itself (its pack.yaml); core, engine and harness come from the
+# The context is the example app itself; core, engine and harness (with its shipped pack) come from the
 # checkouts at their pins, so the image is built from the same sources `make webapp` runs.
 
 # ── Builder stage ───────────────────────────────────────────────────
@@ -97,11 +97,10 @@ COPY --from=harness packs/      /opt/harness/packs/
 COPY --from=harness config/     /opt/harness/config/
 COPY --from=harness docs/       /opt/harness/docs/
 COPY --from=harness bin/        /opt/harness/bin/
-# What the box reads at runtime: the shipped model registry and the app's pack (baked in, from
-# the pinned sources), and core's shipped feeds.
+# What the box reads at runtime: the shipped model registry and core's shipped feeds (the pack
+# is the harness's own, /opt/harness/packs/security/assets.yaml).
 COPY --from=harness config/model-registry.yaml /opt/box-seed/model-registry.yaml
 COPY --from=core src/traust_core/v1/context/shipped/feeds.yaml /opt/box-seed/feeds.yaml
-COPY pack.yaml /opt/box-seed/pack.yaml
 COPY box/init.sh /opt/box-seed/init.sh
 COPY --from=builder /usr/local/bin/gitleaks /usr/local/bin/gitleaks
 COPY --from=builder /usr/local/bin/claude /usr/local/bin/claude

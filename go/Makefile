@@ -8,6 +8,9 @@ ENGINE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/engine/checko
 TRAUST_REPO := https://github.com/traust-security/traust.git
 TRAUST_REF := 0eac366fd8edcfcd6ab0b8ab6d9f6708528dde75
 TRAUST_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/harness/checkout-$(TRAUST_REF)
+# The box runs traust's shipped security pack at TRAUST_REF; the e2e names only the assets it walks.
+PACK := $(TRAUST_SOURCE)/packs/security/assets.yaml
+E2E_ASSETS := --asset full_audit --asset sci_triage
 # The box's Claude login, kept across runs: log in once with CLAUDE_CONFIG_DIR=$(CLAUDE_RUNNER) claude, or set ANTHROPIC_API_KEY.
 CLAUDE_RUNNER ?= $(or $(XDG_CONFIG_HOME),$(HOME)/.config)/traust-sdk/claude-runner
 OPENAPI_DIR := ./internal/generate/openapi
@@ -34,9 +37,8 @@ test:
 webapp-generate:
 	cd examples/webapp && go tool templ generate
 
-check-drift: api-generate webapp-generate engine harness
+check-drift: api-generate webapp-generate
 	@git diff --exit-code -- './examples/webapp/*_templ.go' ./v1/traust/client.gen.go ./v1/traust/calls.gen.go ./v1/traust/views.gen.go ./v1/traust/insights.gen.go './v1/traust/*/*.gen.go' || (echo "ERROR: generated files are out of date; run 'make api-generate webapp-generate' and commit" && exit 1)
-	$(CORE_PYTHON) "$(CURDIR)/internal/pack_drift.py" --webapp "$(CURDIR)/examples/webapp/pack.yaml" --shipped "$(TRAUST_SOURCE)/packs/security/assets.yaml"
 
 core:
 	$(call checkout,$(CORE_SOURCE),$(CORE_REPO),$(CORE_REF),-ffdq)
@@ -134,7 +136,8 @@ endef
 # harness, with internal/e2eclaude standing in for claude (canned work, recorded through the
 # harness's doors). The planner is the webapp box's (traust-engine run), ticking every minute —
 # the --every flag's finest cadence is minutes — so the tick admits a person's submitted order
-# promptly: holds a gated one for approval, withholds an asset the pack does not carry.
+# promptly: holds a gated one for approval, withholds an asset the pack does not carry. It runs
+# the shipped pack limited to the assets the test walks ($(E2E_ASSETS)).
 e2e: engine harness
 	@set -eu; port=$$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'); complete=yes; \
 	command -v cosign >/dev/null || { echo "make e2e signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
@@ -142,8 +145,8 @@ e2e: engine harness
 	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_ADMIN_TOKEN_FILE="$$home/admin" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; \
 	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/...; \
 	cp "$(TRAUST_SOURCE)/config/model-registry.yaml" "$$home/model-registry.yaml"; \
-	(cd "$(CORE_SOURCE)" && exec env TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine run --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --router traust.ops.router:SecurityRouter --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml" --every 1m) > "$$home/engine.log" 2>&1 & pids="$$pids $$!"; \
-	(cd "$(CORE_SOURCE)" && exec env PATH="$(CURDIR)/internal/e2eclaude:$$PATH" TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine claim --loop --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --worker e2e-box --label llm --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml") > "$$home/claim.log" 2>&1 & pids="$$pids $$!"; \
+	(cd "$(CORE_SOURCE)" && exec env TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine run --core "$$home/traust.yaml" --pack "$(PACK)" $(E2E_ASSETS) --router traust.ops.router:SecurityRouter --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml" --every 1m) > "$$home/engine.log" 2>&1 & pids="$$pids $$!"; \
+	(cd "$(CORE_SOURCE)" && exec env PATH="$(CURDIR)/internal/e2eclaude:$$PATH" TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine claim --loop --core "$$home/traust.yaml" --pack "$(PACK)" $(E2E_ASSETS) --worker e2e-box --label llm --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml") > "$$home/claim.log" 2>&1 & pids="$$pids $$!"; \
 	(cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .) || { echo "--- engine.log"; tail -40 "$$home/engine.log"; echo "--- claim.log"; tail -40 "$$home/claim.log"; echo "--- e2eclaude.log"; cat "$$home/e2eclaude.log" 2>/dev/null; exit 1; }
 
 # The example app as the box: a local traust-server, the engine planning the shipped security
@@ -162,8 +165,8 @@ webapp: engine harness
 	$(core_up); \
 	mkdir -p "$(CLAUDE_RUNNER)"; ln -s "$(CLAUDE_RUNNER)" "$$home/claude-runner"; \
 	cp "$(TRAUST_SOURCE)/config/model-registry.yaml" "$$home/model-registry.yaml"; \
-	(cd "$(CORE_SOURCE)" && exec env TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine run --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --router traust.ops.router:SecurityRouter --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml" --every 1m) > "$$home/engine.log" 2>&1 & pids="$$pids $$!"; \
-	(cd "$(CORE_SOURCE)" && exec env TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine claim --loop --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --worker webapp-box --label llm --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml") > "$$home/claim.log" 2>&1 & pids="$$pids $$!"; \
+	(cd "$(CORE_SOURCE)" && exec env TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine run --core "$$home/traust.yaml" --pack "$(PACK)" --router traust.ops.router:SecurityRouter --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml" --every 1m) > "$$home/engine.log" 2>&1 & pids="$$pids $$!"; \
+	(cd "$(CORE_SOURCE)" && exec env TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine claim --loop --core "$$home/traust.yaml" --pack "$(PACK)" --worker webapp-box --label llm --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml") > "$$home/claim.log" 2>&1 & pids="$$pids $$!"; \
 	echo "sign in at http://localhost:3000 as a person: $$(cat "$$home/person")"; \
 	echo "or as an admin (restates decisions): $$(cat "$$home/admin")"; \
 	cd examples/webapp && TRAUST_URL=http://127.0.0.1:$$port TRAUST_TOKEN_FILE="$$home/runner" go run .
