@@ -1,6 +1,9 @@
 // Command webapp is a small web app on traust: onboard repositories, scan them, work their
-// findings, watch the dashboard and build reports. It only serves the pages; the box's claim
-// worker (go/Makefile's webapp target) runs every order the shipped pack declares.
+// findings, watch the dashboard and build reports. One package per feature under internal/
+// (identity, inventory, runs, findings, exposure, remediation, ledger, insight, web), wired
+// by main.go, each feature importing its SDK domain package as core<domain>. It only serves
+// the pages; the box's claim worker (go/Makefile's webapp target) runs every order the
+// shipped pack declares.
 //
 //	TRAUST_URL=https://core.example.com TRAUST_TOKEN_FILE=machine-token go run .
 package main

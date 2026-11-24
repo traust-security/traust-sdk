@@ -12,7 +12,7 @@ decision; the consumer keeps only its own extension data, joined to traust by id
 | Layer | Owns |
 |---|---|
 | [traust-core](https://github.com/traust-security/traust-core) | the data and its services, served over REST |
-| traust-sdk (this repo) | the client generated from core's OpenAPI, the `(T, error)` calls and iterators on it, the run lifecycle (`ops`), and a fake core for tests (`traustest`) |
+| traust-sdk (this repo) | the client generated from core's OpenAPI, the `(T, error)` calls and iterators on it, and a fake core for tests (`traustest`) |
 | consumer | its own extension data, keyed by traust ids |
 
 When several consumers build the same thing on top of traust, it belongs in core (a route) or

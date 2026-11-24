@@ -1,159 +1,158 @@
 # traust-sdk (Go)
 
-Program against traust: read its inventory, findings, dashboards and reports, keep inventory
+Program against traust: read its inventory, exposure, findings and insights, keep inventory
 current, and submit and follow its work. Every call goes to traust-core's REST API; the SDK
-handles auth, retries, paging and typed errors.
+handles auth, retries, paging and typed errors. One package per domain carries the calls; the
+root keeps the transport, `Poller`, the errors, the generated models and `Whoami`/`Healthz`.
+`go doc` on a package shows every signature; the examples run.
 
 ```bash
 go get github.com/traust-security/traust-sdk/go
 ```
 
-## Quickstart
+## Connect
 
 ```go
-import (
-    "github.com/traust-security/traust-sdk/go/v1/traust"
-    "github.com/traust-security/traust-sdk/go/v1/traust/inventory"
-)
-
 client, err := traust.NewClient(traust.Config{
     BaseURL: "https://traust-core.example.com",
     Tokens:  traust.FileTokenSource{Path: "/var/run/secrets/traust-core/token"},
 })
-repos := inventory.New(client)
-
 url := "https://github.com/example/api"
+repos := inventory.New(client)
 page, err := repos.ListRepositories(ctx, &traust.ListRepositoriesParams{Url: &url})
-repo := page.Items[0]
 ```
 
-`traust.NewClient` builds the one client — transport, auth, retries, typed errors — and one
-package per domain carries the calls. Every operation is a method named after core's operation:
-`repos.GetRepository(ctx, id)` returns `(*traust.Repository, error)`; `go doc` on a domain
-package shows every signature, and the runnable examples.
-
-## Connect
-
-| Token | Use |
-|---|---|
-| `traust.FileTokenSource{Path}` | services: re-reads the file on every request, so rotated tokens just work |
-| `traust.StaticToken("…")` | scripts, local development and tests |
+`traust.FileTokenSource{Path}` for services — re-reads the file on every request, so rotated
+tokens just work — and `traust.StaticToken("…")` for scripts, local development and tests.
 
 `Config` also takes your own `*http.Client`, the retry count and the backoff. Reads (GET)
 retry on 429, 502, 503, 504 and transport errors; writes are never retried.
 
-A `LoadConfig` profile can name a machine identity instead of a `token_file`: `token_url`, `client_id`,
-`client_secret_file` (a leading `~/` expands), optional `scopes` — the secret is read from the file, never the config.
+`traust.LoadConfig` builds the `Config` from a profile in `~/.traust/config.yaml` — the one
+`traust.Profile("name")` names, else `TRAUST_PROFILE`, else the file's default; `TRAUST_URL`
+and `TRAUST_TOKEN_FILE` override it. A profile names exactly one credential: a `token_file`,
+or a machine identity — `token_url`, `client_id`, `client_secret_file` (a leading `~/`
+expands, optional `scopes`) — the secret is read from its file, never the config.
 
-## The domains
-
-Each domain is a client over the one root client, `inventory.New(client)` and friends:
-
-| Package | What it covers |
-|---|---|
-| `inventory` | products, repositories, refs and owners — core's portfolio and registry routes |
-| `runs` | orders: submit, claim, run and complete work, query history — core's ops routes |
-| `findings` | findings, assessments, artifacts and validation |
-| `remediation` | remediation efforts, work items and their verification |
-| `exposure` | advisories, packages, dependencies and the reach of both |
-| `ledger` | ledger layers, events and their verification |
-| `insight` | dashboards and reports |
-
-The root keeps the transport, `Poller`, the errors and the generated models (`traust.Repository`
-and every other type a call takes or returns), plus `Whoami` and `Healthz`.
-
-## Read
+A BFF keeps one client under its own identity and sends each user's calls as that user, so
+core authorizes and attributes them to the person:
 
 ```go
-finding, err := findings.New(client).GetFinding(ctx, id)            // one resource
-page, err := findings.New(client).ListFindings(ctx, repoID, nil)     // one page
-for f, err := range findings.New(client).ListFindingsAll(ctx, repoID, nil) { … } // every page
+ctx := traust.OnBehalfOf(r.Context(), userToken) // an empty token is an error, never a fallback
+order, err := runs.New(client).Submit(ctx, req)
 ```
 
-Each paged listing has an `…All` iterator that follows the cursor and stops at the first error. Counts and dashboards
-come from `QueryDashboard`, `SummarizeFindings` and `SummarizeExposure`, reports from `BeginRequestReport` — never from listings.
+## inventory
 
-### Dashboards
+Products, repositories, refs and owners — core's portfolio and registry routes. Writes are
+idempotent, and core stamps when ownership opens and closes, so "who owned this on date X"
+stays answerable.
 
-One query answers a dashboard card: what to count, broken down by up to three dimensions, over
-the repositories (or products, teams) the person may see. Rows read by typed key:
+```go
+inv := inventory.New(client)
+inv.Onboard(ctx, traust.OnboardingRequest{Product: "api"})       // product, repositories, refs, teams
+inv.RegisterRef(ctx, repoID, traust.RefRegistration{Sha: sha})    // a commit you're about to scan
+inv.SetOwners(ctx, repoID, traust.Owners{Teams: []string{"red"}}) // the teams your source reports
+```
+
+Every paged listing also has an `…All` iterator that follows the cursor and stops at the
+first error: `repos.ListRepositoriesAll(ctx, nil)`.
+
+## runs
+
+Orders: submit, claim, run and complete work, and query history — core's ops routes. A worker
+only claims, heartbeats, records and completes; approvals come from verified people through
+core.
+
+```go
+poller, err := runs.New(client).BeginSkill(ctx, "scan") // submit a run by asset name and follow it
+```
+
+`QueryOrders(ctx, traust.OrderQueryRequest{…})` posts filters, search, sort and bounded paging
+to `POST /v1/orders/query`; each item carries an opaque cursor for resuming with filters and
+sort unchanged — not a transactional snapshot. `QueryOrdersAll` iterates every matching item,
+stopping when the consumer stops. As a POST, `QueryOrders` is not retried.
+
+## findings
+
+Findings, assessments, artifacts and validation, and the decisions people make on them.
+
+```go
+fs := findings.New(client)
+finding, err := fs.GetFinding(ctx, findingID)                  // one resource
+for f, err := range fs.ListFindingsAll(ctx, repoID, nil) { … } // every page
+```
+
+People `Decide` and `Restate`; workers `RecordTriage` and `RecordAssessment`.
+
+## remediation
+
+Remediation efforts, work items and their verification.
+
+```go
+rem := remediation.New(client)
+page, err := rem.ListWorkItems(ctx, repoID, nil) // …All iterates every page
+_, err = rem.RecordVerification(ctx, traust.VerificationRecordBody{…})
+```
+
+## exposure
+
+Advisories, packages, dependencies and the reach of both.
+
+```go
+exp := exposure.New(client)
+advisory, err := exp.FindAdvisory(ctx, &traust.FindAdvisoryParams{Identifier: "GHSA-xxxx-yyyy-zzzz"})
+rows, err := exp.SummarizeExposure(ctx, nil) // rollups per dimension; ExposureTimeline for series
+```
+
+## ledger
+
+Ledger layers, events and their verification.
+
+```go
+led := ledger.New(client)
+layers, err := led.ListLayers(ctx, repoID)
+result, err := led.VerifyLayer(ctx, layerID) // an admin may Checkpoint
+```
+
+## insight
+
+Dashboards and reports. One query counts what you ask, broken down by up to three dimensions,
+over the repositories (or products, teams) the person may see; rows read by typed key:
 
 ```go
 result, err := insight.New(client).QueryDashboard(ctx, traust.DashboardQuery{
-    Subject:       traust.SubjectFindings,
-    Measures:      []traust.Measure{traust.MeasureFindings},
-    GroupBy:       &[]traust.Dimension{traust.DimensionSeverity},
-    RepositoryIds: &repoIDs,
+    Subject:  traust.SubjectFindings,
+    Measures: []traust.Measure{traust.MeasureFindings},
+    GroupBy:  &[]traust.Dimension{traust.DimensionSeverity},
 })
 for _, row := range result.Rows {
     severity, count := insight.Group(row, traust.DimensionSeverity), insight.Measure(row, traust.MeasureFindings)
 }
 ```
 
-### Reports
+Counts come from `QueryDashboard`, `SummarizeFindings` and `SummarizeExposure`, never from
+listings.
 
-A report is a job core builds; follow the build, then download the file. A `json` report is the
-view itself, and `ReportView` decodes it as its generated `…Insight` type, refusing a field
-outside the contract:
+A report is a job core builds; follow the build, then download the file. A `json` report is
+the view itself; `ReportView` decodes it as its generated `…Insight` type:
 
 ```go
 format := traust.ReportFormatMarkdown
 reports := insight.New(client)
 poller, err := reports.BeginRequestReport(ctx, traust.ReportRequest{Report: traust.FindingsRollup, Format: &format})
-report, err := poller.Wait(ctx, 2*time.Second)       // ready or failed; ResumeReport(token) after a restart
+report, err := poller.Wait(ctx, 2*time.Second)          // ready or failed; ResumeReport(token) after a restart
 file, err := reports.GetReportFile(ctx, report.OrderId) // the stored bytes, whatever the format
-
-rollup, err := insight.ReportView[traust.FindingsRollupInsight](ctx, reports, report) // a ready json report
+rollup, err := insight.ReportView[traust.FindingsRollupInsight](ctx, reports, report)
 ```
 
-A view composed from others uses their types: `ExecutiveSummaryInsight.Rollup` is a
-`FindingsRollupInsight`, its `Pqc` a `*PqcPortfolioInsight` (nil when the panel was not asked
-for), its isolation panel's `ThreatRegister` a `ThreatRegisterInsight`, and so on. Shared
-contract definitions generate once and are reused: the finding records views embed are
-`FindingRecordsInsightFindingView`, `FindingRecordsInsightOccurrence`,
-`FindingRecordsInsightDecision` (`ContainerFindingsInsight` rows carry them).
-
-### Query orders
-
-`runs.New(client).QueryOrders(ctx, traust.OrderQueryRequest{…})` posts filters, search, sort and bounded
-paging to `POST /v1/orders/query`. Each item contains the order, its repository URL (nullable)
-and an opaque cursor. Follow the page's `Next` for a whole page, or the last consumed item's
-`Cursor` when merging only part of a page with another source. Keep filters and sorting
-unchanged when resuming; the limit may change (1–1000). Malformed or mismatched cursors return
-a typed validation problem.
-
-`q` is a literal case-insensitive substring search across the displayed repository reference
-(URL, else repository ID, else order ID), asset and state. Normal sorts use the requested
-direction, then order ID, with nulls last. `sort_by=ids` preserves the supplied distinct ID
-sequence regardless of direction; `ids=null` is unrestricted and `ids=[]` matches nothing.
-Each ID selector accepts at most 500 values; oversized requests fail validation
-rather than silently dropping IDs. Live mutable sort/filter values can change
-between pages: these cursors are not transactional snapshots.
-Use these server-side queries rather than walking order history to filter or sort it.
-As a POST, `QueryOrders` is not automatically retried.
-
-`QueryOrdersAll(ctx, request)` iterates the remaining matching items
-from `request.Cursor`, following page boundaries and yielding the first error.
-It stops fetching when the consumer stops. Use it for intentional full-history
-processing; interactive tables and mixed-source merges should keep using
-bounded `QueryOrders` pages rather than draining this iterator before rendering.
-
-## Keep inventory current
-
-```go
-inv := inventory.New(client)
-inv.Onboard(ctx, traust.OnboardingRequest{…})                     // product, repositories, refs, teams
-inv.RegisterRef(ctx, repoID, traust.RefRegistration{Sha: sha})     // a commit you're about to scan
-inv.SetOwners(ctx, repoID, traust.Owners{Teams: []string{"red"}})  // the teams your source reports
-```
-
-Writes are idempotent: re-sending the same request changes nothing. Core stamps when ownership
-opens and closes, so "who owned this on date X" stays answerable.
+A view composed from others uses their types (`ExecutiveSummaryInsight.Rollup` is a
+`FindingsRollupInsight`); shared contract definitions generate once and are reused.
 
 ## Errors
 
-A refusal matches its status with `errors.Is`, and core's deny code matches too. For the problem
-document itself, take the `*traust.ProblemError`; a transport failure is the underlying error.
+A refusal matches its status with `errors.Is`, and core's deny code matches too; the problem
+document itself is a `*traust.ProblemError`, a transport failure is the underlying error.
 
 ```go
 errors.Is(err, traust.ErrNotFound)     // also ErrUnauthorized, ErrForbidden, ErrConflict, ErrInvalid
@@ -161,35 +160,35 @@ errors.Is(err, traust.BudgetExhausted) // a DenyCode core sent, as the problem's
 if p, ok := errors.AsType[*traust.ProblemError](err); ok { log.Print(p.Problem.RequestId) }
 ```
 
-## Act for a person
+## Poller
 
-A service serving many users (a BFF) keeps one client under its own identity and sends each
-user's calls as that user, so core authorizes and attributes them to the person:
+`traust.Poller[T]` follows work core finishes later: `Wait(ctx, every)` returns the finished
+thing or its failure, `Poll` checks once, `ResumeToken` persists across a restart. The domain
+packages build one for orders (`runs.BeginSubmit`, `ResumeOrder`) and reports
+(`insight.BeginRequestReport`, `ResumeReport`); core's `finished_at` says when it is done.
 
-```go
-ctx := traust.OnBehalfOf(r.Context(), userToken) // an empty token is an error, never a fallback
-order, err := runs.New(client).Submit(ctx, req)
-```
+## The example app
 
-## Example app
+[`examples/webapp`](examples/webapp) is a small web app on traust (net/http, templ, htmx),
+one package per feature. From a blank core: onboard repositories (with a dry-run preview),
+scan and triage one, settle the review queue, decide and restate findings, open and follow
+remediation efforts, read advisories and exposure, watch the dashboard, verify (and, as an
+admin, checkpoint) the ledger, and build and download a report. It acts as each signed-in
+person with `OnBehalfOf`, submits runs by asset name with `BeginSkill`, and follows runs and
+report builds with the `Poller`; the box's claim worker, not the app, runs the work.
 
-[`examples/webapp`](examples/webapp) is a small web app on traust (net/http, templ, htmx). From a
-blank core: onboard repositories (with a dry-run preview), scan one and triage it, settle what the
-triage leaves in the review queue, decide and restate findings, watch the dashboard count it all,
-verify (and, as an admin, checkpoint) each repository's ledger, and build and download a report. It acts as each signed-in person
-with `OnBehalfOf`, submits runs by asset name with `BeginSkill`, follows runs and report builds
-with `Poller`; the box's claim worker, not the app, runs the work.
+`make webapp` runs the whole stack locally: traust-server beside its report builder (core at
+`CORE_REF`), traust-engine planning the shipped security pack's work every minute, and the
+engine's claim worker running each order — the pack's deterministic assets as materializers
+and its llm assets as skill sessions in the traust harness, which needs a Claude login. Sign
+in as the person it prints and onboard any public repository; the engine's next pass scans
+and triages it. It needs `uv`, `cosign` (the local ledger is signed), `gitleaks` and a Claude
+login. `make webapp STORE=byos` brings its own storage the way a deployment does, Postgres
+for records and an S3 store for artifacts, in throwaway containers (needs `podman`).
 
-`make webapp` runs the whole stack locally: traust-server (reaching real forges), its report
-builder, and traust-engine, which plans a scan of each repository under the app's pack. Sign in
-as the person it prints (or the admin, who may restate decisions) and onboard any public
-repository; the engine's next pass scans it, then triages it.
-It needs `uv` and `cosign` (the local ledger is signed). `make webapp STORE=byos` brings its own
-storage the way a deployment does, Postgres for records and an S3 store for artifacts, in throwaway
-containers (needs `podman`). `make e2e` runs the same flows end to end against a forge stand-in.
-
-The box runs the pack's real skills already: each order runs the pack's command, the traust
-harness's skill session, which needs a harness checkout and a logged-in agent on the worker.
+`make e2e` runs the SDK's and the app's suites end to end through the same box offline: the
+forge is a stand-in (no network) and a stub claude runs canned work, so no Claude login is
+needed.
 
 ## Test your code
 
@@ -199,10 +198,9 @@ harness's skill session, which needs a harness checkout and a logged-in agent on
 core := traustest.New(t)
 core.Handle("GET /v1/repositories/{id}", traustest.JSON(200, traust.Repository{Url: "https://github.com/example/api"}))
 core.Handle("POST /v1/orders/claim", traustest.Status(204))
-client := core.Client()
-// … exercise your code …
-sent := core.Requests()
+client := core.Client() // … exercise your code …
+for _, r := range core.Requests() { … }
 ```
 
-An unregistered route answers with a 404 problem. Use `traustest.Start()` (and `Close`) outside a test,
-as the runnable examples do. `make e2e` runs the SDK itself against a real `traust-server`.
+An unregistered route answers with a 404 problem. Use `traustest.Start()` (and `Close`)
+outside a test, as the runnable examples do.
