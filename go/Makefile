@@ -130,8 +130,11 @@ define core_up
 	$(call mint,e2e-runner,True,runner)
 endef
 
-# The webapp's e2e runs through the box: the engine's claim worker and the real harness, with
-# internal/e2eclaude standing in for claude (canned work, recorded through the harness's doors).
+# The webapp's e2e runs through the box: the engine's planner and claim worker and the real
+# harness, with internal/e2eclaude standing in for claude (canned work, recorded through the
+# harness's doors). The planner is the webapp box's (traust-engine run), ticking every minute —
+# the --every flag's finest cadence is minutes — so the tick admits a person's submitted order
+# promptly: holds a gated one for approval, withholds an asset the pack does not carry.
 e2e: engine harness
 	@set -eu; port=$$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'); complete=yes; \
 	command -v cosign >/dev/null || { echo "make e2e signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
@@ -139,8 +142,9 @@ e2e: engine harness
 	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_ADMIN_TOKEN_FILE="$$home/admin" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; \
 	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/...; \
 	cp "$(TRAUST_SOURCE)/config/model-registry.yaml" "$$home/model-registry.yaml"; \
+	(cd "$(CORE_SOURCE)" && exec env TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine run --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --router traust.ops.router:SecurityRouter --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml" --every 1m) > "$$home/engine.log" 2>&1 & pids="$$pids $$!"; \
 	(cd "$(CORE_SOURCE)" && exec env PATH="$(CURDIR)/internal/e2eclaude:$$PATH" TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine claim --loop --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --worker e2e-box --label llm --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml") > "$$home/claim.log" 2>&1 & pids="$$pids $$!"; \
-	(cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .) || { echo "--- claim.log"; tail -40 "$$home/claim.log"; echo "--- e2eclaude.log"; cat "$$home/e2eclaude.log" 2>/dev/null; exit 1; }
+	(cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .) || { echo "--- engine.log"; tail -40 "$$home/engine.log"; echo "--- claim.log"; tail -40 "$$home/claim.log"; echo "--- e2eclaude.log"; cat "$$home/e2eclaude.log" 2>/dev/null; exit 1; }
 
 # The example app as the box: a local traust-server, the engine planning the shipped security
 # pack's work every minute, and the engine's claim worker running it — the deterministic assets'

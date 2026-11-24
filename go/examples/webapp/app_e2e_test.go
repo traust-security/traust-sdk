@@ -67,11 +67,24 @@ func TestE2EOnboardScanTriageAndReview(t *testing.T) {
 	if repo == nil {
 		t.Fatal("home lists no onboarded repository")
 	}
-	for _, asset := range []string{"full_audit", "sci_triage"} {
-		token := polled(t, send(e.app, http.MethodPost, "/runs", e.user, url.Values{"asset": {asset}, "repository_id": {repo[1]}}), "/runs/")
-		if done := e.finished(t, token); !strings.Contains(done, string(traust.RunOrderStateSucceeded)) {
-			t.Fatalf("%s: %s, want succeeded", asset, done)
-		}
+	// the person's audit is admission-held: the engine's tick holds it for an operator, the
+	// admin releases it through the app, and only then does the claim worker run it
+	audit := polled(t, send(e.app, http.MethodPost, "/runs", e.user, url.Values{"asset": {"full_audit"}, "repository_id": {repo[1]}}), "/runs/")
+	e.held(t, audit)
+	if page := e.get(t, "/approvals"); !strings.Contains(page, "full_audit") {
+		t.Fatalf("approvals: %s, want the held audit", page)
+	}
+	admin := tokenFile(t, "TRAUST_E2E_ADMIN_TOKEN_FILE")
+	if w := send(e.app, http.MethodPost, "/approvals/"+audit, admin, nil); w.Code != http.StatusOK {
+		t.Fatalf("the admin's approval: %d %s", w.Code, w.Body)
+	}
+	if done := e.finished(t, audit); !strings.Contains(done, string(traust.RunOrderStateSucceeded)) {
+		t.Fatalf("full_audit: %s, want succeeded", done)
+	}
+	// sci_triage carries no approval gate, so admission runs it without a person's release
+	triage := polled(t, send(e.app, http.MethodPost, "/runs", e.user, url.Values{"asset": {"sci_triage"}, "repository_id": {repo[1]}}), "/runs/")
+	if done := e.finished(t, triage); !strings.Contains(done, string(traust.RunOrderStateSucceeded)) {
+		t.Fatalf("sci_triage: %s, want succeeded", done)
 	}
 	if runs := e.get(t, "/repositories/"+repo[1]+"/runs"); !strings.Contains(runs, "sci_triage: succeeded, requested by ") {
 		t.Fatalf("run history: %s, want the person's triage", runs)
@@ -101,11 +114,7 @@ func TestE2EOnboardScanTriageAndReview(t *testing.T) {
 	if w := send(e.app, http.MethodPost, "/decisions/"+latest[1]+"/restate", e.user, restate); w.Code != http.StatusForbidden {
 		t.Fatalf("a person's restatement: %d, want 403 (restating is an admin's correction)", w.Code)
 	}
-	admin, err := os.ReadFile(os.Getenv("TRAUST_E2E_ADMIN_TOKEN_FILE"))
-	if err != nil {
-		t.Fatal(err)
-	}
-	if w := send(e.app, http.MethodPost, "/decisions/"+latest[1]+"/restate", strings.TrimSpace(string(admin)), restate); w.Code != http.StatusOK {
+	if w := send(e.app, http.MethodPost, "/decisions/"+latest[1]+"/restate", admin, restate); w.Code != http.StatusOK {
 		t.Fatalf("the admin's restatement: %d %s", w.Code, w.Body)
 	}
 	if detail := e.get(t, finding); !strings.Contains(detail, "restates an earlier decision") {
@@ -129,6 +138,19 @@ func TestE2EOnboardScanTriageAndReview(t *testing.T) {
 	}
 	if w := send(e.app, http.MethodPost, "/repositories/"+repo[1]+"/checkpoint", strings.TrimSpace(string(admin)), nil); w.Code != http.StatusOK {
 		t.Fatalf("the admin's checkpoint: %d %s", w.Code, w.Body)
+	}
+}
+
+// A person's submit of an asset the pack does not carry never runs: the engine's admission
+// withholds it, and the run's page names the reason core recorded.
+func TestE2EUnknownAssetIsWithheld(t *testing.T) {
+	e := newE2E(t)
+	token := polled(t, send(e.app, http.MethodPost, "/runs", e.user, url.Values{"asset": {"no_such_asset"}}), "/runs/")
+	if done := e.finished(t, token); !strings.Contains(done, string(traust.RunOrderStateWithheld)) {
+		t.Fatalf("no_such_asset: %s, want withheld", done)
+	}
+	if detail := e.get(t, "/runs/"+token+"/detail"); !strings.Contains(detail, string(traust.RunOrderReasonAssetNotInPack)) {
+		t.Fatalf("no_such_asset: %s, want the asset-not-in-pack reason", detail)
 	}
 }
 
@@ -156,14 +178,39 @@ func TestE2EBuildAndDownloadAReport(t *testing.T) {
 func (e e2e) finished(t *testing.T, token string) string {
 	t.Helper()
 	row := ""
-	for range 180 {
+	for range 240 {
 		if row = e.get(t, "/runs/"+token); !strings.Contains(row, "hx-trigger") {
 			return row
 		}
 		time.Sleep(time.Second)
 	}
-	t.Fatalf("run %s: %s, still running after 3m", token, row)
+	t.Fatalf("run %s: %s, still running after 4m", token, row)
 	return row
+}
+
+// held polls a run's row until the engine's admission holds the order for a person; the row
+// keeps polling while it waits, so only its words say it is held.
+func (e e2e) held(t *testing.T, token string) string {
+	t.Helper()
+	row := ""
+	for range 120 {
+		if row = e.get(t, "/runs/"+token); strings.Contains(row, string(traust.RunOrderStateAwaitingApproval)) {
+			return row
+		}
+		time.Sleep(time.Second)
+	}
+	t.Fatalf("run %s: %s, still not held for approval after 2m", token, row)
+	return row
+}
+
+// tokenFile reads one of make e2e's minted tokens, whole and trimmed.
+func tokenFile(t *testing.T, name string) string {
+	t.Helper()
+	raw, err := os.ReadFile(os.Getenv(name))
+	if err != nil {
+		t.Fatal(err)
+	}
+	return strings.TrimSpace(string(raw))
 }
 
 // polled is the token in a started row's poll path.
