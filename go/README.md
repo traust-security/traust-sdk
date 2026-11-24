@@ -186,9 +186,9 @@ and triages it. It needs `uv`, `cosign` (the local ledger is signed), `gitleaks`
 login. `make webapp STORE=byos` brings its own storage the way a deployment does, Postgres
 for records and an S3 store for artifacts, in throwaway containers (needs `podman`).
 
-`make e2e` runs the SDK's and the app's suites end to end through the same box offline: the
-forge is a stand-in (no network) and a stub claude runs canned work, so no Claude login is
-needed.
+`make e2e` runs the SDK's and the app's suites end to end through the same box: onboarding
+reads a real public GitHub repository (needs network; a `GITHUB_TOKEN` in the environment, if
+any, lifts its rate limit) and a stub claude runs canned work, so no Claude login is needed.
 
 `make webapp-compose` runs the same box as containers: `podman compose` brings up Postgres
 (throwaway), traust-server and its reports role, the engine's planner and claim worker (the

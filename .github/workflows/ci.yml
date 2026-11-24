@@ -83,6 +83,8 @@ jobs:
       - uses: sigstore/cosign-installer@v3
       - run: go install github.com/zricethezav/gitleaks/v8@v8.18.4 && echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - run: make e2e
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
   guardrails:
     runs-on: ubuntu-latest

@@ -73,12 +73,6 @@ api-generate: core
 mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context import Config, Context; print(Context(Config.from_file(Path('$$home/traust.yaml'))).local_issuer.mint('$(1)', machine=$(2)).token.get_secret_value())") > "$$home/$(3)"
 
 # The generated client against traust-server built from core at CORE_REF.
-# The suite never leaves localhost: the vocabulary test onboards one repository, and
-# onboarding reads its visibility at the forge, so the e2eforge mock stands in for the
-# forge. Core reaches a gitlab-kind host at https://{host}/api/v4 — scheme and port are
-# fixed — so e2eforge is an HTTPS_PROXY CONNECT proxy answering with its own TLS (an
-# ephemeral self-signed certificate, trusted through SSL_CERT_FILE), and the e2e config
-# maps the mock's host to the gitlab kind in forge_hosts.
 # provision is what a deployment does to a fresh configured database, the sequence core runs
 # itself for a fresh local store: the contracts' baseline DDL, the whole upgrade channel, then
 # the data channel.
@@ -92,17 +86,20 @@ export provision := from pathlib import Path; import sys, sqlalchemy as sa; \
 
 # core_up starts traust-server at CORE_REF on $$port beside its report builder, mints a person
 # token ($$home/person), an admin's ($$home/admin: admins restate decisions) and a runner token
-# ($$home/runner), and stops everything on exit. With
-# forge=stand-in, core reaches forges only through the e2eforge stand-in (no network); otherwise
-# it reaches real ones. The config grants the example's scan and triage assets their recording and
+# ($$home/runner), and stops everything on exit. Onboarding reads real forges: with
+# GITHUB_TOKEN in the environment, core reads github.com with it (forge_tokens); otherwise
+# anonymously. The config grants the example's scan and triage assets their recording and
 # keeps a ledger (unsigned unless complete=yes). With
 # complete=yes the config home is what the engine's preflight demands of a deployment: workspace
 # locations, a cosign-signed ledger, and a model registry (core's own fixture at CORE_REF; no
 # example skill uses a model). With STORE=byos core brings its own storage the way a deployment
 # does: Postgres for records and an S3 store (versitygw) for artifacts, in throwaway containers.
 define core_up
-	home="$$(mktemp -d)"; proxy=""; pids=""; containers=""; trap 'exit 130' INT TERM; \
+	home="$$(mktemp -d)"; pids=""; containers=""; trap 'exit 130' INT TERM; \
 	printf 'home: %s\nidentity:\n  trust_local: true\n  admins: [admin@example.com]\nrecording:\n  assessment: [scan]\n  triage: [triage]\n' "$$home" > "$$home/traust.yaml"; \
+	if [ -n "$${GITHUB_TOKEN:-}" ]; then \
+	  printf 'forge_tokens:\n  github.com: GITHUB_TOKEN\n' >> "$$home/traust.yaml"; \
+	fi; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet python -c "import traust_core.v1.rest.server"); \
 	if [ "$${complete:-}" = yes ]; then \
 	  mkdir -p "$$home/workspace" "$$home/analysis-results" "$$home/progress-tracker"; \
@@ -123,15 +120,7 @@ define core_up
 	  printf 'database:\n  url: postgresql+psycopg://traust@127.0.0.1:15433/traust\n  password_env: TRAUST_DB_PASSWORD\nartifacts:\n  s3:\n    bucket: traust\n    endpoint_url: http://127.0.0.1:19000\n    region: us-east-1\n    access_key_env: TRAUST_S3_ACCESS_KEY\n    secret_key_env: TRAUST_S3_SECRET_KEY\n' >> "$$home/traust.yaml"; \
 	  (cd "$(CORE_SOURCE)" && uv run --quiet --extra postgres python -c "$$provision" "$$home/traust.yaml"); \
 	fi; \
-	if [ "$${forge:-}" = stand-in ]; then \
-	  printf 'forge_hosts:\n  e2e-forge.test: gitlab\n' >> "$$home/traust.yaml"; \
-	  go build -o "$$home/e2eforge" ./internal/e2eforge; \
-	  "$$home/e2eforge" -ca "$$home/forge-ca.pem" > "$$home/forge-port" & pids="$$pids $$!"; \
-	  for _ in $$(seq 100); do [ -s "$$home/forge-port" ] && break; sleep 0.1; done; \
-	  forge_port=$$(cat "$$home/forge-port"); \
-	  proxy="SSL_CERT_FILE=$$home/forge-ca.pem HTTPS_PROXY=http://127.0.0.1:$$forge_port https_proxy=http://127.0.0.1:$$forge_port"; \
-	fi; \
-	(cd "$(CORE_SOURCE)" && exec env COSIGN_PASSWORD= $$proxy uv run --quiet traust-server --config "$$home/traust.yaml" --port $$port) > "$$home/server.log" 2>&1 & pids="$$pids $$!"; \
+	(cd "$(CORE_SOURCE)" && exec env COSIGN_PASSWORD= uv run --quiet traust-server --config "$$home/traust.yaml" --port $$port) > "$$home/server.log" 2>&1 & pids="$$pids $$!"; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet traust-server --config "$$home/traust.yaml" --role reports) > "$$home/reports.log" 2>&1 & pids="$$pids $$!"; \
 	trap 'kill $$pids 2>/dev/null || true; [ -z "$$containers" ] || podman stop -t 2 $$containers >/dev/null 2>&1; rm -rf "$$home"' EXIT; \
 	for _ in $$(seq 60); do curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz && break; sleep 1; done; \
@@ -144,13 +133,13 @@ endef
 # The webapp's e2e runs through the box: the engine's claim worker and the real harness, with
 # internal/e2eclaude standing in for claude (canned work, recorded through the harness's doors).
 e2e: engine harness
-	@set -eu; port=$$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'); forge=stand-in; complete=yes; \
+	@set -eu; port=$$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'); complete=yes; \
 	command -v cosign >/dev/null || { echo "make e2e signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }; \
 	$(core_up); \
 	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_ADMIN_TOKEN_FILE="$$home/admin" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; \
 	go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/...; \
 	cp "$(TRAUST_SOURCE)/config/model-registry.yaml" "$$home/model-registry.yaml"; \
-	(cd "$(CORE_SOURCE)" && exec env PATH="$(CURDIR)/internal/e2eclaude:$$PATH" TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" $$proxy uv run --quiet traust-engine claim --loop --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --worker e2e-box --label llm --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml") > "$$home/claim.log" 2>&1 & pids="$$pids $$!"; \
+	(cd "$(CORE_SOURCE)" && exec env PATH="$(CURDIR)/internal/e2eclaude:$$PATH" TRAUST_CONFIG_HOME="$$home" HARNESS_ROOT="$(TRAUST_SOURCE)" uv run --quiet traust-engine claim --loop --core "$$home/traust.yaml" --pack "$(CURDIR)/examples/webapp/pack.yaml" --worker e2e-box --label llm --feeds "$(CORE_SOURCE)/src/traust_core/v1/context/shipped/feeds.yaml" --models "$$home/model-registry.yaml") > "$$home/claim.log" 2>&1 & pids="$$pids $$!"; \
 	(cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .) || { echo "--- claim.log"; tail -40 "$$home/claim.log"; echo "--- e2eclaude.log"; cat "$$home/e2eclaude.log" 2>/dev/null; exit 1; }
 
 # The example app as the box: a local traust-server, the engine planning the shipped security

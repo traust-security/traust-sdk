@@ -17,8 +17,8 @@ import (
 	coreruns "github.com/traust-security/traust-sdk/go/v1/traust/runs"
 )
 
-// The repository the e2e harness's forge stand-in answers for; make webapp onboards real ones.
-const e2eRepository = "https://e2e-forge.test/e2e/fixture"
+// A real public repository the e2e onboards; make webapp onboards any public one.
+const e2eRepository = "https://github.com/octocat/Hello-World"
 
 type e2e struct {
 	app  http.Handler
