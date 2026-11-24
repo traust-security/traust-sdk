@@ -1,8 +1,8 @@
-# go/Makefile — the SDK's targets (`make help` lists them); pins live in pins.yaml, the box's
-# startup in examples/webapp/box/up.sh.
-# pins.yaml is the one place pins live (one why per pin); plain awk reads it, failing loudly
+# go/Makefile — the SDK's targets (`make help` lists them); the pins live in ../pins.yaml
+# and the box's startup in ../box/up.sh (both shared by every language SDK).
+# ../pins.yaml is the one place pins live (one why per pin); plain awk reads it, failing loudly
 # unless every ref is a full 40-char sha. A CORE_REF=... on the command line still overrides.
-pin = $(shell awk -v key='$(1):' -v field='$(2)' '$$1 == key {hit = 1; next} /^[^ \t]/ {hit = 0} hit && $$1 == field ":" {if (field == "ref" && ($$2 !~ /^[0-9a-f]+$$/ || length($$2) != 40)) {printf "pins.yaml: %s %s is not a full 40-char sha: %s\n", key, field, $$2 > "/dev/stderr"; bad = 1; exit 1} print $$2; ok = 1; exit} END {if (!ok && !bad) {printf "pins.yaml: no %s under %s\n", field, key > "/dev/stderr"; exit 1}}' pins.yaml)
+pin = $(shell awk -v key='$(1):' -v field='$(2)' '$$1 == key {hit = 1; next} /^[^ \t]/ {hit = 0} hit && $$1 == field ":" {if (field == "ref" && ($$2 !~ /^[0-9a-f]+$$/ || length($$2) != 40)) {printf "pins.yaml: %s %s is not a full 40-char sha: %s\n", key, field, $$2 > "/dev/stderr"; bad = 1; exit 1} print $$2; ok = 1; exit} END {if (!ok && !bad) {printf "pins.yaml: no %s under %s\n", field, key > "/dev/stderr"; exit 1}}' ../pins.yaml)
 CORE_REF := $(call pin,core,ref)
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
 ENGINE_REF := $(call pin,engine,ref)
@@ -60,7 +60,7 @@ tools: ; python3 ../ci/lang/go/ci.py tools
 define box_start
 	@set -eu; port=$$(python3 -c 'import socket; s = socket.socket(); s.bind(("127.0.0.1", 0)); print(s.getsockname()[1])'); home=$$(mktemp -d); \
 	trap 'kill "$$box" 2>/dev/null || true; wait "$$box" 2>/dev/null || true; rm -rf "$$home"' EXIT; trap 'exit 130' INT; trap 'exit 143' TERM; \
-	examples/webapp/box/up.sh --home "$$home" --port "$$port" --core "$(CORE_SOURCE)" --engine "$(ENGINE_SOURCE)" --harness "$(TRAUST_SOURCE)" $(1) >"$$home/box.log" 2>&1 & box=$$!; \
+	../box/up.sh --home "$$home" --port "$$port" --core "$(CORE_SOURCE)" --engine "$(ENGINE_SOURCE)" --harness "$(TRAUST_SOURCE)" $(1) >"$$home/box.log" 2>&1 & box=$$!; \
 	for _ in $$(seq 900); do [ -f "$$home/ready" ] && break; kill -0 "$$box" 2>/dev/null || break; sleep 1; done; \
 	[ -f "$$home/ready" ] || { echo "--- box.log"; cat "$$home/box.log"; exit 1; }
 endef
@@ -69,7 +69,7 @@ endef
 # public GitHub repository (a GITHUB_TOKEN, if set, lifts its rate limit) and the e2e stub
 # stands in for claude. The SDK suites run before the planner ticks (the gate).
 e2e: checkouts
-	$(call box_start,--worker e2e-box --asset full_audit --asset sci_triage --claude-dir "$(CURDIR)/internal/e2eclaude" --complete --gate "$$home/go"); \
+	$(call box_start,--worker e2e-box --asset full_audit --asset sci_triage --claude-dir ../box/e2eclaude --complete --gate "$$home/go"); \
 	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_ADMIN_TOKEN_FILE="$$home/admin" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/...; touch "$$home/go"; \
 	for _ in $$(seq 120); do [ -f "$$home/boxed" ] && break; kill -0 "$$box" 2>/dev/null || break; sleep 1; done; [ -f "$$home/boxed" ] || { echo "--- box.log"; cat "$$home/box.log"; exit 1; }; \
 	(cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .) || { echo "--- engine.log"; tail -40 "$$home/engine.log"; echo "--- claim.log"; tail -40 "$$home/claim.log"; echo "--- e2eclaude.log"; cat "$$home/e2eclaude.log" 2>/dev/null; exit 1; }
@@ -90,5 +90,5 @@ webapp-compose: checkouts
 	@command -v podman >/dev/null && podman compose version >/dev/null 2>&1 || { echo "webapp-compose needs podman (with a compose provider)" >&2; exit 1; }
 	@$(MAKE) -C "$(ENGINE_SOURCE)" gitleaks && mkdir -p "$(CLAUDE_RUNNER)"
 	@podman build -t localhost/traust-webapp-core:local "$(CORE_SOURCE)" && podman build -t localhost/traust-webapp:local -f examples/webapp/Containerfile ..
-	@podman build --build-context core="$(CORE_SOURCE)" --build-context engine="$(ENGINE_SOURCE)" --build-context harness="$(TRAUST_SOURCE)" -t localhost/traust-webapp-box:local -f examples/webapp/box/Containerfile examples/webapp
+	@podman build --build-context core="$(CORE_SOURCE)" --build-context engine="$(ENGINE_SOURCE)" --build-context harness="$(TRAUST_SOURCE)" -t localhost/traust-webapp-box:local -f ../box/Containerfile ..
 	@cd examples/webapp && CLAUDE_RUNNER="$(CLAUDE_RUNNER)" podman compose up -d --wait && podman compose logs --no-log-prefix box-init | sed -n '/^sign in at/p;/^or as an admin/p'

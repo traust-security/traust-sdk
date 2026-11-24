@@ -2,7 +2,7 @@
 # up.sh — the example box's startup, as named steps: write traust.yaml, start the server and
 # its reports role, wait for health, mint the person/admin/runner tokens, start the planner,
 # start the claim worker — and stop everything it started on exit. The Go side (make -C go e2e
-# / webapp) calls this with the cached checkouts the Makefile fetched; every log lands in
+# / webapp) calls this with the cached checkouts its Makefile fetched; every log lands in
 # <home>/*.log, and the caller owns <home> itself (it creates and removes it).
 #
 # Flags:
@@ -47,6 +47,8 @@ done
 [ -n "$home" ] && [ -n "$port" ] && [ -n "$core" ] && [ -n "$engine" ] && [ -n "$harness" ] \
   || { echo "up.sh: --home, --port, --core, --engine and --harness are required" >&2; exit 2; }
 [ -n "$pack" ] || pack="$harness/packs/security/assets.yaml"
+# The claim worker runs from core's checkout, so a relative --claude-dir must become absolute.
+[ -z "$claude_dir" ] || claude_dir="$(cd "$claude_dir" && pwd)"
 [ "$complete" = no ] || command -v cosign >/dev/null \
   || { echo "up.sh: the box signs its ledger with cosign: install it (https://docs.sigstore.dev)" >&2; exit 1; }
 [ -n "$claude_dir" ] || command -v claude >/dev/null \

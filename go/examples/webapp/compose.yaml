@@ -1,5 +1,5 @@
 # compose.yaml — the example app's box as containers. `make -C go webapp-compose` builds the
-# images from the pinned sources (go/pins.yaml: traust-server from its own
+# images from the pinned sources (pins.yaml: traust-server from its own
 # Containerfile, the box — core's environment with the engine, the traust harness and the Claude
 # CLI — and the app from examples/webapp/) and brings this up; box-init prints the sign-in
 # tokens. `podman compose -f go/examples/webapp/compose.yaml down -v` tears it all down.
@@ -136,7 +136,7 @@ services:
       OPENSSL_armcap: ${OPENSSL_armcap:-}
     volumes:
       - box:/box
-      - ${CLAUDE_RUNNER:-./box/claude-runner}:/box/claude-runner
+      - ${CLAUDE_RUNNER:-./claude-runner}:/box/claude-runner
     depends_on:
       server:
         condition: service_healthy

@@ -1,13 +1,13 @@
 # Containerfile — the example box's own image: core's locked environment with the engine and the
-# traust harness installed into it, the way `make webapp` does on a host (go/Makefile installs
-# both into core's environment), plus what a runner needs beside them: gitleaks, cosign and the
-# Claude Code CLI. `make webapp-compose` builds it with the Makefile's cached checkouts as
-# additional build contexts:
+# traust harness installed into it, the way `make webapp` does on a host (the SDK Makefile
+# installs both into core's environment), plus what a runner needs beside them: gitleaks, cosign
+# and the Claude Code CLI. `make webapp-compose` builds it with the Makefile's cached checkouts
+# as additional build contexts:
 #
 #   podman build --build-context core=$CORE_SOURCE --build-context engine=$ENGINE_SOURCE \
-#     --build-context harness=$TRAUST_SOURCE -f examples/webapp/box/Containerfile examples/webapp
+#     --build-context harness=$TRAUST_SOURCE -f box/Containerfile .
 #
-# The context is the example app itself; core, engine and harness (with its shipped pack) come from the
+# The context is the repo root; core, engine and harness (with its shipped pack) come from the
 # checkouts at their pins, so the image is built from the same sources `make webapp` runs.
 
 # ── Builder stage ───────────────────────────────────────────────────
@@ -37,7 +37,7 @@ WORKDIR /opt/box
 COPY --from=core pyproject.toml uv.lock ./
 RUN uv sync --frozen --extra rest --extra postgres --no-install-project --python "${PYTHON_VERSION}"
 
-# Core itself, the engine and the harness, installed the way go/Makefile does: --no-deps into
+# Core itself, the engine and the harness, installed the way the SDK Makefile does: --no-deps into
 # core's environment, from the checkouts at their pins.
 COPY --from=core pyproject.toml /src/core/pyproject.toml
 COPY --from=core src/ /src/core/src/

@@ -1,3 +1,0 @@
-# The compose file's default Claude login mount (CLAUDE_RUNNER unset): log in once with
-# CLAUDE_CONFIG_DIR=go/examples/webapp/box/claude-runner claude, or set CLAUDE_RUNNER.
-claude-runner/
