@@ -11,10 +11,7 @@ templ Page(title string) {
 			<link rel="stylesheet" href="/static/app.css"/>
 		</head>
 		<body>
-			<nav><a class="brand" href="/">ᛏ traust</a><a href="/onboard">Onboard</a><a href="/products">Products</a><a href="/runs">Runs</a><a href="/approvals">Approvals</a><a href="/findings">Findings</a><a href="/review">Review</a></nav>
-			<nav><a class="brand" href="/">ᛏ traust</a><a href="/onboard">Onboard</a><a href="/products">Products</a><a href="/findings">Findings</a><a href="/advisories">Advisories</a><a href="/review">Review</a></nav>
-			<nav><a class="brand" href="/">ᛏ traust</a><a href="/onboard">Onboard</a><a href="/products">Products</a><a href="/findings">Findings</a><a href="/review">Review</a><a href="/activity">Activity</a></nav>
-			<nav><a class="brand" href="/">ᛏ traust</a><a href="/onboard">Onboard</a><a href="/products">Products</a><a href="/packages">Packages</a><a href="/exposure">Exposure</a><a href="/advisories">Advisories</a></nav>
+			<nav><a class="brand" href="/">ᛏ traust</a><a href="/onboard">Onboard</a><a href="/products">Products</a><a href="/runs">Runs</a><a href="/approvals">Approvals</a><a href="/activity">Activity</a><a href="/findings">Findings</a><a href="/review">Review</a><a href="/advisories">Advisories</a><a href="/packages">Packages</a><a href="/exposure">Exposure</a></nav>
 			<div hx-get="/whoami" hx-trigger="load"></div>
 			<main>
 				{ children... }

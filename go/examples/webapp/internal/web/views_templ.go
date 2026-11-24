@@ -53,7 +53,7 @@ func Page(title string) templ.Component {
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
-		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><script src=\"https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"/static/app.css\"></head><body><nav><a class=\"brand\" href=\"/\">ᛏ traust</a><a href=\"/onboard\">Onboard</a><a href=\"/products\">Products</a><a href=\"/runs\">Runs</a><a href=\"/approvals\">Approvals</a><a href=\"/findings\">Findings</a><a href=\"/review\">Review</a></nav><nav><a class=\"brand\" href=\"/\">ᛏ traust</a><a href=\"/onboard\">Onboard</a><a href=\"/products\">Products</a><a href=\"/findings\">Findings</a><a href=\"/advisories\">Advisories</a><a href=\"/review\">Review</a></nav><nav><a class=\"brand\" href=\"/\">ᛏ traust</a><a href=\"/onboard\">Onboard</a><a href=\"/products\">Products</a><a href=\"/findings\">Findings</a><a href=\"/review\">Review</a><a href=\"/activity\">Activity</a></nav><nav><a class=\"brand\" href=\"/\">ᛏ traust</a><a href=\"/onboard\">Onboard</a><a href=\"/products\">Products</a><a href=\"/packages\">Packages</a><a href=\"/exposure\">Exposure</a><a href=\"/advisories\">Advisories</a></nav><div hx-get=\"/whoami\" hx-trigger=\"load\"></div><main>")
+		templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 3, "\"><script src=\"https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js\" integrity=\"sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+\" crossorigin=\"anonymous\"></script><link rel=\"stylesheet\" href=\"/static/app.css\"></head><body><nav><a class=\"brand\" href=\"/\">ᛏ traust</a><a href=\"/onboard\">Onboard</a><a href=\"/products\">Products</a><a href=\"/runs\">Runs</a><a href=\"/approvals\">Approvals</a><a href=\"/activity\">Activity</a><a href=\"/findings\">Findings</a><a href=\"/review\">Review</a><a href=\"/advisories\">Advisories</a><a href=\"/packages\">Packages</a><a href=\"/exposure\">Exposure</a></nav><div hx-get=\"/whoami\" hx-trigger=\"load\"></div><main>")
 		if templ_7745c5c3_Err != nil {
 			return templ_7745c5c3_Err
 		}
@@ -110,7 +110,7 @@ func SignIn(problem string, sso string) templ.Component {
 				var templ_7745c5c3_Var6 string
 				templ_7745c5c3_Var6, templ_7745c5c3_Err = templ.JoinStringErrs(problem)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views.templ`, Line: 33, Col: 29}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views.templ`, Line: 30, Col: 29}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var6))
 				if templ_7745c5c3_Err != nil {
@@ -133,7 +133,7 @@ func SignIn(problem string, sso string) templ.Component {
 				var templ_7745c5c3_Var7 string
 				templ_7745c5c3_Var7, templ_7745c5c3_Err = templruntime.NewAttributeExpression(sso).ResolveURL(ctx)
 				if templ_7745c5c3_Err != nil {
-					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views.templ`, Line: 37, Col: 19}
+					return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views.templ`, Line: 34, Col: 19}
 				}
 				_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var7)
 				if templ_7745c5c3_Err != nil {
@@ -178,7 +178,7 @@ func Failure(message string) templ.Component {
 		var templ_7745c5c3_Var9 string
 		templ_7745c5c3_Var9, templ_7745c5c3_Err = templ.JoinStringErrs(message)
 		if templ_7745c5c3_Err != nil {
-			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views.templ`, Line: 43, Col: 26}
+			return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views.templ`, Line: 40, Col: 26}
 		}
 		_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ.EscapeString(templ_7745c5c3_Var9))
 		if templ_7745c5c3_Err != nil {
@@ -232,7 +232,7 @@ func Job(poll string, done bool) templ.Component {
 			var templ_7745c5c3_Var11 string
 			templ_7745c5c3_Var11, templ_7745c5c3_Err = templruntime.NewAttributeExpression(poll).Resolve(ctx)
 			if templ_7745c5c3_Err != nil {
-				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views.templ`, Line: 51, Col: 19}
+				return templ.Error{Err: templ_7745c5c3_Err, FileName: `internal/web/views.templ`, Line: 48, Col: 19}
 			}
 			_, templ_7745c5c3_Err = templ_7745c5c3_Buffer.WriteString(templ_7745c5c3_Var11)
 			if templ_7745c5c3_Err != nil {
