@@ -184,45 +184,64 @@ func minimalTriage() types.Triage {
 // re-encoded bytes still pass the contracts schema: a Go client never drops the
 // eliminated matches or their rationale (remediation plan step 12).
 func TestReportNotAffectedRoundTrip(t *testing.T) {
-	report := minimalReport()
-	classification := enums.ImpactClassificationVersionNotInRange
+	ptr := func(s string) *string { return &s }
+	classification := func(c enums.ImpactClassification) *enums.ImpactClassification { return &c }
 	ecosystem := enums.EcosystemGo
-	level := enums.DependencyEvidenceLevelManifest
-	installed := "v0.33.0"
-	artifact := "impact row: widget@abcdef0, go, golang.org/x/net, v0.33.0"
-	report.NotAffected = []types.NotAffectedEntry{{
-		Dependency: types.ReportFindingDependency{
-			Advisory:         "CVE-2024-0001",
-			Module:           "golang.org/x/net",
-			Ecosystem:        &ecosystem,
-			InstalledVersion: &installed,
-			Classification:   &classification,
-			EvidenceLevel:    &level,
-			ImpactArtifact:   &artifact,
+	level := func(l enums.DependencyEvidenceLevel) *enums.DependencyEvidenceLevel { return &l }
+	cases := []struct {
+		name  string
+		entry types.NotAffectedEntry
+	}{
+		{
+			name: "impact row: version not in range",
+			entry: types.NotAffectedEntry{
+				Dependency: types.ReportFindingDependency{
+					Advisory:         "CVE-2024-0001",
+					Module:           "golang.org/x/net",
+					Ecosystem:        &ecosystem,
+					InstalledVersion: ptr("v0.33.0"),
+					Classification:   classification(enums.ImpactClassificationVersionNotInRange),
+					EvidenceLevel:    level(enums.DependencyEvidenceLevelManifest),
+					ImpactArtifact:   ptr("impact row: widget@abcdef0, go, golang.org/x/net, v0.33.0"),
+				},
+				Rationale: "At or past the fix in every source's range.",
+			},
 		},
-		Rationale: "At or past the fix in every source's range.",
-	}}
-
-	data, err := json.Marshal(report)
-	if err != nil {
-		t.Fatalf("marshal: %v", err)
+		{
+			name: "vendor reference, optional dependency fields unset",
+			entry: types.NotAffectedEntry{
+				Dependency: types.ReportFindingDependency{Advisory: "CVE-2024-0002", Module: "openssl"},
+				Rationale:  "Red Hat states this product is not affected.",
+				Reference:  ptr("RHSA-2024:0001"),
+			},
+		},
 	}
-	if err := validate.Validate("report", data); err != nil {
-		t.Fatalf("validate report schema: %v", err)
-	}
-	var back types.Report
-	if err := json.Unmarshal(data, &back); err != nil {
-		t.Fatalf("unmarshal: %v", err)
-	}
-	again, err := json.Marshal(back)
-	if err != nil {
-		t.Fatalf("re-marshal: %v", err)
-	}
-	if err := validate.Validate("report", again); err != nil {
-		t.Fatalf("validate re-encoded report: %v", err)
-	}
-	if len(back.NotAffected) != 1 || back.NotAffected[0].Rationale != report.NotAffected[0].Rationale ||
-		back.NotAffected[0].Dependency.Advisory != "CVE-2024-0001" {
-		t.Fatalf("not_affected lost on round-trip: %+v", back.NotAffected)
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			report := minimalReport()
+			report.NotAffected = []types.NotAffectedEntry{tc.entry}
+			data, err := json.Marshal(report)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			if err := validate.Validate("report", data); err != nil {
+				t.Fatalf("validate report schema: %v", err)
+			}
+			var back types.Report
+			if err := json.Unmarshal(data, &back); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			again, err := json.Marshal(back)
+			if err != nil {
+				t.Fatalf("re-marshal: %v", err)
+			}
+			if err := validate.Validate("report", again); err != nil {
+				t.Fatalf("validate re-encoded report: %v", err)
+			}
+			if len(back.NotAffected) != 1 || back.NotAffected[0].Rationale != tc.entry.Rationale ||
+				back.NotAffected[0].Dependency.Advisory != tc.entry.Dependency.Advisory {
+				t.Fatalf("not_affected lost on round-trip: %+v", back.NotAffected)
+			}
+		})
 	}
 }
