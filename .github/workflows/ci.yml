@@ -49,7 +49,7 @@ jobs:
           cache-dependency-path: go/go.sum
       - run: make security
 
-  # Generated code matches the pinned CORE_REF and was never hand-edited.
+  # Generated code matches the pinned core commit and was never hand-edited.
   drift:
     runs-on: ubuntu-latest
     steps:
@@ -65,7 +65,7 @@ jobs:
           python-version: "3.12"
       - run: make -C go check-drift
 
-  # The generated client against traust-server built from core at CORE_REF.
+  # The generated client against traust-server built from core at the pinned commit.
   e2e:
     runs-on: ubuntu-latest
     steps:

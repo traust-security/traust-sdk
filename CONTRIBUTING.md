@@ -12,15 +12,20 @@ Enables git hooks. One time per clone. Go SDK requires **Go 1.26+** (`toolchain`
 ## Regenerating
 
 ```bash
-make -C go api-generate     # the client, its calls and the insight views from core at CORE_REF
-make -C go webapp-generate  # the example app's templ templates
+make -C go api-generate     # the client, its calls and the insight views from core at its pin
+make -C go generate         # the example app's templ templates
 make -C go check-drift      # regenerates everything, fails when committed output is stale
 ```
 
-`api-generate` builds core's OpenAPI at `CORE_REF` (`go/Makefile`), generates
+`api-generate` builds core's OpenAPI at the pinned core commit, generates
 `v1/traust/client.gen.go`, the `(T, error)` calls and `…All` iterators in one `calls.gen.go`
 per domain package under `v1/traust/`, and the insight views in `v1/traust/views.gen.go`,
 `v1/traust/insights.gen.go` and `v1/traust/insight/insights.gen.go`, and deletes the spec.
+
+The pins — core, engine and traust, each a full commit sha with a one-line why — live in
+`go/pins.yaml`, the one place they are defined (`go/Makefile` reads it). To bump one, edit
+its `ref` there and run `make -C go api-generate check-drift e2e`; commit the regenerated
+files together with the pin.
 
 ## Commit messages
 
@@ -56,16 +61,16 @@ GitHub Actions (`.github/workflows/ci.yml`) on every PR, in the merge queue and 
 | `test` | `go test -race ./...` |
 | `security` | `make security` |
 | `drift` | `make -C go check-drift`: generated code matches the pinned core commit |
-| `e2e` | `make e2e`: the SDK and the example app end to end in the box — core, the engine's claim worker and the harness — at `CORE_REF` |
+| `e2e` | `make e2e`: the SDK and the example app end to end in the box — core, the engine's claim worker and the harness — at the pinned core commit |
 | `guardrails` | `make guardrails`: the AGENTS.md rules a machine can check, plus commit subjects |
 
-`core-head.yml` runs nightly against core's `development` tip; red means bump `CORE_REF`. Paths in `CODEOWNERS` wait for a code owner.
+`core-head.yml` runs nightly against core's `development` tip; red means bump core's ref in `go/pins.yaml`. Paths in `CODEOWNERS` wait for a code owner.
 
 ## Running tests
 
 ```bash
 make test              # network-free unit tests
 make security          # govulncheck + gosec (required in CI)
-make e2e               # the SDK and the example app end to end in the box at CORE_REF (needs uv and cosign)
+make e2e               # the SDK and the example app end to end in the box at the pinned core commit (needs uv and cosign)
 make guardrails        # AGENTS.md rules a machine can check
 ```

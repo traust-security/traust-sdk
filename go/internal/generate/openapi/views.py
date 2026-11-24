@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """Turn core's Insight view contracts into OpenAPI 3.0 components for oapi-codegen.
 
-Runs in core's environment at CORE_REF (`$(CORE_PYTHON)`), so the view schemas are the
+Runs in core's environment (the `api-generate` recipe runs it there), so the view schemas are the
 `views_schema/v1` contracts core validates its views with: no second contracts pin. Each
 view becomes `<View>Insight` and each of its `$defs` `<View>Insight<Def>`; references into
 artifact schemas are inlined. A view composed from others (the executive summary) references

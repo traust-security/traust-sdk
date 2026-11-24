@@ -1,5 +1,5 @@
 # Go types for traust-core's Insight view contracts. `make api-generate` writes the
-# components from core at CORE_REF (internal/generate/openapi/views.py) and generates this
+# components from core at its pin (internal/generate/openapi/views.py) and generates this
 # output; internal/generate/insights then binds each type to its view name.
 package: traust
 generate:

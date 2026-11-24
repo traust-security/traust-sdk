@@ -1,5 +1,5 @@
 # compose.yaml — the example app's box as containers. `make -C go webapp-compose` builds the
-# images from the pinned sources (CORE_REF, ENGINE_REF, TRAUST_REF: traust-server from its own
+# images from the pinned sources (go/pins.yaml: traust-server from its own
 # Containerfile, the box — core's environment with the engine, the traust harness and the Claude
 # CLI — and the app from examples/webapp/) and brings this up; box-init prints the sign-in
 # tokens. `podman compose -f go/examples/webapp/compose.yaml down -v` tears it all down.
@@ -40,7 +40,7 @@ services:
         condition: service_healthy
     restart: "no"
 
-  # traust-server (the API) from core's own Containerfile at CORE_REF. It runs as the box
+  # traust-server (the API) from core's own Containerfile at the pinned core commit. It runs as the box
   # image's user: core keeps its logging directory private (0700), and the engine — the same
   # UID — logs there too.
   server:

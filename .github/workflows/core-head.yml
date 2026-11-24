@@ -1,5 +1,5 @@
 # Nightly: does the client still generate, build and pass e2e against core's development tip?
-# Red means core moved: bump CORE_REF in go/Makefile, run `make -C go api-generate`, open a PR.
+# Red means core moved: bump core's ref in go/pins.yaml, run `make -C go api-generate`, open a PR.
 name: core-head
 
 on:
