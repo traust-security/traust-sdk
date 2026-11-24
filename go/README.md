@@ -50,38 +50,34 @@ for f, err := range client.ListFindingsAll(ctx, repoID, nil) { … } // every pa
 ```
 
 Each paged listing has an `…All` iterator that follows the cursor and stops at the first error.
-Counts, rollups and dashboards come from core, never from walking a listing:
-`SummarizeFindings`, `FindingTimeline`, `SummarizeExposure`, `ExposureTimeline`, and
-`GetInsight(ctx, "findings-rollup", params)` for any insight (dashboards, SARIF, OSCAL, …).
+Counts and dashboard cards come from `QueryDashboard` (`POST /v1/dashboards:query`) rather than
+walking a listing, while full view folds and downloadable files run as report jobs via
+`RequestReport` (`POST /v1/reports`), `GetReport` (`GET /v1/reports/{order_id}`), and
+`GetReportFile` (`GET /v1/reports/{order_id}/file`):
+
+```go
+results, err := client.QueryDashboard(ctx, traust.DashboardQuery{
+	Subject:  traust.SubjectFindings,
+	Measures: []traust.Measure{traust.MeasureFindings},
+})
+```
+
 A view with a contract in traust-contracts `views_schema/v1` also has a generated `…Insight`
-type; `GetInsightAs` asks for that view and decodes it strictly, refusing a field outside the
-contract:
+type; `ViewNameOf` names the view for `RequestReport` and `GetReportFileAs` / `DecodeReportView`
+decodes a `ReportFormatJson` report file strictly, refusing any field outside the contract:
 
 ```go
-rollup, err := traust.GetInsightAs[traust.FindingsRollupInsight](ctx, client, params)
-critical := rollup.Total.Open.Critical                 // unknown is nil, e.g. rollup.AsOf
+format := traust.ReportFormatJson
+job, err := client.RequestReport(ctx, traust.ReportRequest{
+	Report: traust.ViewNameOf[traust.FindingsRollupInsight](),
+	Format: &format,
+})
+rollup, err := traust.GetReportFileAs[traust.FindingsRollupInsight](ctx, client, job.OrderId)
+critical := rollup.Total.Open.Critical
 ```
 
-A view composed from others uses their types: `ExecutiveSummaryInsight.Rollup` is a
-`FindingsRollupInsight`, its `Pqc` a `*PqcPortfolioInsight` (nil when the panel was not asked
-for), its isolation panel's `ThreatRegister` a `ThreatRegisterInsight`, and so on.
-
-Shared contract definitions that are not a view generate once and are reused: the finding
-records views embed are `FindingRecordsInsightFindingView`, `FindingRecordsInsightOccurrence`,
-`FindingRecordsInsightDecision` and so on (`ContainerFindingsInsight` rows carry them).
-
-`GetInsightReport` returns any insight rendered as a report on demand, as one file's bytes,
-scoped the same way (`ExecutivePanel` asks for the executive summary's optional panels):
-
-```go
-format := traust.ReportFormatHtml
-panels := []traust.ExecutivePanel{traust.ExecutivePanelIsolation}
-html, err := client.GetInsightReport(ctx, traust.ExecutiveSummary,
-	&traust.GetInsightReportParams{Format: &format, ExecutivePanel: &panels})
-```
-
-Formats are `ReportFormatMarkdown`, `ReportFormatHtml` and `ReportFormatCsv` (csv only for an insight with an export table).
-
+Formats are `ReportFormatMarkdown`, `ReportFormatHtml`, `ReportFormatCsv` (only for views with an
+export table), and `ReportFormatJson` (the contract-checked view model).
 ### Query orders
 
 `client.QueryOrders(ctx, traust.OrderQueryRequest{…})` posts filters, search, sort and bounded

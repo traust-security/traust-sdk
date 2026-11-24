@@ -509,10 +509,6 @@ func TestSetScopedReadsDecodeTheirPages(t *testing.T) {
 			found, err := c.ListRefsForRepositories(context.Background(), &ListRefsForRepositoriesParams{RepositoryIds: &set})
 			return len(found), err
 		}},
-		{"SummarizeFindingsIn", `[{"key":null,"findings":3,"open":1,"accepted":1,"false_positives":0,"hardening":0,"resolved":1,"open_by_severity":{"high":1}}]`, `[]`, func(c *Client) (int, error) {
-			found, err := c.SummarizeFindingsIn(context.Background(), &SummarizeFindingsInParams{RepositoryIds: &set})
-			return len(found), err
-		}},
 	}
 	for _, read := range reads {
 		t.Run(read.name, func(t *testing.T) {
@@ -572,10 +568,6 @@ func TestSetScopedReadsFailClosed(t *testing.T) {
 		}},
 		{"ListRefsForRepositories", func(c *Client) (int, error) {
 			found, err := c.ListRefsForRepositories(context.Background(), &ListRefsForRepositoriesParams{RepositoryIds: &set})
-			return len(found), err
-		}},
-		{"SummarizeFindingsIn", func(c *Client) (int, error) {
-			found, err := c.SummarizeFindingsIn(context.Background(), &SummarizeFindingsInParams{RepositoryIds: &set})
 			return len(found), err
 		}},
 	}

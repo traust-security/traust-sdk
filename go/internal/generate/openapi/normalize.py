@@ -71,6 +71,31 @@ def normalize_problems(spec: dict) -> None:
                     response["content"] = {"application/json": problem}
 
 
+def normalize_file_downloads(spec: dict) -> None:
+    """Treat multi-format file downloads (e.g. GET /v1/reports/{order_id}/file) as raw bytes
+    rather than JSON strings: core declares application/json alongside text/* with schema
+    {type: string}, which would make oapi-codegen try to unmarshal JSON objects into *string."""
+    for path in spec.get("paths", {}).values():
+        for operation in path.values():
+            if not isinstance(operation, dict):
+                continue
+            ok = operation.get("responses", {}).get("200")
+            if not isinstance(ok, dict):
+                continue
+            content = ok.get("content")
+            if (
+                isinstance(content, dict)
+                and len(content) > 1
+                and all(
+                    isinstance(media, dict) and media.get("schema") == {"type": "string"}
+                    for media in content.values()
+                )
+            ):
+                ok["content"] = {
+                    "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}
+                }
+
+
 # Enums whose constants carry their type name, so a value shared with another enum never renames
 # existing constants (SourceType beside SourceChannel; RunOrderReason's not_found, bad_request;
 # FindingSort's severity beside the Severity type itself; ExecutivePanel's pqc beside the pqc
@@ -100,6 +125,7 @@ def main(argv: list[str]) -> int:
         spec = json.load(handle)
     normalize(spec)
     normalize_problems(spec)
+    normalize_file_downloads(spec)
     for name in NAMESPACED:
         schema = spec["components"]["schemas"].get(name)
         if schema is not None:

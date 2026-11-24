@@ -166,26 +166,6 @@ func (c *Client) CorrectRepositoryUrl(ctx context.Context, repositoryId openapi_
 	return found, nil
 }
 
-// CountFindingsIn is GET /v1/findings/count: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) CountFindingsIn(ctx context.Context, params *CountFindingsInParams) (*FindingCount, error) {
-	raw, err := c.ClientInterface.CountFindingsIn(ctx, params)
-	if err != nil {
-		return nil, fmt.Errorf("CountFindingsIn: %w", err)
-	}
-	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("CountFindingsIn: %w", err)
-	}
-	response, err := ParseCountFindingsInResponse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("CountFindingsIn: %w", err)
-	}
-	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil {
-		return nil, fmt.Errorf("CountFindingsIn: %w", err)
-	}
-	return found, nil
-}
-
 // CreateRemediation is POST /v1/remediations: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) CreateRemediation(ctx context.Context, body CreateRemediationJSONRequestBody) (*ScheduledEffort, error) {
 	raw, err := c.ClientInterface.CreateRemediation(ctx, body)
@@ -581,46 +561,6 @@ func (c *Client) GetFindingByFingerprint(ctx context.Context, repositoryId opena
 	return found, nil
 }
 
-// GetInsight is GET /v1/insights/{name}: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) GetInsight(ctx context.Context, name ViewName, params *GetInsightParams) (*ViewModel, error) {
-	raw, err := c.ClientInterface.GetInsight(ctx, name, params)
-	if err != nil {
-		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
-	}
-	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
-	}
-	response, err := ParseGetInsightResponse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
-	}
-	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil {
-		return nil, fmt.Errorf("GetInsight(%s): %w", name, err)
-	}
-	return found, nil
-}
-
-// GetInsightReport is GET /v1/insights/{name}/report: the exact stored bytes, or a *ProblemError.
-func (c *Client) GetInsightReport(ctx context.Context, name ViewName, params *GetInsightReportParams) ([]byte, error) {
-	raw, err := c.ClientInterface.GetInsightReport(ctx, name, params)
-	if err != nil {
-		return nil, fmt.Errorf("GetInsightReport(%s): %w", name, err)
-	}
-	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("GetInsightReport(%s): %w", name, err)
-	}
-	response, err := ParseGetInsightReportResponse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("GetInsightReport(%s): %w", name, err)
-	}
-	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
-	if response.StatusCode() != http.StatusOK {
-		return nil, fmt.Errorf("GetInsightReport(%s): traust-core: HTTP %d, want 200 with the file", name, response.StatusCode())
-	}
-	return response.Body, nil
-}
-
 // GetLatestRecordedAssessment is GET /v1/repositories/{repositoryId}/assessments/latest: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) GetLatestRecordedAssessment(ctx context.Context, repositoryId openapi_types.UUID, params *GetLatestRecordedAssessmentParams) (*Assessment, error) {
 	raw, err := c.ClientInterface.GetLatestRecordedAssessment(ctx, repositoryId, params)
@@ -759,6 +699,46 @@ func (c *Client) GetRemediation(ctx context.Context, workItemId openapi_types.UU
 		return nil, fmt.Errorf("GetRemediation(%s): %w", workItemId, err)
 	}
 	return found, nil
+}
+
+// GetReport is GET /v1/reports/{orderId}: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) GetReport(ctx context.Context, orderId openapi_types.UUID) (*Report, error) {
+	raw, err := c.ClientInterface.GetReport(ctx, orderId)
+	if err != nil {
+		return nil, fmt.Errorf("GetReport(%s): %w", orderId, err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("GetReport(%s): %w", orderId, err)
+	}
+	response, err := ParseGetReportResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("GetReport(%s): %w", orderId, err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("GetReport(%s): %w", orderId, err)
+	}
+	return found, nil
+}
+
+// GetReportFile is GET /v1/reports/{orderId}/file: the exact stored bytes, or a *ProblemError.
+func (c *Client) GetReportFile(ctx context.Context, orderId openapi_types.UUID) ([]byte, error) {
+	raw, err := c.ClientInterface.GetReportFile(ctx, orderId)
+	if err != nil {
+		return nil, fmt.Errorf("GetReportFile(%s): %w", orderId, err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("GetReportFile(%s): %w", orderId, err)
+	}
+	response, err := ParseGetReportFileResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("GetReportFile(%s): %w", orderId, err)
+	}
+	// the stored bytes come only with 200: another success (204) is no file, never empty bytes
+	if response.StatusCode() != http.StatusOK {
+		return nil, fmt.Errorf("GetReportFile(%s): traust-core: HTTP %d, want 200 with the file", orderId, response.StatusCode())
+	}
+	return response.Body, nil
 }
 
 // GetRepository is GET /v1/repositories/{repositoryId}: the decoded body, or a *ProblemError when core refuses.
@@ -1727,6 +1707,26 @@ func (c *Client) PrepareVerification(ctx context.Context, workItemId openapi_typ
 	return found, nil
 }
 
+// QueryDashboard is POST /v1/dashboards:query: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) QueryDashboard(ctx context.Context, body QueryDashboardJSONRequestBody) (*DashboardResults, error) {
+	raw, err := c.ClientInterface.QueryDashboard(ctx, body)
+	if err != nil {
+		return nil, fmt.Errorf("QueryDashboard: %w", err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("QueryDashboard: %w", err)
+	}
+	response, err := ParseQueryDashboardResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("QueryDashboard: %w", err)
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+	if err != nil {
+		return nil, fmt.Errorf("QueryDashboard: %w", err)
+	}
+	return found, nil
+}
+
 // QueryOrders is POST /v1/orders/query: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) QueryOrders(ctx context.Context, body QueryOrdersJSONRequestBody) (*OrderQueryPage, error) {
 	raw, err := c.ClientInterface.QueryOrders(ctx, body)
@@ -1978,6 +1978,30 @@ func (c *Client) RegisterRef(ctx context.Context, repositoryId openapi_types.UUI
 	return found, nil
 }
 
+// RequestReport is POST /v1/reports: the decoded body, or a *ProblemError when core refuses.
+func (c *Client) RequestReport(ctx context.Context, body RequestReportJSONRequestBody) (*Report, error) {
+	raw, err := c.ClientInterface.RequestReport(ctx, body)
+	if err != nil {
+		return nil, fmt.Errorf("RequestReport: %w", err)
+	}
+	if err := checkRefusal(raw); err != nil {
+		return nil, fmt.Errorf("RequestReport: %w", err)
+	}
+	response, err := ParseRequestReportResponse(raw)
+	if err != nil {
+		return nil, fmt.Errorf("RequestReport: %w", err)
+	}
+	payload := response.JSON200
+	if payload == nil {
+		payload = response.JSON202
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, payload)
+	if err != nil {
+		return nil, fmt.Errorf("RequestReport: %w", err)
+	}
+	return found, nil
+}
+
 // ResolveRepositories is POST /v1/repositories:resolve: the decoded body, or a *ProblemError when core refuses.
 func (c *Client) ResolveRepositories(ctx context.Context, body ResolveRepositoriesJSONRequestBody) ([]RepositoryResolution, error) {
 	raw, err := c.ClientInterface.ResolveRepositories(ctx, body)
@@ -2177,29 +2201,6 @@ func (c *Client) SummarizeFindings(ctx context.Context, repositoryId openapi_typ
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
 	if err != nil {
 		return nil, fmt.Errorf("SummarizeFindings(%s): %w", repositoryId, err)
-	}
-	if found == nil {
-		return nil, nil
-	}
-	return *found, nil
-}
-
-// SummarizeFindingsIn is GET /v1/findings/summaries: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) SummarizeFindingsIn(ctx context.Context, params *SummarizeFindingsInParams) ([]FindingRollup, error) {
-	raw, err := c.ClientInterface.SummarizeFindingsIn(ctx, params)
-	if err != nil {
-		return nil, fmt.Errorf("SummarizeFindingsIn: %w", err)
-	}
-	if err := checkRefusal(raw); err != nil {
-		return nil, fmt.Errorf("SummarizeFindingsIn: %w", err)
-	}
-	response, err := ParseSummarizeFindingsInResponse(raw)
-	if err != nil {
-		return nil, fmt.Errorf("SummarizeFindingsIn: %w", err)
-	}
-	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
-	if err != nil {
-		return nil, fmt.Errorf("SummarizeFindingsIn: %w", err)
 	}
 	if found == nil {
 		return nil, nil

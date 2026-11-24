@@ -120,6 +120,24 @@ const (
 	FindingRecordsInsightDispositionValidityTruePositive  FindingRecordsInsightDispositionValidity = "true_positive"
 )
 
+// Defines values for FindingRecordsInsightFindingCurrentSeverity.
+const (
+	FindingRecordsInsightFindingCurrentSeverityCritical      FindingRecordsInsightFindingCurrentSeverity = "critical"
+	FindingRecordsInsightFindingCurrentSeverityHigh          FindingRecordsInsightFindingCurrentSeverity = "high"
+	FindingRecordsInsightFindingCurrentSeverityInformational FindingRecordsInsightFindingCurrentSeverity = "informational"
+	FindingRecordsInsightFindingCurrentSeverityLow           FindingRecordsInsightFindingCurrentSeverity = "low"
+	FindingRecordsInsightFindingCurrentSeverityMedium        FindingRecordsInsightFindingCurrentSeverity = "medium"
+)
+
+// Defines values for FindingRecordsInsightFindingCurrentState.
+const (
+	FindingRecordsInsightFindingCurrentStateAccepted      FindingRecordsInsightFindingCurrentState = "accepted"
+	FindingRecordsInsightFindingCurrentStateFalsePositive FindingRecordsInsightFindingCurrentState = "false_positive"
+	FindingRecordsInsightFindingCurrentStateHardening     FindingRecordsInsightFindingCurrentState = "hardening"
+	FindingRecordsInsightFindingCurrentStateOpen          FindingRecordsInsightFindingCurrentState = "open"
+	FindingRecordsInsightFindingCurrentStateResolved      FindingRecordsInsightFindingCurrentState = "resolved"
+)
+
 // Defines values for FindingRecordsInsightFindingCvssBasis.
 const (
 	FindingRecordsInsightFindingCvssBasisAuthority FindingRecordsInsightFindingCvssBasis = "authority"
@@ -1363,10 +1381,22 @@ type FindingRecordsInsightFinding struct {
 	// AdvisoryMatch How the finding matched its advisory, raw; null when none.
 	AdvisoryMatch *string `json:"advisory_match"`
 
+	// Category The finding's first category label, copied by a trigger when it is recorded.
+	Category *string `json:"category"`
+
 	// CreatedAt The stored record's (never null: the column is NOT NULL).
-	CreatedAt       time.Time `json:"created_at"`
-	Fingerprint     string    `json:"fingerprint"`
-	FingerprintAlgo string    `json:"fingerprint_algo"`
+	CreatedAt time.Time `json:"created_at"`
+
+	// CurrentDecided Whether a judgment stands on the finding, stamped by core's write doors from the fold.
+	CurrentDecided *bool `json:"current_decided,omitempty"`
+
+	// CurrentSeverity The finding's effective severity, stamped by core's write doors from the fold (effective_severity). Null when unrated.
+	CurrentSeverity *FindingRecordsInsightFindingCurrentSeverity `json:"current_severity"`
+
+	// CurrentState The finding's state, stamped by core's write doors from the fold: open (identified) until a judgment says otherwise.
+	CurrentState    *FindingRecordsInsightFindingCurrentState `json:"current_state,omitempty"`
+	Fingerprint     string                                    `json:"fingerprint"`
+	FingerprintAlgo string                                    `json:"fingerprint_algo"`
 
 	// Id The stored record's (never null: the column is NOT NULL).
 	Id openapi_types.UUID `json:"id"`
@@ -1381,6 +1411,12 @@ type FindingRecordsInsightFinding struct {
 	// UpdatedAt The stored record's (never null: the column is NOT NULL).
 	UpdatedAt time.Time `json:"updated_at"`
 }
+
+// FindingRecordsInsightFindingCurrentSeverity The finding's effective severity, stamped by core's write doors from the fold (effective_severity). Null when unrated.
+type FindingRecordsInsightFindingCurrentSeverity string
+
+// FindingRecordsInsightFindingCurrentState The finding's state, stamped by core's write doors from the fold: open (identified) until a judgment says otherwise.
+type FindingRecordsInsightFindingCurrentState string
 
 // FindingRecordsInsightFindingCvss A finding's CVSS as consumers render it: the occurrence's score and vector, the severity the vector computes (FIRST's qualitative rating), which source won the effective severity, and, for an advisory-backed finding, every authority's statement, the one selected, and whether same-version 3.x authority bands disagree.
 type FindingRecordsInsightFindingCvss struct {

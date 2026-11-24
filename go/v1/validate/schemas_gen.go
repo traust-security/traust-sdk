@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 3ec3df824c7c0a225af78030111f84068d3d058e. DO NOT EDIT.
 
 package validate
 
@@ -6551,6 +6551,12 @@ var Schemas = map[string]string{
       "type": "object",
       "propertyNames": {"$ref": "#/$defs/degraded_key"},
       "additionalProperties": {"type": "integer", "minimum": 1}
+    },
+    "outputs": {
+      "description": "Artifacts the run produced that belong to no assessment (a report's file): what the order wrote, read one order at a time. An assessment's documents are found through the assessment, never here.",
+      "type": "array",
+      "uniqueItems": true,
+      "items": {"type": "string", "format": "uuid"}
     }
   },
   "$defs": {
