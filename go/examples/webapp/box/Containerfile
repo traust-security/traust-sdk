@@ -1,0 +1,127 @@
+# Containerfile — the example box's own image: core's locked environment with the engine and the
+# traust harness installed into it, the way `make webapp` does on a host (go/Makefile installs
+# both into core's environment), plus what a runner needs beside them: gitleaks, cosign and the
+# Claude Code CLI. `make webapp-compose` builds it with the Makefile's cached checkouts as
+# additional build contexts:
+#
+#   podman build --build-context core=$CORE_SOURCE --build-context engine=$ENGINE_SOURCE \
+#     --build-context harness=$TRAUST_SOURCE -f examples/webapp/box/Containerfile examples/webapp
+#
+# The context is the example app itself (its pack.yaml); core, engine and harness come from the
+# checkouts at their pins, so the image is built from the same sources `make webapp` runs.
+
+# ── Builder stage ───────────────────────────────────────────────────
+# The same shape as traust's runtime image: ubi9-minimal with an uv-managed interpreter, so the
+# runtime stage below can keep a shell (the Claude CLI runs skill sessions that need one) —
+# core's and engine's own hardened runtimes have none.
+FROM registry.access.redhat.com/ubi9/ubi-minimal@sha256:085bcde1479c7f6f3d1229575dec6ad4bf45d4c2ce4bd227f4f43a901fa3897c AS builder
+
+USER 0
+
+# git for uv's git-commit dependency pins; the base's curl-minimal fetches the Claude installer.
+RUN microdnf install -y --setopt=install_weak_deps=0 git tar gzip ca-certificates \
+      python3.11 python3.11-pip \
+  && microdnf clean all
+RUN python3.11 -m pip install --no-cache-dir uv==0.13.4
+
+# The interpreter, uv-managed the way traust's runtime image builds it (its code-facts scans
+# parse current Python); uv verifies the download against its pinned checksums.
+ARG PYTHON_VERSION=3.14.8
+ENV UV_PYTHON_INSTALL_DIR=/opt/python UV_PYTHON_PREFERENCE=only-managed
+RUN uv python install "${PYTHON_VERSION}"
+
+WORKDIR /opt/box
+
+# Core's locked environment — the same sync traust-core's own image builds (rest + postgres
+# extras, no project install). Dependency layer first, cache-friendly when only sources change.
+COPY --from=core pyproject.toml uv.lock ./
+RUN uv sync --frozen --extra rest --extra postgres --no-install-project --python "${PYTHON_VERSION}"
+
+# Core itself, the engine and the harness, installed the way go/Makefile does: --no-deps into
+# core's environment, from the checkouts at their pins.
+COPY --from=core pyproject.toml /src/core/pyproject.toml
+COPY --from=core src/ /src/core/src/
+COPY --from=engine . /src/engine/
+COPY --from=harness . /src/harness/
+RUN uv pip install --python /opt/box/.venv/bin/python --no-deps /src/core /src/engine /src/harness \
+  && rm -rf /src
+
+# The engine's preflight requires gitleaks; the binary is a build input the engine checkout's
+# own `make gitleaks` fetches and verifies (go/Makefile runs it before building this image).
+# The digest check refuses to ship anything but the pinned v8.30.1 release.
+ARG TARGETARCH=amd64
+ARG GITLEAKS_VERSION=8.30.1
+COPY --from=engine gitleaks /tmp/gitleaks
+RUN case "$TARGETARCH" in \
+      amd64) echo "88f91962aa2f93ac6ab281d553b9e125f5197bbbce38f9f2437f7299c32e5509" ;; \
+      arm64) echo "00e91bbe655bd7c47753e8cfe61cb76ea1a5d7e7702fe161ee40102b46b3823b" ;; \
+      *) echo "unsupported gitleaks arch: $TARGETARCH" >&2; exit 1 ;; \
+    esac > /tmp/gitleaks.sha256 \
+    && sed 's|$|  /tmp/gitleaks|' /tmp/gitleaks.sha256 | sha256sum -c - \
+    && chmod 0555 /tmp/gitleaks && mv /tmp/gitleaks /usr/local/bin/gitleaks
+
+# The Claude Code CLI the harness's skill sessions run (`claude -p`), a self-contained binary
+# from Anthropic's installer (which verifies the download against the release manifest). The
+# harness passes CLAUDE_CONFIG_DIR through, so the login never ships here.
+ARG CLAUDE_VERSION=2.1.331
+RUN curl -fsSL https://claude.ai/install.sh | bash -s "$CLAUDE_VERSION" \
+  && mv "/root/.local/share/claude/versions/$CLAUDE_VERSION" /usr/local/bin/claude \
+  && /usr/local/bin/claude --version
+
+# ── cosign source ───────────────────────────────────────────────────
+# box-init generates the ledger's keys with cosign; the release binary is static Go, so it
+# runs on the ubi9 runtime below (the hardened hi/cosign image core's Containerfile uses needs
+# a newer glibc than ubi9 ships). The download is verified against the published checksum.
+ARG COSIGN_VERSION=v3.1.4
+RUN curl -fsSL -o /usr/local/bin/cosign \
+    "https://github.com/sigstore/cosign/releases/download/${COSIGN_VERSION}/cosign-linux-${TARGETARCH}" \
+  && echo "ade83b7aac62e131cacfe96d958948b2150cc9efec46a570a2649b8e27dedad2  /usr/local/bin/cosign" > /tmp/cosign.arm64 \
+  && echo "424e2c97d0b45fd7a6b608a87f090f35633f4c23ece5f092d48bba11aaf4bbfa  /usr/local/bin/cosign" > /tmp/cosign.amd64 \
+  && sha256sum -c "/tmp/cosign.${TARGETARCH}" && chmod 0755 /usr/local/bin/cosign \
+  && /usr/local/bin/cosign version >/dev/null && rm -f /tmp/cosign.*
+
+# ── Runtime stage ───────────────────────────────────────────────────
+# ubi9-minimal again: a shell for the Claude CLI's sessions, no package manager use after this
+# layer. Runs as a non-root user (1001, as traust's runtime image does).
+FROM registry.access.redhat.com/ubi9/ubi-minimal@sha256:085bcde1479c7f6f3d1229575dec6ad4bf45d4c2ce4bd227f4f43a901fa3897c
+
+USER 0
+# git and ca-certificates for the skill sessions' work in checked-out workspaces.
+RUN microdnf install -y --setopt=install_weak_deps=0 git ca-certificates && microdnf clean all
+
+COPY --from=builder /opt/python /opt/python
+COPY --from=builder /opt/box /opt/box
+# The harness payload, the same layout traust's runtime image ships (HARNESS_ROOT).
+COPY --from=harness harnessing/ /opt/harness/harnessing/
+COPY --from=harness packs/      /opt/harness/packs/
+COPY --from=harness config/     /opt/harness/config/
+COPY --from=harness docs/       /opt/harness/docs/
+COPY --from=harness bin/        /opt/harness/bin/
+# What the box reads at runtime: the shipped model registry and the app's pack (baked in, from
+# the pinned sources), and core's shipped feeds.
+COPY --from=harness config/model-registry.yaml /opt/box-seed/model-registry.yaml
+COPY --from=core src/traust_core/v1/context/shipped/feeds.yaml /opt/box-seed/feeds.yaml
+COPY pack.yaml /opt/box-seed/pack.yaml
+COPY box/init.sh /opt/box-seed/init.sh
+COPY --from=builder /usr/local/bin/gitleaks /usr/local/bin/gitleaks
+COPY --from=builder /usr/local/bin/claude /usr/local/bin/claude
+COPY --from=builder /usr/local/bin/cosign /usr/local/bin/cosign
+
+RUN chmod 0755 /opt/box-seed/init.sh \
+  && chown -R 1001:1001 /opt/box /opt/harness /opt/box-seed
+
+ENV PATH="/opt/box/.venv/bin:/usr/local/bin:${PATH}" \
+    HARNESS_ROOT=/opt/harness \
+    HOME=/tmp \
+    PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+USER 1001
+
+# Smoke: the parts that need no runtime environment — the interpreter runs core's own
+# package and every binary starts. The engine and harness imports (and the claude login they
+# need) are exercised by the services themselves at `podman compose up`.
+RUN python -c "import traust_core" \
+  && gitleaks version >/dev/null \
+  && cosign version \
+  && claude --version >/dev/null

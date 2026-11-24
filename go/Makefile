@@ -15,7 +15,7 @@ ROOT := ..
 GO_CI := python3 $(ROOT)/ci/lang/go/ci.py
 export PATH := $(shell go env GOPATH)/bin:$(PATH)
 
-.PHONY: core engine harness api-generate e2e webapp test webapp-generate check-drift fmt fmt-check vet lint security tools
+.PHONY: core engine harness api-generate e2e webapp webapp-compose test webapp-generate check-drift fmt fmt-check vet lint security tools
 
 # checkout pins $(1) to commit $(3) of $(2), fetching only that commit; $(4) are git clean's flags.
 define checkout
@@ -174,6 +174,31 @@ webapp: engine harness
 	echo "sign in at http://localhost:3000 as a person: $$(cat "$$home/person")"; \
 	echo "or as an admin (restates decisions): $$(cat "$$home/admin")"; \
 	cd examples/webapp && TRAUST_URL=http://127.0.0.1:$$port TRAUST_TOKEN_FILE="$$home/runner" go run .
+
+# The example box as containers: builds every image from the pinned sources (the cached
+# checkouts the targets above fetch — traust-server from its own Containerfile, the box's own
+# image with core's environment plus the engine, the harness and the Claude CLI, and the app)
+# and brings up compose: postgres (throwaway, the example's credentials), the API server and its
+# reports role, the engine's planner, the claim worker and the app. box-init provisions the
+# database, writes the config home and prints the sign-in tokens; sign in at
+# http://localhost:3000. Needs only podman (with a compose provider), and for live scans a
+# Claude login in CLAUDE_RUNNER or ANTHROPIC_API_KEY. `podman compose -f examples/webapp/compose.yaml
+# down -v` tears the box down. The images are built here rather than by compose itself because
+# podman's compose provider builds with the classic builder, which takes no additional build
+# contexts (the box's image builds from three checkouts at once).
+webapp-compose:
+	@command -v podman >/dev/null || { echo "webapp-compose needs podman" >&2; exit 1; }
+	@podman compose version >/dev/null 2>&1 || { echo "webapp-compose needs 'podman compose': a compose provider podman can call" >&2; exit 1; }
+	$(call checkout,$(CORE_SOURCE),$(CORE_REPO),$(CORE_REF),-ffdq)
+	$(call checkout,$(ENGINE_SOURCE),$(ENGINE_REPO),$(ENGINE_REF),-ffdq)
+	$(call checkout,$(TRAUST_SOURCE),$(TRAUST_REPO),$(TRAUST_REF),-ffdq)
+	@$(MAKE) -C "$(ENGINE_SOURCE)" gitleaks
+	@mkdir -p "$(CLAUDE_RUNNER)"
+	@podman build -t localhost/traust-webapp-core:local "$(CORE_SOURCE)"
+	@podman build --build-context core="$(CORE_SOURCE)" --build-context engine="$(ENGINE_SOURCE)" --build-context harness="$(TRAUST_SOURCE)" -t localhost/traust-webapp-box:local -f examples/webapp/box/Containerfile examples/webapp
+	@podman build -t localhost/traust-webapp:local -f examples/webapp/Containerfile "$(ROOT)"
+	@cd examples/webapp && CLAUDE_RUNNER="$(CLAUDE_RUNNER)" podman compose up -d --wait
+	@cd examples/webapp && podman compose logs --no-log-prefix box-init | sed -n '/^sign in at/p;/^or as an admin/p'
 
 fmt:
 	gofmt -w .

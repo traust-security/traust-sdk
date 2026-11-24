@@ -1,0 +1,160 @@
+# compose.yaml — the example app's box as containers. `make -C go webapp-compose` builds the
+# images from the pinned sources (CORE_REF, ENGINE_REF, TRAUST_REF: traust-server from its own
+# Containerfile, the box — core's environment with the engine, the traust harness and the Claude
+# CLI — and the app from examples/webapp/) and brings this up; box-init prints the sign-in
+# tokens. `podman compose -f go/examples/webapp/compose.yaml down -v` tears it all down.
+#
+# The images are built locally by the Makefile target (podman's compose provider builds with the
+# classic builder, which takes no additional build contexts); CLAUDE_RUNNER defaults to the
+# Makefile's box login dir and ANTHROPIC_API_KEY passes through to the claim worker's sessions.
+name: traust-webapp
+
+services:
+  # Throwaway records store with the example's credentials; no port published.
+  postgres:
+    image: docker.io/library/postgres:16@sha256:3950ad7c3148ca2175ef1b6c36c9efbf78957ae8fbe8b3a5d7c35af50500382f
+    environment:
+      POSTGRES_USER: traust
+      POSTGRES_PASSWORD: traust-test-only
+      POSTGRES_DB: traust
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U traust -d traust"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Everything a deployment does to a fresh database and an empty config home: traust.yaml, the
+  # ledger's cosign keys, the schema, the sign-in tokens. Runs once, before anything else.
+  box-init:
+    image: localhost/traust-webapp-box:local
+    command: ["/opt/box-seed/init.sh"]
+    environment:
+      TRAUST_DB_PASSWORD: traust-test-only
+      # Passes through empty: set OPENSSL_armcap=0 in the environment only on a VM that
+      # advertises SVE it cannot execute (cryptography's wheels then probe no ARM features).
+      OPENSSL_armcap: ${OPENSSL_armcap:-}
+    volumes:
+      - box:/box
+    depends_on:
+      postgres:
+        condition: service_healthy
+    restart: "no"
+
+  # traust-server (the API) from core's own Containerfile at CORE_REF. It runs as the box
+  # image's user: core keeps its logging directory private (0700), and the engine — the same
+  # UID — logs there too.
+  server:
+    image: localhost/traust-webapp-core:local
+    user: "1001:1001"
+    command: ["--config", "/box/traust.yaml"]
+    environment:
+      TRAUST_DB_PASSWORD: traust-test-only
+      COSIGN_PASSWORD: ""
+      OPENSSL_armcap: ${OPENSSL_armcap:-}
+    volumes:
+      - box:/box
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      box-init:
+        condition: service_completed_successfully
+    healthcheck:
+      test: ["CMD", "python", "/box/healthz.py"]
+      interval: 2s
+      timeout: 3s
+      retries: 30
+
+  # Its reports role, from the same image.
+  reports:
+    image: localhost/traust-webapp-core:local
+    user: "1001:1001"
+    command: ["--config", "/box/traust.yaml", "--role", "reports"]
+    environment:
+      TRAUST_DB_PASSWORD: traust-test-only
+      COSIGN_PASSWORD: ""
+      OPENSSL_armcap: ${OPENSSL_armcap:-}
+    volumes:
+      - box:/box
+    depends_on:
+      box-init:
+        condition: service_completed_successfully
+
+  # The engine's planner: the shipped security pack's work, planned every minute.
+  planner:
+    image: localhost/traust-webapp-box:local
+    command:
+      - traust-engine
+      - run
+      - --core
+      - /box/traust.yaml
+      - --pack
+      - /opt/box-seed/pack.yaml
+      - --router
+      - traust.ops.router:SecurityRouter
+      - --feeds
+      - /opt/box-seed/feeds.yaml
+      - --models
+      - /box/model-registry.yaml
+      - --every
+      - 1m
+    environment:
+      TRAUST_CONFIG_HOME: /box
+      TRAUST_DB_PASSWORD: traust-test-only
+      COSIGN_PASSWORD: ""
+      OPENSSL_armcap: ${OPENSSL_armcap:-}
+    volumes:
+      - box:/box
+    depends_on:
+      server:
+        condition: service_healthy
+
+  # The claim worker that runs it: the deterministic assets' materializers and the llm assets'
+  # skill sessions (claude, its login mounted from CLAUDE_RUNNER — or ANTHROPIC_API_KEY).
+  claim:
+    image: localhost/traust-webapp-box:local
+    command:
+      - traust-engine
+      - claim
+      - --loop
+      - --core
+      - /box/traust.yaml
+      - --pack
+      - /opt/box-seed/pack.yaml
+      - --worker
+      - webapp-box
+      - --label
+      - llm
+      - --feeds
+      - /opt/box-seed/feeds.yaml
+      - --models
+      - /box/model-registry.yaml
+    environment:
+      TRAUST_CONFIG_HOME: /box
+      TRAUST_DB_PASSWORD: traust-test-only
+      COSIGN_PASSWORD: ""
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY:-}
+      OPENSSL_armcap: ${OPENSSL_armcap:-}
+    volumes:
+      - box:/box
+      - ${CLAUDE_RUNNER:-./box/claude-runner}:/box/claude-runner
+    depends_on:
+      server:
+        condition: service_healthy
+
+  # The app itself: pages only, every order run by the claim worker above.
+  webapp:
+    image: localhost/traust-webapp:local
+    command: ["-addr", "0.0.0.0:3000"]
+    environment:
+      TRAUST_URL: http://server:8080
+      TRAUST_TOKEN_FILE: /box/runner
+    volumes:
+      - box:/box:ro
+    ports:
+      - "127.0.0.1:3000:3000"
+    depends_on:
+      server:
+        condition: service_healthy
+
+volumes:
+  box: {}

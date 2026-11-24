@@ -190,6 +190,12 @@ for records and an S3 store for artifacts, in throwaway containers (needs `podma
 forge is a stand-in (no network) and a stub claude runs canned work, so no Claude login is
 needed.
 
+`make webapp-compose` runs the same box as containers: `podman compose` brings up Postgres
+(throwaway), traust-server and its reports role, the engine's planner and claim worker (the
+traust harness and the claude CLI in its image), and the app, all built from the pinned sources.
+It needs only podman and, for live scans, a Claude login in `CLAUDE_RUNNER` (or
+`ANTHROPIC_API_KEY`); `podman compose -f examples/webapp/compose.yaml down -v` tears it down.
+
 ## Test your code
 
 `traustest` is a fake core: register the responses your code should see and check what it sent.
