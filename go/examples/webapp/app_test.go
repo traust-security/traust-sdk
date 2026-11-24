@@ -849,7 +849,10 @@ func TestAnAssessmentPageShowsItsIntakeAndEvidence(t *testing.T) {
 
 func TestAllAssessmentsSpanThePersonsRepositories(t *testing.T) {
 	core := traustest.New(t)
-	ref, scan, triage := uuid.New(), uuid.New(), uuid.New()
+	ref, scan, triage, repo := uuid.New(), uuid.New(), uuid.New(), uuid.New()
+	core.Handle("GET /v1/repositories", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageRepository{
+		Items: []traust.Repository{{Id: &repo, Url: "https://forge.example/org/a"}},
+	})))
 	core.Handle("GET /v1/assessments", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageAssessment{Items: []traust.Assessment{
 		anAssessment(t, scan, ref, traust.AssessmentKindSecureCode1, "recorded"),
 		anAssessment(t, triage, ref, traust.AssessmentKindTriage, "recorded"),

@@ -69,13 +69,25 @@ func (h *Handler) assessment(w http.ResponseWriter, r *http.Request) {
 
 // allAssessments is every assessment core recorded for the person, across their repositories.
 func (h *Handler) allAssessments(w http.ResponseWriter, r *http.Request) {
-	var listed []traust.Assessment
-	for a, err := range h.coreFindings.ListAssessmentsAll(r.Context(), nil) {
+	var ids []uuid.UUID
+	for repo, err := range h.coreInventory.ListRepositoriesAll(r.Context(), nil) {
 		if err != nil {
 			web.Fail(w, r, err)
 			return
 		}
-		listed = append(listed, a)
+		if repo.Id != nil {
+			ids = append(ids, *repo.Id)
+		}
+	}
+	var listed []traust.Assessment
+	if len(ids) > 0 { // core refuses a set with no repositories, so an empty scope asks nothing
+		for a, err := range h.coreFindings.ListAssessmentsAll(r.Context(), &traust.ListAssessmentsParams{RepositoryIds: &ids}) {
+			if err != nil {
+				web.Fail(w, r, err)
+				return
+			}
+			listed = append(listed, a)
+		}
 	}
 	web.Render(w, r, http.StatusOK, allAssessments(listed))
 }
