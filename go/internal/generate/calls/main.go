@@ -339,6 +339,9 @@ func main() {
 			log.Fatal(err)
 		}
 		c.Empty = spec.empty[c.Name]
+		if spec.file[c.Name] {
+			c.Result = "" // a file served in several formats: its exact bytes, whatever the format
+		}
 		pkg, err := spec.packageFor(c.Name)
 		if err != nil {
 			log.Fatal(err)
@@ -356,10 +359,11 @@ func main() {
 	}
 }
 
-// spec is the OpenAPI the calls group by: which operations document 204 No Content and
-// which tag each carries.
+// spec is the OpenAPI the calls group by: which operations document 204 No Content, which
+// serve a file (a 200 with a non-JSON media type) and which tag each carries.
 type spec struct {
 	empty map[string]bool
+	file  map[string]bool
 	tags  map[string][]string
 }
 
@@ -378,7 +382,7 @@ func readSpec(path string) (*spec, error) {
 	if err := json.Unmarshal(raw, &doc); err != nil {
 		return nil, fmt.Errorf("reading %s: %w", path, err)
 	}
-	s := &spec{empty: map[string]bool{}, tags: map[string][]string{}}
+	s := &spec{empty: map[string]bool{}, file: map[string]bool{}, tags: map[string][]string{}}
 	for _, operations := range doc.Paths {
 		for _, op := range operations {
 			if op.OperationID == "" {
@@ -386,6 +390,16 @@ func readSpec(path string) (*spec, error) {
 			}
 			if _, ok := op.Responses["204"]; ok {
 				s.empty[camel(op.OperationID)] = true
+			}
+			var ok struct {
+				Content map[string]json.RawMessage `json:"content"`
+			}
+			if raw, found := op.Responses["200"]; found && json.Unmarshal(raw, &ok) == nil {
+				for media := range ok.Content {
+					if media != "application/json" {
+						s.file[camel(op.OperationID)] = true
+					}
+				}
 			}
 			s.tags[camel(op.OperationID)] = dedupe(op.Tags)
 		}

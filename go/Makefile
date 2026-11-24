@@ -1,12 +1,12 @@
 CORE_REPO := https://github.com/traust-security/traust-core.git
-CORE_REF := 7cfad02f39a889a5a247d25804df4f3f7b578837
+CORE_REF := 036354d94b970ac3ca480f8102e30f9a553cecba
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
 CORE_PYTHON := cd "$(CORE_SOURCE)" && uv run --quiet python
 ENGINE_REPO := https://github.com/traust-security/traust-engine.git
-ENGINE_REF := c82854b33a538e985bee7c5d932194afa1edacf2
+ENGINE_REF := 0b8bd0a6ff82b75fffd9c51b88ee86200e10b91b
 ENGINE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/engine/checkout-$(ENGINE_REF)
 TRAUST_REPO := https://github.com/traust-security/traust.git
-TRAUST_REF := 7ed390f84270ecceba524798e031b591a6dea5dc
+TRAUST_REF := 0eac366fd8edcfcd6ab0b8ab6d9f6708528dde75
 TRAUST_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/harness/checkout-$(TRAUST_REF)
 # The box's Claude login, kept across runs: log in once with CLAUDE_CONFIG_DIR=$(CLAUDE_RUNNER) claude, or set ANTHROPIC_API_KEY.
 CLAUDE_RUNNER ?= $(or $(XDG_CONFIG_HOME),$(HOME)/.config)/traust-sdk/claude-runner

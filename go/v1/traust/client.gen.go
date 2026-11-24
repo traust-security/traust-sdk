@@ -204,19 +204,19 @@ const (
 
 // Defines values for Ecosystem.
 const (
-	Actions Ecosystem = "actions"
-	Apk     Ecosystem = "apk"
-	Cargo   Ecosystem = "cargo"
-	Deb     Ecosystem = "deb"
-	Docker  Ecosystem = "docker"
-	Go      Ecosystem = "go"
-	Helm    Ecosystem = "helm"
-	Maven   Ecosystem = "maven"
-	Npm     Ecosystem = "npm"
-	Nuget   Ecosystem = "nuget"
-	Pypi    Ecosystem = "pypi"
-	Rpm     Ecosystem = "rpm"
-	Ruby    Ecosystem = "ruby"
+	EcosystemActions Ecosystem = "actions"
+	EcosystemApk     Ecosystem = "apk"
+	EcosystemCargo   Ecosystem = "cargo"
+	EcosystemDeb     Ecosystem = "deb"
+	EcosystemDocker  Ecosystem = "docker"
+	EcosystemGo      Ecosystem = "go"
+	EcosystemHelm    Ecosystem = "helm"
+	EcosystemMaven   Ecosystem = "maven"
+	EcosystemNpm     Ecosystem = "npm"
+	EcosystemNuget   Ecosystem = "nuget"
+	EcosystemPypi    Ecosystem = "pypi"
+	EcosystemRpm     Ecosystem = "rpm"
+	EcosystemRuby    Ecosystem = "ruby"
 )
 
 // Defines values for EvidenceGrade.
@@ -1828,12 +1828,11 @@ type OnboardingRequest struct {
 	Repositories *[]RepositorySpec `json:"repositories,omitempty"`
 }
 
-// OnboardingResult `skipped`: what onboarding couldn't refresh (a forge outage), each with its reason.
+// OnboardingResult defines model for OnboardingResult.
 type OnboardingResult struct {
 	OrderIds      *[]openapi_types.UUID `json:"order_ids,omitempty"`
 	ProductId     openapi_types.UUID    `json:"product_id"`
 	RepositoryIds *[]openapi_types.UUID `json:"repository_ids,omitempty"`
-	Skipped       *[]string             `json:"skipped,omitempty"`
 }
 
 // OrderManifest defines model for OrderManifest.
@@ -12222,7 +12221,9 @@ type OnboardResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *OnboardingResult
 	JSON401      *Problem
+	JSON404      *Problem
 	JSON422      *Problem
+	JSON502      *Problem
 }
 
 // Status returns HTTPResponse.Status
@@ -12247,6 +12248,7 @@ type PlanOnboardingResponse struct {
 	JSON200      *OnboardingPlan
 	JSON401      *Problem
 	JSON422      *Problem
+	JSON502      *Problem
 }
 
 // Status returns HTTPResponse.Status
@@ -13004,7 +13006,7 @@ func (r GetReportResponse) StatusCode() int {
 type GetReportFileResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *string
+	JSON200      *map[string]interface{}
 	JSON401      *Problem
 	JSON404      *Problem
 	JSON409      *Problem
@@ -16432,12 +16434,26 @@ func ParseOnboardResponse(rsp *http.Response) (*OnboardResponse, error) {
 		}
 		response.JSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON502 = &dest
 
 	}
 
@@ -16478,6 +16494,13 @@ func ParsePlanOnboardingResponse(rsp *http.Response) (*PlanOnboardingResponse, e
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON502 = &dest
 
 	}
 
@@ -17939,7 +17962,7 @@ func ParseGetReportFileResponse(rsp *http.Response) (*GetReportFileResponse, err
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest string
+		var dest map[string]interface{}
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
