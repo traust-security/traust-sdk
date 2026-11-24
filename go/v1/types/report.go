@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 369a2ab2c9b65225c6878eca75bada6a65df548f. DO NOT EDIT.
 
 package types
 
@@ -16,6 +16,7 @@ type Report struct {
 	Footer                *string                       `json:"footer,omitempty"`
 	Metadata              ReportMetadata                `json:"metadata"`
 	NegativeResults       []NegativeResult              `json:"negative_results,omitempty"`
+	NotAffected           []NotAffectedEntry            `json:"not_affected,omitempty"`
 	PeachIsolationReview  *PeachIsolationReview         `json:"peach_isolation_review,omitempty"`
 	RemediationRoadmap    []RoadmapItem                 `json:"remediation_roadmap"`
 	ReviewSurfaceCoverage map[string]ReviewSurfaceEntry `json:"review_surface_coverage,omitempty"`
@@ -107,6 +108,12 @@ type NegativeResult struct {
 	Area   string  `json:"area"`
 	Files  *string `json:"files,omitempty"`
 	Result string  `json:"result"`
+}
+
+type NotAffectedEntry struct {
+	Dependency ReportFindingDependency `json:"dependency"`
+	Rationale  string                  `json:"rationale"`
+	Reference  *string                 `json:"reference,omitempty"`
 }
 
 type PeachIsolationReview struct {

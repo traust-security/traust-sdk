@@ -1,6 +1,6 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 369a2ab2c9b65225c6878eca75bada6a65df548f. DO NOT EDIT.
 
 package types
 
 // ContractsRef is the pinned traust-contracts commit.
-const ContractsRef = "31d0d884672149e606934c2844ffcbf3bdd4b925"
+const ContractsRef = "369a2ab2c9b65225c6878eca75bada6a65df548f"

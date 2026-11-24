@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 369a2ab2c9b65225c6878eca75bada6a65df548f. DO NOT EDIT.
 
 package types
 
@@ -12,6 +12,7 @@ type RunManifest struct {
 	Budget   *RunManifestBudget      `json:"budget,omitempty"`
 	Config   []RunManifestConfigItem `json:"config,omitempty"`
 	Degraded map[string]int          `json:"degraded,omitempty"`
+	Outputs  []string                `json:"outputs,omitempty"`
 	Progress *RunManifestProgress    `json:"progress,omitempty"`
 	Sessions []Session               `json:"sessions,omitempty"`
 }

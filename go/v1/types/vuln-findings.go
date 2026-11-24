@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 369a2ab2c9b65225c6878eca75bada6a65df548f. DO NOT EDIT.
 
 package types
 
@@ -7,14 +7,15 @@ import (
 )
 
 type VulnFindings struct {
-	Findings              []VulnFindingsFinding  `json:"findings"`
-	FocusAreas            []string               `json:"focus_areas"`
-	KnownFindings         []KnownFinding         `json:"known_findings,omitempty"`
-	Metadata              VulnFindingsMetadata   `json:"metadata"`
-	ReviewSurfaceCoverage map[string]interface{} `json:"review_surface_coverage,omitempty"`
-	ScannedAt             string                 `json:"scanned_at"`
-	Summary               VulnFindingsSummary    `json:"summary"`
-	Target                string                 `json:"target"`
+	Findings              []VulnFindingsFinding          `json:"findings"`
+	FocusAreas            []string                       `json:"focus_areas"`
+	KnownFindings         []KnownFinding                 `json:"known_findings,omitempty"`
+	Metadata              VulnFindingsMetadata           `json:"metadata"`
+	NotAffected           []VulnFindingsNotAffectedEntry `json:"not_affected,omitempty"`
+	ReviewSurfaceCoverage map[string]interface{}         `json:"review_surface_coverage,omitempty"`
+	ScannedAt             string                         `json:"scanned_at"`
+	Summary               VulnFindingsSummary            `json:"summary"`
+	Target                string                         `json:"target"`
 }
 
 type KnownFinding struct {
@@ -61,6 +62,12 @@ type VulnFindingsMetadataAdditionalCoverageDiff struct {
 	ChangedFilesCovered []string `json:"changed_files_covered"`
 	RefusedOrSkipped    []string `json:"refused_or_skipped"`
 	ResolutionSource    string   `json:"resolution_source"`
+}
+
+type VulnFindingsNotAffectedEntry struct {
+	Dependency ReportFindingDependency `json:"dependency"`
+	Rationale  string                  `json:"rationale"`
+	Reference  *string                 `json:"reference,omitempty"`
 }
 
 type VulnFindingsSummary struct {
