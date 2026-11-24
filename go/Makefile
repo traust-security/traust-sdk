@@ -88,7 +88,7 @@ export provision := from pathlib import Path; import sys, sqlalchemy as sa; \
 	engine = sa.create_engine(Config.from_file(Path(sys.argv[1])).database.engine_url()); dialect = Dialect.of(engine); \
 	apply_schema(engine, contracts.database_ddl(dialect)); \
 	on_driver_connection(engine, lambda dbapi: contracts.run_db_upgrades(dbapi, dialect)); \
-	data_migrations.run(engine)
+	data_migrations.run(engine, cvss=None)
 
 # core_up starts traust-server at CORE_REF on $$port beside its report builder, mints a person
 # token ($$home/person), an admin's ($$home/admin: admins restate decisions) and a runner token
