@@ -56,6 +56,32 @@ const (
 	ExecutiveSummaryInsightIsolationReviewPostureWeak        ExecutiveSummaryInsightIsolationReviewPosture = "weak"
 )
 
+// Defines values for FindingRecordsInsightCvssStatementBand.
+const (
+	FindingRecordsInsightCvssStatementBandCritical      FindingRecordsInsightCvssStatementBand = "critical"
+	FindingRecordsInsightCvssStatementBandHigh          FindingRecordsInsightCvssStatementBand = "high"
+	FindingRecordsInsightCvssStatementBandInformational FindingRecordsInsightCvssStatementBand = "informational"
+	FindingRecordsInsightCvssStatementBandLow           FindingRecordsInsightCvssStatementBand = "low"
+	FindingRecordsInsightCvssStatementBandMedium        FindingRecordsInsightCvssStatementBand = "medium"
+)
+
+// Defines values for FindingRecordsInsightCvssStatementSource.
+const (
+	FindingRecordsInsightCvssStatementSourceAdp     FindingRecordsInsightCvssStatementSource = "adp"
+	FindingRecordsInsightCvssStatementSourceCna     FindingRecordsInsightCvssStatementSource = "cna"
+	FindingRecordsInsightCvssStatementSourceGhsa    FindingRecordsInsightCvssStatementSource = "ghsa"
+	FindingRecordsInsightCvssStatementSourceNist    FindingRecordsInsightCvssStatementSource = "nist"
+	FindingRecordsInsightCvssStatementSourceRedHat  FindingRecordsInsightCvssStatementSource = "red-hat"
+	FindingRecordsInsightCvssStatementSourceScanner FindingRecordsInsightCvssStatementSource = "scanner"
+)
+
+// Defines values for FindingRecordsInsightCvssStatementVersion.
+const (
+	FindingRecordsInsightCvssStatementVersionN30 FindingRecordsInsightCvssStatementVersion = "3.0"
+	FindingRecordsInsightCvssStatementVersionN31 FindingRecordsInsightCvssStatementVersion = "3.1"
+	FindingRecordsInsightCvssStatementVersionN40 FindingRecordsInsightCvssStatementVersion = "4.0"
+)
+
 // Defines values for FindingRecordsInsightDispositionAssurance.
 const (
 	FindingRecordsInsightDispositionAssuranceClaimed         FindingRecordsInsightDispositionAssurance = "claimed"
@@ -114,6 +140,7 @@ const (
 
 // Defines values for FindingRecordsInsightFindingCvssBasis.
 const (
+	FindingRecordsInsightFindingCvssBasisAuthority FindingRecordsInsightFindingCvssBasis = "authority"
 	FindingRecordsInsightFindingCvssBasisComputed  FindingRecordsInsightFindingCvssBasis = "computed"
 	FindingRecordsInsightFindingCvssBasisJudgement FindingRecordsInsightFindingCvssBasis = "judgement"
 	FindingRecordsInsightFindingCvssBasisScanner   FindingRecordsInsightFindingCvssBasis = "scanner"
@@ -148,10 +175,61 @@ const (
 	FindingRecordsInsightOccurrenceSeverityUnrated       FindingRecordsInsightOccurrenceSeverity = "unrated"
 )
 
+// Defines values for FindingRecordsInsightSelectedCvssBand.
+const (
+	FindingRecordsInsightSelectedCvssBandCritical      FindingRecordsInsightSelectedCvssBand = "critical"
+	FindingRecordsInsightSelectedCvssBandHigh          FindingRecordsInsightSelectedCvssBand = "high"
+	FindingRecordsInsightSelectedCvssBandInformational FindingRecordsInsightSelectedCvssBand = "informational"
+	FindingRecordsInsightSelectedCvssBandLow           FindingRecordsInsightSelectedCvssBand = "low"
+	FindingRecordsInsightSelectedCvssBandMedium        FindingRecordsInsightSelectedCvssBand = "medium"
+)
+
+// Defines values for FindingRecordsInsightSelectedCvssReason.
+const (
+	FindingRecordsInsightSelectedCvssReasonPrecedence FindingRecordsInsightSelectedCvssReason = "precedence"
+)
+
+// Defines values for FindingRecordsInsightSelectedCvssSource.
+const (
+	FindingRecordsInsightSelectedCvssSourceAdp     FindingRecordsInsightSelectedCvssSource = "adp"
+	FindingRecordsInsightSelectedCvssSourceCna     FindingRecordsInsightSelectedCvssSource = "cna"
+	FindingRecordsInsightSelectedCvssSourceGhsa    FindingRecordsInsightSelectedCvssSource = "ghsa"
+	FindingRecordsInsightSelectedCvssSourceNist    FindingRecordsInsightSelectedCvssSource = "nist"
+	FindingRecordsInsightSelectedCvssSourceRedHat  FindingRecordsInsightSelectedCvssSource = "red-hat"
+	FindingRecordsInsightSelectedCvssSourceScanner FindingRecordsInsightSelectedCvssSource = "scanner"
+)
+
+// Defines values for FindingRecordsInsightSelectedCvssVersion.
+const (
+	FindingRecordsInsightSelectedCvssVersionN30 FindingRecordsInsightSelectedCvssVersion = "3.0"
+	FindingRecordsInsightSelectedCvssVersionN31 FindingRecordsInsightSelectedCvssVersion = "3.1"
+	FindingRecordsInsightSelectedCvssVersionN40 FindingRecordsInsightSelectedCvssVersion = "4.0"
+)
+
+// Defines values for FindingsRollupInsightTopFindingCvssSource.
+const (
+	FindingsRollupInsightTopFindingCvssSourceAdp     FindingsRollupInsightTopFindingCvssSource = "adp"
+	FindingsRollupInsightTopFindingCvssSourceCna     FindingsRollupInsightTopFindingCvssSource = "cna"
+	FindingsRollupInsightTopFindingCvssSourceGhsa    FindingsRollupInsightTopFindingCvssSource = "ghsa"
+	FindingsRollupInsightTopFindingCvssSourceNist    FindingsRollupInsightTopFindingCvssSource = "nist"
+	FindingsRollupInsightTopFindingCvssSourceRedHat  FindingsRollupInsightTopFindingCvssSource = "red-hat"
+	FindingsRollupInsightTopFindingCvssSourceScanner FindingsRollupInsightTopFindingCvssSource = "scanner"
+)
+
 // Defines values for FindingsRollupInsightTopFindingSeverity.
 const (
 	FindingsRollupInsightTopFindingSeverityCritical FindingsRollupInsightTopFindingSeverity = "critical"
 	FindingsRollupInsightTopFindingSeverityHigh     FindingsRollupInsightTopFindingSeverity = "high"
+)
+
+// Defines values for FindingsTrendInsightAcceptedRiskCvssSource.
+const (
+	FindingsTrendInsightAcceptedRiskCvssSourceAdp     FindingsTrendInsightAcceptedRiskCvssSource = "adp"
+	FindingsTrendInsightAcceptedRiskCvssSourceCna     FindingsTrendInsightAcceptedRiskCvssSource = "cna"
+	FindingsTrendInsightAcceptedRiskCvssSourceGhsa    FindingsTrendInsightAcceptedRiskCvssSource = "ghsa"
+	FindingsTrendInsightAcceptedRiskCvssSourceNist    FindingsTrendInsightAcceptedRiskCvssSource = "nist"
+	FindingsTrendInsightAcceptedRiskCvssSourceRedHat  FindingsTrendInsightAcceptedRiskCvssSource = "red-hat"
+	FindingsTrendInsightAcceptedRiskCvssSourceScanner FindingsTrendInsightAcceptedRiskCvssSource = "scanner"
 )
 
 // Defines values for FindingsTrendInsightAcceptedRiskSeverity.
@@ -1179,6 +1257,42 @@ type ExposureInsightRollup struct {
 	Key *string `json:"key"`
 }
 
+// FindingRecordsInsightCvssStatement One source's CVSS statement, as Core kept it: a stated score agrees with its vector (FIRST's formula), else it isn't kept.
+type FindingRecordsInsightCvssStatement struct {
+	// AcquiredAt When that document's content was first fetched; null for the scanner's.
+	AcquiredAt *time.Time `json:"acquired_at"`
+
+	// Band FIRST's qualitative rating of the score ("None" reading informational); null when unscored.
+	Band *FindingRecordsInsightCvssStatementBand `json:"band"`
+
+	// Document The kept document it was read from (`nvd:CVE-…`, `cve-list:CVE-…`, `osv:GHSA-…`, `rh-cve:CVE-…`), or the occurrence for the scanner's.
+	Document string `json:"document"`
+
+	// Score CVSS base score from 0 to 10 as an exact decimal string. Core emits the shortest fixed-point form, the same from every storage backend (for example "9.8", "10", "0"); the pattern also admits trailing zeros, so compare as decimals. Null when the finding is unscored.
+	Score *string `json:"score"`
+
+	// ScoredBy The organisation the source names as the scorer (a CNA or ADP short name, `nvd@nist.gov`); null when it names none.
+	ScoredBy *string `json:"scored_by"`
+
+	// Source Who stated it, in ranking order: NIST (NVD Primary), the GitHub-reviewed advisory, the CNA, an ADP, Red Hat, or the scanner that reported the finding.
+	Source FindingRecordsInsightCvssStatementSource `json:"source"`
+
+	// Vector The vector as the source states it.
+	Vector string `json:"vector"`
+
+	// Version The CVSS version the vector states.
+	Version FindingRecordsInsightCvssStatementVersion `json:"version"`
+}
+
+// FindingRecordsInsightCvssStatementBand FIRST's qualitative rating of the score ("None" reading informational); null when unscored.
+type FindingRecordsInsightCvssStatementBand string
+
+// FindingRecordsInsightCvssStatementSource Who stated it, in ranking order: NIST (NVD Primary), the GitHub-reviewed advisory, the CNA, an ADP, Red Hat, or the scanner that reported the finding.
+type FindingRecordsInsightCvssStatementSource string
+
+// FindingRecordsInsightCvssStatementVersion The CVSS version the vector states.
+type FindingRecordsInsightCvssStatementVersion string
+
 // FindingRecordsInsightDecision One judgement on a finding; corrections are new decisions.
 type FindingRecordsInsightDecision struct {
 	// Actor Raw; null when unattributed.
@@ -1304,13 +1418,22 @@ type FindingRecordsInsightFindingCurrentSeverity string
 // FindingRecordsInsightFindingCurrentState The finding's state, stamped by core's write doors from the fold: open (identified) until a judgment says otherwise.
 type FindingRecordsInsightFindingCurrentState string
 
-// FindingRecordsInsightFindingCvss A finding's CVSS as consumers render it: the occurrence's score and vector, the severity the vector computes (FIRST's qualitative rating), and which source won the effective severity.
+// FindingRecordsInsightFindingCvss A finding's CVSS as consumers render it: the occurrence's score and vector, the severity the vector computes (FIRST's qualitative rating), which source won the effective severity, and, for an advisory-backed finding, every authority's statement, the one selected, and whether same-version 3.x authority bands disagree.
 type FindingRecordsInsightFindingCvss struct {
-	// Basis Which source won the effective severity.
+	// AuthorityScores Every authority's kept statement for the finding's advisory and its aliases, in ranking order; empty for a finding with no advisory.
+	AuthorityScores []FindingRecordsInsightCvssStatement `json:"authority_scores"`
+
+	// Basis Which source won the effective severity: `authority` is the selected authority statement's band.
 	Basis FindingRecordsInsightFindingCvssBasis `json:"basis"`
+
+	// Conflict True when two authorities' 3.x statements of the same version fall in different bands.
+	Conflict bool `json:"conflict"`
 
 	// Score CVSS base score from 0 to 10 as an exact decimal string. Core emits the shortest fixed-point form, the same from every storage backend (for example "9.8", "10", "0"); the pattern also admits trailing zeros, so compare as decimals. Null when the finding is unscored.
 	Score *string `json:"score"`
+
+	// Selected The statement selected by precedence; null when no source has a score.
+	Selected *FindingRecordsInsightSelectedCvss `json:"selected"`
 
 	// Severity The severity the vector computes; null when the vector doesn't parse.
 	Severity *FindingRecordsInsightFindingCvssSeverity `json:"severity"`
@@ -1319,7 +1442,7 @@ type FindingRecordsInsightFindingCvss struct {
 	Vector *string `json:"vector"`
 }
 
-// FindingRecordsInsightFindingCvssBasis Which source won the effective severity.
+// FindingRecordsInsightFindingCvssBasis Which source won the effective severity: `authority` is the selected authority statement's band.
 type FindingRecordsInsightFindingCvssBasis string
 
 // FindingRecordsInsightFindingCvssSeverity The severity the vector computes; null when the vector doesn't parse.
@@ -1409,6 +1532,48 @@ type FindingRecordsInsightOccurrence struct {
 
 // FindingRecordsInsightOccurrenceSeverity The scanner-severity registry's reported severity.
 type FindingRecordsInsightOccurrenceSeverity string
+
+// FindingRecordsInsightSelectedCvss The authority statement the finding's score and effective severity follow.
+type FindingRecordsInsightSelectedCvss struct {
+	// AcquiredAt When that document's content was first fetched; null for the scanner's.
+	AcquiredAt *time.Time `json:"acquired_at"`
+
+	// Band FIRST's qualitative rating of the score ("None" reading informational).
+	Band FindingRecordsInsightSelectedCvssBand `json:"band"`
+
+	// Document The kept document it was read from (`nvd:CVE-…`, `cve-list:CVE-…`, `osv:GHSA-…`, `rh-cve:CVE-…`), or the occurrence for the scanner's.
+	Document string `json:"document"`
+
+	// Reason Why it was selected: `precedence`, the first source in ranking order with a 3.x score (a 4.0 score only when no source has 3.x).
+	Reason FindingRecordsInsightSelectedCvssReason `json:"reason"`
+
+	// Score Never null: a statement with no score (a 4.0 vector stated alone) is never selected.
+	Score string `json:"score"`
+
+	// ScoredBy The organisation the source names as the scorer (a CNA or ADP short name, `nvd@nist.gov`); null when it names none.
+	ScoredBy *string `json:"scored_by"`
+
+	// Source Who stated it, in ranking order: NIST (NVD Primary), the GitHub-reviewed advisory, the CNA, an ADP, Red Hat, or the scanner that reported the finding.
+	Source FindingRecordsInsightSelectedCvssSource `json:"source"`
+
+	// Vector The vector as the source states it.
+	Vector string `json:"vector"`
+
+	// Version The CVSS version the vector states.
+	Version FindingRecordsInsightSelectedCvssVersion `json:"version"`
+}
+
+// FindingRecordsInsightSelectedCvssBand FIRST's qualitative rating of the score ("None" reading informational).
+type FindingRecordsInsightSelectedCvssBand string
+
+// FindingRecordsInsightSelectedCvssReason Why it was selected: `precedence`, the first source in ranking order with a 3.x score (a 4.0 score only when no source has 3.x).
+type FindingRecordsInsightSelectedCvssReason string
+
+// FindingRecordsInsightSelectedCvssSource Who stated it, in ranking order: NIST (NVD Primary), the GitHub-reviewed advisory, the CNA, an ADP, Red Hat, or the scanner that reported the finding.
+type FindingRecordsInsightSelectedCvssSource string
+
+// FindingRecordsInsightSelectedCvssVersion The CVSS version the vector states.
+type FindingRecordsInsightSelectedCvssVersion string
 
 // FindingsRollupInsight Ephemeral derived Insight ViewModel from traust-core's findings-rollup view: disposition-aware finding counts for a scope (named products and teams, else every repository) at a point in time, per product, per repository and per category label, with the open critical and high findings listed. Not a persisted artifact or SQL projection. Every serialized field is present, nullable ones included. JSON Schema checks structure and ranges, not count arithmetic.
 type FindingsRollupInsight struct {
@@ -1530,10 +1695,13 @@ type FindingsRollupInsightTally struct {
 // FindingsRollupInsightTopFinding defines model for FindingsRollupInsightTopFinding.
 type FindingsRollupInsightTopFinding struct {
 	// CvssScore CVSS base score from 0 to 10 as an exact decimal string. Core emits the shortest fixed-point form, the same from every storage backend (for example "9.8", "10", "0"); the pattern also admits trailing zeros, so compare as decimals. Null when the finding is unscored.
-	CvssScore       *string            `json:"cvss_score"`
-	ExecutionProven bool               `json:"execution_proven"`
-	FindingId       openapi_types.UUID `json:"finding_id"`
-	RepositoryUrl   string             `json:"repository_url"`
+	CvssScore *string `json:"cvss_score"`
+
+	// CvssSource Who stated `cvss_score`: the selected authority (traust-core's precedence), or the scanner that reported it; null when unscored.
+	CvssSource      *FindingsRollupInsightTopFindingCvssSource `json:"cvss_source"`
+	ExecutionProven bool                                       `json:"execution_proven"`
+	FindingId       openapi_types.UUID                         `json:"finding_id"`
+	RepositoryUrl   string                                     `json:"repository_url"`
 
 	// Severity Effective severity.
 	Severity FindingsRollupInsightTopFindingSeverity `json:"severity"`
@@ -1544,6 +1712,9 @@ type FindingsRollupInsightTopFinding struct {
 	// Title Raw untrusted finding title, preserved as data rather than authored Markdown or HTML.
 	Title string `json:"title"`
 }
+
+// FindingsRollupInsightTopFindingCvssSource Who stated `cvss_score`: the selected authority (traust-core's precedence), or the scanner that reported it; null when unscored.
+type FindingsRollupInsightTopFindingCvssSource string
 
 // FindingsRollupInsightTopFindingSeverity Effective severity.
 type FindingsRollupInsightTopFindingSeverity string
@@ -1574,7 +1745,10 @@ type FindingsTrendInsightAcceptedRisk struct {
 
 	// CvssScore CVSS base score from 0 to 10 as an exact decimal string. Core emits the shortest fixed-point form, the same from every storage backend (for example "9.8", "10", "0"); the pattern also admits trailing zeros, so compare as decimals. Null when the finding is unscored.
 	CvssScore *FindingsTrendInsightCvssScore `json:"cvss_score"`
-	FindingId openapi_types.UUID             `json:"finding_id"`
+
+	// CvssSource Who stated `cvss_score`: the selected authority (traust-core's precedence), or the scanner that reported it; null when unscored.
+	CvssSource *FindingsTrendInsightAcceptedRiskCvssSource `json:"cvss_source"`
+	FindingId  openapi_types.UUID                          `json:"finding_id"`
 
 	// Rationale That decision's rationale, raw and truncated to 160 characters; null when none was given.
 	Rationale *string `json:"rationale"`
@@ -1588,6 +1762,9 @@ type FindingsTrendInsightAcceptedRisk struct {
 	// Title Raw untrusted finding title, preserved as data rather than authored Markdown or HTML.
 	Title string `json:"title"`
 }
+
+// FindingsTrendInsightAcceptedRiskCvssSource Who stated `cvss_score`: the selected authority (traust-core's precedence), or the scanner that reported it; null when unscored.
+type FindingsTrendInsightAcceptedRiskCvssSource string
 
 // FindingsTrendInsightAcceptedRiskSeverity Effective severity; null when the finding is unrated.
 type FindingsTrendInsightAcceptedRiskSeverity string

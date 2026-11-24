@@ -104,6 +104,23 @@ const (
 	Secret CredentialSource = "secret"
 )
 
+// Defines values for CvssSource.
+const (
+	CvssSourceAdp     CvssSource = "adp"
+	CvssSourceCna     CvssSource = "cna"
+	CvssSourceGhsa    CvssSource = "ghsa"
+	CvssSourceNist    CvssSource = "nist"
+	CvssSourceRedHat  CvssSource = "red-hat"
+	CvssSourceScanner CvssSource = "scanner"
+)
+
+// Defines values for CvssStatementVersion.
+const (
+	CvssStatementVersionN30 CvssStatementVersion = "3.0"
+	CvssStatementVersionN31 CvssStatementVersion = "3.1"
+	CvssStatementVersionN40 CvssStatementVersion = "4.0"
+)
+
 // Defines values for DecisionReason.
 const (
 	DecisionReasonAbandoned                  DecisionReason = "abandoned"
@@ -187,19 +204,19 @@ const (
 
 // Defines values for Ecosystem.
 const (
-	EcosystemActions Ecosystem = "actions"
-	EcosystemApk     Ecosystem = "apk"
-	EcosystemCargo   Ecosystem = "cargo"
-	EcosystemDeb     Ecosystem = "deb"
-	EcosystemDocker  Ecosystem = "docker"
-	EcosystemGo      Ecosystem = "go"
-	EcosystemHelm    Ecosystem = "helm"
-	EcosystemMaven   Ecosystem = "maven"
-	EcosystemNpm     Ecosystem = "npm"
-	EcosystemNuget   Ecosystem = "nuget"
-	EcosystemPypi    Ecosystem = "pypi"
-	EcosystemRpm     Ecosystem = "rpm"
-	EcosystemRuby    Ecosystem = "ruby"
+	Actions Ecosystem = "actions"
+	Apk     Ecosystem = "apk"
+	Cargo   Ecosystem = "cargo"
+	Deb     Ecosystem = "deb"
+	Docker  Ecosystem = "docker"
+	Go      Ecosystem = "go"
+	Helm    Ecosystem = "helm"
+	Maven   Ecosystem = "maven"
+	Npm     Ecosystem = "npm"
+	Nuget   Ecosystem = "nuget"
+	Pypi    Ecosystem = "pypi"
+	Rpm     Ecosystem = "rpm"
+	Ruby    Ecosystem = "ruby"
 )
 
 // Defines values for EvidenceGrade.
@@ -622,6 +639,13 @@ const (
 	ScannerSeverityUnrated       ScannerSeverity = "unrated"
 )
 
+// Defines values for SelectedCvssVersion.
+const (
+	SelectedCvssVersionN30 SelectedCvssVersion = "3.0"
+	SelectedCvssVersionN31 SelectedCvssVersion = "3.1"
+	SelectedCvssVersionN40 SelectedCvssVersion = "4.0"
+)
+
 // Defines values for Severity.
 const (
 	SeverityCritical      Severity = "critical"
@@ -633,6 +657,7 @@ const (
 
 // Defines values for SeverityBasis.
 const (
+	Authority SeverityBasis = "authority"
 	Computed  SeverityBasis = "computed"
 	Judgement SeverityBasis = "judgement"
 	Scanner   SeverityBasis = "scanner"
@@ -1010,6 +1035,26 @@ type CredentialConfig struct {
 // Secret referenced onto its Job.
 type CredentialSource string
 
+// CvssSource Who stated a score, in ranking order.
+type CvssSource string
+
+// CvssStatement One source's statement as a view shows it: its score with FIRST's band beside it.
+type CvssStatement struct {
+	AcquiredAt *time.Time `json:"acquired_at"`
+	Band       *Severity  `json:"band"`
+	Document   string     `json:"document"`
+	Score      *string    `json:"score"`
+	ScoredBy   *string    `json:"scored_by"`
+
+	// Source Who stated a score, in ranking order.
+	Source  CvssSource           `json:"source"`
+	Vector  string               `json:"vector"`
+	Version CvssStatementVersion `json:"version"`
+}
+
+// CvssStatementVersion defines model for CvssStatement.Version.
+type CvssStatementVersion string
+
 // DashboardOrder defines model for DashboardOrder.
 type DashboardOrder struct {
 	By   DashboardOrder_By `json:"by"`
@@ -1299,12 +1344,16 @@ type FindingContext struct {
 }
 
 // FindingCvss A finding's CVSS as consumers render it: the occurrence's score and vector, the severity
-// the vector computes, and which source won the effective severity.
+// the vector computes, which source won the effective severity, and every authority's say.
 type FindingCvss struct {
+	AuthorityScores *[]CvssStatement `json:"authority_scores,omitempty"`
+
 	// Basis Which source won a finding's severity label: the CVSS band the vector computes, the
 	// scanner's word for an unscored finding, a judgement's re-rating, or nothing.
 	Basis    SeverityBasis `json:"basis"`
+	Conflict *bool         `json:"conflict,omitempty"`
 	Score    *string       `json:"score"`
+	Selected *SelectedCvss `json:"selected"`
 	Severity *Severity     `json:"severity"`
 	Vector   *string       `json:"vector"`
 }
@@ -2376,6 +2425,24 @@ type ScheduledEffort struct {
 	// on, its status from its decisions, and its report once recorded.
 	WorkItem WorkItem `json:"work_item"`
 }
+
+// SelectedCvss The statement a finding's score follows, chosen by precedence: never an unscored one.
+type SelectedCvss struct {
+	AcquiredAt *time.Time `json:"acquired_at"`
+	Band       Severity   `json:"band"`
+	Document   string     `json:"document"`
+	Reason     *string    `json:"reason,omitempty"`
+	Score      *string    `json:"score"`
+	ScoredBy   *string    `json:"scored_by"`
+
+	// Source Who stated a score, in ranking order.
+	Source  CvssSource          `json:"source"`
+	Vector  string              `json:"vector"`
+	Version SelectedCvssVersion `json:"version"`
+}
+
+// SelectedCvssVersion defines model for SelectedCvss.Version.
+type SelectedCvssVersion string
 
 // Severity defines model for Severity.
 type Severity string
@@ -12889,6 +12956,7 @@ type RequestReportResponse struct {
 	JSON200      *Report
 	JSON202      *Report
 	JSON401      *Problem
+	JSON409      *Problem
 	JSON422      *Problem
 }
 
@@ -17789,6 +17857,13 @@ func ParseRequestReportResponse(rsp *http.Response) (*RequestReportResponse, err
 			return nil, err
 		}
 		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
 
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest Problem

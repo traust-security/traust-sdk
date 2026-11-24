@@ -1,5 +1,5 @@
 CORE_REPO := https://github.com/traust-security/traust-core.git
-CORE_REF := 264736f36a45a471f46dd6abf68b9dc646091ca0
+CORE_REF := 7cfad02f39a889a5a247d25804df4f3f7b578837
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
 CORE_PYTHON := cd "$(CORE_SOURCE)" && uv run --quiet python
 ENGINE_REPO := https://github.com/traust-security/traust-engine.git
