@@ -25,7 +25,13 @@ func New(core *traust.Client) *Handler {
 func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /advisories", web.SignedIn(h.search))
 	mux.HandleFunc("GET /advisories/{id}", web.SignedIn(h.advisory))
+	mux.HandleFunc("GET /advisories/{id}/impact-inputs", web.SignedIn(h.impactInputs))
+	mux.HandleFunc("GET /advisories/{id}/impacts/export", web.SignedIn(h.exportImpacts))
 	mux.HandleFunc("GET /findings/{id}/advisories", web.SignedIn(h.findingAdvisories))
+	mux.HandleFunc("GET /packages", web.SignedIn(h.packages))
+	mux.HandleFunc("GET /packages/{id}", web.SignedIn(h.packagePage))
+	mux.HandleFunc("GET /refs/{id}/dependencies", web.SignedIn(h.refDependencies))
+	mux.HandleFunc("GET /exposure", web.SignedIn(h.exposure))
 }
 
 // search is the Advisories page: the advisory core knows under the identifier asked for, as its

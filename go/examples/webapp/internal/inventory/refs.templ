@@ -61,6 +61,8 @@ templ refDetail(ref traust.RepositoryRef) {
 			}
 		</p>
 		<p><a href={ templ.URL("/repositories/" + ref.RepositoryId.String()) }>Its repository</a></p>
+		<h2>Dependencies</h2>
+		<div hx-get={ "/refs/" + ref.Id.String() + "/dependencies" } hx-trigger="load"></div>
 	}
 }
 

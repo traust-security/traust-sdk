@@ -91,6 +91,16 @@ templ advisoryPage(advisory traust.Advisory, record *traust.AdvisoryRecord, pack
 				</li>
 			}
 		</ul>
+		if advisory.Id != nil {
+			<h2>Impact inputs</h2>
+			if len(impactRefs(affected)) == 0 {
+				<p>Nothing to prepare yet.</p>
+			}
+			for _, ref := range impactRefs(affected) {
+				<div hx-get={ "/advisories/" + advisory.Id.String() + "/impact-inputs?ref=" + ref.String() } hx-trigger="load"></div>
+			}
+			<p><a href={ templ.URL("/advisories/" + advisory.Id.String() + "/impacts/export") }>Export impacts</a></p>
+		}
 	}
 }
 

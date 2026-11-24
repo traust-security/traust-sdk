@@ -1,0 +1,79 @@
+package exposure
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// exposurePage is the Exposure page: what core counts as exposed by ecosystem, how that moved
+// bucket by bucket, the impacts it analysed, and how fresh its advisory feeds are.
+templ exposurePage(rollups []traust.ExposureRollup, timeline []traust.ExposureSeriesPoint, impacts []traust.ImpactAnalysis, feeds []traust.FeedStatus) {
+	@web.Page("Exposure") {
+		<h1>Exposure</h1>
+		<h2>By ecosystem</h2>
+		if len(rollups) == 0 {
+			<p>Nothing counted yet.</p>
+		}
+		<ul>
+			for _, rollup := range rollups {
+				<li>{ web.Value(rollup.Key) }: { rollup.Exposed } exposed · { rollup.Affected } affected · { rollup.Commits } commits</li>
+			}
+		</ul>
+		<h2>Timeline</h2>
+		if len(timeline) == 0 {
+			<p>Nothing replayed yet.</p>
+		}
+		<ul>
+			for _, point := range timeline {
+				<li>{ point.Bucket.Format(time.DateOnly) }: { point.Exposed } exposed · { point.Affected } affected · { point.Analysed } analysed</li>
+			}
+		</ul>
+		<h2>Impacts</h2>
+		if len(impacts) == 0 {
+			<p>None analysed yet.</p>
+		}
+		<ul>
+			for _, impact := range impacts {
+				<li>
+					<a href={ templ.URL("/advisories/" + impact.AdvisoryId.String()) }>its advisory</a>
+					· <a href={ templ.URL("/refs/" + impact.RepositoryRefId.String()) }>its ref</a>
+					· { string(impact.Classification) }
+				</li>
+			}
+		</ul>
+		<h2>Feeds</h2>
+		if len(feeds) == 0 {
+			<p>No feeds watched.</p>
+		}
+		<ul>
+			for _, feed := range feeds {
+				<li>{ feed.Name } · { fetched(feed) }{ errored(feed) }</li>
+			}
+		</ul>
+	}
+}
+
+// impactInputs is one ref's share of the advisory page's impact inputs: the commits core
+// prepared against the advisory, and what their SBOMs hold of its packages.
+templ impactInputs(ref uuid.UUID, inputs []traust.ImpactInput) {
+	<div id={ "impact-inputs-" + ref.String() }>
+		if len(inputs) == 0 {
+			<p>Nothing to prepare for this ref.</p>
+		}
+		<ul>
+			for _, input := range inputs {
+				<li>
+					<a href={ templ.URL("/refs/" + input.Subject.RepositoryRefId.String()) }>{ input.Subject.RepositoryUrl }</a>
+					at { input.Subject.Sha }
+					· { string(input.Package.Ecosystem) } { input.Package.Name }
+					· { len(input.Dependencies) } affected dependencies
+				</li>
+			}
+		</ul>
+	</div>
+}

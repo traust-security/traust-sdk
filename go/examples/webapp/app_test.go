@@ -16,6 +16,7 @@ import (
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 	"github.com/traust-security/traust-sdk/go/v1/traust/traustest"
+	"reflect"
 )
 
 func newApp(t *testing.T, core *traustest.Server) http.Handler {
@@ -1721,5 +1722,242 @@ func TestApprovalRefusalsKeepTheirStatus(t *testing.T) {
 	if denied.Code != http.StatusForbidden || !strings.Contains(denied.Body.String(), "budget_exhausted") ||
 		!strings.Contains(denied.Body.String(), "the lane&#39;s budget is spent") {
 		t.Fatalf("a denied check: %d %s, want core's status and its issues", denied.Code, denied.Body)
+	}
+}
+
+func TestAPackageIsFoundUnderItsEcosystemAndName(t *testing.T) {
+	core := traustest.New(t)
+	pkg, repo := uuid.New(), uuid.New()
+	core.Handle("GET /v1/packages", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Package{
+		Id: &pkg, Ecosystem: "npm", Name: "left-pad", SourceRepositoryId: &repo,
+	})))
+	h := newApp(t, core)
+
+	blank := send(h, http.MethodGet, "/packages", "ada", nil).Body.String()
+	if !strings.Contains(blank, "<h1>Packages</h1>") || strings.Contains(blank, "npm · left-pad") {
+		t.Fatalf("an empty search: %s, want the form alone", blank)
+	}
+	page := send(h, http.MethodGet, "/packages?ecosystem=npm&name=left-pad", "ada", nil).Body.String()
+	asked := core.Requests()[0].Query
+	if asked.Get("ecosystem") != "npm" || asked.Get("name") != "left-pad" {
+		t.Fatalf("search asked %v, want the ecosystem and name passed through", asked)
+	}
+	for _, want := range []string{
+		"npm · left-pad", "package " + pkg.String(),
+		`href="/packages/` + pkg.String() + `"`,
+		`href="/repositories/` + repo.String() + `"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("packages page lacks %q:\n%s", want, page)
+		}
+	}
+}
+
+func TestAPackageNoCoreKnowsSaysSo(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/packages", onlyFor("ada", traustest.Problem(http.StatusNotFound, "no such package")))
+	w := send(newApp(t, core), http.MethodGet, "/packages?ecosystem=npm&name=right-pad", "ada", nil)
+	if w.Code != http.StatusNotFound || !strings.Contains(w.Body.String(), "No package matches that ecosystem and name.") {
+		t.Fatalf("a missed package: %d %s, want the miss said", w.Code, w.Body)
+	}
+}
+
+func TestAPackagesDependentsLinkTheirRefs(t *testing.T) {
+	core := traustest.New(t)
+	pkg, first, second := uuid.New(), uuid.New(), uuid.New()
+	core.Handle("GET /v1/packages/{id}/dependents", onlyFor("ada", traustest.JSON(http.StatusOK, []uuid.UUID{first, second})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/packages/"+pkg.String()+"?version=1.2.3", "ada", nil).Body.String()
+	if v := core.Requests()[0].Query.Get("version"); v != "1.2.3" {
+		t.Fatalf("dependents asked for version %q, want the narrowed one passed through", v)
+	}
+	for _, want := range []string{
+		"package " + pkg.String(),
+		`href="/refs/` + first.String() + `"`,
+		`href="/refs/` + second.String() + `"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("package page lacks %q:\n%s", want, page)
+		}
+	}
+}
+
+func TestARefsDependenciesAreListedOnItsPage(t *testing.T) {
+	core := traustest.New(t)
+	ref, pkg := uuid.New(), uuid.New()
+	kind, name := "branch", "main"
+	core.Handle("GET /v1/refs/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RepositoryRef{
+		Id: &ref, RepositoryId: uuid.New(), Kind: &kind, Name: &name, Sha: "4c7f0b9",
+	})))
+	core.Handle("GET /v1/refs/{id}/dependencies", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.RefDependency{
+		{Package: traust.Package{Id: &pkg, Ecosystem: "npm", Name: "left-pad"}, Dependency: traust.Dependency{PackageId: pkg, SbomId: uuid.New(), Version: "1.2.3", Direct: true}},
+		{Package: traust.Package{Ecosystem: "go", Name: "fasthttp"}, Dependency: traust.Dependency{PackageId: uuid.New(), SbomId: uuid.New(), Version: "0.9.0"}},
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/refs/"+ref.String(), "ada", nil).Body.String()
+	if !strings.Contains(page, `hx-get="/refs/`+ref.String()+`/dependencies"`) {
+		t.Fatalf("ref page: %s, want the lazy dependency section", page)
+	}
+	section := send(h, http.MethodGet, "/refs/"+ref.String()+"/dependencies", "ada", nil).Body.String()
+	for _, want := range []string{
+		`href="/packages/` + pkg.String() + `">npm · left-pad</a> · 1.2.3 · direct`,
+		"go · fasthttp · 0.9.0 · transitive",
+	} {
+		if !strings.Contains(section, want) {
+			t.Fatalf("ref's dependencies: %s, want %q", section, want)
+		}
+	}
+}
+
+func TestTheExposurePageCountsReplaysListsAndWatches(t *testing.T) {
+	core := traustest.New(t)
+	npm := "npm"
+	core.Handle("GET /v1/exposure/summary", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.ExposureRollup{
+		{Key: &npm, Exposed: 3, Affected: 2, Commits: 5},
+	})))
+	core.Handle("GET /v1/exposure/timeline", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.ExposureSeriesPoint{
+		{Bucket: time.Date(2026, 1, 1, 0, 0, 0, 0, time.UTC), Exposed: 1, Affected: 1, Analysed: 4},
+		{Bucket: time.Date(2026, 2, 1, 0, 0, 0, 0, time.UTC), Exposed: 3, Affected: 2, Analysed: 9},
+	})))
+	advisory, other, ref := uuid.New(), uuid.New(), uuid.New()
+	cursor := "next-page"
+	core.Handle("GET /v1/impacts", onlyFor("ada", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		page := traust.PageImpactAnalysis{Items: []traust.ImpactAnalysis{{
+			AdvisoryId: advisory, ArtifactId: uuid.New(), AssessmentId: uuid.New(),
+			Classification: traust.ImpactClassificationNotImported, RepositoryRefId: ref,
+		}}}
+		if r.URL.Query().Get("cursor") == "" {
+			page.Next = &cursor
+		} else {
+			page.Items = []traust.ImpactAnalysis{{
+				AdvisoryId: other, ArtifactId: uuid.New(), AssessmentId: uuid.New(),
+				Classification: traust.ImpactClassificationAffected, RepositoryRefId: uuid.New(),
+			}}
+		}
+		traustest.JSON(http.StatusOK, page).ServeHTTP(w, r)
+	})))
+	fetchedAt, stalled := time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC), "the feed stalled"
+	core.Handle("GET /v1/feeds", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.FeedStatus{
+		{Name: "osv", FetchedAt: &fetchedAt, MaxAge: "24h"},
+		{Name: "github", LastError: &stalled},
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/exposure", "ada", nil).Body.String()
+	if group := core.Requests()[0].Query.Get("group_by"); group != "ecosystem" {
+		t.Fatalf("summary grouped by %q, want ecosystems", group)
+	}
+	for _, want := range []string{
+		"<h1>Exposure</h1>", "npm: 3 exposed · 2 affected · 5 commits",
+		"2026-01-01: 1 exposed · 1 affected · 4 analysed",
+		"2026-02-01: 3 exposed · 2 affected · 9 analysed",
+		`href="/advisories/` + advisory.String() + `"`,
+		`href="/advisories/` + other.String() + `"`,
+		`href="/refs/` + ref.String() + `"`,
+		"not_imported", "affected",
+		"osv · 2026-02-03 04:05:06", "github · not fetched yet · errored: the feed stalled",
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("exposure page lacks %q:\n%s", want, page)
+		}
+	}
+	if early, late := strings.Index(page, "2026-01-01"), strings.Index(page, "2026-02-01"); early > late {
+		t.Fatalf("the timeline replays out of core's order:\n%s", page)
+	}
+}
+
+func TestAnAdvisoryPreparesItsImpactInputsAndExportsThem(t *testing.T) {
+	core := traustest.New(t)
+	advisory, pkg, ref := uuid.New(), uuid.New(), uuid.New()
+	high := "high"
+	core.Handle("GET /v1/advisories/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Advisory{
+		Id: &advisory, Identifier: "GHSA-1111-2222-3333",
+	})))
+	core.Handle("GET /v1/advisories", onlyFor("ada", traustest.JSON(http.StatusOK, traust.AdvisoryRecord{
+		Identifier: "GHSA-1111-2222-3333", DeclaredSeverity: &high,
+	})))
+	core.Handle("GET /v1/advisories/{id}/packages", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.AdvisoryPackage{
+		{AdvisoryId: advisory, PackageId: pkg},
+	})))
+	core.Handle("GET /v1/advisories/{id}/affected", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.AffectedDependency{
+		{RepositoryRefId: &ref, Dependency: traust.Dependency{PackageId: pkg, SbomId: uuid.New(), Version: "1.2.3"}, Vulnerable: true},
+	})))
+	prepared := time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC)
+	core.Handle("GET /v1/advisories/{id}/impact-inputs", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.ImpactInput{{
+		Subject: traust.SubjectRef{
+			RepositoryRefId: ref, RepositoryId: uuid.New(),
+			RepositoryUrl: "https://forge.example/a", Sha: "4c7f0b9",
+		},
+		Package:      traust.AffectedPackage{Ecosystem: "npm", Name: "left-pad"},
+		Dependencies: make([]traust.AffectedDependency, 2),
+		PreparedAt:   prepared,
+	}})))
+	export := traust.ImpactExport{
+		Advisory: "GHSA-1111-2222-3333", AdvisoryId: advisory, Analyses: 1, Commits: 1,
+		GeneratedAt: prepared, Classifications: map[string]int{"affected": 1},
+	}
+	core.Handle("GET /v1/advisories/{id}/impact-report", onlyFor("ada", traustest.JSON(http.StatusOK, export)))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/advisories/"+advisory.String(), "ada", nil).Body.String()
+	for _, want := range []string{
+		"<h2>Impact inputs</h2>",
+		`hx-get="/advisories/` + advisory.String() + `/impact-inputs?ref=` + ref.String() + `"`,
+		`href="/advisories/` + advisory.String() + `/impacts/export"`,
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("advisory page lacks %q:\n%s", want, page)
+		}
+	}
+	section := send(h, http.MethodGet, "/advisories/"+advisory.String()+"/impact-inputs?ref="+ref.String(), "ada", nil)
+	if asked := core.Requests()[4].Query.Get("repository_ref_id"); asked != ref.String() {
+		t.Fatalf("preparation asked for ref %q, want the section's ref passed through", asked)
+	}
+	for _, want := range []string{
+		`href="/refs/` + ref.String() + `">https://forge.example/a</a>`,
+		"at 4c7f0b9", "npm left-pad", "2 affected dependencies",
+	} {
+		if !strings.Contains(section.Body.String(), want) {
+			t.Fatalf("impact inputs lack %q:\n%s", want, section.Body)
+		}
+	}
+	download := send(h, http.MethodGet, "/advisories/"+advisory.String()+"/impacts/export", "ada", nil)
+	if download.Code != http.StatusOK {
+		t.Fatalf("export: %d %s", download.Code, download.Body)
+	}
+	if cd, ct := download.Header().Get("Content-Disposition"), download.Header().Get("Content-Type"); cd != `attachment; filename="impacts-`+advisory.String()+`.json"` || ct != "application/json" {
+		t.Fatalf("export answers %q %q, want the advisory's file", cd, ct)
+	}
+	var got traust.ImpactExport
+	if err := json.Unmarshal(download.Body.Bytes(), &got); err != nil || got.Advisory != export.Advisory || got.Analyses != export.Analyses || !reflect.DeepEqual(got.Classifications, export.Classifications) {
+		t.Fatalf("export downloads %v %v, want core's export", got, err)
+	}
+}
+
+func TestPackagesAndExposureRefusalsKeepTheirStatus(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/packages", traustest.Problem(http.StatusForbidden, "packages are an admin's"))
+	core.Handle("GET /v1/packages/{id}/dependents", traustest.Problem(http.StatusForbidden, "a package's dependents are an admin's"))
+	core.Handle("GET /v1/refs/{id}/dependencies", traustest.Problem(http.StatusForbidden, "a ref's dependencies are an admin's"))
+	core.Handle("GET /v1/exposure/summary", traustest.Problem(http.StatusForbidden, "exposure is an admin's"))
+	core.Handle("GET /v1/exposure/timeline", traustest.Problem(http.StatusForbidden, "the timeline is an admin's"))
+	core.Handle("GET /v1/impacts", traustest.Problem(http.StatusForbidden, "impacts are an admin's"))
+	core.Handle("GET /v1/feeds", traustest.Problem(http.StatusForbidden, "feeds are an admin's"))
+	core.Handle("GET /v1/advisories/{id}/impact-inputs", traustest.Problem(http.StatusForbidden, "impact inputs are an admin's"))
+	core.Handle("GET /v1/advisories/{id}/impact-report", traustest.Problem(http.StatusForbidden, "impact reports are an admin's"))
+	h := newApp(t, core)
+	for _, path := range []string{
+		"/packages?ecosystem=npm&name=left-pad",
+		"/packages/" + uuid.NewString(),
+		"/refs/" + uuid.NewString() + "/dependencies",
+		"/exposure",
+		"/advisories/" + uuid.NewString() + "/impact-inputs?ref=" + uuid.NewString(),
+		"/advisories/" + uuid.NewString() + "/impacts/export",
+	} {
+		if w := send(h, http.MethodGet, path, "ada", nil); w.Code != http.StatusForbidden || !strings.Contains(w.Body.String(), "admin&#39;s") {
+			t.Fatalf("%s: %d %s, want core's refusal shown", path, w.Code, w.Body)
+		}
 	}
 }

@@ -3,6 +3,8 @@ package exposure
 import (
 	"time"
 
+	"github.com/google/uuid"
+
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
@@ -30,4 +32,18 @@ func reach(a traust.AffectedDependency) string {
 		return "vulnerable"
 	}
 	return "leads to a vulnerable package"
+}
+
+// impactRefs is the refs an advisory's affected dependencies name, each once, in core's order;
+// core prepares an advisory's impacts one ref at a time.
+func impactRefs(affected []traust.AffectedDependency) []uuid.UUID {
+	refs := make([]uuid.UUID, 0, len(affected))
+	seen := make(map[uuid.UUID]bool, len(affected))
+	for _, a := range affected {
+		if a.RepositoryRefId != nil && !seen[*a.RepositoryRefId] {
+			seen[*a.RepositoryRefId] = true
+			refs = append(refs, *a.RepositoryRefId)
+		}
+	}
+	return refs
 }
