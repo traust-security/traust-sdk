@@ -3,13 +3,21 @@
 package ops
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"log/slog"
 	"os"
+	"slices"
+	"strconv"
+	"strings"
 	"testing"
 	"time"
 
+	"github.com/traust-security/traust-sdk/go/v1/enums"
+	"github.com/traust-security/traust-sdk/go/v1/skills/skillstest"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+	"github.com/traust-security/traust-sdk/go/v1/types"
 )
 
 // Runs against traust-server built from core at CORE_REF; `make e2e` starts it.
@@ -120,11 +128,129 @@ func TestE2ERunnerResolvesEveryCommandParameter(t *testing.T) {
 	if err != nil || order == nil || *order.Id != *want.Id || order.State != traust.RunOrderStateSucceeded {
 		t.Fatalf("order=%+v err=%v", order, err)
 	}
-	if len(argv) != 8 || argv[0] != "python3" || argv[3] != want.Id.String() || argv[4] == "" ||
-		argv[5] != "smoke-role" || argv[6] != rule || argv[7] != repository {
+	if len(argv) != 9 || argv[0] != "python3" || argv[3] != want.Id.String() || argv[4] == "" ||
+		argv[5] != "smoke-role" || argv[6] != rule || argv[7] != repository || argv[8] != strconv.Itoa(order.LeaseGeneration) || order.LeaseGeneration < 1 {
 		t.Fatalf("resolved argv: %v", argv)
 	}
 	if idle, err := runner.RunOnce(ctx); err != nil || idle != nil {
 		t.Fatalf("drained queue returned order=%+v err=%v", idle, err)
 	}
+}
+
+func TestE2ERecordingPreservesReportFields(t *testing.T) {
+	ctx, cancel := context.WithTimeout(context.Background(), time.Minute)
+	defer cancel()
+	person := e2eClient(t, "TRAUST_E2E_TOKEN_FILE")
+	worker := e2eClient(t, "TRAUST_E2E_RUNNER_TOKEN_FILE")
+	repository, branch, sha := "https://e2e-forge.test/e2e/fixture", "main", strings.Repeat("a", 40)
+	label := "Recording integrity"
+	onboarded, err := person.Onboard(ctx, traust.OnboardingRequest{
+		Product: "recording-integrity", Label: &label,
+		Repositories: &[]traust.RepositorySpec{{Url: repository}},
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+	repo := (*onboarded.RepositoryIds)[0]
+	kind := traust.Branch
+	ref, err := person.RegisterRef(ctx, repo, traust.RegisterRefJSONRequestBody{
+		Sha: sha, Name: &branch, Kind: &kind,
+	})
+	if err != nil {
+		t.Fatal(err)
+	}
+
+	document := skillstest.FixtureReport()
+	document.Metadata.Repository, document.Metadata.Commit = &repository, &sha
+	id := "FIXTURE-aaaaaaa-001"
+	weakness := enums.FindingKindWeakness
+	document.Findings = []types.ReportFinding{{
+		Id: id, Kind: &weakness, Severity: enums.SeverityMedium, Title: "Untrusted input to the model",
+		Cwes: []string{"CWE-20"}, Locations: []types.ReportLocation{{Path: "fixture.py"}},
+		Description:        "The fixture lets untrusted input into a model instruction.",
+		Remediation:        "Keep user input separate from instructions.",
+		OwaspLlmReferences: []enums.OwaspLlmCategory{enums.OwaspLlmCategoryLLM01},
+	}}
+	document.ExecutiveSummary.SeverityCounts.Medium = 1
+	document.FindingsSummary[2].Count, document.FindingsSummary[2].FindingIds = 1, []string{id}
+	document.RemediationRoadmap[0].Addresses = []string{id}
+	payload, err := json.Marshal(document)
+	if err != nil {
+		t.Fatal(err)
+	}
+	eventTime := time.Date(2024, 4, 5, 6, 7, 8, 0, time.UTC)
+	run := RecordingRun{
+		Client: worker,
+		Start: traust.StartRecordingRequest{
+			LeaseSeconds: 30,
+			Order:        traust.OrderRequest{Asset: "audit", Priority: 1, RepositoryId: &repo},
+		},
+		Request: RecordingRequest{Assessment: &traust.AssessmentRecordRequest{
+			RepositoryRefId: *ref.Id, AssessorVersion: "1.2.3",
+			Provenance: traust.Provenance{Source: traust.SourceTypeVulnScanReport, OccurredAt: eventTime},
+		}},
+		Executor: executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+			return ProducedReport{Payload: payload, Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
+		}),
+	}
+	result, err := run.Run(ctx)
+	if err != nil {
+		t.Fatal(err)
+	}
+	recorded := result.Receipt.Assessment
+	if recorded == nil || result.Order.State != traust.RunOrderStateSucceeded {
+		t.Fatalf("recording did not succeed: %+v", result)
+	}
+	assessment, err := person.GetAssessment(ctx, recorded.AssessmentId)
+	if err != nil || assessment == nil || !assessment.OccurredAt.Equal(eventTime) {
+		t.Fatalf("expected assessment event time %v, got %+v, %v", eventTime, assessment, err)
+	}
+	raw, err := person.GetArtifactContent(ctx, recorded.ArtifactId)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if !bytes.Equal(raw, payload) {
+		t.Fatal("stored report differs from the SDK payload")
+	}
+	findingID, ok := recorded.Intake.Findings[id]
+	if !ok {
+		t.Fatalf("no native finding bound to report label %s", id)
+	}
+	finding, err := person.GetFinding(ctx, findingID)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if finding.Labels == nil || !slices.ContainsFunc(*finding.Labels, func(label traust.FindingLabel) bool {
+		return label.Taxonomy == "owasp-llm" && label.Label == "LLM01"
+	}) {
+		t.Fatal("finding lost its OWASP LLM label")
+	}
+
+	t.Run("adapter envelope is not an authored report", func(t *testing.T) {
+		raw, err := os.ReadFile("../storage/testdata/adapter-result-rich.test.json")
+		if err != nil {
+			t.Fatal(err)
+		}
+		adapter, err := types.ParseAdapterResultArtifact(raw)
+		if err != nil {
+			t.Fatal(err)
+		}
+		run.Executor = executorFunc(func(context.Context, Execution) (ProducedReport, error) {
+			return ProducedReport{Payload: adapter.Payload(), Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
+		})
+		rejected, err := run.Run(ctx)
+		problem := causeProblem(err)
+		if problem == nil || problem.StatusCode != 422 || rejected == nil || rejected.Order.Id == nil {
+			t.Fatalf("expected a schema rejection from Core, got result=%+v err=%v", rejected, err)
+		}
+		order, err := person.GetOrder(ctx, *rejected.Order.Id)
+		if err != nil || order.State != traust.RunOrderStateFailed ||
+			order.Reason == nil || *order.Reason != string(traust.RunOrderReasonSessionOutputInvalid) {
+			t.Fatalf("rejected record's stored order=%+v err=%v", order, err)
+		}
+		assessments, err := person.ListOrderAssessments(ctx, *order.Id)
+		if err != nil || len(assessments) != 0 {
+			t.Fatalf("rejected record left assessments=%+v err=%v", assessments, err)
+		}
+	})
 }

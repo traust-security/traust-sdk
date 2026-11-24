@@ -2,8 +2,11 @@ package traust_test
 
 import (
 	"context"
+	"encoding/json"
 	"errors"
 	"net/http"
+	"os"
+	"strings"
 	"testing"
 	"time"
 
@@ -145,4 +148,63 @@ func TestGetReportFileAsDecodesStrictlyAndRejectsUnknownFields(t *testing.T) {
 	if _, err := traust.DecodeReportView[traust.FindingsRollupInsight]([]byte(`{"repositories":[]} {"extra":1}`)); err == nil {
 		t.Fatal("expected trailing JSON error, got nil")
 	}
+}
+
+// Core's test_dependency_reach_coverage.py captures each view body (reach) alongside
+// its scan evidence (coverage). Only reach conforms to the published v1 contract.
+func TestDependencyReachReadsCapturedV1Responses(t *testing.T) {
+	body, err := os.ReadFile("testdata/dependency-reach-cases.json")
+	if err != nil {
+		t.Fatal(err)
+	}
+	var cases map[string]struct {
+		Reach    json.RawMessage
+		Coverage struct {
+			WithoutScan int            `json:"without_scan"`
+			Unresolved  map[string]int `json:"unresolved"`
+		}
+	}
+	if err := json.Unmarshal(body, &cases); err != nil {
+		t.Fatal(err)
+	}
+	measured, partial := cases["measured-empty"], cases["partial-empty"]
+	if string(measured.Reach) != string(partial.Reach) || len(measured.Coverage.Unresolved) != 0 || partial.Coverage.Unresolved["npm"] != 1 {
+		t.Fatal("expected identical v1 bodies for a complete empty scan and an unresolved npm scan")
+	}
+	for _, name := range []string{"never-scanned", "document-only", "measured-empty", "partial-empty", "partial-positive"} {
+		t.Run(name, func(t *testing.T) {
+			view, err := traust.DecodeReportView[traust.DependencyReachInsight](cases[name].Reach)
+			if err != nil {
+				t.Fatal(err)
+			}
+			unmeasured := 0
+			if name == "never-scanned" {
+				unmeasured = 1
+			}
+			if view.Repositories != 1 || view.Unmeasured != unmeasured {
+				t.Fatalf("repositories=%d unmeasured=%d; want 1 and %d", view.Repositories, view.Unmeasured, unmeasured)
+			}
+			if name == "partial-positive" {
+				if len(view.Shared) != 1 || view.Shared[0].Name != "left-pad" || view.Shared[0].Ecosystem != "npm" || view.Shared[0].Repositories != 1 {
+					t.Fatalf("lost positive package: %+v", view.Shared)
+				}
+			} else if len(view.Shared) != 0 || len(view.Ecosystems) != 0 {
+				t.Fatalf("unexpected package evidence: %+v", view)
+			}
+		})
+	}
+	t.Run("in-place expansion rejected", func(t *testing.T) {
+		var fields map[string]any
+		if err := json.Unmarshal(partial.Reach, &fields); err != nil {
+			t.Fatal(err)
+		}
+		fields["coverage"] = partial.Coverage
+		expanded, err := json.Marshal(fields)
+		if err != nil {
+			t.Fatal(err)
+		}
+		if _, err := traust.DecodeReportView[traust.DependencyReachInsight](expanded); err == nil || !strings.Contains(err.Error(), `unknown field "coverage"`) {
+			t.Fatalf("want a refusal naming coverage, got %v", err)
+		}
+	})
 }
