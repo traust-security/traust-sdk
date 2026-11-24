@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 8f684d27d978e53c0ffc2b43af379fc1284c26eb. DO NOT EDIT.
+// Code generated from traust-contracts 05e1b0f8f7866d1a12e18770cc79229731c1df1d. DO NOT EDIT.
 
 package types
 
@@ -42,8 +42,16 @@ type ComponentTarget struct {
 }
 
 type ComponentTargetVerification struct {
-	ManifestPaths []string                      `json:"manifest_paths"`
-	Strategy      enums.ComponentTargetStrategy `json:"strategy"`
+	ManifestPaths []string                               `json:"manifest_paths"`
+	Provenance    *ComponentTargetVerificationProvenance `json:"provenance,omitempty"`
+	Strategy      enums.ComponentTargetStrategy          `json:"strategy"`
+}
+
+type ComponentTargetVerificationProvenance struct {
+	Digest          string  `json:"digest"`
+	ManifestVersion *string `json:"manifest_version,omitempty"`
+	Ref             string  `json:"ref"`
+	Source          string  `json:"source"`
 }
 
 type DependencyAudit struct {

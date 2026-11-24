@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 8f684d27d978e53c0ffc2b43af379fc1284c26eb. DO NOT EDIT.
+// Code generated from traust-contracts 05e1b0f8f7866d1a12e18770cc79229731c1df1d. DO NOT EDIT.
 
 package enums
 
@@ -6,9 +6,10 @@ package enums
 type ComponentTargetStrategy string
 
 const (
-	ComponentTargetStrategySharedRelease    ComponentTargetStrategy = "shared_release"
-	ComponentTargetStrategyPackageRelease   ComponentTargetStrategy = "package_release"
-	ComponentTargetStrategyWorkspacePackage ComponentTargetStrategy = "workspace_package"
+	ComponentTargetStrategySharedRelease      ComponentTargetStrategy = "shared_release"
+	ComponentTargetStrategyPackageRelease     ComponentTargetStrategy = "package_release"
+	ComponentTargetStrategyWorkspacePackage   ComponentTargetStrategy = "workspace_package"
+	ComponentTargetStrategyExternalProvenance ComponentTargetStrategy = "external_provenance"
 )
 
 // ComponentTargetStrategyValues returns all valid ComponentTargetStrategy values.
@@ -17,5 +18,6 @@ func ComponentTargetStrategyValues() []ComponentTargetStrategy {
 		ComponentTargetStrategySharedRelease,
 		ComponentTargetStrategyPackageRelease,
 		ComponentTargetStrategyWorkspacePackage,
+		ComponentTargetStrategyExternalProvenance,
 	}
 }

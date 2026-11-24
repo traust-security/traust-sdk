@@ -125,3 +125,45 @@ func TestFormatIsAsserted(t *testing.T) {
 		}
 	}
 }
+
+func TestValidateComponentTargetExternalProvenanceAndSha256(t *testing.T) {
+	sha256Commit := strings.Repeat("a", 64)
+	validManifest := []byte(`{
+  "artifact": "run-manifest",
+  "component_target": {
+    "purl": "pkg:maven/org.springframework/spring-beans@7.1.0",
+    "repository": "https://github.com/spring-projects/spring-framework",
+    "commit": "` + sha256Commit + `",
+    "module_path": ".",
+    "verification": {
+      "strategy": "external_provenance",
+      "manifest_paths": ["pom.xml"],
+      "provenance": {
+        "source": "https://slsa.dev/provenance/v1",
+        "ref": "attestation:build-42",
+        "digest": "sha256:` + strings.Repeat("b", 64) + `"
+      }
+    }
+  }
+}`)
+	if err := Validate("run-manifest", validManifest); err != nil {
+		t.Fatalf("Validate(run-manifest) rejected valid external_provenance target: %v", err)
+	}
+
+	missingProvenance := []byte(`{
+  "artifact": "run-manifest",
+  "component_target": {
+    "purl": "pkg:maven/org.springframework/spring-beans@7.1.0",
+    "repository": "https://github.com/spring-projects/spring-framework",
+    "commit": "` + sha256Commit + `",
+    "module_path": ".",
+    "verification": {
+      "strategy": "external_provenance",
+      "manifest_paths": ["pom.xml"]
+    }
+  }
+}`)
+	if err := Validate("run-manifest", missingProvenance); err == nil {
+		t.Fatal("Validate(run-manifest) accepted external_provenance without provenance object")
+	}
+}
