@@ -1,0 +1,75 @@
+package runs
+
+import (
+	"time"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// approvalsPage is the Approvals page: every order core holds for a person to release, each
+// with what core estimates it costs when its manifest carries an estimate.
+templ approvalsPage(rows []awaiting) {
+	@web.Page("Approvals") {
+		<h1>Approvals</h1>
+		if len(rows) == 0 {
+			<p>Nothing waits on a person.</p>
+		}
+		<ul>
+			for _, row := range rows {
+				@approvalLine(row.item, row.estimate)
+			}
+		</ul>
+	}
+}
+
+// approvalLine is one order waiting on a person: what it runs and for which repository, who
+// asked and when, what core estimates it costs, and the doors that check and release it.
+templ approvalLine(item traust.OrderQueryItem, estimate string) {
+	<li>
+		@runLink(item.Order)
+		: { string(item.Order.State) } · requested by { item.Order.RequestedBy } · priority { item.Order.Priority }
+		if item.RepositoryUrl != nil {
+			· { web.Text(item.RepositoryUrl) }
+		}
+		if item.Order.CreatedAt != nil {
+			· { item.Order.CreatedAt.Format(time.RFC3339) }
+		}
+		if estimate != "" {
+			· estimated ${ estimate }
+		}
+		if item.Order.State == traust.RunOrderStateAwaitingApproval && item.Order.Id != nil {
+			if item.Order.RepositoryId != nil {
+				<button hx-get={ "/approvals/" + item.Order.Id.String() + "/check" } hx-target="this" hx-swap="outerHTML">Check</button>
+			} else {
+				<span>no repository to check</span>
+			}
+			<button hx-post={ "/approvals/" + item.Order.Id.String() } hx-target="closest li" hx-swap="outerHTML">Approve</button>
+		}
+	</li>
+}
+
+// preflightAnswer is core's answer to a check: the asset may run on its repository, or not.
+templ preflightAnswer(result traust.PreflightResult) {
+	if result.Allowed {
+		<span>preflight allows it</span>
+	} else {
+		<span role="alert">preflight does not allow it</span>
+	}
+}
+
+// preflightDenied is core's refusal of a check: its words, then every typed issue it carries.
+templ preflightDenied(title string, issues []traust.DenyIssue) {
+	<span role="alert">
+		{ title }
+		for _, issue := range issues {
+			· { string(issue.Code) }: { issue.Detail }
+		}
+	</span>
+}
+
+// noPreflight says a check cannot be asked: core's preflight question names a repository.
+templ noPreflight() {
+	<span>core's preflight asks for a repository; this order names none.</span>
+}

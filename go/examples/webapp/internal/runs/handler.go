@@ -37,6 +37,9 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /runs/{token}/detail", web.SignedIn(h.runDetail))
 	mux.HandleFunc("GET /repositories/{id}/runs", web.SignedIn(h.runHistory))
 	mux.HandleFunc("GET /activity", web.SignedIn(h.activity))
+	mux.HandleFunc("GET /approvals", web.SignedIn(h.approvals))
+	mux.HandleFunc("POST /approvals/{id}", web.SignedIn(h.approve))
+	mux.HandleFunc("GET /approvals/{id}/check", web.SignedIn(h.check))
 }
 
 func (h *Handler) startRun(w http.ResponseWriter, r *http.Request) {

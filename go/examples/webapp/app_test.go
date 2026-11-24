@@ -1590,3 +1590,136 @@ func TestAWorkItemsLazySectionsKeepCoresRefusal(t *testing.T) {
 		}
 	}
 }
+
+func TestTheApprovalsPageListsWhatAwaitsAPerson(t *testing.T) {
+	core := traustest.New(t)
+	repo, gated, fleet := uuid.New(), uuid.New(), uuid.New()
+	created := time.Date(2026, 2, 3, 4, 5, 6, 0, time.UTC)
+	forge := "https://forge.example/org/a"
+	core.Handle("POST /v1/orders/query", onlyFor("ada", traustest.JSON(http.StatusOK, traust.OrderQueryPage{
+		Items: []traust.OrderQueryItem{
+			{Order: traust.RunOrder{Id: &gated, Asset: "full_audit", State: traust.RunOrderStateAwaitingApproval,
+				RequestedBy: "engine", Priority: 20, RepositoryId: &repo, CreatedAt: &created}, RepositoryUrl: &forge},
+			{Order: traust.RunOrder{Id: &fleet, Asset: "threat_model_quarterly", State: traust.RunOrderStateAwaitingApproval,
+				RequestedBy: "engine", Priority: 45, CreatedAt: &created}},
+		},
+	})))
+	core.Handle("GET /v1/orders/{id}/manifest", onlyFor("ada", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		manifest := traust.OrderManifest{}
+		if r.PathValue("id") == gated.String() {
+			manifest["estimate_usd"] = "10.00"
+		}
+		traustest.JSON(http.StatusOK, manifest).ServeHTTP(w, r)
+	})))
+	core.Handle("GET /v1/orders/{id}", onlyFor("ada", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		order := traust.RunOrder{Id: &fleet, Asset: "threat_model_quarterly", State: traust.RunOrderStateAwaitingApproval, RequestedBy: "engine"}
+		if r.PathValue("id") == gated.String() {
+			order = traust.RunOrder{Id: &gated, Asset: "full_audit", State: traust.RunOrderStateAwaitingApproval,
+				RequestedBy: "engine", RepositoryId: &repo}
+		}
+		traustest.JSON(http.StatusOK, order).ServeHTTP(w, r)
+	})))
+	core.Handle("POST /v1/preflight", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PreflightResult{
+		Allowed: true, Asset: "full_audit", RepositoryId: repo,
+	})))
+	h := newApp(t, core)
+
+	page := send(h, http.MethodGet, "/approvals", "ada", nil).Body.String()
+	for _, want := range []string{
+		"<h1>Approvals</h1>", `href="/runs/` + gated.String() + `/detail">full_audit</a>`,
+		"awaiting_approval · requested by engine · priority 20", forge, "2026-02-03T04:05:06Z",
+		"estimated $10.00", // estate-data-ok: an invented fixture estimate, not a measurement
+		`hx-get="/approvals/` + gated.String() + `/check"`,
+		`hx-post="/approvals/` + gated.String() + `"`, "threat_model_quarterly", "no repository to check",
+	} {
+		if !strings.Contains(page, want) {
+			t.Fatalf("approvals page lacks %q:\n%s", want, page)
+		}
+	}
+	var asked traust.OrderQueryRequest
+	if err := json.Unmarshal(core.Requests()[0].Body, &asked); err != nil ||
+		len(*asked.States) != 1 || (*asked.States)[0] != traust.RunOrderStateAwaitingApproval {
+		t.Fatalf("core was asked %+v %v, want only awaiting_approval", asked, err)
+	}
+	if n := len(core.Requests()); n != 3 { // the query, then each waiting order's manifest
+		t.Fatalf("core saw %d requests, want the query and a manifest per order", n)
+	}
+
+	checked := send(h, http.MethodGet, "/approvals/"+gated.String()+"/check", "ada", nil)
+	if checked.Code != http.StatusOK || !strings.Contains(checked.Body.String(), "preflight allows it") {
+		t.Fatalf("a check: %d %s, want core's allowance", checked.Code, checked.Body)
+	}
+	var preflight traust.PreflightRequest
+	if err := json.Unmarshal(core.Requests()[4].Body, &preflight); err != nil ||
+		preflight.Asset != "full_audit" || preflight.RepositoryId != repo {
+		t.Fatalf("core was asked %+v %v, want the order's asset and repository", preflight, err)
+	}
+	uncheckable := send(h, http.MethodGet, "/approvals/"+fleet.String()+"/check", "ada", nil)
+	if uncheckable.Code != http.StatusOK || !strings.Contains(uncheckable.Body.String(), "asks for a repository") {
+		t.Fatalf("a check of the fleet-wide order: %d %s, want the question core cannot be asked", uncheckable.Code, uncheckable.Body)
+	}
+}
+
+func TestApprovingAnOrderReleasesItIntoTheQueue(t *testing.T) {
+	core := traustest.New(t)
+	gated := uuid.New()
+	core.Handle("POST /v1/orders/{order_id}/approve", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RunOrder{
+		Id: &gated, Asset: "full_audit", State: traust.RunOrderStateQueued, RequestedBy: "engine", Priority: 20,
+	})))
+	h := newApp(t, core)
+
+	released := send(h, http.MethodPost, "/approvals/"+gated.String(), "ada", nil)
+	body := released.Body.String()
+	if released.Code != http.StatusOK || !strings.Contains(body, "full_audit") || !strings.Contains(body, "queued") {
+		t.Fatalf("approve: %d %s, want the row core answered", released.Code, body)
+	}
+	if strings.Contains(body, ">Approve<") {
+		t.Fatalf("approve: %s, a released row offers no approval", body)
+	}
+	reqs := core.Requests()
+	if len(reqs) != 1 || reqs[0].Method != http.MethodPost || reqs[0].Path != "/v1/orders/"+gated.String()+"/approve" {
+		t.Fatalf("core saw %v, want only the order's approval", reqs)
+	}
+	if w := send(h, http.MethodPost, "/approvals/not-an-order", "ada", nil); w.Code != http.StatusBadRequest {
+		t.Fatalf("an approval of nothing: %d, want 400", w.Code)
+	}
+}
+
+func TestApprovalRefusalsKeepTheirStatus(t *testing.T) {
+	for refused, want := range map[int]int{
+		http.StatusForbidden:           http.StatusForbidden,
+		http.StatusNotFound:            http.StatusNotFound,
+		http.StatusConflict:            http.StatusConflict,
+		http.StatusInternalServerError: http.StatusBadGateway,
+	} {
+		t.Run(http.StatusText(refused), func(t *testing.T) {
+			core := traustest.New(t)
+			core.Handle("POST /v1/orders/{order_id}/approve", traustest.Problem(refused, "refused"))
+			if w := send(newApp(t, core), http.MethodPost, "/approvals/"+uuid.NewString(), "ada", nil); w.Code != want {
+				t.Fatalf("core %d: app %d, want %d", refused, w.Code, want)
+			}
+		})
+	}
+
+	// a check core denies keeps its status and shows its typed issues
+	core := traustest.New(t)
+	repo, gated := uuid.New(), uuid.New()
+	core.Handle("GET /v1/orders/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.RunOrder{
+		Id: &gated, Asset: "full_audit", State: traust.RunOrderStateAwaitingApproval, RepositoryId: &repo,
+	})))
+	code := traust.BudgetExhausted
+	issues := []traust.DenyIssue{{Code: code, Detail: "the lane's budget is spent"}}
+	core.Handle("POST /v1/preflight", onlyFor("ada", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Content-Type", "application/problem+json")
+		w.WriteHeader(http.StatusForbidden)
+		_ = json.NewEncoder(w).Encode(traust.Problem{
+			Type: "about:blank", Title: "Forbidden", Status: http.StatusForbidden,
+			Detail: "the lane's budget is spent", Code: &code, Issues: &issues, RequestId: "traustest",
+		})
+	})))
+	denied := send(newApp(t, core), http.MethodGet, "/approvals/"+gated.String()+"/check", "ada", nil)
+	if denied.Code != http.StatusForbidden || !strings.Contains(denied.Body.String(), "budget_exhausted") ||
+		!strings.Contains(denied.Body.String(), "the lane&#39;s budget is spent") {
+		t.Fatalf("a denied check: %d %s, want core's status and its issues", denied.Code, denied.Body)
+	}
+}
