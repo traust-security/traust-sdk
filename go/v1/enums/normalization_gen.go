@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 05e1b0f8f7866d1a12e18770cc79229731c1df1d. DO NOT EDIT.
 
 package enums
 
@@ -42,6 +42,7 @@ var enumNormalizationRegistry = map[string]map[string]Normalization{
 	"compliance_target_resolves_via":    {},
 	"compliance_verdict":                {},
 	"compliance_verdict_source":         {},
+	"component_target_strategy":         {},
 	"cross_repo_propagation":            {},
 	"crypto_governance_class":           {},
 	"cve_replay_verdict":                {},

@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 05e1b0f8f7866d1a12e18770cc79229731c1df1d. DO NOT EDIT.
 
 package types
 
@@ -7,13 +7,15 @@ import (
 )
 
 type RunManifest struct {
-	Approval *RunManifestApproval    `json:"approval,omitempty"`
-	Artifact interface{}             `json:"artifact"`
-	Budget   *RunManifestBudget      `json:"budget,omitempty"`
-	Config   []RunManifestConfigItem `json:"config,omitempty"`
-	Degraded map[string]int          `json:"degraded,omitempty"`
-	Progress *RunManifestProgress    `json:"progress,omitempty"`
-	Sessions []Session               `json:"sessions,omitempty"`
+	Approval        *RunManifestApproval    `json:"approval,omitempty"`
+	Artifact        interface{}             `json:"artifact"`
+	Budget          *RunManifestBudget      `json:"budget,omitempty"`
+	ComponentTarget *ComponentTarget        `json:"component_target,omitempty"`
+	Config          []RunManifestConfigItem `json:"config,omitempty"`
+	Degraded        map[string]int          `json:"degraded,omitempty"`
+	Outputs         []string                `json:"outputs,omitempty"`
+	Progress        *RunManifestProgress    `json:"progress,omitempty"`
+	Sessions        []Session               `json:"sessions,omitempty"`
 }
 
 type RunManifestApproval struct {

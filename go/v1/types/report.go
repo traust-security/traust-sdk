@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 31d0d884672149e606934c2844ffcbf3bdd4b925. DO NOT EDIT.
+// Code generated from traust-contracts 05e1b0f8f7866d1a12e18770cc79229731c1df1d. DO NOT EDIT.
 
 package types
 
@@ -30,6 +30,28 @@ type AsvsChapter struct {
 	HighestSeverity      *enums.Severity `json:"highest_severity,omitempty"`
 	RequirementsAssessed *int            `json:"requirements_assessed,omitempty"`
 	Violations           *int            `json:"violations,omitempty"`
+}
+
+type ComponentTarget struct {
+	Commit       string                      `json:"commit"`
+	ModulePath   string                      `json:"module_path"`
+	Purl         string                      `json:"purl"`
+	ReleaseRef   *string                     `json:"release_ref,omitempty"`
+	Repository   string                      `json:"repository"`
+	Verification ComponentTargetVerification `json:"verification"`
+}
+
+type ComponentTargetVerification struct {
+	ManifestPaths []string                               `json:"manifest_paths"`
+	Provenance    *ComponentTargetVerificationProvenance `json:"provenance,omitempty"`
+	Strategy      enums.ComponentTargetStrategy          `json:"strategy"`
+}
+
+type ComponentTargetVerificationProvenance struct {
+	Digest          string  `json:"digest"`
+	ManifestVersion *string `json:"manifest_version,omitempty"`
+	Ref             string  `json:"ref"`
+	Source          string  `json:"source"`
 }
 
 type DependencyAudit struct {
@@ -217,6 +239,7 @@ type ReportMetadata struct {
 	RefKind      *enums.RefKind              `json:"ref_kind,omitempty"`
 	Repository   *string                     `json:"repository,omitempty"`
 	Scope        string                      `json:"scope"`
+	Target       *ComponentTarget            `json:"target,omitempty"`
 	Tools        []string                    `json:"tools,omitempty"`
 }
 
