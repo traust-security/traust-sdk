@@ -72,6 +72,17 @@ job, err := client.RequestReport(ctx, traust.ReportRequest{
 	Report: traust.ViewNameOf[traust.FindingsRollupInsight](),
 	Format: &format,
 })
+for err == nil && job.Status != traust.ReportStatusReady {
+	if job.Status == traust.ReportStatusFailed {
+		return fmt.Errorf("report failed: %v", job.Reason)
+	}
+	select {
+	case <-ctx.Done():
+		return ctx.Err()
+	case <-time.After(time.Second):
+	}
+	job, err = client.GetReport(ctx, job.OrderId)
+}
 rollup, err := traust.GetReportFileAs[traust.FindingsRollupInsight](ctx, client, job.OrderId)
 critical := rollup.Total.Open.Critical
 ```
