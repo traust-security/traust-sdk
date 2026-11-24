@@ -83,7 +83,13 @@ for err == nil && job.Status != traust.ReportStatusReady {
 	}
 	job, err = client.GetReport(ctx, job.OrderId)
 }
+if err != nil {
+	return err
+}
 rollup, err := traust.GetReportFileAs[traust.FindingsRollupInsight](ctx, client, job.OrderId)
+if err != nil {
+	return err
+}
 critical := rollup.Total.Open.Critical
 ```
 

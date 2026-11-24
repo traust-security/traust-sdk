@@ -4,7 +4,9 @@ import (
 	"bytes"
 	"context"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"io"
 
 	openapi_types "github.com/oapi-codegen/runtime/types"
 )
@@ -29,6 +31,9 @@ func DecodeReportView[T any, PT insightView[T]](body []byte) (*T, error) {
 	decoder.DisallowUnknownFields()
 	if err := decoder.Decode(&view); err != nil {
 		return nil, fmt.Errorf("decoding the %s report: %w", name, err)
+	}
+	if err := decoder.Decode(&struct{}{}); !errors.Is(err, io.EOF) {
+		return nil, fmt.Errorf("decoding the %s report: trailing data after JSON document", name)
 	}
 	return &view, nil
 }

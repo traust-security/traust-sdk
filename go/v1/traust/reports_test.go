@@ -141,4 +141,8 @@ func TestGetReportFileAsDecodesStrictlyAndRejectsUnknownFields(t *testing.T) {
 	if _, err := traust.GetReportFileAs[traust.FindingsRollupInsight](context.Background(), core.Client(), notReadyID); !errors.As(err, &problem) || problem.StatusCode != http.StatusConflict {
 		t.Fatalf("want 409 ProblemError, got %v", err)
 	}
+
+	if _, err := traust.DecodeReportView[traust.FindingsRollupInsight]([]byte(`{"repositories":[]} {"extra":1}`)); err == nil {
+		t.Fatal("expected trailing JSON error, got nil")
+	}
 }
