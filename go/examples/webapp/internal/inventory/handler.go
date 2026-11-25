@@ -117,6 +117,7 @@ func (h *Handler) dashboard(ctx context.Context, repos []traust.Repository) ([]c
 	}{
 		{"Findings by severity", traust.SubjectFindings, traust.MeasureFindings, traust.DimensionSeverity},
 		{"Findings by state", traust.SubjectFindings, traust.MeasureFindings, traust.DimensionState},
+		{"Findings by product", traust.SubjectFindings, traust.MeasureFindings, traust.DimensionProduct},
 		{"Review queue by status", traust.SubjectReviewItems, traust.MeasureReviewItems, traust.DimensionStatus},
 	}
 	cards := make([]card, 0, len(queries))

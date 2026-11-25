@@ -119,10 +119,10 @@ func TestHomeShowsThePersonAndTheirRepositories(t *testing.T) {
 		}
 		subjects = append(subjects, asked.Subject)
 	}
-	if len(subjects) != 3 || subjects[2] != traust.SubjectReviewItems {
-		t.Fatalf("dashboard asked %v, want two findings cards and the review queue", subjects)
+	if len(subjects) != 4 || subjects[3] != traust.SubjectReviewItems {
+		t.Fatalf("dashboard asked %v, want three findings cards and the review queue", subjects)
 	}
-	for _, want := range []string{"Signed in as Ada", `href="/repositories/` + repo.String() + `"`, "<dt>high</dt><dd>3</dd>", "Review queue by status"} {
+	for _, want := range []string{"Signed in as Ada", `href="/repositories/` + repo.String() + `"`, "<dt>high</dt><dd>3</dd>", "Findings by product", "Review queue by status"} {
 		if !strings.Contains(body, want) {
 			t.Fatalf("home lacks %q:\n%s", want, body)
 		}

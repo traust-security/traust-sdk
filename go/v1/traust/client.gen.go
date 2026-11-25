@@ -2123,8 +2123,10 @@ type RemediationFindingRequest struct {
 	RepositoryId openapi_types.UUID `json:"repository_id"`
 }
 
-// RemediationInput What the skill patches: the work item, its findings, where to push.
+// RemediationInput What the skill patches: the work item, its findings, where to push, and the machine
+// identity the fix commit is authored under.
 type RemediationInput struct {
+	Committer string         `json:"committer"`
 	Findings  FindingContext `json:"findings"`
 	FixBranch string         `json:"fix_branch"`
 
