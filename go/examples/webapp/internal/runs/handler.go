@@ -42,6 +42,10 @@ func (h *Handler) Routes(mux *http.ServeMux) {
 	mux.HandleFunc("GET /approvals/{id}/check", web.SignedIn(h.check))
 }
 
+// personPriority is the app's choice for a run a person starts: ahead of the engine's scheduled
+// work (core claims the lowest first).
+const personPriority = 1
+
 func (h *Handler) startRun(w http.ResponseWriter, r *http.Request) {
 	var opts []coreruns.RunOption
 	if repo := r.PostFormValue("repository_id"); repo != "" {
@@ -52,7 +56,7 @@ func (h *Handler) startRun(w http.ResponseWriter, r *http.Request) {
 		}
 		opts = append(opts, coreruns.ForRepository(id))
 	}
-	poller, err := h.coreRuns.BeginSkill(r.Context(), r.PostFormValue("asset"), opts...)
+	poller, err := h.coreRuns.BeginSkill(r.Context(), r.PostFormValue("asset"), personPriority, opts...)
 	if err != nil {
 		web.Fail(w, r, err)
 		return

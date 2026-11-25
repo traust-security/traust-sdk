@@ -106,6 +106,7 @@ func (h *Handler) signOut(w http.ResponseWriter, r *http.Request) {
 func (h *Handler) ssoLink() string { return h.sso.Link() }
 
 // startSession keeps the token core accepted as the person's session, as both sign-in paths do.
+// Secure follows the request's own TLS: behind a TLS-terminating proxy, set Secure always.
 func startSession(w http.ResponseWriter, r *http.Request, token string) {
 	http.SetCookie(w, &http.Cookie{
 		Name: web.SessionCookie, Value: token, Path: "/",

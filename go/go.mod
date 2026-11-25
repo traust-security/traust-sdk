@@ -7,7 +7,6 @@ toolchain go1.26.11
 require (
 	github.com/google/uuid v1.6.0
 	github.com/oapi-codegen/runtime v1.8.0
-	gopkg.in/yaml.v3 v3.0.1
 )
 
 require (
@@ -31,6 +30,7 @@ require (
 	golang.org/x/text v0.39.0 // indirect
 	golang.org/x/tools v0.48.0 // indirect
 	gopkg.in/yaml.v2 v2.4.0 // indirect
+	gopkg.in/yaml.v3 v3.0.1 // indirect
 )
 
 tool github.com/oapi-codegen/oapi-codegen/v2/cmd/oapi-codegen

@@ -65,7 +65,7 @@ func TestBeginSkillSubmitsTheAssetByName(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			client, submitted := fakeSkill(t)
-			poller, err := client.BeginSkill(t.Context(), "scan", tt.opts...)
+			poller, err := client.BeginSkill(t.Context(), "scan", 1, tt.opts...)
 			if err != nil {
 				t.Fatal(err)
 			}
@@ -105,7 +105,7 @@ func TestBeginSkillSubmitsTheAssetByName(t *testing.T) {
 
 func TestBeginSkillRequiresAnAsset(t *testing.T) {
 	client, _ := fakeSkill(t)
-	if _, err := client.BeginSkill(t.Context(), ""); err == nil {
+	if _, err := client.BeginSkill(t.Context(), "", 1); err == nil {
 		t.Fatal("BeginSkill accepted an empty asset")
 	}
 }
@@ -121,7 +121,7 @@ func TestBeginSkillPassesCoreRefusalsThrough(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	if _, err := runs.New(client).BeginSkill(t.Context(), "scan"); !errors.Is(err, traust.ErrForbidden) {
+	if _, err := runs.New(client).BeginSkill(t.Context(), "scan", 1); !errors.Is(err, traust.ErrForbidden) {
 		t.Fatalf("a refused submit: %v, want ErrForbidden", err)
 	}
 }

@@ -12,7 +12,7 @@ Enables git hooks. One time per clone. Go SDK requires **Go 1.26+** (`toolchain`
 ## Regenerating
 
 ```bash
-make -C go api-generate     # the client, its calls and the insight views from core at its pin
+make -C go api-generate     # the client and one calls.gen.go per domain, from core at its pin
 make -C go generate         # the example app's templ templates
 make -C go check-drift      # regenerates everything, fails when committed output is stale
 ```

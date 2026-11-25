@@ -84,10 +84,9 @@ type Config struct {
 	BaseURL string
 	Tokens  TokenSource // optional
 
-	HTTPClient *http.Client     // optional; default http.DefaultClient wrapped with retries
-	Retries    int              // attempts beyond the first; default 2
-	Backoff    time.Duration    // between retries; default 250ms, doubling
-	Now        func() time.Time // clock for tests; default time.Now
+	HTTPClient *http.Client  // optional; default http.DefaultClient wrapped with retries
+	Retries    int           // attempts beyond the first; default 2
+	Backoff    time.Duration // between retries; default 250ms, doubling
 }
 
 // Client is traust-core's client: the transport — auth, retries, typed errors — the domain
@@ -114,10 +113,6 @@ func NewClient(cfg Config) (*Client, error) {
 	if cfg.Backoff == 0 {
 		cfg.Backoff = 250 * time.Millisecond
 	}
-	now := cfg.Now
-	if now == nil {
-		now = time.Now
-	}
 	httpClient := cfg.HTTPClient
 	if httpClient == nil {
 		httpClient = http.DefaultClient
@@ -131,7 +126,7 @@ func NewClient(cfg Config) (*Client, error) {
 	// used to drop them (a caller's ErrUseLastResponse policy was silently
 	// ignored and redirects followed).
 	wrapped := *httpClient
-	wrapped.Transport = &retryTransport{base: inner, retries: cfg.Retries, backoff: cfg.Backoff, now: now}
+	wrapped.Transport = &retryTransport{base: inner, retries: cfg.Retries, backoff: cfg.Backoff}
 	httpClient = &wrapped
 	editor := func(ctx context.Context, req *http.Request) error {
 		token, err := bearer(ctx, cfg.Tokens)
@@ -201,7 +196,6 @@ type retryTransport struct {
 	base    http.RoundTripper
 	retries int
 	backoff time.Duration
-	now     func() time.Time
 }
 
 func (t *retryTransport) RoundTrip(req *http.Request) (*http.Response, error) {

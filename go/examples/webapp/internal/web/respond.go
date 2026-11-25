@@ -30,9 +30,13 @@ func Status(err error) int {
 // Fail answers with core's refusal and its reason, which core words for people; anything else is
 // core being unavailable.
 func Fail(w http.ResponseWriter, r *http.Request, err error) {
-	code, message := Status(err), http.StatusText(Status(err))
+	code := Status(err)
+	message := http.StatusText(code)
 	if p, ok := errors.AsType[*traust.ProblemError](err); ok && p.Problem != nil && code < http.StatusInternalServerError {
-		message = p.Problem.Title + ": " + p.Problem.Detail
+		message = p.Problem.Title
+		if p.Problem.Detail != "" {
+			message += ": " + p.Problem.Detail
+		}
 	}
 	Render(w, r, code, Failure(message))
 }

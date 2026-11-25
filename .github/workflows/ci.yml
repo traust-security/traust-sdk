@@ -65,7 +65,7 @@ jobs:
           python-version: "3.12"
       - run: make -C go check-drift
 
-  # The generated client against traust-server built from core at the pinned commit.
+  # The AGENTS.md rules a machine can check, plus commit subjects.
   guardrails:
     runs-on: ubuntu-latest
     steps:
