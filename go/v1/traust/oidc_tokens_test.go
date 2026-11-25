@@ -78,6 +78,8 @@ func TestNewClientCredentialsTokenSourceValidates(t *testing.T) {
 		{name: "missing ClientSecret", src: ClientCredentialsTokenSource{TokenURL: "https://issuer.example/token", ClientID: "id"}, wantErr: "ClientSecret is required"},
 		{name: "plain http off loopback", src: ClientCredentialsTokenSource{TokenURL: "http://issuer.example/token", ClientID: "id", ClientSecret: "secret"}, wantErr: "must be https"},
 		{name: "not a URL", src: ClientCredentialsTokenSource{TokenURL: "issuer.example", ClientID: "id", ClientSecret: "secret"}, wantErr: "not a valid URL"},
+		{name: "userinfo in the URL", src: ClientCredentialsTokenSource{TokenURL: "https://u:p@issuer.example/token", ClientID: "id", ClientSecret: "secret"}, wantErr: "no userinfo or query"},
+		{name: "query in the URL", src: ClientCredentialsTokenSource{TokenURL: "https://issuer.example/token?key=s3cret", ClientID: "id", ClientSecret: "secret"}, wantErr: "no userinfo or query"},
 		{name: "https accepted", src: ClientCredentialsTokenSource{TokenURL: "https://issuer.example/token", ClientID: "id", ClientSecret: "secret"}},
 		{name: "http on localhost", src: ClientCredentialsTokenSource{TokenURL: "http://localhost:8080/token", ClientID: "id", ClientSecret: "secret"}},
 		{name: "http on loopback IP", src: ClientCredentialsTokenSource{TokenURL: "http://127.0.0.1:8080/token", ClientID: "id", ClientSecret: "secret"}},
@@ -100,6 +102,9 @@ func TestNewClientCredentialsTokenSourceValidates(t *testing.T) {
 			}
 			if !strings.Contains(err.Error(), tt.wantErr) {
 				t.Fatalf("error %q does not name %q", err, tt.wantErr)
+			}
+			if strings.Contains(err.Error(), "s3cret") || strings.Contains(err.Error(), "u:p") {
+				t.Fatalf("error %q repeats a credential from the URL", err)
 			}
 			if tt.src.ClientSecret != "" && strings.Contains(err.Error(), tt.src.ClientSecret) {
 				t.Fatalf("error %q leaks the client secret", err)

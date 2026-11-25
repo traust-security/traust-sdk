@@ -15,52 +15,8 @@ import (
 	"gopkg.in/yaml.v3"
 )
 
-// Named failures of LoadConfig, for errors.Is.
-var (
-	// ErrNoConfigFile: the config file is needed to fill in the Config but missing.
-	ErrNoConfigFile = errors.New("traust: no config file")
-	// ErrNoProfile: nothing selected a profile — no Profile option, no TRAUST_PROFILE, no default.
-	ErrNoProfile = errors.New("traust: no profile selected")
-	// ErrUnknownProfile: the selected profile is not in the config file.
-	ErrUnknownProfile = errors.New("traust: unknown profile")
-	// ErrProfileBothCredentials: a profile names a token_file and a client identity.
-	ErrProfileBothCredentials = errors.New("names both a token_file and a client identity")
-	// ErrProfileNoCredential: a profile names neither a token_file nor a client identity.
-	ErrProfileNoCredential = errors.New("names no credential")
-)
-
-// ProfileKeyError reports a profile in the config file that is missing its url or one of the
-// credential keys.
-type ProfileKeyError struct {
-	Profile string
-	Key     string
-}
-
-func (e *ProfileKeyError) Error() string {
-	return fmt.Sprintf("traust: profile %q has no %s", e.Profile, e.Key)
-}
-
-// ProfileCredentialError reports a profile in the config file that does not name exactly one
-// credential: token_file, or the client-credentials trio. Err is ErrProfileBothCredentials or
-// ErrProfileNoCredential.
-type ProfileCredentialError struct {
-	Profile string
-	Err     error
-}
-
-func (e *ProfileCredentialError) Error() string {
-	return fmt.Sprintf("traust: profile %q %s", e.Profile, e.Err)
-}
-
-func (e *ProfileCredentialError) Unwrap() error { return e.Err }
-
 // ProfileOption tunes which profile LoadConfig selects.
 type ProfileOption func(*profileChoice)
-
-// Profile selects the profile named in ~/.traust/config.yaml.
-func Profile(name string) ProfileOption {
-	return func(c *profileChoice) { c.name = name }
-}
 
 type profileChoice struct{ name string }
 
@@ -76,6 +32,11 @@ type profileEntry struct {
 type profileFile struct {
 	Default  string                  `yaml:"default"`
 	Profiles map[string]profileEntry `yaml:"profiles"`
+}
+
+// Profile selects the profile named in ~/.traust/config.yaml.
+func Profile(name string) ProfileOption {
+	return func(c *profileChoice) { c.name = name }
 }
 
 // LoadConfig builds a Config from a profile in ~/.traust/config.yaml: the one opts name (Profile),

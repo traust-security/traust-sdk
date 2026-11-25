@@ -74,7 +74,7 @@ jobs:
           fetch-depth: 0
       - run: make guardrails
         env:
-          GUARDRAILS_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+          GUARDRAILS_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
           GUARDRAILS_HEAD: ${{ github.event.pull_request.head.sha }}
 
   # The bloat gates: what the diff adds must replace, be justified, and stay off
@@ -87,4 +87,4 @@ jobs:
           fetch-depth: 0
       - run: make lean
         env:
-          LEAN_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || '' }}
+          LEAN_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}

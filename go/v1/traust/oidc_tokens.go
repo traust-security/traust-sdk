@@ -41,7 +41,8 @@ type ClientCredentialsTokenSource struct {
 }
 
 // NewClientCredentialsTokenSource validates src and returns it ready for use.
-// TokenURL must be https (http only on a loopback host, for local issuers).
+// TokenURL must be https (http only on a loopback host, for local issuers), with no userinfo
+// or query.
 func NewClientCredentialsTokenSource(src ClientCredentialsTokenSource) (*ClientCredentialsTokenSource, error) {
 	switch {
 	case src.TokenURL == "":
@@ -53,7 +54,11 @@ func NewClientCredentialsTokenSource(src ClientCredentialsTokenSource) (*ClientC
 	}
 	endpoint, err := url.Parse(src.TokenURL)
 	if err != nil || endpoint.Host == "" {
-		return nil, fmt.Errorf("traust: TokenURL %q is not a valid URL", src.TokenURL)
+		return nil, errors.New("traust: TokenURL is not a valid URL")
+	}
+	if endpoint.User != nil || endpoint.RawQuery != "" {
+		// The URL appears in every grant error; a credential belongs in ClientID/ClientSecret.
+		return nil, errors.New("traust: TokenURL must carry no userinfo or query")
 	}
 	if endpoint.Scheme != "https" && !(endpoint.Scheme == "http" && isLoopbackHost(endpoint.Hostname())) {
 		return nil, fmt.Errorf("traust: TokenURL must be https, or http on a loopback host: %s", src.TokenURL)
