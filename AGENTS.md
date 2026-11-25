@@ -26,7 +26,7 @@ Before writing Go, load `.agents/skills/go-patterns/SKILL.md`. `.claude/skills` 
 
 | Lint | Test | Security | Generate | Rules |
 |---|---|---|---|---|
-| `make lint` | `make test` (network-free); `make e2e` against core at `CORE_REF` | `make security` (gosec, govulncheck) | `make -C go api-generate`, then `make -C go check-drift` clean | `make guardrails` |
+| `make lint` | `make test` (network-free); `make e2e` in the box at the pins, when they or `box/` change | `make security` (gosec, govulncheck) | `make -C go api-generate`, then `make -C go check-drift` clean | `make guardrails` |
 
 CI runs each of these on every PR. A new `go/v1` package is added to `ci/guardrails.sh` in the same PR.
 

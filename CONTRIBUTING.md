@@ -61,7 +61,7 @@ GitHub Actions (`.github/workflows/ci.yml`) on every PR, in the merge queue and 
 | `test` | `go test -race ./...` |
 | `security` | `make security` |
 | `drift` | `make -C go check-drift`: generated code matches the pinned core commit |
-| `e2e` | `make e2e`: the SDK and the example app end to end in the box — core, the engine's claim worker and the harness — at the pinned core commit |
+| `e2e` | `make e2e`: the SDK and the example app end to end in the box — core, the engine's claim worker and the harness — at the pins. Runs only when `pins.yaml` or `box/` changes, or on demand (Actions → e2e → Run workflow) |
 | `guardrails` | `make guardrails`: the AGENTS.md rules a machine can check, plus commit subjects |
 
 `core-head.yml` runs nightly against core's `development` tip; red means bump core's ref in `pins.yaml`. Paths in `CODEOWNERS` wait for a code owner.

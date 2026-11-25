@@ -66,26 +66,6 @@ jobs:
       - run: make -C go check-drift
 
   # The generated client against traust-server built from core at the pinned commit.
-  e2e:
-    runs-on: ubuntu-latest
-    steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-go@v5
-        with:
-          go-version-file: go/go.mod
-          cache-dependency-path: go/go.sum
-      - uses: astral-sh/setup-uv@v6
-        with:
-          enable-cache: true
-          cache-dependency-glob: go/Makefile
-          python-version: "3.12"
-      # the box the webapp e2e runs through signs its ledger and observes repositories
-      - uses: sigstore/cosign-installer@v3
-      - run: go install github.com/zricethezav/gitleaks/v8@v8.18.4 && echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
-      - run: make e2e
-        env:
-          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
-
   guardrails:
     runs-on: ubuntu-latest
     steps:

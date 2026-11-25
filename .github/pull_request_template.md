@@ -12,7 +12,7 @@
 - [ ] Types come only from core's OpenAPI; nothing consumer-specific
 - [ ] Comments only for a non-obvious why; doc comments one or two lines; no status prose in READMEs
 - [ ] Table-driven tests cover the edges (nil deps, cancellation, each problem status, malformed body)
-- [ ] `make lint test guardrails lean`, `make -C go check-drift e2e` green
+- [ ] `make lint test guardrails lean`, `make -C go check-drift` green; `make e2e` too when `pins.yaml` or `box/` changed
 
 ## Changed tests
 
