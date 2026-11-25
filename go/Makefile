@@ -78,7 +78,7 @@ e2e: checkouts
 webapp: checkouts
 	$(call box_start,--worker webapp-box --claude-login "$(CLAUDE_RUNNER)" --complete); \
 	echo "sign in at http://localhost:3000 as a person: $$(cat "$$home/person")"; echo "or as an admin (restates decisions): $$(cat "$$home/admin")"; \
-	cd examples/webapp && TRAUST_URL=http://127.0.0.1:$$port TRAUST_TOKEN_FILE="$$home/runner" go run .
+	cd examples/webapp && go run . -core-url http://127.0.0.1:$$port
 
 # webapp-compose — the same box as containers, every image built here from the pinned
 # checkouts (podman's compose provider builds with the classic builder, which takes no extra

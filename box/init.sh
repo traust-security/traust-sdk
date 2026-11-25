@@ -3,7 +3,7 @@
 # (traust.yaml with its ledger keys, workspace locations and database), the database's schema,
 # and the sign-in tokens the app prints. Compose runs this one-shot, to completion, before
 # traust-server, the engine and the app start; the rest of the box reads what it wrote from the
-# shared /box volume; the app reads only its own token, from /runner. Re-running it is safe: the
+# shared /box volume; the app mounts none of it. Re-running it is safe: the
 # ledger keys are kept (records signed under them must still verify), provisioning is the
 # upgrade channel core itself follows, and the tokens are minted again.
 set -euo pipefail
@@ -71,21 +71,16 @@ import urllib.request
 urllib.request.urlopen("http://localhost:8080/v1/healthz")
 EOF
 
-# The sign-in tokens: a person, an admin (admins restate decisions) and the app's runner
-# (machine) token — the same identities `make webapp` mints. The runner's goes to /runner, the
-# only thing the app mounts.
+# The sign-in tokens: a person and an admin (admins restate decisions), the people `make webapp`
+# signs in as. The app itself holds no token.
 python - <<'EOF'
 from pathlib import Path
 
 from traust_core.v1.context import Config, Context
 
 issuer = Context(Config.from_file(Path("/box/traust.yaml"))).local_issuer
-for path, identity, machine in (
-    ("/box/person", "e2e@example.com", False),
-    ("/box/admin", "admin@example.com", False),
-    ("/runner/token", "e2e-runner", True),
-):
-    Path(path).write_text(issuer.mint(identity, machine=machine).token.get_secret_value())
+for name, identity in (("person", "e2e@example.com"), ("admin", "admin@example.com")):
+    Path(f"/box/{name}").write_text(issuer.mint(identity).token.get_secret_value())
 EOF
 
 # The whole box runs as one user (1001, the box image's), so core's private logging

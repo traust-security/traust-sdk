@@ -25,14 +25,19 @@ type e2e struct {
 	user string
 }
 
-// newE2E is the app on the box make e2e started: its client a machine identity, which core
-// refuses to act for a person; the box's claim worker runs what the person submits.
+// newE2E is the app on the box make e2e started, holding only core's URL: every page calls as
+// the signed-in person; the box's claim worker runs what the person submits.
 func newE2E(t *testing.T) e2e {
 	t.Helper()
 	person, err := os.ReadFile(os.Getenv("TRAUST_E2E_TOKEN_FILE"))
 	if os.Getenv("TRAUST_E2E_URL") == "" || err != nil {
 		t.Fatalf("TRAUST_E2E_URL and TRAUST_E2E_TOKEN_FILE are required; run make e2e (%v)", err)
 	}
+	app, err := traust.NewClient(traust.Config{BaseURL: os.Getenv("TRAUST_E2E_URL")})
+	if err != nil {
+		t.Fatal(err)
+	}
+	// A machine identity may not submit a person's work: core refuses it, whoever holds it.
 	machine, err := traust.NewClient(traust.Config{BaseURL: os.Getenv("TRAUST_E2E_URL"), Tokens: traust.FileTokenSource{Path: os.Getenv("TRAUST_E2E_RUNNER_TOKEN_FILE")}})
 	if err != nil {
 		t.Fatal(err)
@@ -41,7 +46,7 @@ func newE2E(t *testing.T) e2e {
 		t.Fatalf("a machine's own submit: %v, want ErrForbidden", err)
 	}
 	user := strings.TrimSpace(string(person))
-	h := routes(machine, nil)
+	h := routes(app, nil)
 	if w := send(h, http.MethodPost, "/sign-in", "", url.Values{"token": {user}}); w.Code != http.StatusSeeOther {
 		t.Fatalf("sign in: %d %s", w.Code, w.Body)
 	}

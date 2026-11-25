@@ -20,7 +20,7 @@ RUN cd go/examples/webapp \
 
 # ── Runtime stage ───────────────────────────────────────────────────
 # ubi9-micro: no shell, no package manager, nothing but the static binary. Runs as a non-root
-# user; the container needs nothing else (TRAUST_URL and TRAUST_TOKEN_FILE come from compose).
+# user; the container needs nothing else (compose passes -core-url; the app holds no token).
 FROM registry.access.redhat.com/ubi9/ubi-micro@sha256:4d31030f31dbe2c812eef22b8ac14c3ab1ff1bf43303e26e6d36b495aa2c4349
 
 COPY --from=builder /out/webapp /usr/local/bin/webapp

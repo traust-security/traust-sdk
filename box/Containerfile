@@ -113,11 +113,11 @@ COPY --from=builder /usr/local/bin/gitleaks /usr/local/bin/gitleaks
 COPY --from=builder /usr/local/bin/claude /usr/local/bin/claude
 COPY --from=builder /usr/local/bin/cosign /usr/local/bin/cosign
 
-# /box and /runner exist owned by the box's user, so a fresh named volume mounted there starts
-# writable by it (the engine copies the mountpoint's ownership into an empty volume).
+# /box exists owned by the box's user, so a fresh named volume mounted there starts writable by
+# it (the engine copies the mountpoint's ownership into an empty volume).
 RUN chmod 0755 /opt/box-seed/init.sh \
   && chown -R 1001:1001 /opt/box /opt/harness /opt/box-seed \
-  && install -d -o 1001 -g 1001 -m 0700 /box /runner
+  && install -d -o 1001 -g 1001 -m 0700 /box
 
 ENV PATH="/opt/box/.venv/bin:/usr/local/bin:${PATH}" \
     HARNESS_ROOT=/opt/harness \

@@ -19,9 +19,20 @@ import (
 	"reflect"
 )
 
+// newApp builds the app as main does, holding only core's URL: a page that calls core without the
+// signed-in person fails here (traust.ErrNoIdentity), never quietly as the app.
 func newApp(t *testing.T, core *traustest.Server) http.Handler {
 	t.Helper()
-	return routes(core.Client(), nil)
+	return newAppWithSSO(t, core, nil)
+}
+
+func newAppWithSSO(t *testing.T, core *traustest.Server, sso *identity.SSO) http.Handler {
+	t.Helper()
+	client, err := traust.NewClient(traust.Config{BaseURL: core.URL()})
+	if err != nil {
+		t.Fatal(err)
+	}
+	return routes(client, sso)
 }
 
 // send makes one request, signed in when token is set.
@@ -108,7 +119,7 @@ func TestHomeOffersSSOOnlyWhenAnIssuerIsConfigured(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	offers := send(routes(core.Client(), sso), http.MethodGet, "/", "", nil).Body.String()
+	offers := send(newAppWithSSO(t, core, sso), http.MethodGet, "/", "", nil).Body.String()
 	for _, want := range []string{`href="/sso"`, "Sign in with SSO"} {
 		if !strings.Contains(offers, want) {
 			t.Fatalf("home with an issuer lacks %q:\n%s", want, offers)

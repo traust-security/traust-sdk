@@ -5,7 +5,9 @@
 // the pages; the box's claim worker (go/Makefile's webapp target) runs every order the
 // shipped pack declares.
 //
-//	TRAUST_URL=https://core.example.com TRAUST_TOKEN_FILE=machine-token go run .
+//	go run . -core-url https://core.example.com
+//
+// It holds no identity of its own: every page calls core as the signed-in person (OnBehalfOf).
 package main
 
 import (
@@ -35,6 +37,7 @@ import (
 
 func main() {
 	addr := flag.String("addr", "localhost:3000", "listen address")
+	coreURL := flag.String("core-url", "", "traust-core's URL, e.g. https://core.example.com (required)")
 	oidcIssuer := flag.String("oidc-issuer", "", "the OIDC issuer people sign in with; empty offers pasted-token sign-in only")
 	oidcClientID := flag.String("oidc-client-id", "", "the app's client id at the issuer")
 	oidcSecretFile := flag.String("oidc-client-secret-file", "", "a file holding the app's client secret; empty for a public client")
@@ -50,7 +53,7 @@ func main() {
 	if err != nil {
 		log.Fatal(err)
 	}
-	if err := run(ctx, *addr, sso); err != nil {
+	if err := run(ctx, *addr, *coreURL, sso); err != nil {
 		log.Fatal(err)
 	}
 }
@@ -71,12 +74,8 @@ func clientSecret(path string) (string, error) {
 	return secret, nil
 }
 
-func run(ctx context.Context, addr string, sso *identity.SSO) error {
-	cfg, err := traust.LoadConfig()
-	if err != nil {
-		return err
-	}
-	core, err := traust.NewClient(cfg)
+func run(ctx context.Context, addr, coreURL string, sso *identity.SSO) error {
+	core, err := traust.NewClient(traust.Config{BaseURL: coreURL})
 	if err != nil {
 		return err
 	}
