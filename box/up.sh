@@ -92,9 +92,11 @@ fi
 # S3 store (versitygw) for artifacts, in throwaway containers — then provision the database:
 # the contracts' baseline DDL, the whole upgrade channel, then the data channel.
 if [ "${STORE:-}" = byos ]; then
-  podman run -d --rm --name traust-sdk-webapp-pg -e POSTGRES_USER=traust -e POSTGRES_PASSWORD=traust-test-only -e POSTGRES_DB=traust -p 127.0.0.1:15433:5432 docker.io/library/postgres:16 >/dev/null
-  podman run -d --rm --name traust-sdk-webapp-s3 -e ROOT_ACCESS_KEY=traust -e ROOT_SECRET_KEY=traust-test-only -p 127.0.0.1:19000:7070 docker.io/versity/versitygw:latest posix /tmp >/dev/null
-  containers="traust-sdk-webapp-pg traust-sdk-webapp-s3"
+  # each joins the trap's list as soon as it starts, so a failure after it never strands it
+  podman run -d --rm --name traust-sdk-webapp-pg -e POSTGRES_USER=traust -e POSTGRES_PASSWORD=traust-test-only -e POSTGRES_DB=traust -p 127.0.0.1:15433:5432 docker.io/library/postgres:16@sha256:3950ad7c3148ca2175ef1b6c36c9efbf78957ae8fbe8b3a5d7c35af50500382f >/dev/null
+  containers="traust-sdk-webapp-pg"
+  podman run -d --rm --name traust-sdk-webapp-s3 -e ROOT_ACCESS_KEY=traust -e ROOT_SECRET_KEY=traust-test-only -p 127.0.0.1:19000:7070 docker.io/versity/versitygw:v1.11.0@sha256:8319a530d08d537426e2f855bae5280709795dc73a3f0c347973ef915d6343c5 posix /tmp >/dev/null
+  containers="$containers traust-sdk-webapp-s3"
   for _ in $(seq 60); do podman exec traust-sdk-webapp-pg pg_isready -U traust -q 2>/dev/null && curl -s -o /dev/null http://127.0.0.1:19000/ && break; sleep 1; done
   curl -sf -o /dev/null --aws-sigv4 aws:amz:us-east-1:s3 --user traust:traust-test-only -X PUT http://127.0.0.1:19000/traust
   printf 'database:\n  url: postgresql+psycopg://traust@127.0.0.1:15433/traust\n  password_env: TRAUST_DB_PASSWORD\nartifacts:\n  s3:\n    bucket: traust\n    endpoint_url: http://127.0.0.1:19000\n    region: us-east-1\n    access_key_env: TRAUST_S3_ACCESS_KEY\n    secret_key_env: TRAUST_S3_SECRET_KEY\n' >> "$home/traust.yaml"

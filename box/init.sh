@@ -3,18 +3,22 @@
 # (traust.yaml with its ledger keys, workspace locations and database), the database's schema,
 # and the sign-in tokens the app prints. Compose runs this one-shot, to completion, before
 # traust-server, the engine and the app start; the rest of the box reads what it wrote from the
-# shared /box volume. Re-running it is safe: the keys are regenerated, provisioning is the
+# shared /box volume; the app reads only its own token, from /runner. Re-running it is safe: the
+# ledger keys are kept (records signed under them must still verify), provisioning is the
 # upgrade channel core itself follows, and the tokens are minted again.
 set -euo pipefail
+umask 077
 
 home=/box
 seed=/opt/box-seed
 
 mkdir -p "$home"/workspace "$home"/analysis-results "$home"/progress-tracker
-rm -f "$home"/ledger.key "$home"/ledger.pub
-# The ledger's cosign key pair, generated the way `make webapp` does: unencrypted, because the
-# box is a throwaway (COSIGN_PASSWORD empty — cosign refuses a truly empty prompt otherwise).
-COSIGN_PASSWORD= cosign generate-key-pair --output-key-prefix "$home/ledger" >/dev/null 2>&1
+# The ledger's cosign key pair, generated once the way `make webapp` does: unencrypted, because
+# the box is a throwaway (COSIGN_PASSWORD empty — cosign refuses a truly empty prompt otherwise).
+if [ ! -s "$home/ledger.key" ] || [ ! -s "$home/ledger.pub" ]; then
+  rm -f "$home"/ledger.key "$home"/ledger.pub
+  COSIGN_PASSWORD= cosign generate-key-pair --output-key-prefix "$home/ledger" >/dev/null 2>&1
+fi
 cp "$seed/model-registry.yaml" "$home/model-registry.yaml"
 
 # The config `make webapp` writes for the same box: local-trusted identity, the example's
@@ -68,21 +72,20 @@ urllib.request.urlopen("http://localhost:8080/v1/healthz")
 EOF
 
 # The sign-in tokens: a person, an admin (admins restate decisions) and the app's runner
-# (machine) token — the same identities `make webapp` mints.
+# (machine) token — the same identities `make webapp` mints. The runner's goes to /runner, the
+# only thing the app mounts.
 python - <<'EOF'
 from pathlib import Path
 
 from traust_core.v1.context import Config, Context
 
 issuer = Context(Config.from_file(Path("/box/traust.yaml"))).local_issuer
-for name, identity, machine in (
-    ("person", "e2e@example.com", False),
-    ("admin", "admin@example.com", False),
-    ("runner", "e2e-runner", True),
+for path, identity, machine in (
+    ("/box/person", "e2e@example.com", False),
+    ("/box/admin", "admin@example.com", False),
+    ("/runner/token", "e2e-runner", True),
 ):
-    Path(f"/box/{name}").write_text(
-        issuer.mint(identity, machine=machine).token.get_secret_value()
-    )
+    Path(path).write_text(issuer.mint(identity, machine=machine).token.get_secret_value())
 EOF
 
 # The whole box runs as one user (1001, the box image's), so core's private logging

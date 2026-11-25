@@ -35,6 +35,7 @@ services:
       OPENSSL_armcap: ${OPENSSL_armcap:-}
     volumes:
       - box:/box
+      - runner:/runner
     depends_on:
       postgres:
         condition: service_healthy
@@ -141,15 +142,17 @@ services:
       server:
         condition: service_healthy
 
-  # The app itself: pages only, every order run by the claim worker above.
+  # The app itself: pages only, every order run by the claim worker above. It sees only its own
+  # token (the runner volume), never the box's admin token, ledger key or config.
   webapp:
     image: localhost/traust-webapp:local
+    user: "1001:1001"
     command: ["-addr", "0.0.0.0:3000"]
     environment:
       TRAUST_URL: http://server:8080
-      TRAUST_TOKEN_FILE: /box/runner
+      TRAUST_TOKEN_FILE: /runner/token
     volumes:
-      - box:/box:ro
+      - runner:/runner:ro
     ports:
       - "127.0.0.1:3000:3000"
     depends_on:
@@ -158,3 +161,4 @@ services:
 
 volumes:
   box: {}
+  runner: {}
