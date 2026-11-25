@@ -66,8 +66,8 @@ trap 'exit 130' INT
 trap 'exit 143' TERM
 
 # Install the engine and the harness into core's environment: the box's planner, claim worker
-# and skill sessions all run there.
-(cd "$core" && uv pip install --quiet --no-deps "$engine" "$harness")
+# and skill sessions all run there. A fresh checkout has no environment yet: create it first.
+(cd "$core" && uv sync --quiet && uv pip install --quiet --no-deps "$engine" "$harness")
 
 # traust.yaml: local-trusted identity, the example's recording grants, and a ledger; a
 # GITHUB_TOKEN in the environment becomes onboarding's github.com forge token.

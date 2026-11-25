@@ -63,7 +63,7 @@ func clientSecret(path string) (string, error) {
 	if path == "" {
 		return "", nil
 	}
-	raw, err := os.ReadFile(path)
+	raw, err := os.ReadFile(path) // #nosec G304 -- the operator names this file with -oidc-client-secret-file
 	if err != nil {
 		return "", fmt.Errorf("reading the OIDC client secret: %w", err)
 	}

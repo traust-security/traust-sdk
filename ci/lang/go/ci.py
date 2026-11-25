@@ -37,15 +37,13 @@ LINT_CMDS: tuple[tuple[str, ...], ...] = (
 
 TEST_CMDS: tuple[tuple[str, ...], ...] = (("go", "test", "./..."),)
 
-SECURITY_CMDS: tuple[tuple[str, ...], ...] = (
-    ("govulncheck", "./..."),
-    (
-        "gosec",
-        "-exclude-generated",
-        "-exclude-dir=internal",
-        "-fmt=text",
-        "./...",
-    ),
+# The SDK module (its generators under internal/ excluded), then the example app, which is its
+# own module: gosec from go/ would descend into it without its go.mod and fail to type-check.
+SECURITY_CMDS: tuple[tuple[str, tuple[str, ...]], ...] = (
+    (".", ("govulncheck", "./...")),
+    (".", ("gosec", "-exclude-generated", "-exclude-dir=internal", "-exclude-dir=examples", "-fmt=text", "./...")),
+    ("examples/webapp", ("govulncheck", "./...")),
+    ("examples/webapp", ("gosec", "-exclude-generated", "-fmt=text", "./...")),
 )
 
 TOOLCHAIN_RE = re.compile(r"^toolchain\s+(\S+)", re.MULTILINE)
@@ -55,10 +53,12 @@ TOOLCHAIN_RE = re.compile(r"^toolchain\s+(\S+)", re.MULTILINE)
 class LabeledCmd:
     label: str
     argv: tuple[str, ...]
+    module: str
 
 
 SECURITY_STEPS = tuple(
-    LabeledCmd(label=argv[0], argv=argv) for argv in SECURITY_CMDS
+    LabeledCmd(label=f"{argv[0]} ({module})", argv=argv, module=module)
+    for module, argv in SECURITY_CMDS
 )
 
 
@@ -150,7 +150,7 @@ class GoCI:
 
         for step in SECURITY_STEPS:
             print(f"==> {step.label}")
-            run(step.argv, cwd=self.go_dir, env=env)
+            run(step.argv, cwd=self.go_dir / step.module, env=env)
 
 
 CommandHandler = Callable[[GoCI], None]
