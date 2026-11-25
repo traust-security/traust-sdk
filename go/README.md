@@ -12,35 +12,31 @@ go get github.com/traust-security/traust-sdk/go
 
 ## Connect
 
-```go
-client, err := traust.NewClient(traust.Config{
-    BaseURL: "https://traust-core.example.com",
-    Tokens:  traust.FileTokenSource{Path: "/var/run/secrets/traust-core/token"},
-})
-url := "https://github.com/example/api"
-repos := inventory.New(client)
-page, err := repos.ListRepositories(ctx, &traust.ListRepositoriesParams{Url: &url})
-```
-
-`traust.FileTokenSource{Path}` for services — re-reads the file on every request, so rotated
-tokens just work — and `traust.StaticToken("…")` for scripts, local development and tests.
-
-`Config` also takes your own `*http.Client`, the retry count and the backoff. Reads (GET)
-retry on 429, 502, 503, 504 and transport errors; writes are never retried.
-
-`traust.LoadConfig` builds the `Config` from a profile in `~/.traust/config.yaml` — the one
-`traust.Profile("name")` names, else `TRAUST_PROFILE`, else the file's default; `TRAUST_URL`
-and `TRAUST_TOKEN_FILE` override it. A profile names exactly one credential: a `token_file`,
-or a machine identity — `token_url`, `client_id`, `client_secret_file` (a leading `~/`
-expands, optional `scopes`) — the secret is read from its file, never the config.
-
-A BFF keeps one client under its own identity and sends each user's calls as that user, so
-core authorizes and attributes them to the person:
+A client needs core's URL. Every call then names its caller: a person, with `OnBehalfOf`, or the
+app itself, with `Tokens`. A call that names neither is refused before it is sent
+(`traust.ErrNoIdentity`).
 
 ```go
+client, err := traust.NewClient(traust.Config{BaseURL: "https://traust-core.example.com"})
+
+// a person's request: their token, so core authorizes and attributes it to them
 ctx := traust.OnBehalfOf(r.Context(), userToken) // an empty token is an error, never a fallback
 order, err := runs.New(client).Submit(ctx, req)
 ```
+
+An app that also makes calls as itself (a background job) sets `Tokens`, its machine identity:
+
+| `Tokens` | For |
+|---|---|
+| `traust.ClientCredentialsTokenSource{TokenURL, ClientID, ClientSecret, Scopes}` (via `NewClientCredentialsTokenSource`) | a service's identity at your SSO; fetched and refreshed before expiry |
+| `traust.FileTokenSource{Path}` | a token kept fresh by someone else (a mounted, rotated secret); re-read on every request |
+| `traust.StaticToken("…")` | scripts and tests |
+
+The SDK reads no environment variables or files of its own: the app passes these values from its
+own configuration.
+
+`Config` also takes your own `*http.Client`, the retry count and the backoff. Reads (GET)
+retry on 429, 502, 503, 504 and transport errors; writes are never retried.
 
 ## inventory
 

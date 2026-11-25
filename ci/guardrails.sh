@@ -30,9 +30,8 @@ done
 # Every hand-written source under go/v1/traust and its domain packages.
 src=$(find go/v1/traust -name '*.go' ! -name '*_test.go' ! -name '*.gen.go')
 [ -n "$src" ] || rule "go/v1/traust has no hand-written sources"
-# profile.go is LoadConfig, the one explicit loader allowed to read env vars ("One config").
 # shellcheck disable=SC2086
-if hits=$(grep -nE 'os\.(Getenv|LookupEnv)\(' $src | grep -vF 'go/v1/traust/profile.go:'); then rule "library code never reads env vars:"$'\n'"$hits"; fi
+if hits=$(grep -nE 'os\.(Getenv|LookupEnv)\(' $src); then rule "library code never reads env vars:"$'\n'"$hits"; fi
 # shellcheck disable=SC2086
 if hits=$(grep -n '"database/sql"' $src); then rule "core's REST API is the only way in:"$'\n'"$hits"; fi
 

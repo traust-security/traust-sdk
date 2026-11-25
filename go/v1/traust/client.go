@@ -18,7 +18,8 @@ import (
 	"time"
 )
 
-// TokenSource supplies the bearer token for each request.
+// TokenSource supplies the app's own bearer token for each request: its machine identity, for
+// the calls it makes as itself (background jobs), never for a person's.
 type TokenSource interface {
 	BearerToken(ctx context.Context) (string, error)
 }
@@ -54,6 +55,8 @@ func (t StaticToken) BearerToken(_ context.Context) (string, error) {
 
 type onBehalfOfKey struct{}
 
+const healthzPath = "/v1/healthz"
+
 // OnBehalfOf sends the calls made with ctx under a person's bearer token instead of the client's,
 // so core authorizes and attributes them to that person: a BFF acting for its signed-in user.
 func OnBehalfOf(ctx context.Context, token string) context.Context {
@@ -63,6 +66,9 @@ func OnBehalfOf(ctx context.Context, token string) context.Context {
 func bearer(ctx context.Context, tokens TokenSource) (string, error) {
 	token, person := ctx.Value(onBehalfOfKey{}).(string)
 	if !person {
+		if tokens == nil {
+			return "", ErrNoIdentity
+		}
 		return tokens.BearerToken(ctx)
 	}
 	if strings.TrimSpace(token) == "" {
@@ -71,10 +77,12 @@ func bearer(ctx context.Context, tokens TokenSource) (string, error) {
 	return token, nil
 }
 
-// Config configures a Client. BaseURL and Tokens are required; the rest have defaults.
+// Config configures a Client. BaseURL is required. Tokens is the app's own identity, set only
+// by an app that makes calls as itself; every other call names its person with OnBehalfOf. The
+// rest have defaults.
 type Config struct {
 	BaseURL string
-	Tokens  TokenSource
+	Tokens  TokenSource // optional
 
 	HTTPClient *http.Client     // optional; default http.DefaultClient wrapped with retries
 	Retries    int              // attempts beyond the first; default 2
@@ -96,9 +104,6 @@ func (c *Client) Raw() *ClientWithResponses { return c.raw }
 func NewClient(cfg Config) (*Client, error) {
 	if cfg.BaseURL == "" {
 		return nil, errors.New("traust: BaseURL is required")
-	}
-	if cfg.Tokens == nil {
-		return nil, errors.New("traust: Tokens is required")
 	}
 	if cfg.Retries < 0 {
 		return nil, fmt.Errorf("traust: Retries must not be negative, got %d", cfg.Retries)
@@ -130,6 +135,9 @@ func NewClient(cfg Config) (*Client, error) {
 	httpClient = &wrapped
 	editor := func(ctx context.Context, req *http.Request) error {
 		token, err := bearer(ctx, cfg.Tokens)
+		if errors.Is(err, ErrNoIdentity) && strings.HasSuffix(req.URL.Path, healthzPath) {
+			return nil // core's liveness check takes no caller
+		}
 		if err != nil {
 			return fmt.Errorf("traust: bearer token: %w", err)
 		}

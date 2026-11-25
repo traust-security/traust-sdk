@@ -9,6 +9,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync/atomic"
 	"testing"
@@ -118,8 +119,39 @@ func TestNewClientValidatesConfig(t *testing.T) {
 	if _, err := NewClient(Config{Tokens: FileTokenSource{Path: "x"}}); err == nil {
 		t.Fatal("empty BaseURL accepted")
 	}
-	if _, err := NewClient(Config{BaseURL: "http://x"}); err == nil {
-		t.Fatal("missing Tokens accepted")
+}
+
+// A client with only a URL serves people (OnBehalfOf) and the liveness check; a call that names
+// no caller is refused before it is sent, never made anonymously.
+func TestAClientWithOnlyAURLNeedsACallerPerCall(t *testing.T) {
+	var auth []string
+	srv := httptest.NewServer(http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
+		auth = append(auth, r.URL.Path+" "+r.Header.Get("Authorization"))
+		w.Header().Set("Content-Type", "application/json")
+		switch r.URL.Path {
+		case "/v1/healthz":
+			_, _ = w.Write([]byte(`{"status":"ok"}`))
+		default:
+			_, _ = w.Write([]byte(`{"identity":"ada@example.com","kind":"human","display":"Ada"}`))
+		}
+	}))
+	defer srv.Close()
+	client, err := NewClient(Config{BaseURL: srv.URL})
+	if err != nil {
+		t.Fatal(err)
+	}
+	if _, err := client.Healthz(context.Background()); err != nil {
+		t.Fatalf("healthz without a caller: %v", err)
+	}
+	if _, err := client.Whoami(OnBehalfOf(context.Background(), "ada-token")); err != nil {
+		t.Fatalf("a person's call: %v", err)
+	}
+	if _, err := client.Whoami(context.Background()); !errors.Is(err, ErrNoIdentity) {
+		t.Fatalf("a call naming no caller: %v, want ErrNoIdentity", err)
+	}
+	want := []string{"/v1/healthz ", "/v1/whoami Bearer ada-token"}
+	if !slices.Equal(auth, want) {
+		t.Fatalf("core saw %q, want %q (the refused call never sent)", auth, want)
 	}
 }
 
