@@ -79,6 +79,28 @@ func TestSignInKeepsOnlyATokenCoreAccepts(t *testing.T) {
 	}
 }
 
+func TestAFormFromAnotherOriginIsRefused(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/whoami", onlyFor("mallory", traustest.JSON(http.StatusOK, traust.Principal{Display: "Mallory"})))
+	h := newApp(t, core)
+	for name, header := range map[string][2]string{
+		"another site":            {"Sec-Fetch-Site", "cross-site"},
+		"another port, same site": {"Sec-Fetch-Site", "same-site"},
+		"an older browser":        {"Origin", "http://localhost:4000"},
+	} {
+		t.Run(name, func(t *testing.T) {
+			r := httptest.NewRequest(http.MethodPost, "http://localhost:3000/sign-in", strings.NewReader(url.Values{"token": {"mallory"}}.Encode()))
+			r.Header.Set("Content-Type", "application/x-www-form-urlencoded")
+			r.Header.Set(header[0], header[1])
+			w := httptest.NewRecorder()
+			h.ServeHTTP(w, r)
+			if w.Code != http.StatusForbidden || len(w.Result().Cookies()) != 0 {
+				t.Fatalf("%d with cookies %v, want 403 and no session", w.Code, w.Result().Cookies())
+			}
+		})
+	}
+}
+
 func TestHomeOffersSSOOnlyWhenAnIssuerIsConfigured(t *testing.T) {
 	core := traustest.New(t)
 	core.Handle("GET /v1/whoami", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Principal{Display: "Ada"})))

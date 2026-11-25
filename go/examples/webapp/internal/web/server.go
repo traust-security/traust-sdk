@@ -17,5 +17,7 @@ func Handler(routes ...func(*http.ServeMux)) http.Handler {
 	for _, register := range routes {
 		register(mux)
 	}
-	return mux
+	// A form post from another origin — another site, or another port on localhost — is refused,
+	// so no foreign page can sign a person in as someone else or act with their session.
+	return http.NewCrossOriginProtection().Handler(mux)
 }
