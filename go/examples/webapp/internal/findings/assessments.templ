@@ -1,6 +1,7 @@
 package findings
 
 import (
+	"strconv"
 	"time"
 
 	"github.com/google/uuid"
@@ -29,7 +30,7 @@ templ assessmentList(assessments []traust.Assessment, latest uuid.UUID) {
 
 // assessment is one assessment's page: what core recorded it as, the findings its intake created
 // (each by its report label), and the evidence it left.
-templ assessment(a traust.Assessment, intake traust.AssessmentIntakeBindings, artifacts []traust.Artifact) {
+templ assessment(a traust.Assessment, intake traust.AssessmentIntakeBindings, artifacts []traust.ArtifactView) {
 	@web.Page(assessmentKind(a)) {
 		<h1>{ assessmentKind(a) }</h1>
 		<p>{ a.Status } · { a.Assessor } { a.AssessorVersion } · { a.OccurredAt.Format(time.DateOnly) }</p>
@@ -50,7 +51,7 @@ templ assessment(a traust.Assessment, intake traust.AssessmentIntakeBindings, ar
 		}
 		<ul>
 			for _, artifact := range artifacts {
-				<li><a href={ templ.URL("/artifacts/" + artifact.Id.String()) }>{ artifact.Kind }</a> · { web.Short(&artifact.Digest) }</li>
+				<li><a href={ templ.URL("/artifacts/" + artifact.Id.String()) }>{ string(artifact.Kind) }</a> · { web.Short(&artifact.Digest) }</li>
 			}
 		</ul>
 	}
@@ -72,10 +73,10 @@ templ allAssessments(assessments []traust.Assessment) {
 }
 
 // artifact is one artifact's page: the evidence core kept, and its bytes as a download.
-templ artifact(a traust.Artifact) {
-	@web.Page(a.Kind) {
-		<h1>{ a.Kind }</h1>
-		<p>digest { a.Digest }</p>
+templ artifact(a traust.ArtifactView) {
+	@web.Page(string(a.Kind)) {
+		<h1>{ string(a.Kind) }</h1>
+		<p>digest { a.Digest } · { a.MediaType } · { strconv.Itoa(a.Size) } bytes</p>
 		if a.CreatedAt != nil {
 			<p>recorded { a.CreatedAt.Format(time.DateOnly) }</p>
 		}

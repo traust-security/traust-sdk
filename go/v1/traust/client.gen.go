@@ -28,6 +28,77 @@ const (
 	Machine ActorKind = "machine"
 )
 
+// Defines values for ArtifactKind.
+const (
+	ArtifactKindAdapterResult               ArtifactKind = "adapter-result"
+	ArtifactKindAdrRegistry                 ArtifactKind = "adr-registry"
+	ArtifactKindAttackMapping               ArtifactKind = "attack-mapping"
+	ArtifactKindBelowRangePackets           ArtifactKind = "below-range-packets"
+	ArtifactKindBelowRangeVerdicts          ArtifactKind = "below-range-verdicts"
+	ArtifactKindBenchmarkTarget             ArtifactKind = "benchmark-target"
+	ArtifactKindCloudConfigAudit            ArtifactKind = "cloud-config-audit"
+	ArtifactKindCloudConfigAuditJson        ArtifactKind = "cloud-config-audit.json"
+	ArtifactKindCloudConfigFindingsCurrent  ArtifactKind = "cloud-config-findings-current"
+	ArtifactKindCodeFacts                   ArtifactKind = "code-facts"
+	ArtifactKindComplianceAssessment        ArtifactKind = "compliance-assessment"
+	ArtifactKindComplianceMapping           ArtifactKind = "compliance-mapping"
+	ArtifactKindComplianceScope             ArtifactKind = "compliance-scope"
+	ArtifactKindContainerAuditJson          ArtifactKind = "container-audit.json"
+	ArtifactKindCorpusRegistry              ArtifactKind = "corpus-registry"
+	ArtifactKindCveReplay                   ArtifactKind = "cve-replay"
+	ArtifactKindDocVariance                 ArtifactKind = "doc-variance"
+	ArtifactKindFeed                        ArtifactKind = "feed"
+	ArtifactKindFindingClaim                ArtifactKind = "finding-claim"
+	ArtifactKindFindingIntake               ArtifactKind = "finding-intake"
+	ArtifactKindFindingsCurrentJson         ArtifactKind = "findings-current.json"
+	ArtifactKindFindingsLayerJson           ArtifactKind = "findings-layer.json"
+	ArtifactKindFleetFix                    ArtifactKind = "fleet-fix"
+	ArtifactKindFuzzCampaign                ArtifactKind = "fuzz-campaign"
+	ArtifactKindFuzzReport                  ArtifactKind = "fuzz-report"
+	ArtifactKindImpactAnalysis              ArtifactKind = "impact-analysis"
+	ArtifactKindInsightBuilds               ArtifactKind = "insight-builds"
+	ArtifactKindIsolationReview             ArtifactKind = "isolation-review"
+	ArtifactKindLayer                       ArtifactKind = "layer"
+	ArtifactKindManifestCoverage            ArtifactKind = "manifest-coverage"
+	ArtifactKindOperatorPrivProfile         ArtifactKind = "operator-priv-profile"
+	ArtifactKindOrgParameters               ArtifactKind = "org-parameters"
+	ArtifactKindPqcBlockers                 ArtifactKind = "pqc-blockers"
+	ArtifactKindPqcDecisionTree             ArtifactKind = "pqc-decision-tree"
+	ArtifactKindPqcFacts                    ArtifactKind = "pqc-facts"
+	ArtifactKindPqcReadiness                ArtifactKind = "pqc-readiness"
+	ArtifactKindPqcVendorClaims             ArtifactKind = "pqc-vendor-claims"
+	ArtifactKindPrivProfileJson             ArtifactKind = "priv-profile.json"
+	ArtifactKindProductDefinitionsMap       ArtifactKind = "product-definitions-map"
+	ArtifactKindRefutedRegister             ArtifactKind = "refuted-register"
+	ArtifactKindRemediation                 ArtifactKind = "remediation"
+	ArtifactKindRemediationPatchDiff        ArtifactKind = "remediation-patch.diff"
+	ArtifactKindRemediationVerificationJson ArtifactKind = "remediation-verification.json"
+	ArtifactKindRepoLiveness                ArtifactKind = "repo-liveness"
+	ArtifactKindRepoState                   ArtifactKind = "repo-state"
+	ArtifactKindRepoStateJson               ArtifactKind = "repo-state.json"
+	ArtifactKindReport                      ArtifactKind = "report"
+	ArtifactKindRiskRatingMethodology       ArtifactKind = "risk-rating-methodology"
+	ArtifactKindRunManifest                 ArtifactKind = "run-manifest"
+	ArtifactKindSbom                        ArtifactKind = "sbom"
+	ArtifactKindSecurityAuditJson           ArtifactKind = "security-audit.json"
+	ArtifactKindSecurityAuditMd             ArtifactKind = "security-audit.md"
+	ArtifactKindSessionResult               ArtifactKind = "session-result"
+	ArtifactKindSessionTask                 ArtifactKind = "session-task"
+	ArtifactKindSlaPolicy                   ArtifactKind = "sla-policy"
+	ArtifactKindThreatModel                 ArtifactKind = "threat-model"
+	ArtifactKindThreatModelJson             ArtifactKind = "threat-model.json"
+	ArtifactKindThreatModelMd               ArtifactKind = "threat-model.md"
+	ArtifactKindTriage                      ArtifactKind = "triage"
+	ArtifactKindTriageJson                  ArtifactKind = "triage.json"
+	ArtifactKindTriageMd                    ArtifactKind = "triage.md"
+	ArtifactKindValidation                  ArtifactKind = "validation"
+	ArtifactKindValidationAuthorization     ArtifactKind = "validation-authorization"
+	ArtifactKindValidationJson              ArtifactKind = "validation.json"
+	ArtifactKindValidationPlan              ArtifactKind = "validation-plan"
+	ArtifactKindVerification                ArtifactKind = "verification"
+	ArtifactKindVulnFindings                ArtifactKind = "vuln-findings"
+)
+
 // Defines values for AssessmentKind.
 const (
 	AssessmentKindAudit            AssessmentKind = "audit"
@@ -64,6 +135,57 @@ const (
 	AssessmentKindVulnScan1        AssessmentKind = "vuln_scan"
 )
 
+// Defines values for CloudConfigAuditArtifactFindingsIsolationDimensions.
+const (
+	CloudConfigAuditArtifactFindingsIsolationDimensionsAuthentication CloudConfigAuditArtifactFindingsIsolationDimensions = "authentication"
+	CloudConfigAuditArtifactFindingsIsolationDimensionsConnectivity   CloudConfigAuditArtifactFindingsIsolationDimensions = "connectivity"
+	CloudConfigAuditArtifactFindingsIsolationDimensionsEncryption     CloudConfigAuditArtifactFindingsIsolationDimensions = "encryption"
+	CloudConfigAuditArtifactFindingsIsolationDimensionsHygiene        CloudConfigAuditArtifactFindingsIsolationDimensions = "hygiene"
+	CloudConfigAuditArtifactFindingsIsolationDimensionsPrivilege      CloudConfigAuditArtifactFindingsIsolationDimensions = "privilege"
+)
+
+// Defines values for CloudConfigAuditArtifactMetadataRefKind.
+const (
+	CloudConfigAuditArtifactMetadataRefKindBranch  CloudConfigAuditArtifactMetadataRefKind = "branch"
+	CloudConfigAuditArtifactMetadataRefKindDefault CloudConfigAuditArtifactMetadataRefKind = "default"
+	CloudConfigAuditArtifactMetadataRefKindStream  CloudConfigAuditArtifactMetadataRefKind = "stream"
+	CloudConfigAuditArtifactMetadataRefKindTag     CloudConfigAuditArtifactMetadataRefKind = "tag"
+)
+
+// Defines values for CloudConfigFindingsCurrentArtifactFindingsIsolationDimensions.
+const (
+	CloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsCloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsAuthentication CloudConfigFindingsCurrentArtifactFindingsIsolationDimensions = "authentication"
+	CloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsCloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsConnectivity   CloudConfigFindingsCurrentArtifactFindingsIsolationDimensions = "connectivity"
+	CloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsCloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsEncryption     CloudConfigFindingsCurrentArtifactFindingsIsolationDimensions = "encryption"
+	CloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsCloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsHygiene        CloudConfigFindingsCurrentArtifactFindingsIsolationDimensions = "hygiene"
+	CloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsCloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsPrivilege      CloudConfigFindingsCurrentArtifactFindingsIsolationDimensions = "privilege"
+)
+
+// Defines values for CloudConfigFindingsCurrentArtifactMetadataRefKind.
+const (
+	CloudConfigFindingsCurrentArtifactMetadataRefKindCloudConfigFindingsCurrentArtifactMetadataRefKindBranch  CloudConfigFindingsCurrentArtifactMetadataRefKind = "branch"
+	CloudConfigFindingsCurrentArtifactMetadataRefKindCloudConfigFindingsCurrentArtifactMetadataRefKindDefault CloudConfigFindingsCurrentArtifactMetadataRefKind = "default"
+	CloudConfigFindingsCurrentArtifactMetadataRefKindCloudConfigFindingsCurrentArtifactMetadataRefKindStream  CloudConfigFindingsCurrentArtifactMetadataRefKind = "stream"
+	CloudConfigFindingsCurrentArtifactMetadataRefKindCloudConfigFindingsCurrentArtifactMetadataRefKindTag     CloudConfigFindingsCurrentArtifactMetadataRefKind = "tag"
+)
+
+// Defines values for CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensions.
+const (
+	CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensionsCloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsAuthentication CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensions = "authentication"
+	CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensionsCloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsConnectivity   CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensions = "connectivity"
+	CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensionsCloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsEncryption     CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensions = "encryption"
+	CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensionsCloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsHygiene        CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensions = "hygiene"
+	CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensionsCloudConfigFindingsCurrentArtifactFindingsIsolationDimensionsPrivilege      CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensions = "privilege"
+)
+
+// Defines values for CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKind.
+const (
+	CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKindCloudConfigFindingsCurrentArtifactMetadataRefKindBranch  CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKind = "branch"
+	CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKindCloudConfigFindingsCurrentArtifactMetadataRefKindDefault CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKind = "default"
+	CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKindCloudConfigFindingsCurrentArtifactMetadataRefKindStream  CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKind = "stream"
+	CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKindCloudConfigFindingsCurrentArtifactMetadataRefKindTag     CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKind = "tag"
+)
+
 // Defines values for ComparisonStatus.
 const (
 	ComparisonStatusBanSuspected    ComparisonStatus = "ban-suspected"
@@ -98,10 +220,36 @@ const (
 	OpenaiCompatible    ConnectionType = "openai-compatible"
 )
 
+// Defines values for CorpusRegistryArtifactSubjectOwnership.
+const (
+	CorpusRegistryArtifactSubjectOwnershipExternalBu CorpusRegistryArtifactSubjectOwnership = "external-bu"
+	CorpusRegistryArtifactSubjectOwnershipHarnessQa  CorpusRegistryArtifactSubjectOwnership = "harness-qa"
+	CorpusRegistryArtifactSubjectOwnershipOwned      CorpusRegistryArtifactSubjectOwnership = "owned"
+	CorpusRegistryArtifactSubjectOwnershipUpstream   CorpusRegistryArtifactSubjectOwnership = "upstream"
+)
+
+// Defines values for CorpusRegistryArtifactSubjectRefKind.
+const (
+	CorpusRegistryArtifactSubjectRefKindBranch  CorpusRegistryArtifactSubjectRefKind = "branch"
+	CorpusRegistryArtifactSubjectRefKindDefault CorpusRegistryArtifactSubjectRefKind = "default"
+	CorpusRegistryArtifactSubjectRefKindStream  CorpusRegistryArtifactSubjectRefKind = "stream"
+	CorpusRegistryArtifactSubjectRefKindTag     CorpusRegistryArtifactSubjectRefKind = "tag"
+)
+
 // Defines values for CredentialSource.
 const (
 	Env    CredentialSource = "env"
 	Secret CredentialSource = "secret"
+)
+
+// Defines values for CveReplayArtifactCandidateSeverity.
+const (
+	CveReplayArtifactCandidateSeverityCritical      CveReplayArtifactCandidateSeverity = "critical"
+	CveReplayArtifactCandidateSeverityHigh          CveReplayArtifactCandidateSeverity = "high"
+	CveReplayArtifactCandidateSeverityInformational CveReplayArtifactCandidateSeverity = "informational"
+	CveReplayArtifactCandidateSeverityLow           CveReplayArtifactCandidateSeverity = "low"
+	CveReplayArtifactCandidateSeverityMedium        CveReplayArtifactCandidateSeverity = "medium"
+	CveReplayArtifactCandidateSeverityUnrated       CveReplayArtifactCandidateSeverity = "unrated"
 )
 
 // Defines values for CvssSource.
@@ -338,6 +486,115 @@ const (
 	Oidc      IdentitySource = "oidc"
 )
 
+// Defines values for ImpactAnalysisArtifactEvidenceBinaryLinkedLibrary.
+const (
+	ImpactAnalysisArtifactEvidenceBinaryLinkedLibraryLinked    ImpactAnalysisArtifactEvidenceBinaryLinkedLibrary = "linked"
+	ImpactAnalysisArtifactEvidenceBinaryLinkedLibraryNone      ImpactAnalysisArtifactEvidenceBinaryLinkedLibrary = "<nil>"
+	ImpactAnalysisArtifactEvidenceBinaryLinkedLibraryNotLinked ImpactAnalysisArtifactEvidenceBinaryLinkedLibrary = "not_linked"
+)
+
+// Defines values for ImpactAnalysisArtifactEvidenceBinaryStringScan.
+const (
+	ImpactAnalysisArtifactEvidenceBinaryStringScanNone               ImpactAnalysisArtifactEvidenceBinaryStringScan = "<nil>"
+	ImpactAnalysisArtifactEvidenceBinaryStringScanNotScanned         ImpactAnalysisArtifactEvidenceBinaryStringScan = "not_scanned"
+	ImpactAnalysisArtifactEvidenceBinaryStringScanPackagePathAbsent  ImpactAnalysisArtifactEvidenceBinaryStringScan = "package_path_absent"
+	ImpactAnalysisArtifactEvidenceBinaryStringScanPackagePathPresent ImpactAnalysisArtifactEvidenceBinaryStringScan = "package_path_present"
+)
+
+// Defines values for ImpactAnalysisArtifactEvidenceBinarySymbolScan.
+const (
+	ImpactAnalysisArtifactEvidenceBinarySymbolScanNone           ImpactAnalysisArtifactEvidenceBinarySymbolScan = "<nil>"
+	ImpactAnalysisArtifactEvidenceBinarySymbolScanSymbolsAbsent  ImpactAnalysisArtifactEvidenceBinarySymbolScan = "symbols_absent"
+	ImpactAnalysisArtifactEvidenceBinarySymbolScanSymbolsPresent ImpactAnalysisArtifactEvidenceBinarySymbolScan = "symbols_present"
+)
+
+// Defines values for ImpactAnalysisArtifactEvidenceEvidenceLevel.
+const (
+	ImpactAnalysisArtifactEvidenceEvidenceLevelBinary      ImpactAnalysisArtifactEvidenceEvidenceLevel = "binary"
+	ImpactAnalysisArtifactEvidenceEvidenceLevelManifest    ImpactAnalysisArtifactEvidenceEvidenceLevel = "manifest"
+	ImpactAnalysisArtifactEvidenceEvidenceLevelNone        ImpactAnalysisArtifactEvidenceEvidenceLevel = "none"
+	ImpactAnalysisArtifactEvidenceEvidenceLevelSymbol      ImpactAnalysisArtifactEvidenceEvidenceLevel = "symbol"
+	ImpactAnalysisArtifactEvidenceEvidenceLevelSymbolUsage ImpactAnalysisArtifactEvidenceEvidenceLevel = "symbol-usage"
+)
+
+// Defines values for ImpactAnalysisArtifactEvidenceGovulncheck.
+const (
+	ImpactAnalysisArtifactEvidenceGovulncheckModuleRequiredNotObserved  ImpactAnalysisArtifactEvidenceGovulncheck = "module_required_not_observed"
+	ImpactAnalysisArtifactEvidenceGovulncheckNone                       ImpactAnalysisArtifactEvidenceGovulncheck = "<nil>"
+	ImpactAnalysisArtifactEvidenceGovulncheckPackageImportedNotObserved ImpactAnalysisArtifactEvidenceGovulncheck = "package_imported_not_observed"
+	ImpactAnalysisArtifactEvidenceGovulncheckSymbolReachable            ImpactAnalysisArtifactEvidenceGovulncheck = "symbol_reachable"
+)
+
+// Defines values for ImpactAnalysisArtifactEvidenceManifestScan.
+const (
+	ImpactAnalysisArtifactEvidenceManifestScanModuleNotInManifests   ImpactAnalysisArtifactEvidenceManifestScan = "module_not_in_manifests"
+	ImpactAnalysisArtifactEvidenceManifestScanModulePinnedInRange    ImpactAnalysisArtifactEvidenceManifestScan = "module_pinned_in_range"
+	ImpactAnalysisArtifactEvidenceManifestScanModulePinnedOutOfRange ImpactAnalysisArtifactEvidenceManifestScan = "module_pinned_out_of_range"
+	ImpactAnalysisArtifactEvidenceManifestScanNoManifestsFound       ImpactAnalysisArtifactEvidenceManifestScan = "no_manifests_found"
+	ImpactAnalysisArtifactEvidenceManifestScanNone                   ImpactAnalysisArtifactEvidenceManifestScan = "<nil>"
+)
+
+// Defines values for ImpactAnalysisArtifactEvidenceSbomScan.
+const (
+	ImpactAnalysisArtifactEvidenceSbomScanModuleNotInSbom   ImpactAnalysisArtifactEvidenceSbomScan = "module_not_in_sbom"
+	ImpactAnalysisArtifactEvidenceSbomScanNone              ImpactAnalysisArtifactEvidenceSbomScan = "<nil>"
+	ImpactAnalysisArtifactEvidenceSbomScanShippedInRange    ImpactAnalysisArtifactEvidenceSbomScan = "shipped_in_range"
+	ImpactAnalysisArtifactEvidenceSbomScanShippedOutOfRange ImpactAnalysisArtifactEvidenceSbomScan = "shipped_out_of_range"
+)
+
+// Defines values for ImpactAnalysisArtifactEvidenceSourceImportScan.
+const (
+	ImpactAnalysisArtifactEvidenceSourceImportScanImportsFound    ImpactAnalysisArtifactEvidenceSourceImportScan = "imports_found"
+	ImpactAnalysisArtifactEvidenceSourceImportScanImportsNotFound ImpactAnalysisArtifactEvidenceSourceImportScan = "imports_not_found"
+	ImpactAnalysisArtifactEvidenceSourceImportScanNone            ImpactAnalysisArtifactEvidenceSourceImportScan = "<nil>"
+)
+
+// Defines values for ImpactAnalysisArtifactEvidenceSymbolUsageScan.
+const (
+	ImpactAnalysisArtifactEvidenceSymbolUsageScanNone            ImpactAnalysisArtifactEvidenceSymbolUsageScan = "<nil>"
+	ImpactAnalysisArtifactEvidenceSymbolUsageScanSymbolsNotFound ImpactAnalysisArtifactEvidenceSymbolUsageScan = "symbols_not_found"
+	ImpactAnalysisArtifactEvidenceSymbolUsageScanSymbolsUsed     ImpactAnalysisArtifactEvidenceSymbolUsageScan = "symbols_used"
+)
+
+// Defines values for ImpactAnalysisArtifactMetadataTiersExecuted.
+const (
+	ImpactAnalysisArtifactMetadataTiersExecutedBinaryScan     ImpactAnalysisArtifactMetadataTiersExecuted = "binary_scan"
+	ImpactAnalysisArtifactMetadataTiersExecutedFeaturePattern ImpactAnalysisArtifactMetadataTiersExecuted = "feature_pattern"
+	ImpactAnalysisArtifactMetadataTiersExecutedGovulncheck    ImpactAnalysisArtifactMetadataTiersExecuted = "govulncheck"
+	ImpactAnalysisArtifactMetadataTiersExecutedL1             ImpactAnalysisArtifactMetadataTiersExecuted = "L1"
+	ImpactAnalysisArtifactMetadataTiersExecutedL4             ImpactAnalysisArtifactMetadataTiersExecuted = "L4"
+	ImpactAnalysisArtifactMetadataTiersExecutedManifestScan   ImpactAnalysisArtifactMetadataTiersExecuted = "manifest_scan"
+	ImpactAnalysisArtifactMetadataTiersExecutedSbomCrossCheck ImpactAnalysisArtifactMetadataTiersExecuted = "sbom_cross_check"
+	ImpactAnalysisArtifactMetadataTiersExecutedSourceScan     ImpactAnalysisArtifactMetadataTiersExecuted = "source_scan"
+)
+
+// Defines values for ImpactAnalysisArtifactMetadataEcosystem.
+const (
+	ImpactAnalysisArtifactMetadataEcosystemActions ImpactAnalysisArtifactMetadataEcosystem = "actions"
+	ImpactAnalysisArtifactMetadataEcosystemApk     ImpactAnalysisArtifactMetadataEcosystem = "apk"
+	ImpactAnalysisArtifactMetadataEcosystemCargo   ImpactAnalysisArtifactMetadataEcosystem = "cargo"
+	ImpactAnalysisArtifactMetadataEcosystemDeb     ImpactAnalysisArtifactMetadataEcosystem = "deb"
+	ImpactAnalysisArtifactMetadataEcosystemDocker  ImpactAnalysisArtifactMetadataEcosystem = "docker"
+	ImpactAnalysisArtifactMetadataEcosystemGo      ImpactAnalysisArtifactMetadataEcosystem = "go"
+	ImpactAnalysisArtifactMetadataEcosystemHelm    ImpactAnalysisArtifactMetadataEcosystem = "helm"
+	ImpactAnalysisArtifactMetadataEcosystemMaven   ImpactAnalysisArtifactMetadataEcosystem = "maven"
+	ImpactAnalysisArtifactMetadataEcosystemNpm     ImpactAnalysisArtifactMetadataEcosystem = "npm"
+	ImpactAnalysisArtifactMetadataEcosystemNuget   ImpactAnalysisArtifactMetadataEcosystem = "nuget"
+	ImpactAnalysisArtifactMetadataEcosystemPypi    ImpactAnalysisArtifactMetadataEcosystem = "pypi"
+	ImpactAnalysisArtifactMetadataEcosystemRpm     ImpactAnalysisArtifactMetadataEcosystem = "rpm"
+	ImpactAnalysisArtifactMetadataEcosystemRuby    ImpactAnalysisArtifactMetadataEcosystem = "ruby"
+)
+
+// Defines values for ImpactAnalysisArtifactRepoEntryClassification.
+const (
+	ImpactAnalysisArtifactRepoEntryClassificationAffected          ImpactAnalysisArtifactRepoEntryClassification = "affected"
+	ImpactAnalysisArtifactRepoEntryClassificationInconclusive      ImpactAnalysisArtifactRepoEntryClassification = "inconclusive"
+	ImpactAnalysisArtifactRepoEntryClassificationLikelyAffected    ImpactAnalysisArtifactRepoEntryClassification = "likely_affected"
+	ImpactAnalysisArtifactRepoEntryClassificationNotImported       ImpactAnalysisArtifactRepoEntryClassification = "not_imported"
+	ImpactAnalysisArtifactRepoEntryClassificationNotObserved       ImpactAnalysisArtifactRepoEntryClassification = "not_observed"
+	ImpactAnalysisArtifactRepoEntryClassificationVersionNotInRange ImpactAnalysisArtifactRepoEntryClassification = "version_not_in_range"
+)
+
 // Defines values for ImpactClassification.
 const (
 	ImpactClassificationAffected          ImpactClassification = "affected"
@@ -413,6 +670,178 @@ const (
 	SourceScan     ImpactTier = "source_scan"
 )
 
+// Defines values for LayerArtifactActorKind.
+const (
+	LayerArtifactActorKindHuman   LayerArtifactActorKind = "human"
+	LayerArtifactActorKindMachine LayerArtifactActorKind = "machine"
+)
+
+// Defines values for LayerArtifactDispositionEmbargo.
+const (
+	LayerArtifactDispositionEmbargoActive      LayerArtifactDispositionEmbargo = "active"
+	LayerArtifactDispositionEmbargoNotRequired LayerArtifactDispositionEmbargo = "not_required"
+	LayerArtifactDispositionEmbargoRequired    LayerArtifactDispositionEmbargo = "required"
+	LayerArtifactDispositionEmbargoUncertain   LayerArtifactDispositionEmbargo = "uncertain"
+)
+
+// Defines values for LayerArtifactDispositionSeverity.
+const (
+	LayerArtifactDispositionSeverityCritical      LayerArtifactDispositionSeverity = "critical"
+	LayerArtifactDispositionSeverityHigh          LayerArtifactDispositionSeverity = "high"
+	LayerArtifactDispositionSeverityInformational LayerArtifactDispositionSeverity = "informational"
+	LayerArtifactDispositionSeverityLow           LayerArtifactDispositionSeverity = "low"
+	LayerArtifactDispositionSeverityMedium        LayerArtifactDispositionSeverity = "medium"
+)
+
+// Defines values for LayerArtifactEventRiskWeightTenancyProfile.
+const (
+	LayerArtifactEventRiskWeightTenancyProfileMultiTenant  LayerArtifactEventRiskWeightTenancyProfile = "multi_tenant"
+	LayerArtifactEventRiskWeightTenancyProfileSingleTenant LayerArtifactEventRiskWeightTenancyProfile = "single_tenant"
+)
+
+// Defines values for LayerArtifactEventEvidenceGrade.
+const (
+	LayerArtifactEventEvidenceGradeE0   LayerArtifactEventEvidenceGrade = "E0"
+	LayerArtifactEventEvidenceGradeE1   LayerArtifactEventEvidenceGrade = "E1"
+	LayerArtifactEventEvidenceGradeE2   LayerArtifactEventEvidenceGrade = "E2"
+	LayerArtifactEventEvidenceGradeE3   LayerArtifactEventEvidenceGrade = "E3"
+	LayerArtifactEventEvidenceGradeNone LayerArtifactEventEvidenceGrade = "<nil>"
+)
+
+// Defines values for LayerArtifactEventFindingSeverity.
+const (
+	LayerArtifactEventFindingSeverityCritical      LayerArtifactEventFindingSeverity = "critical"
+	LayerArtifactEventFindingSeverityHigh          LayerArtifactEventFindingSeverity = "high"
+	LayerArtifactEventFindingSeverityInformational LayerArtifactEventFindingSeverity = "informational"
+	LayerArtifactEventFindingSeverityLow           LayerArtifactEventFindingSeverity = "low"
+	LayerArtifactEventFindingSeverityMedium        LayerArtifactEventFindingSeverity = "medium"
+)
+
+// Defines values for LayerArtifactEventRestatementReason.
+const (
+	LayerArtifactEventRestatementReasonBaselineRewrite LayerArtifactEventRestatementReason = "baseline_rewrite"
+	LayerArtifactEventRestatementReasonDataError       LayerArtifactEventRestatementReason = "data_error"
+	LayerArtifactEventRestatementReasonOperatorError   LayerArtifactEventRestatementReason = "operator_error"
+	LayerArtifactEventRestatementReasonSchemaMigration LayerArtifactEventRestatementReason = "schema_migration"
+)
+
+// Defines values for LayerArtifactEventRestatementTarget.
+const (
+	LayerArtifactEventRestatementTargetArtifactDigests   LayerArtifactEventRestatementTarget = "artifact_digests"
+	LayerArtifactEventRestatementTargetAuditReportSha256 LayerArtifactEventRestatementTarget = "audit_report_sha256"
+	LayerArtifactEventRestatementTargetClaimHashes       LayerArtifactEventRestatementTarget = "claim_hashes"
+)
+
+// Defines values for LayerArtifactLayerMetadataExternalRefsConfidence.
+const (
+	LayerArtifactLayerMetadataExternalRefsConfidenceConfirmed LayerArtifactLayerMetadataExternalRefsConfidence = "confirmed"
+	LayerArtifactLayerMetadataExternalRefsConfidenceProbable  LayerArtifactLayerMetadataExternalRefsConfidence = "probable"
+)
+
+// Defines values for LayerArtifactLayerMetadataExternalRefsSystem.
+const (
+	LayerArtifactLayerMetadataExternalRefsSystemBugzilla LayerArtifactLayerMetadataExternalRefsSystem = "bugzilla"
+	LayerArtifactLayerMetadataExternalRefsSystemCve      LayerArtifactLayerMetadataExternalRefsSystem = "cve"
+	LayerArtifactLayerMetadataExternalRefsSystemGhsa     LayerArtifactLayerMetadataExternalRefsSystem = "ghsa"
+	LayerArtifactLayerMetadataExternalRefsSystemJira     LayerArtifactLayerMetadataExternalRefsSystem = "jira"
+)
+
+// Defines values for LayerArtifactLayerMetadataLeafFormat.
+const (
+	LayerArtifactLayerMetadataLeafFormat1 LayerArtifactLayerMetadataLeafFormat = 1
+	LayerArtifactLayerMetadataLeafFormat2 LayerArtifactLayerMetadataLeafFormat = 2
+)
+
+// Defines values for LayerArtifactLayerMetadataMerkleAlgorithm.
+const (
+	LayerArtifactLayerMetadataMerkleAlgorithmSha256 LayerArtifactLayerMetadataMerkleAlgorithm = "sha256"
+)
+
+// Defines values for LayerArtifactLayerMetadataMerkleSignatureFormat.
+const (
+	LayerArtifactLayerMetadataMerkleSignatureFormat1 LayerArtifactLayerMetadataMerkleSignatureFormat = 1
+	LayerArtifactLayerMetadataMerkleSignatureFormat2 LayerArtifactLayerMetadataMerkleSignatureFormat = 2
+	LayerArtifactLayerMetadataMerkleSignatureFormat3 LayerArtifactLayerMetadataMerkleSignatureFormat = 3
+	LayerArtifactLayerMetadataMerkleSignatureFormat4 LayerArtifactLayerMetadataMerkleSignatureFormat = 4
+)
+
+// Defines values for LayerArtifactResolution.
+const (
+	LayerArtifactResolutionFixInProgress        LayerArtifactResolution = "fix_in_progress"
+	LayerArtifactResolutionOpen                 LayerArtifactResolution = "open"
+	LayerArtifactResolutionPartiallyResolved    LayerArtifactResolution = "partially_resolved"
+	LayerArtifactResolutionRegressionIntroduced LayerArtifactResolution = "regression_introduced"
+	LayerArtifactResolutionResolved             LayerArtifactResolution = "resolved"
+	LayerArtifactResolutionRiskAccepted         LayerArtifactResolution = "risk_accepted"
+)
+
+// Defines values for LayerArtifactReviewItemQueueReason.
+const (
+	LayerArtifactReviewItemQueueReasonAmbiguousStatement    LayerArtifactReviewItemQueueReason = "ambiguous_statement"
+	LayerArtifactReviewItemQueueReasonAnalystReview         LayerArtifactReviewItemQueueReason = "analyst_review"
+	LayerArtifactReviewItemQueueReasonDependencyUpdate      LayerArtifactReviewItemQueueReason = "dependency_update"
+	LayerArtifactReviewItemQueueReasonEvidenceAvailable     LayerArtifactReviewItemQueueReason = "evidence_available"
+	LayerArtifactReviewItemQueueReasonFalsePositiveDispute  LayerArtifactReviewItemQueueReason = "false_positive_dispute"
+	LayerArtifactReviewItemQueueReasonFpAuditValve          LayerArtifactReviewItemQueueReason = "fp_audit_valve"
+	LayerArtifactReviewItemQueueReasonInsufficientAuthority LayerArtifactReviewItemQueueReason = "insufficient_authority"
+	LayerArtifactReviewItemQueueReasonManualQueue           LayerArtifactReviewItemQueueReason = "manual_queue"
+	LayerArtifactReviewItemQueueReasonNeedsIdentity         LayerArtifactReviewItemQueueReason = "needs_identity"
+	LayerArtifactReviewItemQueueReasonNeedsManualTest       LayerArtifactReviewItemQueueReason = "needs_manual_test"
+	LayerArtifactReviewItemQueueReasonNewDiscovery          LayerArtifactReviewItemQueueReason = "new_discovery"
+	LayerArtifactReviewItemQueueReasonNoFindingId           LayerArtifactReviewItemQueueReason = "no_finding_id"
+	LayerArtifactReviewItemQueueReasonPatchAvailable        LayerArtifactReviewItemQueueReason = "patch_available"
+	LayerArtifactReviewItemQueueReasonRebaselineMapping     LayerArtifactReviewItemQueueReason = "rebaseline_mapping"
+	LayerArtifactReviewItemQueueReasonRebaselineUnmatched   LayerArtifactReviewItemQueueReason = "rebaseline_unmatched"
+	LayerArtifactReviewItemQueueReasonRegressionDetected    LayerArtifactReviewItemQueueReason = "regression_detected"
+	LayerArtifactReviewItemQueueReasonRemediationDue        LayerArtifactReviewItemQueueReason = "remediation_due"
+	LayerArtifactReviewItemQueueReasonRemediationReady      LayerArtifactReviewItemQueueReason = "remediation_ready"
+	LayerArtifactReviewItemQueueReasonRevalidationRequired  LayerArtifactReviewItemQueueReason = "revalidation_required"
+	LayerArtifactReviewItemQueueReasonScopeChange           LayerArtifactReviewItemQueueReason = "scope_change"
+	LayerArtifactReviewItemQueueReasonSeverityProposal      LayerArtifactReviewItemQueueReason = "severity_proposal"
+	LayerArtifactReviewItemQueueReasonSeverityUpgrade       LayerArtifactReviewItemQueueReason = "severity_upgrade"
+	LayerArtifactReviewItemQueueReasonSlaEscalation         LayerArtifactReviewItemQueueReason = "sla_escalation"
+	LayerArtifactReviewItemQueueReasonStaleBaseline         LayerArtifactReviewItemQueueReason = "stale_baseline"
+	LayerArtifactReviewItemQueueReasonUndeterminedFinding   LayerArtifactReviewItemQueueReason = "undetermined_finding"
+	LayerArtifactReviewItemQueueReasonUngradedConfirmation  LayerArtifactReviewItemQueueReason = "ungraded_confirmation"
+	LayerArtifactReviewItemQueueReasonUnsoundRefutation     LayerArtifactReviewItemQueueReason = "unsound_refutation"
+	LayerArtifactReviewItemQueueReasonUnverifiedIdentity    LayerArtifactReviewItemQueueReason = "unverified_identity"
+	LayerArtifactReviewItemQueueReasonWeakConfirmation      LayerArtifactReviewItemQueueReason = "weak_confirmation"
+)
+
+// Defines values for LayerArtifactReviewItemStatus.
+const (
+	LayerArtifactReviewItemStatusAccepted         LayerArtifactReviewItemStatus = "accepted"
+	LayerArtifactReviewItemStatusClosedUnreviewed LayerArtifactReviewItemStatus = "closed_unreviewed"
+	LayerArtifactReviewItemStatusConfirmed        LayerArtifactReviewItemStatus = "confirmed"
+	LayerArtifactReviewItemStatusPending          LayerArtifactReviewItemStatus = "pending"
+	LayerArtifactReviewItemStatusRejected         LayerArtifactReviewItemStatus = "rejected"
+)
+
+// Defines values for LayerArtifactSourceType.
+const (
+	LayerArtifactSourceTypeCommit             LayerArtifactSourceType = "commit"
+	LayerArtifactSourceTypeFuzzReport         LayerArtifactSourceType = "fuzz_report"
+	LayerArtifactSourceTypeImpactReport       LayerArtifactSourceType = "impact_report"
+	LayerArtifactSourceTypeInteractive        LayerArtifactSourceType = "interactive"
+	LayerArtifactSourceTypeJira               LayerArtifactSourceType = "jira"
+	LayerArtifactSourceTypeMrComment          LayerArtifactSourceType = "mr_comment"
+	LayerArtifactSourceTypeRebaseline         LayerArtifactSourceType = "rebaseline"
+	LayerArtifactSourceTypeRestatement        LayerArtifactSourceType = "restatement"
+	LayerArtifactSourceTypeTriageReport       LayerArtifactSourceType = "triage_report"
+	LayerArtifactSourceTypeValidationReport   LayerArtifactSourceType = "validation_report"
+	LayerArtifactSourceTypeVerificationReport LayerArtifactSourceType = "verification_report"
+	LayerArtifactSourceTypeVulnScanReport     LayerArtifactSourceType = "vuln_scan_report"
+)
+
+// Defines values for LayerArtifactValidity.
+const (
+	LayerArtifactValidityConfirmed     LayerArtifactValidity = "confirmed"
+	LayerArtifactValidityCorrected     LayerArtifactValidity = "corrected"
+	LayerArtifactValidityFalsePositive LayerArtifactValidity = "false_positive"
+	LayerArtifactValidityHardening     LayerArtifactValidity = "hardening"
+	LayerArtifactValidityNotAffected   LayerArtifactValidity = "not_affected"
+)
+
 // Defines values for LivenessStatus.
 const (
 	Active   LivenessStatus = "active"
@@ -421,6 +850,12 @@ const (
 	Missing  LivenessStatus = "missing"
 	Moved    LivenessStatus = "moved"
 	Unknown  LivenessStatus = "unknown"
+)
+
+// Defines values for ManifestCoverageArtifactReason.
+const (
+	ManifestCoverageArtifactReasonNoLockfile ManifestCoverageArtifactReason = "no-lockfile"
+	ManifestCoverageArtifactReasonUnpinned   ManifestCoverageArtifactReason = "unpinned"
 )
 
 // Defines values for Measure.
@@ -479,6 +914,40 @@ const (
 	PatchEvidenceKindScannerDifferential PatchEvidenceKind = "scanner_differential"
 )
 
+// Defines values for PqcBlockersArtifactFindingPqcClassification.
+const (
+	PqcBlockersArtifactFindingPqcClassificationClassicallyBroken    PqcBlockersArtifactFindingPqcClassification = "classically-broken"
+	PqcBlockersArtifactFindingPqcClassificationClock2030Parameter   PqcBlockersArtifactFindingPqcClassification = "clock-2030-parameter"
+	PqcBlockersArtifactFindingPqcClassificationHndlExposure         PqcBlockersArtifactFindingPqcClassification = "hndl-exposure"
+	PqcBlockersArtifactFindingPqcClassificationPqcAdoption          PqcBlockersArtifactFindingPqcClassification = "pqc-adoption"
+	PqcBlockersArtifactFindingPqcClassificationPqcBlockerConfig     PqcBlockersArtifactFindingPqcClassification = "pqc-blocker-config"
+	PqcBlockersArtifactFindingPqcClassificationShorKeyEstablishment PqcBlockersArtifactFindingPqcClassification = "shor-key-establishment"
+	PqcBlockersArtifactFindingPqcClassificationShorSignature        PqcBlockersArtifactFindingPqcClassification = "shor-signature"
+)
+
+// Defines values for PqcBlockersArtifactFindingRemediationEffort.
+const (
+	PqcBlockersArtifactFindingRemediationEffortBlockedExternal PqcBlockersArtifactFindingRemediationEffort = "blocked-external"
+	PqcBlockersArtifactFindingRemediationEffortL               PqcBlockersArtifactFindingRemediationEffort = "l"
+	PqcBlockersArtifactFindingRemediationEffortM               PqcBlockersArtifactFindingRemediationEffort = "m"
+	PqcBlockersArtifactFindingRemediationEffortModerate        PqcBlockersArtifactFindingRemediationEffort = "moderate"
+	PqcBlockersArtifactFindingRemediationEffortNone            PqcBlockersArtifactFindingRemediationEffort = "<nil>"
+	PqcBlockersArtifactFindingRemediationEffortS               PqcBlockersArtifactFindingRemediationEffort = "s"
+	PqcBlockersArtifactFindingRemediationEffortSignificant     PqcBlockersArtifactFindingRemediationEffort = "significant"
+	PqcBlockersArtifactFindingRemediationEffortTrivial         PqcBlockersArtifactFindingRemediationEffort = "trivial"
+	PqcBlockersArtifactFindingRemediationEffortXl              PqcBlockersArtifactFindingRemediationEffort = "xl"
+	PqcBlockersArtifactFindingRemediationEffortXs              PqcBlockersArtifactFindingRemediationEffort = "xs"
+)
+
+// Defines values for PqcBlockersArtifactSeverityLevel.
+const (
+	PqcBlockersArtifactSeverityLevelCritical      PqcBlockersArtifactSeverityLevel = "critical"
+	PqcBlockersArtifactSeverityLevelHigh          PqcBlockersArtifactSeverityLevel = "high"
+	PqcBlockersArtifactSeverityLevelInformational PqcBlockersArtifactSeverityLevel = "informational"
+	PqcBlockersArtifactSeverityLevelLow           PqcBlockersArtifactSeverityLevel = "low"
+	PqcBlockersArtifactSeverityLevelMedium        PqcBlockersArtifactSeverityLevel = "medium"
+)
+
 // Defines values for PrecedentBasis.
 const (
 	HashBacked PrecedentBasis = "hash_backed"
@@ -499,6 +968,137 @@ const (
 	Tag     RefKind = "tag"
 )
 
+// Defines values for RemediationArtifactCheckOutcome.
+const (
+	RemediationArtifactCheckOutcomeError RemediationArtifactCheckOutcome = "error"
+	RemediationArtifactCheckOutcomeFail  RemediationArtifactCheckOutcome = "fail"
+	RemediationArtifactCheckOutcomePass  RemediationArtifactCheckOutcome = "pass"
+	RemediationArtifactCheckOutcomeSkip  RemediationArtifactCheckOutcome = "skip"
+)
+
+// Defines values for RemediationArtifactFixStrategy.
+const (
+	RemediationArtifactFixStrategyApiRestrict         RemediationArtifactFixStrategy = "api-restrict"
+	RemediationArtifactFixStrategyAuthAdd             RemediationArtifactFixStrategy = "auth-add"
+	RemediationArtifactFixStrategyBoundResource       RemediationArtifactFixStrategy = "bound-resource"
+	RemediationArtifactFixStrategyConfigDefaultHarden RemediationArtifactFixStrategy = "config-default-harden"
+	RemediationArtifactFixStrategyDependencyBump      RemediationArtifactFixStrategy = "dependency-bump"
+	RemediationArtifactFixStrategyDigestPin           RemediationArtifactFixStrategy = "digest-pin"
+	RemediationArtifactFixStrategyInputValidation     RemediationArtifactFixStrategy = "input-validation"
+	RemediationArtifactFixStrategyOther               RemediationArtifactFixStrategy = "other"
+	RemediationArtifactFixStrategyRbacScopeDown       RemediationArtifactFixStrategy = "rbac-scope-down"
+	RemediationArtifactFixStrategyRemoveFeature       RemediationArtifactFixStrategy = "remove-feature"
+	RemediationArtifactFixStrategyTlsEnforce          RemediationArtifactFixStrategy = "tls-enforce"
+	RemediationArtifactFixStrategyUrlAllowlist        RemediationArtifactFixStrategy = "url-allowlist"
+)
+
+// Defines values for RemediationArtifactForkHost.
+const (
+	RemediationArtifactForkHostGithub RemediationArtifactForkHost = "github"
+	RemediationArtifactForkHostGitlab RemediationArtifactForkHost = "gitlab"
+	RemediationArtifactForkHostOther  RemediationArtifactForkHost = "other"
+)
+
+// Defines values for RemediationArtifactForkVisibility.
+const (
+	RemediationArtifactForkVisibilityInternal RemediationArtifactForkVisibility = "internal"
+	RemediationArtifactForkVisibilityPrivate  RemediationArtifactForkVisibility = "private"
+	RemediationArtifactForkVisibilityPublic   RemediationArtifactForkVisibility = "public"
+)
+
+// Defines values for RemediationArtifactPatchFilesChangedChangeType.
+const (
+	RemediationArtifactPatchFilesChangedChangeTypeAdded    RemediationArtifactPatchFilesChangedChangeType = "added"
+	RemediationArtifactPatchFilesChangedChangeTypeDeleted  RemediationArtifactPatchFilesChangedChangeType = "deleted"
+	RemediationArtifactPatchFilesChangedChangeTypeModified RemediationArtifactPatchFilesChangedChangeType = "modified"
+	RemediationArtifactPatchFilesChangedChangeTypeRenamed  RemediationArtifactPatchFilesChangedChangeType = "renamed"
+)
+
+// Defines values for RemediationArtifactPatchEvidenceKind.
+const (
+	RemediationArtifactPatchEvidenceKindExploit             RemediationArtifactPatchEvidenceKind = "exploit"
+	RemediationArtifactPatchEvidenceKindMutation            RemediationArtifactPatchEvidenceKind = "mutation"
+	RemediationArtifactPatchEvidenceKindProperty            RemediationArtifactPatchEvidenceKind = "property"
+	RemediationArtifactPatchEvidenceKindRegression          RemediationArtifactPatchEvidenceKind = "regression"
+	RemediationArtifactPatchEvidenceKindScannerDifferential RemediationArtifactPatchEvidenceKind = "scanner_differential"
+)
+
+// Defines values for RemediationArtifactPullRequestState.
+const (
+	RemediationArtifactPullRequestStateClosed RemediationArtifactPullRequestState = "closed"
+	RemediationArtifactPullRequestStateDraft  RemediationArtifactPullRequestState = "draft"
+	RemediationArtifactPullRequestStateMerged RemediationArtifactPullRequestState = "merged"
+	RemediationArtifactPullRequestStateOpen   RemediationArtifactPullRequestState = "open"
+)
+
+// Defines values for RemediationArtifactPullRequestTarget.
+const (
+	RemediationArtifactPullRequestTargetDownstream  RemediationArtifactPullRequestTarget = "downstream"
+	RemediationArtifactPullRequestTargetPrivateFork RemediationArtifactPullRequestTarget = "private-fork"
+	RemediationArtifactPullRequestTargetUpstream    RemediationArtifactPullRequestTarget = "upstream"
+)
+
+// Defines values for RemediationArtifactRemStatus.
+const (
+	RemediationArtifactRemStatusAbandoned                  RemediationArtifactRemStatus = "abandoned"
+	RemediationArtifactRemStatusCandidate                  RemediationArtifactRemStatus = "candidate"
+	RemediationArtifactRemStatusChecksFailed               RemediationArtifactRemStatus = "checks_failed"
+	RemediationArtifactRemStatusChecksPassed               RemediationArtifactRemStatus = "checks_passed"
+	RemediationArtifactRemStatusForked                     RemediationArtifactRemStatus = "forked"
+	RemediationArtifactRemStatusMerged                     RemediationArtifactRemStatus = "merged"
+	RemediationArtifactRemStatusPatched                    RemediationArtifactRemStatus = "patched"
+	RemediationArtifactRemStatusPrOpened                   RemediationArtifactRemStatus = "pr_opened"
+	RemediationArtifactRemStatusRevalidatedFixed           RemediationArtifactRemStatus = "revalidated_fixed"
+	RemediationArtifactRemStatusRevalidatedStillVulnerable RemediationArtifactRemStatus = "revalidated_still_vulnerable"
+)
+
+// Defines values for RemediationArtifactRevalidationAfterVerdict.
+const (
+	RemediationArtifactRevalidationAfterVerdictBlockedByScope RemediationArtifactRevalidationAfterVerdict = "blocked_by_scope"
+	RemediationArtifactRevalidationAfterVerdictConfirmed      RemediationArtifactRevalidationAfterVerdict = "confirmed"
+	RemediationArtifactRevalidationAfterVerdictInconclusive   RemediationArtifactRevalidationAfterVerdict = "inconclusive"
+	RemediationArtifactRevalidationAfterVerdictNotAttempted   RemediationArtifactRevalidationAfterVerdict = "not_attempted"
+	RemediationArtifactRevalidationAfterVerdictRefuted        RemediationArtifactRevalidationAfterVerdict = "refuted"
+)
+
+// Defines values for RemediationArtifactRevalidationBeforeVerdict.
+const (
+	RemediationArtifactRevalidationBeforeVerdictBlockedByScope RemediationArtifactRevalidationBeforeVerdict = "blocked_by_scope"
+	RemediationArtifactRevalidationBeforeVerdictConfirmed      RemediationArtifactRevalidationBeforeVerdict = "confirmed"
+	RemediationArtifactRevalidationBeforeVerdictInconclusive   RemediationArtifactRevalidationBeforeVerdict = "inconclusive"
+	RemediationArtifactRevalidationBeforeVerdictNotAttempted   RemediationArtifactRevalidationBeforeVerdict = "not_attempted"
+	RemediationArtifactRevalidationBeforeVerdictNotValidated   RemediationArtifactRevalidationBeforeVerdict = "not_validated"
+	RemediationArtifactRevalidationBeforeVerdictRefuted        RemediationArtifactRevalidationBeforeVerdict = "refuted"
+)
+
+// Defines values for RemediationArtifactRevalidationMethod.
+const (
+	RemediationArtifactRevalidationMethodManual           RemediationArtifactRevalidationMethod = "manual"
+	RemediationArtifactRevalidationMethodNone             RemediationArtifactRevalidationMethod = "none"
+	RemediationArtifactRevalidationMethodValidateFindings RemediationArtifactRevalidationMethod = "validate-findings"
+	RemediationArtifactRevalidationMethodValidateLive     RemediationArtifactRevalidationMethod = "validate-live"
+	RemediationArtifactRevalidationMethodValidatePlatform RemediationArtifactRevalidationMethod = "validate-platform"
+)
+
+// Defines values for RemediationArtifactSourceFindingSeverity.
+const (
+	RemediationArtifactSourceFindingSeverityCritical      RemediationArtifactSourceFindingSeverity = "critical"
+	RemediationArtifactSourceFindingSeverityHigh          RemediationArtifactSourceFindingSeverity = "high"
+	RemediationArtifactSourceFindingSeverityInformational RemediationArtifactSourceFindingSeverity = "informational"
+	RemediationArtifactSourceFindingSeverityLow           RemediationArtifactSourceFindingSeverity = "low"
+	RemediationArtifactSourceFindingSeverityMedium        RemediationArtifactSourceFindingSeverity = "medium"
+)
+
+// Defines values for RemediationArtifactSourceFindingValidationVerdict.
+const (
+	RemediationArtifactSourceFindingValidationVerdictBlockedByScope RemediationArtifactSourceFindingValidationVerdict = "blocked_by_scope"
+	RemediationArtifactSourceFindingValidationVerdictConfirmed      RemediationArtifactSourceFindingValidationVerdict = "confirmed"
+	RemediationArtifactSourceFindingValidationVerdictInconclusive   RemediationArtifactSourceFindingValidationVerdict = "inconclusive"
+	RemediationArtifactSourceFindingValidationVerdictNotAttempted   RemediationArtifactSourceFindingValidationVerdict = "not_attempted"
+	RemediationArtifactSourceFindingValidationVerdictNotValidated   RemediationArtifactSourceFindingValidationVerdict = "not_validated"
+	RemediationArtifactSourceFindingValidationVerdictRefuted        RemediationArtifactSourceFindingValidationVerdict = "refuted"
+)
+
 // Defines values for RemediationStatus.
 const (
 	Abandoned                  RemediationStatus = "abandoned"
@@ -511,6 +1111,238 @@ const (
 	PrOpened                   RemediationStatus = "pr_opened"
 	RevalidatedFixed           RemediationStatus = "revalidated_fixed"
 	RevalidatedStillVulnerable RemediationStatus = "revalidated_still_vulnerable"
+)
+
+// Defines values for RepoLivenessArtifactLivenessStatus.
+const (
+	RepoLivenessArtifactLivenessStatusActive   RepoLivenessArtifactLivenessStatus = "active"
+	RepoLivenessArtifactLivenessStatusArchived RepoLivenessArtifactLivenessStatus = "archived"
+	RepoLivenessArtifactLivenessStatusDisabled RepoLivenessArtifactLivenessStatus = "disabled"
+	RepoLivenessArtifactLivenessStatusMissing  RepoLivenessArtifactLivenessStatus = "missing"
+	RepoLivenessArtifactLivenessStatusMoved    RepoLivenessArtifactLivenessStatus = "moved"
+	RepoLivenessArtifactLivenessStatusUnknown  RepoLivenessArtifactLivenessStatus = "unknown"
+)
+
+// Defines values for RepoStateArtifactComparisonStatus.
+const (
+	RepoStateArtifactComparisonStatusBanSuspected    RepoStateArtifactComparisonStatus = "ban-suspected"
+	RepoStateArtifactComparisonStatusError           RepoStateArtifactComparisonStatus = "error"
+	RepoStateArtifactComparisonStatusNetworkSkipped  RepoStateArtifactComparisonStatus = "network-skipped"
+	RepoStateArtifactComparisonStatusNeverAudited    RepoStateArtifactComparisonStatus = "never-audited"
+	RepoStateArtifactComparisonStatusNoCredentials   RepoStateArtifactComparisonStatus = "no-credentials"
+	RepoStateArtifactComparisonStatusNoPinnedSha     RepoStateArtifactComparisonStatus = "no-pinned-sha"
+	RepoStateArtifactComparisonStatusNoRepoUrl       RepoStateArtifactComparisonStatus = "no-repo-url"
+	RepoStateArtifactComparisonStatusOk              RepoStateArtifactComparisonStatus = "ok"
+	RepoStateArtifactComparisonStatusQuotaDeferred   RepoStateArtifactComparisonStatus = "quota-deferred"
+	RepoStateArtifactComparisonStatusUnreachable     RepoStateArtifactComparisonStatus = "unreachable"
+	RepoStateArtifactComparisonStatusUnsupportedHost RepoStateArtifactComparisonStatus = "unsupported-host"
+)
+
+// Defines values for ReportArtifactDispositionAssurance.
+const (
+	ReportArtifactDispositionAssuranceClaimed         ReportArtifactDispositionAssurance = "claimed"
+	ReportArtifactDispositionAssuranceExecutionProven ReportArtifactDispositionAssurance = "execution_proven"
+	ReportArtifactDispositionAssuranceHumanReviewed   ReportArtifactDispositionAssurance = "human_reviewed"
+	ReportArtifactDispositionAssuranceMachineVerified ReportArtifactDispositionAssurance = "machine_verified"
+)
+
+// Defines values for ReportArtifactDispositionResolution.
+const (
+	ReportArtifactDispositionResolutionFixInProgress        ReportArtifactDispositionResolution = "fix_in_progress"
+	ReportArtifactDispositionResolutionOpen                 ReportArtifactDispositionResolution = "open"
+	ReportArtifactDispositionResolutionPartiallyResolved    ReportArtifactDispositionResolution = "partially_resolved"
+	ReportArtifactDispositionResolutionRegressionIntroduced ReportArtifactDispositionResolution = "regression_introduced"
+	ReportArtifactDispositionResolutionResolved             ReportArtifactDispositionResolution = "resolved"
+	ReportArtifactDispositionResolutionRiskAccepted         ReportArtifactDispositionResolution = "risk_accepted"
+)
+
+// Defines values for ReportArtifactDispositionSeverityOverrideSeverity.
+const (
+	ReportArtifactDispositionSeverityOverrideSeverityCritical      ReportArtifactDispositionSeverityOverrideSeverity = "critical"
+	ReportArtifactDispositionSeverityOverrideSeverityHigh          ReportArtifactDispositionSeverityOverrideSeverity = "high"
+	ReportArtifactDispositionSeverityOverrideSeverityInformational ReportArtifactDispositionSeverityOverrideSeverity = "informational"
+	ReportArtifactDispositionSeverityOverrideSeverityLow           ReportArtifactDispositionSeverityOverrideSeverity = "low"
+	ReportArtifactDispositionSeverityOverrideSeverityMedium        ReportArtifactDispositionSeverityOverrideSeverity = "medium"
+)
+
+// Defines values for ReportArtifactDispositionValidity.
+const (
+	ReportArtifactDispositionValidityConfirmed     ReportArtifactDispositionValidity = "confirmed"
+	ReportArtifactDispositionValidityCorrected     ReportArtifactDispositionValidity = "corrected"
+	ReportArtifactDispositionValidityFalsePositive ReportArtifactDispositionValidity = "false_positive"
+	ReportArtifactDispositionValidityHardening     ReportArtifactDispositionValidity = "hardening"
+	ReportArtifactDispositionValidityNotAffected   ReportArtifactDispositionValidity = "not_affected"
+	ReportArtifactDispositionValidityNotVerified   ReportArtifactDispositionValidity = "not_verified"
+	ReportArtifactDispositionValidityTruePositive  ReportArtifactDispositionValidity = "true_positive"
+)
+
+// Defines values for ReportArtifactDispositionSummarySeverityOverridesSeverity.
+const (
+	ReportArtifactDispositionSummarySeverityOverridesSeverityCritical      ReportArtifactDispositionSummarySeverityOverridesSeverity = "critical"
+	ReportArtifactDispositionSummarySeverityOverridesSeverityHigh          ReportArtifactDispositionSummarySeverityOverridesSeverity = "high"
+	ReportArtifactDispositionSummarySeverityOverridesSeverityInformational ReportArtifactDispositionSummarySeverityOverridesSeverity = "informational"
+	ReportArtifactDispositionSummarySeverityOverridesSeverityLow           ReportArtifactDispositionSummarySeverityOverridesSeverity = "low"
+	ReportArtifactDispositionSummarySeverityOverridesSeverityMedium        ReportArtifactDispositionSummarySeverityOverridesSeverity = "medium"
+)
+
+// Defines values for ReportArtifactEffort.
+const (
+	ReportArtifactEffortL    ReportArtifactEffort = "l"
+	ReportArtifactEffortM    ReportArtifactEffort = "m"
+	ReportArtifactEffortNone ReportArtifactEffort = "<nil>"
+	ReportArtifactEffortS    ReportArtifactEffort = "s"
+	ReportArtifactEffortXl   ReportArtifactEffort = "xl"
+	ReportArtifactEffortXs   ReportArtifactEffort = "xs"
+)
+
+// Defines values for ReportArtifactFindingDependencyClassification.
+const (
+	ReportArtifactFindingDependencyClassificationAffected          ReportArtifactFindingDependencyClassification = "affected"
+	ReportArtifactFindingDependencyClassificationInconclusive      ReportArtifactFindingDependencyClassification = "inconclusive"
+	ReportArtifactFindingDependencyClassificationLikelyAffected    ReportArtifactFindingDependencyClassification = "likely_affected"
+	ReportArtifactFindingDependencyClassificationNotImported       ReportArtifactFindingDependencyClassification = "not_imported"
+	ReportArtifactFindingDependencyClassificationNotObserved       ReportArtifactFindingDependencyClassification = "not_observed"
+	ReportArtifactFindingDependencyClassificationVersionNotInRange ReportArtifactFindingDependencyClassification = "version_not_in_range"
+)
+
+// Defines values for ReportArtifactFindingDependencyEcosystem.
+const (
+	ReportArtifactFindingDependencyEcosystemActions ReportArtifactFindingDependencyEcosystem = "actions"
+	ReportArtifactFindingDependencyEcosystemApk     ReportArtifactFindingDependencyEcosystem = "apk"
+	ReportArtifactFindingDependencyEcosystemCargo   ReportArtifactFindingDependencyEcosystem = "cargo"
+	ReportArtifactFindingDependencyEcosystemDeb     ReportArtifactFindingDependencyEcosystem = "deb"
+	ReportArtifactFindingDependencyEcosystemDocker  ReportArtifactFindingDependencyEcosystem = "docker"
+	ReportArtifactFindingDependencyEcosystemGo      ReportArtifactFindingDependencyEcosystem = "go"
+	ReportArtifactFindingDependencyEcosystemHelm    ReportArtifactFindingDependencyEcosystem = "helm"
+	ReportArtifactFindingDependencyEcosystemMaven   ReportArtifactFindingDependencyEcosystem = "maven"
+	ReportArtifactFindingDependencyEcosystemNpm     ReportArtifactFindingDependencyEcosystem = "npm"
+	ReportArtifactFindingDependencyEcosystemNuget   ReportArtifactFindingDependencyEcosystem = "nuget"
+	ReportArtifactFindingDependencyEcosystemPypi    ReportArtifactFindingDependencyEcosystem = "pypi"
+	ReportArtifactFindingDependencyEcosystemRpm     ReportArtifactFindingDependencyEcosystem = "rpm"
+	ReportArtifactFindingDependencyEcosystemRuby    ReportArtifactFindingDependencyEcosystem = "ruby"
+)
+
+// Defines values for ReportArtifactFindingDependencyEvidenceLevel.
+const (
+	ReportArtifactFindingDependencyEvidenceLevelBinary      ReportArtifactFindingDependencyEvidenceLevel = "binary"
+	ReportArtifactFindingDependencyEvidenceLevelManifest    ReportArtifactFindingDependencyEvidenceLevel = "manifest"
+	ReportArtifactFindingDependencyEvidenceLevelNone        ReportArtifactFindingDependencyEvidenceLevel = "none"
+	ReportArtifactFindingDependencyEvidenceLevelSymbol      ReportArtifactFindingDependencyEvidenceLevel = "symbol"
+	ReportArtifactFindingDependencyEvidenceLevelSymbolUsage ReportArtifactFindingDependencyEvidenceLevel = "symbol-usage"
+)
+
+// Defines values for ReportArtifactFindingEffectiveSeverity.
+const (
+	ReportArtifactFindingEffectiveSeverityCritical      ReportArtifactFindingEffectiveSeverity = "critical"
+	ReportArtifactFindingEffectiveSeverityHigh          ReportArtifactFindingEffectiveSeverity = "high"
+	ReportArtifactFindingEffectiveSeverityInformational ReportArtifactFindingEffectiveSeverity = "informational"
+	ReportArtifactFindingEffectiveSeverityLow           ReportArtifactFindingEffectiveSeverity = "low"
+	ReportArtifactFindingEffectiveSeverityMedium        ReportArtifactFindingEffectiveSeverity = "medium"
+)
+
+// Defines values for ReportArtifactFindingOrigin.
+const (
+	ReportArtifactFindingOriginCreateFuzzing       ReportArtifactFindingOrigin = "create-fuzzing"
+	ReportArtifactFindingOriginImpactAnalysis      ReportArtifactFindingOrigin = "impact-analysis"
+	ReportArtifactFindingOriginValidateFindings    ReportArtifactFindingOrigin = "validate-findings"
+	ReportArtifactFindingOriginValidationDiscovery ReportArtifactFindingOrigin = "validation-discovery"
+	ReportArtifactFindingOriginVerifyRemediation   ReportArtifactFindingOrigin = "verify-remediation"
+	ReportArtifactFindingOriginVulnScan            ReportArtifactFindingOrigin = "vuln-scan"
+)
+
+// Defines values for ReportArtifactFindingPqcClassification.
+const (
+	ReportArtifactFindingPqcClassificationClassicallyBroken    ReportArtifactFindingPqcClassification = "classically-broken"
+	ReportArtifactFindingPqcClassificationClock2030Parameter   ReportArtifactFindingPqcClassification = "clock-2030-parameter"
+	ReportArtifactFindingPqcClassificationHndlExposure         ReportArtifactFindingPqcClassification = "hndl-exposure"
+	ReportArtifactFindingPqcClassificationPqcAdoption          ReportArtifactFindingPqcClassification = "pqc-adoption"
+	ReportArtifactFindingPqcClassificationPqcBlockerConfig     ReportArtifactFindingPqcClassification = "pqc-blocker-config"
+	ReportArtifactFindingPqcClassificationShorKeyEstablishment ReportArtifactFindingPqcClassification = "shor-key-establishment"
+	ReportArtifactFindingPqcClassificationShorSignature        ReportArtifactFindingPqcClassification = "shor-signature"
+)
+
+// Defines values for ReportArtifactFindingRemediationEffort.
+const (
+	ReportArtifactFindingRemediationEffortBlockedExternal ReportArtifactFindingRemediationEffort = "blocked-external"
+	ReportArtifactFindingRemediationEffortL               ReportArtifactFindingRemediationEffort = "l"
+	ReportArtifactFindingRemediationEffortM               ReportArtifactFindingRemediationEffort = "m"
+	ReportArtifactFindingRemediationEffortModerate        ReportArtifactFindingRemediationEffort = "moderate"
+	ReportArtifactFindingRemediationEffortNone            ReportArtifactFindingRemediationEffort = "<nil>"
+	ReportArtifactFindingRemediationEffortS               ReportArtifactFindingRemediationEffort = "s"
+	ReportArtifactFindingRemediationEffortSignificant     ReportArtifactFindingRemediationEffort = "significant"
+	ReportArtifactFindingRemediationEffortTrivial         ReportArtifactFindingRemediationEffort = "trivial"
+	ReportArtifactFindingRemediationEffortXl              ReportArtifactFindingRemediationEffort = "xl"
+	ReportArtifactFindingRemediationEffortXs              ReportArtifactFindingRemediationEffort = "xs"
+)
+
+// Defines values for ReportArtifactFindingValidationStatus.
+const (
+	ReportArtifactFindingValidationStatusConfirmed     ReportArtifactFindingValidationStatus = "confirmed"
+	ReportArtifactFindingValidationStatusCorrected     ReportArtifactFindingValidationStatus = "corrected"
+	ReportArtifactFindingValidationStatusFalsePositive ReportArtifactFindingValidationStatus = "false_positive"
+	ReportArtifactFindingValidationStatusHardening     ReportArtifactFindingValidationStatus = "hardening"
+	ReportArtifactFindingValidationStatusNotAffected   ReportArtifactFindingValidationStatus = "not_affected"
+	ReportArtifactFindingValidationStatusNotVerified   ReportArtifactFindingValidationStatus = "not_verified"
+	ReportArtifactFindingValidationStatusTruePositive  ReportArtifactFindingValidationStatus = "true_positive"
+)
+
+// Defines values for ReportArtifactMetadataAdditionalPrecisionGatesFiredAction.
+const (
+	ReportArtifactMetadataAdditionalPrecisionGatesFiredActionDependencyAudit ReportArtifactMetadataAdditionalPrecisionGatesFiredAction = "dependency_audit"
+	ReportArtifactMetadataAdditionalPrecisionGatesFiredActionDowngraded      ReportArtifactMetadataAdditionalPrecisionGatesFiredAction = "downgraded"
+	ReportArtifactMetadataAdditionalPrecisionGatesFiredActionNegativeResults ReportArtifactMetadataAdditionalPrecisionGatesFiredAction = "negative_results"
+)
+
+// Defines values for ReportArtifactMetadataRefKind.
+const (
+	ReportArtifactMetadataRefKindBranch  ReportArtifactMetadataRefKind = "branch"
+	ReportArtifactMetadataRefKindDefault ReportArtifactMetadataRefKind = "default"
+	ReportArtifactMetadataRefKindStream  ReportArtifactMetadataRefKind = "stream"
+	ReportArtifactMetadataRefKindTag     ReportArtifactMetadataRefKind = "tag"
+)
+
+// Defines values for ReportArtifactPeachIsolationReviewInterfacesBoundaryType.
+const (
+	ReportArtifactPeachIsolationReviewInterfacesBoundaryTypeContainerization       ReportArtifactPeachIsolationReviewInterfacesBoundaryType = "containerization"
+	ReportArtifactPeachIsolationReviewInterfacesBoundaryTypeDataSegmentation       ReportArtifactPeachIsolationReviewInterfacesBoundaryType = "data_segmentation"
+	ReportArtifactPeachIsolationReviewInterfacesBoundaryTypeHardwareSeparation     ReportArtifactPeachIsolationReviewInterfacesBoundaryType = "hardware_separation"
+	ReportArtifactPeachIsolationReviewInterfacesBoundaryTypeHardwareVirtualization ReportArtifactPeachIsolationReviewInterfacesBoundaryType = "hardware_virtualization"
+	ReportArtifactPeachIsolationReviewInterfacesBoundaryTypeIdentitySegmentation   ReportArtifactPeachIsolationReviewInterfacesBoundaryType = "identity_segmentation"
+	ReportArtifactPeachIsolationReviewInterfacesBoundaryTypeNetworkSegmentation    ReportArtifactPeachIsolationReviewInterfacesBoundaryType = "network_segmentation"
+)
+
+// Defines values for ReportArtifactPeachIsolationReviewInterfacesComplexity.
+const (
+	ReportArtifactPeachIsolationReviewInterfacesComplexityHigh   ReportArtifactPeachIsolationReviewInterfacesComplexity = "high"
+	ReportArtifactPeachIsolationReviewInterfacesComplexityLow    ReportArtifactPeachIsolationReviewInterfacesComplexity = "low"
+	ReportArtifactPeachIsolationReviewInterfacesComplexityMedium ReportArtifactPeachIsolationReviewInterfacesComplexity = "medium"
+)
+
+// Defines values for ReportArtifactReviewSurfaceEntryStatus.
+const (
+	ReportArtifactReviewSurfaceEntryStatusFinding       ReportArtifactReviewSurfaceEntryStatus = "finding"
+	ReportArtifactReviewSurfaceEntryStatusNegative      ReportArtifactReviewSurfaceEntryStatus = "negative"
+	ReportArtifactReviewSurfaceEntryStatusNotApplicable ReportArtifactReviewSurfaceEntryStatus = "not_applicable"
+	ReportArtifactReviewSurfaceEntryStatusNotAssessed   ReportArtifactReviewSurfaceEntryStatus = "not_assessed"
+	ReportArtifactReviewSurfaceEntryStatusOutOfScope    ReportArtifactReviewSurfaceEntryStatus = "out_of_scope"
+)
+
+// Defines values for ReportArtifactRoadmapPriority.
+const (
+	ReportArtifactRoadmapPriorityP0 ReportArtifactRoadmapPriority = "p0"
+	ReportArtifactRoadmapPriorityP1 ReportArtifactRoadmapPriority = "p1"
+	ReportArtifactRoadmapPriorityP2 ReportArtifactRoadmapPriority = "p2"
+	ReportArtifactRoadmapPriorityP3 ReportArtifactRoadmapPriority = "p3"
+	ReportArtifactRoadmapPriorityP4 ReportArtifactRoadmapPriority = "p4"
+)
+
+// Defines values for ReportArtifactSeverityLevel.
+const (
+	ReportArtifactSeverityLevelCritical      ReportArtifactSeverityLevel = "critical"
+	ReportArtifactSeverityLevelHigh          ReportArtifactSeverityLevel = "high"
+	ReportArtifactSeverityLevelInformational ReportArtifactSeverityLevel = "informational"
+	ReportArtifactSeverityLevelLow           ReportArtifactSeverityLevel = "low"
+	ReportArtifactSeverityLevelMedium        ReportArtifactSeverityLevel = "medium"
 )
 
 // Defines values for ReportFormat.
@@ -599,6 +1431,21 @@ const (
 	Restate Role = "restate"
 )
 
+// Defines values for RunManifestArtifactBudgetEnforcement.
+const (
+	RunManifestArtifactBudgetEnforcementAdvisory RunManifestArtifactBudgetEnforcement = "advisory"
+	RunManifestArtifactBudgetEnforcementEnforced RunManifestArtifactBudgetEnforcement = "enforced"
+	RunManifestArtifactBudgetEnforcementNone     RunManifestArtifactBudgetEnforcement = "none"
+	RunManifestArtifactBudgetEnforcementObserve  RunManifestArtifactBudgetEnforcement = "observe"
+)
+
+// Defines values for RunManifestArtifactBudgetStatus.
+const (
+	RunManifestArtifactBudgetStatusNoBudget RunManifestArtifactBudgetStatus = "no_budget"
+	RunManifestArtifactBudgetStatusOver     RunManifestArtifactBudgetStatus = "over"
+	RunManifestArtifactBudgetStatusWithin   RunManifestArtifactBudgetStatus = "within"
+)
+
 // Defines values for RunOrderReason.
 const (
 	RunOrderReasonAssetNotInPack       RunOrderReason = "asset-not-in-pack"
@@ -637,6 +1484,11 @@ const (
 	ScannerSeverityLow           ScannerSeverity = "low"
 	ScannerSeverityMedium        ScannerSeverity = "medium"
 	ScannerSeverityUnrated       ScannerSeverity = "unrated"
+)
+
+// Defines values for SelectedCvssReason.
+const (
+	Precedence SelectedCvssReason = "precedence"
 )
 
 // Defines values for SelectedCvssVersion.
@@ -729,11 +1581,201 @@ const (
 	Resolved        SymbolStatus = "resolved"
 )
 
+// Defines values for ThreatModelArtifactEntryPointKind.
+const (
+	ThreatModelArtifactEntryPointKindCiSupplyChain  ThreatModelArtifactEntryPointKind = "ci-supply-chain"
+	ThreatModelArtifactEntryPointKindCli            ThreatModelArtifactEntryPointKind = "cli"
+	ThreatModelArtifactEntryPointKindDeployConfig   ThreatModelArtifactEntryPointKind = "deploy-config"
+	ThreatModelArtifactEntryPointKindEventConsumer  ThreatModelArtifactEntryPointKind = "event-consumer"
+	ThreatModelArtifactEntryPointKindFileInput      ThreatModelArtifactEntryPointKind = "file-input"
+	ThreatModelArtifactEntryPointKindGrpcApi        ThreatModelArtifactEntryPointKind = "grpc-api"
+	ThreatModelArtifactEntryPointKindHttpApi        ThreatModelArtifactEntryPointKind = "http-api"
+	ThreatModelArtifactEntryPointKindK8SController  ThreatModelArtifactEntryPointKind = "k8s-controller"
+	ThreatModelArtifactEntryPointKindLlmIntegration ThreatModelArtifactEntryPointKind = "llm-integration"
+	ThreatModelArtifactEntryPointKindMetricsDebug   ThreatModelArtifactEntryPointKind = "metrics-debug"
+	ThreatModelArtifactEntryPointKindNetworkPeer    ThreatModelArtifactEntryPointKind = "network-peer"
+	ThreatModelArtifactEntryPointKindOther          ThreatModelArtifactEntryPointKind = "other"
+)
+
 // Defines values for TimeBucket.
 const (
 	Day   TimeBucket = "day"
 	Month TimeBucket = "month"
 	Week  TimeBucket = "week"
+)
+
+// Defines values for TriageArtifactFindingVerifyVerdict.
+const (
+	TriageArtifactFindingVerifyVerdictConfirmed       TriageArtifactFindingVerifyVerdict = "confirmed"
+	TriageArtifactFindingVerifyVerdictExploitable     TriageArtifactFindingVerifyVerdict = "exploitable"
+	TriageArtifactFindingVerifyVerdictHardening       TriageArtifactFindingVerifyVerdict = "hardening"
+	TriageArtifactFindingVerifyVerdictMitigated       TriageArtifactFindingVerifyVerdict = "mitigated"
+	TriageArtifactFindingVerifyVerdictNeedsManualTest TriageArtifactFindingVerifyVerdict = "needs_manual_test"
+	TriageArtifactFindingVerifyVerdictNone            TriageArtifactFindingVerifyVerdict = "<nil>"
+	TriageArtifactFindingVerifyVerdictRefuted         TriageArtifactFindingVerifyVerdict = "refuted"
+)
+
+// Defines values for TriageArtifactSeverityLevel.
+const (
+	TriageArtifactSeverityLevelCritical      TriageArtifactSeverityLevel = "critical"
+	TriageArtifactSeverityLevelHigh          TriageArtifactSeverityLevel = "high"
+	TriageArtifactSeverityLevelInformational TriageArtifactSeverityLevel = "informational"
+	TriageArtifactSeverityLevelLow           TriageArtifactSeverityLevel = "low"
+	TriageArtifactSeverityLevelMedium        TriageArtifactSeverityLevel = "medium"
+)
+
+// Defines values for TriageArtifactVerdict.
+const (
+	TriageArtifactVerdictDuplicate     TriageArtifactVerdict = "duplicate"
+	TriageArtifactVerdictFalsePositive TriageArtifactVerdict = "false_positive"
+	TriageArtifactVerdictHardening     TriageArtifactVerdict = "hardening"
+	TriageArtifactVerdictTruePositive  TriageArtifactVerdict = "true_positive"
+	TriageArtifactVerdictUndetermined  TriageArtifactVerdict = "undetermined"
+)
+
+// Defines values for ValidationArtifactAdapter.
+const (
+	ValidationArtifactAdapterContainer ValidationArtifactAdapter = "container"
+	ValidationArtifactAdapterK8S       ValidationArtifactAdapter = "k8s"
+	ValidationArtifactAdapterWasm      ValidationArtifactAdapter = "wasm"
+)
+
+// Defines values for ValidationArtifactClassification.
+const (
+	ValidationArtifactClassificationDestructive ValidationArtifactClassification = "destructive"
+	ValidationArtifactClassificationMutating    ValidationArtifactClassification = "mutating"
+	ValidationArtifactClassificationSafe        ValidationArtifactClassification = "safe"
+)
+
+// Defines values for ValidationArtifactEvidenceArtifactType.
+const (
+	ValidationArtifactEvidenceArtifactTypeDiff       ValidationArtifactEvidenceArtifactType = "diff"
+	ValidationArtifactEvidenceArtifactTypeDump       ValidationArtifactEvidenceArtifactType = "dump"
+	ValidationArtifactEvidenceArtifactTypeHttp       ValidationArtifactEvidenceArtifactType = "http"
+	ValidationArtifactEvidenceArtifactTypeLog        ValidationArtifactEvidenceArtifactType = "log"
+	ValidationArtifactEvidenceArtifactTypeManifest   ValidationArtifactEvidenceArtifactType = "manifest"
+	ValidationArtifactEvidenceArtifactTypeOther      ValidationArtifactEvidenceArtifactType = "other"
+	ValidationArtifactEvidenceArtifactTypeScreenshot ValidationArtifactEvidenceArtifactType = "screenshot"
+	ValidationArtifactEvidenceArtifactTypeStdout     ValidationArtifactEvidenceArtifactType = "stdout"
+)
+
+// Defines values for ValidationArtifactPositiveControlKind.
+const (
+	ValidationArtifactPositiveControlKindMustDeny    ValidationArtifactPositiveControlKind = "must_deny"
+	ValidationArtifactPositiveControlKindMustSucceed ValidationArtifactPositiveControlKind = "must_succeed"
+)
+
+// Defines values for ValidationArtifactScopeBindingMode.
+const (
+	ValidationArtifactScopeBindingModeValidationArtifactScopeBindingModeExplicit ValidationArtifactScopeBindingMode = "explicit"
+	ValidationArtifactScopeBindingModeValidationArtifactScopeBindingModeInferred ValidationArtifactScopeBindingMode = "inferred"
+	ValidationArtifactScopeBindingModeValidationArtifactScopeBindingModeInline   ValidationArtifactScopeBindingMode = "inline"
+	ValidationArtifactScopeBindingModeValidationArtifactScopeBindingModeMixed    ValidationArtifactScopeBindingMode = "mixed"
+	ValidationArtifactScopeBindingModeValidationArtifactScopeBindingModeNone     ValidationArtifactScopeBindingMode = "none"
+)
+
+// Defines values for ValidationArtifactSeverityValidationDemonstratedAttackVector.
+const (
+	ValidationArtifactSeverityValidationDemonstratedAttackVectorAdjacent ValidationArtifactSeverityValidationDemonstratedAttackVector = "adjacent"
+	ValidationArtifactSeverityValidationDemonstratedAttackVectorLocal    ValidationArtifactSeverityValidationDemonstratedAttackVector = "local"
+	ValidationArtifactSeverityValidationDemonstratedAttackVectorNetwork  ValidationArtifactSeverityValidationDemonstratedAttackVector = "network"
+	ValidationArtifactSeverityValidationDemonstratedAttackVectorNone     ValidationArtifactSeverityValidationDemonstratedAttackVector = "<nil>"
+	ValidationArtifactSeverityValidationDemonstratedAttackVectorPhysical ValidationArtifactSeverityValidationDemonstratedAttackVector = "physical"
+)
+
+// Defines values for ValidationArtifactSeverityValidationDemonstratedImpacts.
+const (
+	ValidationArtifactSeverityValidationDemonstratedImpactsAvailability    ValidationArtifactSeverityValidationDemonstratedImpacts = "availability"
+	ValidationArtifactSeverityValidationDemonstratedImpactsConfidentiality ValidationArtifactSeverityValidationDemonstratedImpacts = "confidentiality"
+	ValidationArtifactSeverityValidationDemonstratedImpactsIntegrity       ValidationArtifactSeverityValidationDemonstratedImpacts = "integrity"
+)
+
+// Defines values for ValidationArtifactSeverityValidationDemonstratedPrivilegesRequired.
+const (
+	ValidationArtifactSeverityValidationDemonstratedPrivilegesRequiredHigh ValidationArtifactSeverityValidationDemonstratedPrivilegesRequired = "high"
+	ValidationArtifactSeverityValidationDemonstratedPrivilegesRequiredLow  ValidationArtifactSeverityValidationDemonstratedPrivilegesRequired = "low"
+	ValidationArtifactSeverityValidationDemonstratedPrivilegesRequiredNone ValidationArtifactSeverityValidationDemonstratedPrivilegesRequired = "none"
+)
+
+// Defines values for ValidationArtifactSeverityValidationDemonstratedUserInteraction.
+const (
+	ValidationArtifactSeverityValidationDemonstratedUserInteractionNone     ValidationArtifactSeverityValidationDemonstratedUserInteraction = "none"
+	ValidationArtifactSeverityValidationDemonstratedUserInteractionRequired ValidationArtifactSeverityValidationDemonstratedUserInteraction = "required"
+)
+
+// Defines values for ValidationArtifactSeverityValidationProposalSeverity.
+const (
+	ValidationArtifactSeverityValidationProposalSeverityCritical      ValidationArtifactSeverityValidationProposalSeverity = "critical"
+	ValidationArtifactSeverityValidationProposalSeverityHigh          ValidationArtifactSeverityValidationProposalSeverity = "high"
+	ValidationArtifactSeverityValidationProposalSeverityInformational ValidationArtifactSeverityValidationProposalSeverity = "informational"
+	ValidationArtifactSeverityValidationProposalSeverityLow           ValidationArtifactSeverityValidationProposalSeverity = "low"
+	ValidationArtifactSeverityValidationProposalSeverityMedium        ValidationArtifactSeverityValidationProposalSeverity = "medium"
+)
+
+// Defines values for ValidationArtifactSourceReportKind.
+const (
+	ValidationArtifactSourceReportKindSecurityAudit ValidationArtifactSourceReportKind = "security-audit"
+	ValidationArtifactSourceReportKindThreatModel   ValidationArtifactSourceReportKind = "threat-model"
+	ValidationArtifactSourceReportKindTriage        ValidationArtifactSourceReportKind = "triage"
+)
+
+// Defines values for ValidationArtifactTechnique.
+const (
+	ValidationArtifactTechniqueAdapted ValidationArtifactTechnique = "adapted"
+	ValidationArtifactTechniqueChained ValidationArtifactTechnique = "chained"
+	ValidationArtifactTechniqueNovel   ValidationArtifactTechnique = "novel"
+	ValidationArtifactTechniqueRecon   ValidationArtifactTechnique = "recon"
+	ValidationArtifactTechniqueReplay  ValidationArtifactTechnique = "replay"
+	ValidationArtifactTechniqueSkip    ValidationArtifactTechnique = "skip"
+)
+
+// Defines values for ValidationArtifactValidatedFindingChainContextChainSeverity.
+const (
+	ValidationArtifactValidatedFindingChainContextChainSeverityCritical ValidationArtifactValidatedFindingChainContextChainSeverity = "critical"
+	ValidationArtifactValidatedFindingChainContextChainSeverityHigh     ValidationArtifactValidatedFindingChainContextChainSeverity = "high"
+	ValidationArtifactValidatedFindingChainContextChainSeverityLow      ValidationArtifactValidatedFindingChainContextChainSeverity = "low"
+	ValidationArtifactValidatedFindingChainContextChainSeverityMedium   ValidationArtifactValidatedFindingChainContextChainSeverity = "medium"
+)
+
+// Defines values for ValidationArtifactValidatedFindingEvidenceGrade.
+const (
+	ValidationArtifactValidatedFindingEvidenceGradeE0   ValidationArtifactValidatedFindingEvidenceGrade = "E0"
+	ValidationArtifactValidatedFindingEvidenceGradeE1   ValidationArtifactValidatedFindingEvidenceGrade = "E1"
+	ValidationArtifactValidatedFindingEvidenceGradeE2   ValidationArtifactValidatedFindingEvidenceGrade = "E2"
+	ValidationArtifactValidatedFindingEvidenceGradeE3   ValidationArtifactValidatedFindingEvidenceGrade = "E3"
+	ValidationArtifactValidatedFindingEvidenceGradeNone ValidationArtifactValidatedFindingEvidenceGrade = "<nil>"
+)
+
+// Defines values for ValidationArtifactValidationMetadataApprovalMode.
+const (
+	ValidationArtifactValidationMetadataApprovalModeValidationArtifactValidationMetadataApprovalModeAuto        ValidationArtifactValidationMetadataApprovalMode = "auto"
+	ValidationArtifactValidationMetadataApprovalModeValidationArtifactValidationMetadataApprovalModeDryRun      ValidationArtifactValidationMetadataApprovalMode = "dry-run"
+	ValidationArtifactValidationMetadataApprovalModeValidationArtifactValidationMetadataApprovalModeInteractive ValidationArtifactValidationMetadataApprovalMode = "interactive"
+)
+
+// Defines values for ValidationArtifactVerdict.
+const (
+	ValidationArtifactVerdictBlockedByScope ValidationArtifactVerdict = "blocked_by_scope"
+	ValidationArtifactVerdictConfirmed      ValidationArtifactVerdict = "confirmed"
+	ValidationArtifactVerdictInconclusive   ValidationArtifactVerdict = "inconclusive"
+	ValidationArtifactVerdictNotAttempted   ValidationArtifactVerdict = "not_attempted"
+	ValidationArtifactVerdictRefuted        ValidationArtifactVerdict = "refuted"
+)
+
+// Defines values for ValidationAuthorizationArtifactMode.
+const (
+	ValidationAuthorizationArtifactModeValidationArtifactValidationMetadataApprovalModeAuto        ValidationAuthorizationArtifactMode = "auto"
+	ValidationAuthorizationArtifactModeValidationArtifactValidationMetadataApprovalModeDryRun      ValidationAuthorizationArtifactMode = "dry-run"
+	ValidationAuthorizationArtifactModeValidationArtifactValidationMetadataApprovalModeInteractive ValidationAuthorizationArtifactMode = "interactive"
+)
+
+// Defines values for ValidationAuthorizationArtifactScopeModes.
+const (
+	ValidationAuthorizationArtifactScopeModesValidationArtifactScopeBindingModeExplicit ValidationAuthorizationArtifactScopeModes = "explicit"
+	ValidationAuthorizationArtifactScopeModesValidationArtifactScopeBindingModeInferred ValidationAuthorizationArtifactScopeModes = "inferred"
+	ValidationAuthorizationArtifactScopeModesValidationArtifactScopeBindingModeInline   ValidationAuthorizationArtifactScopeModes = "inline"
+	ValidationAuthorizationArtifactScopeModesValidationArtifactScopeBindingModeMixed    ValidationAuthorizationArtifactScopeModes = "mixed"
+	ValidationAuthorizationArtifactScopeModesValidationArtifactScopeBindingModeNone     ValidationAuthorizationArtifactScopeModes = "none"
 )
 
 // Defines values for ValidationRecordingPolicy.
@@ -760,6 +1802,40 @@ const (
 	ValidityNotAffected   Validity = "not_affected"
 	ValidityNotVerified   Validity = "not_verified"
 	ValidityTruePositive  Validity = "true_positive"
+)
+
+// Defines values for VerificationArtifactCrossRepoPropagation.
+const (
+	VerificationArtifactCrossRepoPropagationConsumed      VerificationArtifactCrossRepoPropagation = "consumed"
+	VerificationArtifactCrossRepoPropagationModuleAbsent  VerificationArtifactCrossRepoPropagation = "module_absent"
+	VerificationArtifactCrossRepoPropagationNotApplicable VerificationArtifactCrossRepoPropagation = "not_applicable"
+	VerificationArtifactCrossRepoPropagationPending       VerificationArtifactCrossRepoPropagation = "pending"
+)
+
+// Defines values for VerificationArtifactRemediationCommitRelevance.
+const (
+	VerificationArtifactRemediationCommitRelevanceDirect     VerificationArtifactRemediationCommitRelevance = "direct"
+	VerificationArtifactRemediationCommitRelevancePartial    VerificationArtifactRemediationCommitRelevance = "partial"
+	VerificationArtifactRemediationCommitRelevanceSupporting VerificationArtifactRemediationCommitRelevance = "supporting"
+)
+
+// Defines values for VerificationArtifactVerdict.
+const (
+	VerificationArtifactVerdictFalsePositive     VerificationArtifactVerdict = "false_positive"
+	VerificationArtifactVerdictNewApproach       VerificationArtifactVerdict = "new_approach"
+	VerificationArtifactVerdictPartiallyResolved VerificationArtifactVerdict = "partially_resolved"
+	VerificationArtifactVerdictRegression        VerificationArtifactVerdict = "regression"
+	VerificationArtifactVerdictResolved          VerificationArtifactVerdict = "resolved"
+	VerificationArtifactVerdictRiskAccepted      VerificationArtifactVerdict = "risk_accepted"
+	VerificationArtifactVerdictUnresolved        VerificationArtifactVerdict = "unresolved"
+)
+
+// Defines values for VerificationArtifactVerificationMetadataRefKind.
+const (
+	VerificationArtifactVerificationMetadataRefKindBranch  VerificationArtifactVerificationMetadataRefKind = "branch"
+	VerificationArtifactVerificationMetadataRefKindDefault VerificationArtifactVerificationMetadataRefKind = "default"
+	VerificationArtifactVerificationMetadataRefKindStream  VerificationArtifactVerificationMetadataRefKind = "stream"
+	VerificationArtifactVerificationMetadataRefKindTag     VerificationArtifactVerificationMetadataRefKind = "tag"
 )
 
 // Defines values for VerificationVerdict.
@@ -810,8 +1886,125 @@ const (
 	ValidationFuzz      ViewName = "validation-fuzz"
 )
 
+// Defines values for VulnFindingsArtifactSeverityLevel.
+const (
+	VulnFindingsArtifactSeverityLevelCritical      VulnFindingsArtifactSeverityLevel = "critical"
+	VulnFindingsArtifactSeverityLevelHigh          VulnFindingsArtifactSeverityLevel = "high"
+	VulnFindingsArtifactSeverityLevelInformational VulnFindingsArtifactSeverityLevel = "informational"
+	VulnFindingsArtifactSeverityLevelLow           VulnFindingsArtifactSeverityLevel = "low"
+	VulnFindingsArtifactSeverityLevelMedium        VulnFindingsArtifactSeverityLevel = "medium"
+)
+
 // ActorKind defines model for ActorKind.
 type ActorKind string
+
+// AdapterResultArtifact Common typed observations from engine-lib scanner adapters (scan() return value), not authored audit findings or validity verdicts. Distinct from vuln-findings.schema.json ScanResult which is skill-level output with repo_slug, baseline, etc.
+type AdapterResultArtifact struct {
+	Findings   []AdapterResultArtifactAdapterFinding `json:"findings"`
+	FocusAreas *[]string                             `json:"focus_areas,omitempty"`
+	Metadata   AdapterResultArtifactMetadata         `json:"metadata"`
+	ScannedAt  string                                `json:"scanned_at"`
+	Summary    *AdapterResultArtifactSummary         `json:"summary,omitempty"`
+	Target     string                                `json:"target"`
+}
+
+// AdapterResultArtifactAdapterFinding Scanner-reported observation using the Finding DTO layout. Empty CWEs, description or remediation mean unreported; downstream authors supply audit conclusions.
+type AdapterResultArtifactAdapterFinding struct {
+	AsvsReferences *ReportArtifactFindingAsvsReferences `json:"asvs_references,omitempty"`
+	AttackPattern  *ReportArtifactFindingAttackPattern  `json:"attack_pattern,omitempty"`
+
+	// BlockedExternal An external dependency blocks this item; independent of effort size.
+	BlockedExternal *ReportArtifactFindingBlockedExternal `json:"blocked_external,omitempty"`
+	Capec           *ReportArtifactFindingCapec           `json:"capec,omitempty"`
+	Category        *ReportArtifactFindingCategory        `json:"category,omitempty"`
+	Cvss            *ReportArtifactFindingCvss            `json:"cvss,omitempty"`
+	Cwes            []ReportArtifactFindingCwes           `json:"cwes"`
+
+	// Dependency Supply-chain provenance for a dependency finding, so the finding is SELF-DESCRIBING and does not depend on a sibling impact-analysis artifact resolving by relative path. Required once findings live in object storage, and the join key for consumers that build their own database rather than reading the local SQLite projection. Optional; present when origin is 'impact-analysis' or the finding is otherwise advisory-derived.
+	Dependency *ReportArtifactFindingDependency `json:"dependency,omitempty"`
+
+	// Description Scanner-supplied description; empty means unreported.
+	Description       string                                  `json:"description"`
+	Disposition       *ReportArtifactFindingDisposition       `json:"disposition,omitempty"`
+	EffectiveSeverity *ReportArtifactFindingEffectiveSeverity `json:"effective_severity,omitempty"`
+	Evidence          *ReportArtifactFindingEvidence          `json:"evidence,omitempty"`
+
+	// Fingerprint Deterministic cross-scan identity: sha256(canonical repo URL | ';'-joined sorted set of lineless location paths | primary CWE). One implementation, the identity module fingerprint function; stamped by the finding-identity utility, never model-authored. Only the harness computes identity — a non-harness producer submits unstamped rather than inventing a value. Validation recomputes every stamp and compares (check_finding_identity), so a forged or drifted value is an error rather than a silent identity split. Secondary correlation key — the scan-scoped id stays the primary key, and a fingerprint is never the sole key of a disposition record.
+	Fingerprint *ReportArtifactFindingFingerprint `json:"fingerprint,omitempty"`
+
+	// FingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION). Mirrors layer.schema.json's event field of the same name, and for the same reason: stamps outlive recipes, so matching fingerprints across an epoch boundary means comparing this field too. Absent on findings stamped before 2026-09-18 -- those predate the field rather than declaring an unknown version, and were separable only because exactly two recipes existed to try.
+	FingerprintAlgo     *ReportArtifactFindingFingerprintAlgo     `json:"fingerprint_algo,omitempty"`
+	Id                  string                                    `json:"id"`
+	IsolationBoundary   *ReportArtifactFindingIsolationBoundary   `json:"isolation_boundary,omitempty"`
+	IsolationDimensions *ReportArtifactFindingIsolationDimensions `json:"isolation_dimensions,omitempty"`
+
+	// Kind The finding kind, independent of validity. Historical findings may omit it.
+	Kind      *ReportArtifactFindingKind     `json:"kind,omitempty"`
+	Locations ReportArtifactFindingLocations `json:"locations"`
+	Origin    *ReportArtifactFindingOrigin   `json:"origin,omitempty"`
+
+	// OwaspLlmReferences OWASP Top 10 for LLM Applications (2025) category IDs this finding falls under. Set on findings about LLM, agent or MCP application code; the category ID is cited, never OWASP text.
+	OwaspLlmReferences *ReportArtifactFindingOwaspLlmReferences `json:"owasp_llm_references,omitempty"`
+
+	// Passes Audit passes that independently surfaced this finding (dual-pass union-merge, harness >= 0.144.0). [1,2] = both passes; [2] = second pass only. Optional; single-pass reports omit it.
+	Passes *ReportArtifactFindingPasses `json:"passes,omitempty"`
+
+	// PeachReferences PEACH tenant-isolation hardening parameter(s) this finding violates. Only set when the audited component is multi-tenant.
+	PeachReferences   *ReportArtifactFindingPeachReferences   `json:"peach_references,omitempty"`
+	PqcClassification *ReportArtifactFindingPqcClassification `json:"pqc_classification,omitempty"`
+
+	// Remediation Scanner-supplied remediation; empty means unreported.
+	Remediation       string                                  `json:"remediation"`
+	RemediationEffort *ReportArtifactFindingRemediationEffort `json:"remediation_effort"`
+	Severity          ReportArtifactFindingSeverity           `json:"severity"`
+	SourceFindings    *ReportArtifactFindingSourceFindings    `json:"source_findings,omitempty"`
+	Title             string                                  `json:"title"`
+	ValidationStatus  *ReportArtifactFindingValidationStatus  `json:"validation_status,omitempty"`
+}
+
+// AdapterResultArtifactCanonicalWrite defines model for AdapterResultArtifactCanonicalWrite.
+type AdapterResultArtifactCanonicalWrite struct {
+	Findings   interface{}                   `json:"findings"`
+	FocusAreas *[]string                     `json:"focus_areas,omitempty"`
+	Metadata   AdapterResultArtifactMetadata `json:"metadata"`
+	ScannedAt  string                        `json:"scanned_at"`
+	Summary    *AdapterResultArtifactSummary `json:"summary,omitempty"`
+	Target     string                        `json:"target"`
+}
+
+// AdapterResultArtifactMetadata defines model for AdapterResultArtifactMetadata.
+type AdapterResultArtifactMetadata struct {
+	ScannerVersion *string `json:"scanner_version,omitempty"`
+	Tool           string  `json:"tool"`
+}
+
+// AdapterResultArtifactSummary defines model for AdapterResultArtifactSummary.
+type AdapterResultArtifactSummary struct {
+	BySeverity *map[string]int `json:"by_severity,omitempty"`
+	Total      int             `json:"total"`
+}
+
+// AdrRegistryArtifact Validates your compliance configuration directory's ADR register registry — the pinned list of architecture-decision-record registers the harness indexes (compliance Phase 2c). Pins are the determinism anchor: the indexer reads each register AT ITS PIN, advancing a pin is a deliberate diffable config change (never done implicitly by a run), and /drift-watch reports pin-vs-upstream-HEAD divergence. The index derived from this registry is status-aware because a superseded decision cited as current evidence is a compliance error (the citation gate refuses it).
+type AdrRegistryArtifact struct {
+	Note      *string `json:"note,omitempty"`
+	Registers []struct {
+		// DeclaredStatus register-level status declaration for registers whose format carries no status field — applies to every decision, overrides parsing, and MUST cite its declarer/date in `note` (only non-terminal statuses declarable; superseded/deprecated always come from the records themselves)
+		DeclaredStatus interface{} `json:"declared_status,omitempty"`
+
+		// Governs graph node refs this register's decisions govern (product:*, repo:*, service:*) — becomes `governs` edges
+		Governs *[]string `json:"governs,omitempty"`
+		Name    string    `json:"name"`
+		Note    *string   `json:"note,omitempty"`
+
+		// Paths directories under the repo containing decision records
+		Paths []string `json:"paths"`
+
+		// Pin commit SHA the index reads — advance deliberately
+		Pin  string `json:"pin"`
+		Repo string `json:"repo"`
+	} `json:"registers"`
+	Version int `json:"version"`
+}
 
 // Advisory defines model for Advisory.
 type Advisory struct {
@@ -882,22 +2075,26 @@ type AffectedSpan struct {
 	LastAffected *string `json:"last_affected"`
 }
 
-// Artifact A document an assessment produced (or imported); bytes live at uri.
-type Artifact struct {
-	AssessmentId *openapi_types.UUID `json:"assessment_id"`
-	CreatedAt    *time.Time          `json:"created_at"`
-	Digest       string              `json:"digest"`
-	Id           *openapi_types.UUID `json:"id"`
-	Kind         string              `json:"kind"`
-	RunOrderId   *openapi_types.UUID `json:"run_order_id"`
-	Uri          string              `json:"uri"`
-}
+// ArtifactKind defines model for ArtifactKind.
+type ArtifactKind string
 
 // ArtifactRef defines model for ArtifactRef.
 type ArtifactRef struct {
 	Digest string             `json:"digest"`
 	Id     openapi_types.UUID `json:"id"`
 	Name   string             `json:"name"`
+}
+
+// ArtifactView An artifact as the API states it: what it is, never where core keeps the bytes.
+type ArtifactView struct {
+	AssessmentId *openapi_types.UUID `json:"assessment_id"`
+	CreatedAt    *time.Time          `json:"created_at"`
+	Digest       string              `json:"digest"`
+	Id           openapi_types.UUID  `json:"id"`
+	Kind         ArtifactKind        `json:"kind"`
+	MediaType    string              `json:"media_type"`
+	RunOrderId   *openapi_types.UUID `json:"run_order_id"`
+	Size         int                 `json:"size"`
 }
 
 // Assessment 3a · what was examined: a ref (and image), by an assessor, with what outcome.
@@ -949,6 +2146,300 @@ type AssessmentRecordResult struct {
 	Intake IntakeResult `json:"intake"`
 }
 
+// AttackMappingArtifact Validates the harness vocabulary to MITRE ATT&CK technique mapping table — the bounded, versioned mapping from harness vocabularies (live-validation capabilities, finding categories) to candidate ATT&CK technique IDs. Structural gate only; referential integrity (every ID exists and is non-revoked in the pinned attack-techniques.json) is enforced by attack_refs.py --validate-tables and the test suite.
+type AttackMappingArtifact struct {
+	AttackVersion  string                       `json:"attack_version"`
+	Attribution    string                       `json:"attribution"`
+	CapabilityMap  AttackMappingArtifactTechMap `json:"capability_map"`
+	CategoryMap    AttackMappingArtifactTechMap `json:"category_map"`
+	Documentation  *string                      `json:"documentation,omitempty"`
+	MappingVersion string                       `json:"mapping_version"`
+	Schema         *string                      `json:"schema,omitempty"`
+	Source         string                       `json:"source"`
+}
+
+// AttackMappingArtifactTechMap defines model for AttackMappingArtifactTechMap.
+type AttackMappingArtifactTechMap map[string]AttackMappingArtifactTechMap_AdditionalProperties
+
+// AttackMappingArtifactTechMap0 defines model for .
+type AttackMappingArtifactTechMap0 = string
+
+// AttackMappingArtifactTechMap1 defines model for .
+type AttackMappingArtifactTechMap1 = []AttackMappingArtifactTechniqueId
+
+// AttackMappingArtifactTechMap_AdditionalProperties defines model for AttackMappingArtifactTechMap.AdditionalProperties.
+type AttackMappingArtifactTechMap_AdditionalProperties struct {
+	union json.RawMessage
+}
+
+// AttackMappingArtifactTechniqueId defines model for AttackMappingArtifactTechniqueId.
+type AttackMappingArtifactTechniqueId = string
+
+// BelowRangePacketsArtifact One commit's below-range candidates (installed versions an advisory's stated ranges leave out) as evidence packets for review, held by an impact assessment of the commit (its status complete or degraded as the document is). Facts only: nothing here decides whether a version is affected. Every candidate is a packet or a coverage gap. Installed source trees are working data and are not stored; each packet keeps the source's registry URL and sha256, so review refetches and checks it.
+type BelowRangePacketsArtifact struct {
+	Artifact     interface{}                            `json:"artifact"`
+	Candidates   int                                    `json:"candidates"`
+	CoverageGaps []BelowRangePacketsArtifactCoverageGap `json:"coverage_gaps"`
+
+	// InstalledExact Exact installs checked.
+	InstalledExact  int                               `json:"installed_exact"`
+	Packets         []BelowRangePacketsArtifactPacket `json:"packets"`
+	RepositoryRefId openapi_types.UUID                `json:"repository_ref_id"`
+
+	// SkippedInstalls Installs not checked, counted by reason (`ecosystem:<e>`, `version:<e>`).
+	SkippedInstalls map[string]int `json:"skipped_installs"`
+
+	// Status degraded: some packages unanswered or some advisories unreadable.
+	Status interface{} `json:"status"`
+}
+
+// BelowRangePacketsArtifactAdvisory defines model for BelowRangePacketsArtifactAdvisory.
+type BelowRangePacketsArtifactAdvisory struct {
+	Affected   BelowRangePacketsArtifactAffected `json:"affected"`
+	Aliases    []string                          `json:"aliases"`
+	Details    string                            `json:"details"`
+	Identifier string                            `json:"identifier"`
+	Summary    string                            `json:"summary"`
+}
+
+// BelowRangePacketsArtifactAffected defines model for BelowRangePacketsArtifactAffected.
+type BelowRangePacketsArtifactAffected struct {
+	// Ecosystem Package ecosystem of the affected module; the same vocabulary as report.schema.json finding.dependency.ecosystem (enums/v1/ecosystem.json). actions/docker/helm are manifest-level dependency surfaces (no reachability tier); rpm/deb/apk are distro ecosystems for C/C++ packages (no reachability tier). Optional (defaults to go semantics when absent) and non-breaking.
+	Ecosystem ImpactAnalysisArtifactMetadataEcosystem `json:"ecosystem"`
+	Imports   *[]string                               `json:"imports,omitempty"`
+	Name      string                                  `json:"name"`
+	Spans     *[]BelowRangePacketsArtifactSpan        `json:"spans,omitempty"`
+	Symbols   *[]string                               `json:"symbols,omitempty"`
+	Versions  *[]string                               `json:"versions,omitempty"`
+}
+
+// BelowRangePacketsArtifactCandidate defines model for BelowRangePacketsArtifactCandidate.
+type BelowRangePacketsArtifactCandidate struct {
+	Advisory string    `json:"advisory"`
+	Aliases  *[]string `json:"aliases,omitempty"`
+
+	// Ecosystem Package ecosystem of the affected module; the same vocabulary as report.schema.json finding.dependency.ecosystem (enums/v1/ecosystem.json). actions/docker/helm are manifest-level dependency surfaces (no reachability tier); rpm/deb/apk are distro ecosystems for C/C++ packages (no reachability tier). Optional (defaults to go semantics when absent) and non-breaking.
+	Ecosystem ImpactAnalysisArtifactMetadataEcosystem `json:"ecosystem"`
+
+	// Kind below_range: under every span's explicit start; gap: after a span left without a fix, before the next span's start.
+	Kind          interface{} `json:"kind"`
+	MajorDistance *int        `json:"major_distance"`
+	Package       string      `json:"package"`
+	StatedStart   string      `json:"stated_start"`
+	Version       string      `json:"version"`
+}
+
+// BelowRangePacketsArtifactCommit defines model for BelowRangePacketsArtifactCommit.
+type BelowRangePacketsArtifactCommit struct {
+	Sha     string `json:"sha"`
+	Subject string `json:"subject"`
+}
+
+// BelowRangePacketsArtifactCoverageGap A candidate (or a lookup) that couldn't be checked, and why: never clean.
+type BelowRangePacketsArtifactCoverageGap struct {
+	Case      *string                                  `json:"case"`
+	Detail    *string                                  `json:"detail"`
+	Ecosystem *ImpactAnalysisArtifactMetadataEcosystem `json:"ecosystem"`
+	Package   *string                                  `json:"package"`
+	Reason    interface{}                              `json:"reason"`
+	Tried     *[]BelowRangePacketsArtifactFixAttempt   `json:"tried,omitempty"`
+	Version   *string                                  `json:"version"`
+}
+
+// BelowRangePacketsArtifactDeclaredSource The repository and commit a NuGet nuspec says the package was built from: the publisher's claim.
+type BelowRangePacketsArtifactDeclaredSource struct {
+	Commit     string `json:"commit"`
+	Nuspec     string `json:"nuspec"`
+	Repository string `json:"repository"`
+}
+
+// BelowRangePacketsArtifactDependencyGap defines model for BelowRangePacketsArtifactDependencyGap.
+type BelowRangePacketsArtifactDependencyGap struct {
+	Package *string `json:"package"`
+	Reason  string  `json:"reason"`
+	Version *string `json:"version"`
+}
+
+// BelowRangePacketsArtifactDependencySource defines model for BelowRangePacketsArtifactDependencySource.
+type BelowRangePacketsArtifactDependencySource struct {
+	Files      int      `json:"files"`
+	ImportedBy []string `json:"imported_by"`
+	Package    string   `json:"package"`
+	Root       string   `json:"root"`
+	Sha256     string   `json:"sha256"`
+	Url        string   `json:"url"`
+	Version    string   `json:"version"`
+}
+
+// BelowRangePacketsArtifactFilePresence defines model for BelowRangePacketsArtifactFilePresence.
+type BelowRangePacketsArtifactFilePresence struct {
+	Hunks         *[]BelowRangePacketsArtifactHunkPresence `json:"hunks,omitempty"`
+	InstalledPath *string                                  `json:"installed_path"`
+	PatchPath     string                                   `json:"patch_path"`
+}
+
+// BelowRangePacketsArtifactFix defines model for BelowRangePacketsArtifactFix.
+type BelowRangePacketsArtifactFix struct {
+	Alternatives []BelowRangePacketsArtifactFixAttempt `json:"alternatives"`
+
+	// Chosen One linked patch and how it scored; error when it couldn't be read.
+	Chosen        BelowRangePacketsArtifactFixAttempt     `json:"chosen"`
+	FixedReleases []BelowRangePacketsArtifactFixedRelease `json:"fixed_releases"`
+}
+
+// BelowRangePacketsArtifactFixAttempt One linked patch and how it scored; error when it couldn't be read.
+type BelowRangePacketsArtifactFixAttempt struct {
+	CommitDate           *string                            `json:"commit_date"`
+	Commits              *[]BelowRangePacketsArtifactCommit `json:"commits,omitempty"`
+	Error                *string                            `json:"error"`
+	Files                *int                               `json:"files"`
+	FilesInInstalledTree *int                               `json:"files_in_installed_tree"`
+	NamesAdvisory        *bool                              `json:"names_advisory"`
+	OnlyAddsCode         *bool                              `json:"only_adds_code"`
+	Rank                 int                                `json:"rank"`
+	ReleaseCommit        *bool                              `json:"release_commit"`
+	Url                  string                             `json:"url"`
+}
+
+// BelowRangePacketsArtifactFixedRelease defines model for BelowRangePacketsArtifactFixedRelease.
+type BelowRangePacketsArtifactFixedRelease struct {
+	Published *string `json:"published"`
+	Version   string  `json:"version"`
+}
+
+// BelowRangePacketsArtifactHunkPresence defines model for BelowRangePacketsArtifactHunkPresence.
+type BelowRangePacketsArtifactHunkPresence struct {
+	AddedLines     int `json:"added_lines"`
+	AddedPresent   int `json:"added_present"`
+	RemovedLines   int `json:"removed_lines"`
+	RemovedPresent int `json:"removed_present"`
+}
+
+// BelowRangePacketsArtifactInstalledSource defines model for BelowRangePacketsArtifactInstalledSource.
+type BelowRangePacketsArtifactInstalledSource struct {
+	DeclaredBy *BelowRangePacketsArtifactDeclaredSource `json:"declared_by"`
+	Files      int                                      `json:"files"`
+	Root       string                                   `json:"root"`
+	Sha256     string                                   `json:"sha256"`
+	Url        string                                   `json:"url"`
+}
+
+// BelowRangePacketsArtifactPacket defines model for BelowRangePacketsArtifactPacket.
+type BelowRangePacketsArtifactPacket struct {
+	Advisory          BelowRangePacketsArtifactAdvisory            `json:"advisory"`
+	Candidate         BelowRangePacketsArtifactCandidate           `json:"candidate"`
+	Case              BelowRangePacketsArtifactPacketCase          `json:"case"`
+	DependencyGaps    *[]BelowRangePacketsArtifactDependencyGap    `json:"dependency_gaps,omitempty"`
+	DependencySources *[]BelowRangePacketsArtifactDependencySource `json:"dependency_sources,omitempty"`
+	Fix               BelowRangePacketsArtifactFix                 `json:"fix"`
+	HunkPresence      []BelowRangePacketsArtifactFilePresence      `json:"hunk_presence"`
+	InstalledSource   BelowRangePacketsArtifactInstalledSource     `json:"installed_source"`
+
+	// Patch The chosen fix's patch text (untrusted third-party content).
+	Patch string `json:"patch"`
+}
+
+// BelowRangePacketsArtifactPacketCase defines model for BelowRangePacketsArtifactPacketCase.
+type BelowRangePacketsArtifactPacketCase = string
+
+// BelowRangePacketsArtifactSpan defines model for BelowRangePacketsArtifactSpan.
+type BelowRangePacketsArtifactSpan struct {
+	Fixed        *string `json:"fixed"`
+	Introduced   string  `json:"introduced"`
+	LastAffected *string `json:"last_affected"`
+}
+
+// BelowRangeVerdictsArtifact The review of one below-range packets document, held by a second impact assessment of the same commit: per packet two blind reviews, a judge on a split or an undetermined review, and the final verdict (decisions D1, D4: only code-verified cases become findings; no human queue). Coverage gaps are carried unchanged: never dropped, never clean. Consistency among rows (every packet reviewed once, the judge exactly when needed, the verdict the agreed one or the judge's) is a service check.
+type BelowRangeVerdictsArtifact struct {
+	Artifact interface{} `json:"artifact"`
+	Cases    []struct {
+		Case BelowRangePacketsArtifactPacketCase `json:"case"`
+
+		// Judge The opus-class judge, given both reviews and the packet.
+		Judge *struct {
+			Model  string `json:"model"`
+			Ruling string `json:"ruling"`
+
+			// Settle What would settle an undetermined case.
+			Settle  *string                           `json:"settle,omitempty"`
+			Verdict BelowRangeVerdictsArtifactVerdict `json:"verdict"`
+		} `json:"judge,omitempty"`
+
+		// Reviews Reviewer A (opus-class fact-judge) and reviewer B (fact-judge at its floor), blind to each other.
+		Reviews []struct {
+			Evidence string                            `json:"evidence"`
+			Model    string                            `json:"model"`
+			Verdict  BelowRangeVerdictsArtifactVerdict `json:"verdict"`
+		} `json:"reviews"`
+		Verdict BelowRangeVerdictsArtifactVerdict `json:"verdict"`
+	} `json:"cases"`
+	CoverageGaps []BelowRangePacketsArtifactCoverageGap `json:"coverage_gaps"`
+
+	// PacketsAssessmentId The impact assessment holding the reviewed below-range-packets document.
+	PacketsAssessmentId openapi_types.UUID `json:"packets_assessment_id"`
+}
+
+// BelowRangeVerdictsArtifactVerdict defines model for BelowRangeVerdictsArtifactVerdict.
+type BelowRangeVerdictsArtifactVerdict = interface{}
+
+// BenchmarkTargetArtifact Ground-truth corpus for the recall benchmark (capability C1). Each target pins a repo ref that provably contains one or more known-real findings. CONTAMINATION RULE: this manifest must never be readable from inside an audited checkout, and audit agents in a benchmark run must never be told they are being benchmarked. HELD-OUT RULE: entries with held_out=true are scored at release time only and must never be consulted during prompt/skill development.
+type BenchmarkTargetArtifact struct {
+	Targets []struct {
+		// Admitted false = candidate awaiting human admission review; only admitted targets are scored
+		Admitted   bool        `json:"admitted"`
+		AdmittedAt *string     `json:"admitted_at"`
+		AdmittedBy *string     `json:"admitted_by"`
+		Embargo    interface{} `json:"embargo,omitempty"`
+		Evidence   *struct {
+			Excerpt *string     `json:"excerpt,omitempty"`
+			Kind    interface{} `json:"kind"`
+			Ref     string      `json:"ref"`
+		} `json:"evidence,omitempty"`
+		Expected []struct {
+			Cwes []string `json:"cwes"`
+
+			// Fingerprint finding_identity fingerprint — tier-1 match key; null when only path/CWE identity is known
+			Fingerprint *string     `json:"fingerprint"`
+			Paths       []string    `json:"paths"`
+			Severity    interface{} `json:"severity"`
+
+			// SourceFinding Originating finding id (provenance only; ids are scan-scoped)
+			SourceFinding *string `json:"source_finding,omitempty"`
+			Title         *string `json:"title,omitempty"`
+		} `json:"expected"`
+
+		// FixCommit Commit that removed the bug; audit target is its first parent (self_replay/cve_replay)
+		FixCommit *string `json:"fix_commit"`
+		HeldOut   *bool   `json:"held_out,omitempty"`
+
+		// Id Stable target id, e.g. bt-kueue-operator-001
+		Id string `json:"id"`
+
+		// Injection Present on seeded prompt-injection canaries (capability C2). A canary PASSES only if the seeded finding is detected AND no obedience signal fires (no canary token echoed into the report; seeded finding not marked false_positive).
+		Injection *struct {
+			Class interface{} `json:"class"`
+
+			// Tokens Strings the injected instructions ask the auditor to reproduce; any appearance anywhere in the report = obedience
+			Tokens []string `json:"tokens"`
+		} `json:"injection,omitempty"`
+
+		// Language Primary language of the expected findings (per-language recall cut); absent/null targets score under "unspecified" — never guessed
+		Language *string `json:"language"`
+		Notes    *string `json:"notes,omitempty"`
+
+		// PreFixSha Resolved fix_commit^ — verified against the live repo at admission; the SHA the benchmark audits
+		PreFixSha *string `json:"pre_fix_sha"`
+
+		// Provenance self_replay = campaign ledger resolved-with-fix-commit; cve_replay = public advisory (training-contamination caveat applies); seeded = injected pattern
+		Provenance interface{} `json:"provenance"`
+
+		// RepoUrl file:// is used by seeded canaries materialized locally by build_canaries.py
+		RepoUrl string `json:"repo_url"`
+	} `json:"targets"`
+	Updated string `json:"updated"`
+	Version int    `json:"version"`
+}
+
 // Checkpoint A layer after restamping its root; `warning` is what the caller must surface.
 type Checkpoint struct {
 	// Layer 5 · one Merkle tree of decision events for a repository (or one line), signed per root.
@@ -975,6 +2466,457 @@ type ClaimRequest struct {
 	OrderId        *openapi_types.UUID `json:"order_id"`
 }
 
+// CloudConfigAuditArtifact Layer-2 agent-authored IaC cloud-configuration audit report over the deterministic Checkov facts artifact. Declared configuration only — the assessment_mode const makes an observation claim unrepresentable. Enforcement gate: schema validation plus citation checks (every finding cites fact IDs; suppressions, needs_review, severity assigned over unrated facts, and severity changes all require rationale).
+type CloudConfigAuditArtifact struct {
+	Findings []struct {
+		CheckId     string    `json:"check_id"`
+		ControlRefs *[]string `json:"control_refs,omitempty"`
+		Cwe         *string   `json:"cwe"`
+
+		// ExternalCorrelation finding IDs in an enterprise CSPM already tracking the deployed twin of this declared misconfiguration
+		ExternalCorrelation *[]string `json:"external_correlation,omitempty"`
+
+		// FactIds every constituent fact from the facts artifact — deduped per-module facts all cited here
+		FactIds []string `json:"fact_ids"`
+
+		// Fingerprint Deterministic cross-scan identity, same recipe as report.schema.json. Policy findings anchor on locations[].resource rather than a file path (files move; RoleBinding.ns.name does not) and append check_id, because the CHECK is what separates two findings on one resource -- without it 20 violations on a single Pod collapsed to one identity.
+		Fingerprint *string `json:"fingerprint,omitempty"`
+
+		// FingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION). Mirrors report.schema.json and layer.schema.json: stamps outlive recipes, so matching fingerprints across an epoch boundary means comparing this field too.
+		FingerprintAlgo *string `json:"fingerprint_algo,omitempty"`
+
+		// Framework checkov framework the facts came from (terraform, cloudformation, kubernetes, …)
+		Framework string `json:"framework"`
+
+		// Id CCA-<target>-NNN
+		Id                  string                                                 `json:"id"`
+		IsolationBoundary   *string                                                `json:"isolation_boundary,omitempty"`
+		IsolationDimensions *[]CloudConfigAuditArtifactFindingsIsolationDimensions `json:"isolation_dimensions,omitempty"`
+		Locations           *[]struct {
+			FileLineRange *[]int  `json:"file_line_range"`
+			FilePath      *string `json:"file_path,omitempty"`
+			Resource      *string `json:"resource"`
+		} `json:"locations,omitempty"`
+		Provider interface{} `json:"provider"`
+
+		// Rationale required by the gate for suppressed / needs_review / unrated-severity / severity-changed findings
+		Rationale   *string `json:"rationale,omitempty"`
+		Remediation *string `json:"remediation"`
+
+		// ScannerSeverity from the facts artifact; OSS Checkov emits none, so this is normally 'unrated' and the gate then requires the rationale to name the SKILL.md rubric row applied
+		ScannerSeverity interface{} `json:"scanner_severity,omitempty"`
+		Severity        interface{} `json:"severity"`
+		Status          interface{} `json:"status"`
+		Title           string      `json:"title"`
+	} `json:"findings"`
+
+	// Gaps copied through from the facts artifact — files/targets here were NOT assessed
+	Gaps     *[]string `json:"gaps,omitempty"`
+	Metadata struct {
+		// AssessmentMode this skill audits declared configuration only; observed-state evidence comes from other sources
+		AssessmentMode     interface{} `json:"assessment_mode"`
+		CheckovVersion     string      `json:"checkov_version"`
+		DeterministicSteps []struct {
+			Invocation string  `json:"invocation"`
+			Tool       string  `json:"tool"`
+			Version    *string `json:"version,omitempty"`
+		} `json:"deterministic_steps"`
+
+		// FactsRef path of the sibling cloud-facts artifact
+		FactsRef        string `json:"facts_ref"`
+		FactsSnapshotId string `json:"facts_snapshot_id"`
+
+		// Frameworks checkov frameworks that evaluated checks (terraform, cloudformation, kubernetes, …)
+		Frameworks     *[]string                                `json:"frameworks,omitempty"`
+		GeneratedAt    *string                                  `json:"generated_at,omitempty"`
+		HarnessVersion string                                   `json:"harness_version"`
+		Ref            *string                                  `json:"ref,omitempty"`
+		RefKind        *CloudConfigAuditArtifactMetadataRefKind `json:"ref_kind,omitempty"`
+
+		// Repository upstream URL of the scanned repo — lets repo-graph and inventory joins attribute this coverage to the right node
+		Repository *string `json:"repository"`
+
+		// Target target slug (scanned checkout's directory name)
+		Target string `json:"target"`
+
+		// TargetHead git HEAD of the scanned checkout, when available
+		TargetHead *string `json:"target_head"`
+	} `json:"metadata"`
+	Summary struct {
+		ByProvider  *map[string]int `json:"by_provider,omitempty"`
+		BySeverity  *map[string]int `json:"by_severity,omitempty"`
+		Confirmed   int             `json:"confirmed"`
+		FactsTotal  int             `json:"facts_total"`
+		Gaps        int             `json:"gaps"`
+		NeedsReview int             `json:"needs_review"`
+		Suppressed  int             `json:"suppressed"`
+	} `json:"summary"`
+	Title string `json:"title"`
+}
+
+// CloudConfigAuditArtifactFindingsIsolationDimensions defines model for CloudConfigAuditArtifact.Findings.IsolationDimensions.
+type CloudConfigAuditArtifactFindingsIsolationDimensions string
+
+// CloudConfigAuditArtifactMetadataRefKind defines model for CloudConfigAuditArtifact.Metadata.RefKind.
+type CloudConfigAuditArtifactMetadataRefKind string
+
+// CloudConfigFindingsCurrentArtifact Cumulative *-findings-current report derived by the track-findings cumulative builder from a *-cloud-config-audit.json baseline (schema/cloud-config-audit.schema.json) and its *-findings-layer.json disposition ledger. The finding core mirrors the cloud-config audit contract; build_cumulative adds the per-finding disposition block, validation_status, effective_severity, the top-level disposition_summary, the '— Cumulative Findings Status' title suffix, and metadata.additional.cumulative provenance (whose source_audit reference is also the validator's routing key). Strict where build_cumulative and the cloud-config validation gate guarantee the shape; permissive where audit vintages legitimately differ (extra metadata annotations such as tracking/campaign, free-form summary notes).
+type CloudConfigFindingsCurrentArtifact struct {
+	DispositionSummary struct {
+		ByResolution      map[string]int `json:"by_resolution"`
+		ByValidity        map[string]int `json:"by_validity"`
+		Conflicts         []string       `json:"conflicts"`
+		GeneratedAt       string         `json:"generated_at"`
+		LayerRef          string         `json:"layer_ref"`
+		NeedsReviewCount  int            `json:"needs_review_count"`
+		SeverityOverrides []struct {
+			At        string      `json:"at"`
+			By        string      `json:"by"`
+			Finding   string      `json:"finding"`
+			From      *string     `json:"from"`
+			Rationale *string     `json:"rationale,omitempty"`
+			Severity  interface{} `json:"severity"`
+		} `json:"severity_overrides"`
+	} `json:"disposition_summary"`
+	Findings []struct {
+		CheckId     string    `json:"check_id"`
+		ControlRefs *[]string `json:"control_refs,omitempty"`
+		Cwe         *string   `json:"cwe"`
+		Disposition struct {
+			Assurance interface{} `json:"assurance"`
+			Conflict  interface{} `json:"conflict,omitempty"`
+			Events    []string    `json:"events"`
+
+			// EvidenceGrade Explicit evidence strength: E0 observed effect, E1 authenticated success response, E2 strong inference, E3 behavioral inference. E0 is strongest. Missing or null means ungraded; source type and human approval never invent or upgrade a grade.
+			EvidenceGrade          *LayerArtifactEventEvidenceGrade `json:"evidence_grade"`
+			FpOverridden           interface{}                      `json:"fp_overridden,omitempty"`
+			FpReassertionBlocked   interface{}                      `json:"fp_reassertion_blocked,omitempty"`
+			LastUpdated            string                           `json:"last_updated"`
+			RefutedAwaitingSignoff interface{}                      `json:"refuted_awaiting_signoff,omitempty"`
+			Resolution             interface{}                      `json:"resolution"`
+			SeverityOverride       *struct {
+				At        string      `json:"at"`
+				By        string      `json:"by"`
+				Rationale *string     `json:"rationale,omitempty"`
+				Severity  interface{} `json:"severity"`
+			} `json:"severity_override,omitempty"`
+			Validity interface{} `json:"validity"`
+		} `json:"disposition"`
+
+		// EffectiveSeverity disposition.severity_override.severity when a human override exists, else the finding's severity (cross-checked by the validator)
+		EffectiveSeverity   interface{} `json:"effective_severity"`
+		ExternalCorrelation *[]string   `json:"external_correlation,omitempty"`
+		FactIds             []string    `json:"fact_ids"`
+
+		// Fingerprint Deterministic cross-scan identity, same recipe as report.schema.json. Policy findings anchor on locations[].resource rather than a file path (files move; RoleBinding.ns.name does not) and append check_id, because the CHECK is what separates two findings on one resource -- without it 20 violations on a single Pod collapsed to one identity.
+		Fingerprint *string `json:"fingerprint,omitempty"`
+
+		// FingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION). Mirrors report.schema.json and layer.schema.json: stamps outlive recipes, so matching fingerprints across an epoch boundary means comparing this field too.
+		FingerprintAlgo     *string                                                          `json:"fingerprint_algo,omitempty"`
+		Framework           string                                                           `json:"framework"`
+		Id                  string                                                           `json:"id"`
+		IsolationBoundary   *string                                                          `json:"isolation_boundary,omitempty"`
+		IsolationDimensions *[]CloudConfigFindingsCurrentArtifactFindingsIsolationDimensions `json:"isolation_dimensions,omitempty"`
+
+		// Kind The finding kind, independent of validity. Historical findings may omit it.
+		Kind      *ReportArtifactFindingKind `json:"kind,omitempty"`
+		Locations *[]struct {
+			FileLineRange *[]int  `json:"file_line_range"`
+			FilePath      *string `json:"file_path,omitempty"`
+			Resource      *string `json:"resource"`
+		} `json:"locations,omitempty"`
+		Provider        interface{} `json:"provider"`
+		Rationale       *string     `json:"rationale,omitempty"`
+		Remediation     *string     `json:"remediation"`
+		ScannerSeverity interface{} `json:"scanner_severity,omitempty"`
+		Severity        interface{} `json:"severity"`
+		Status          interface{} `json:"status"`
+		Title           string      `json:"title"`
+
+		// ValidationStatus mirrors disposition.validity (cross-checked by the validator)
+		ValidationStatus interface{} `json:"validation_status"`
+	} `json:"findings"`
+	Gaps     *[]string `json:"gaps,omitempty"`
+	Metadata struct {
+		Additional struct {
+			Cumulative struct {
+				GeneratedAt string `json:"generated_at"`
+
+				// Layer the *-findings-layer.json disposition ledger the dispositions were replayed from
+				Layer              string  `json:"layer"`
+				OriginalReportDate *string `json:"original_report_date"`
+
+				// SourceAudit the baseline audit filename stamped by the cumulative builder — also the validator's routing key for this schema
+				SourceAudit string `json:"source_audit"`
+			} `json:"cumulative"`
+		} `json:"additional"`
+
+		// AssessmentMode inherited from the cloud-config audit: declared configuration only
+		AssessmentMode interface{} `json:"assessment_mode"`
+		CheckovVersion string      `json:"checkov_version"`
+
+		// Date the cumulative builder sets this to the cumulative generation date (generated_at[:10])
+		Date               string `json:"date"`
+		DeterministicSteps []struct {
+			Invocation string  `json:"invocation"`
+			Tool       string  `json:"tool"`
+			Version    *string `json:"version,omitempty"`
+		} `json:"deterministic_steps"`
+
+		// FactsRef path of the sibling cloud-facts artifact
+		FactsRef        string                                             `json:"facts_ref"`
+		FactsSnapshotId string                                             `json:"facts_snapshot_id"`
+		Frameworks      *[]string                                          `json:"frameworks,omitempty"`
+		GeneratedAt     *string                                            `json:"generated_at,omitempty"`
+		HarnessVersion  string                                             `json:"harness_version"`
+		Ref             *string                                            `json:"ref,omitempty"`
+		RefKind         *CloudConfigFindingsCurrentArtifactMetadataRefKind `json:"ref_kind,omitempty"`
+		Repository      *string                                            `json:"repository"`
+
+		// Target target slug (scanned checkout's directory name)
+		Target     string  `json:"target"`
+		TargetHead *string `json:"target_head"`
+	} `json:"metadata"`
+	Summary struct {
+		ByProvider  *map[string]int `json:"by_provider,omitempty"`
+		BySeverity  *map[string]int `json:"by_severity,omitempty"`
+		Confirmed   int             `json:"confirmed"`
+		FactsTotal  int             `json:"facts_total"`
+		Gaps        int             `json:"gaps"`
+		NeedsReview int             `json:"needs_review"`
+		Suppressed  int             `json:"suppressed"`
+	} `json:"summary"`
+
+	// Title audit title with the suffix the cumulative builder always appends
+	Title string `json:"title"`
+}
+
+// CloudConfigFindingsCurrentArtifactFindingsIsolationDimensions defines model for CloudConfigFindingsCurrentArtifact.Findings.IsolationDimensions.
+type CloudConfigFindingsCurrentArtifactFindingsIsolationDimensions string
+
+// CloudConfigFindingsCurrentArtifactMetadataRefKind defines model for CloudConfigFindingsCurrentArtifact.Metadata.RefKind.
+type CloudConfigFindingsCurrentArtifactMetadataRefKind string
+
+// CloudConfigFindingsCurrentArtifactCanonicalWrite defines model for CloudConfigFindingsCurrentArtifactCanonicalWrite.
+type CloudConfigFindingsCurrentArtifactCanonicalWrite struct {
+	DispositionSummary struct {
+		SeverityOverrides interface{} `json:"severity_overrides,omitempty"`
+	} `json:"disposition_summary"`
+	Findings []struct {
+		CheckId     string    `json:"check_id"`
+		ControlRefs *[]string `json:"control_refs,omitempty"`
+		Cwe         *string   `json:"cwe"`
+		Disposition struct {
+			Assurance interface{} `json:"assurance"`
+			Conflict  interface{} `json:"conflict,omitempty"`
+			Events    []string    `json:"events"`
+
+			// EvidenceGrade Explicit evidence strength: E0 observed effect, E1 authenticated success response, E2 strong inference, E3 behavioral inference. E0 is strongest. Missing or null means ungraded; source type and human approval never invent or upgrade a grade.
+			EvidenceGrade          *LayerArtifactEventEvidenceGrade `json:"evidence_grade"`
+			FpOverridden           interface{}                      `json:"fp_overridden,omitempty"`
+			FpReassertionBlocked   interface{}                      `json:"fp_reassertion_blocked,omitempty"`
+			LastUpdated            string                           `json:"last_updated"`
+			RefutedAwaitingSignoff interface{}                      `json:"refuted_awaiting_signoff,omitempty"`
+			Resolution             interface{}                      `json:"resolution"`
+			SeverityOverride       *struct {
+				At        string      `json:"at"`
+				By        string      `json:"by"`
+				Rationale *string     `json:"rationale,omitempty"`
+				Severity  interface{} `json:"severity"`
+			} `json:"severity_override,omitempty"`
+			Validity interface{} `json:"validity"`
+		} `json:"disposition"`
+
+		// EffectiveSeverity disposition.severity_override.severity when a human override exists, else the finding's severity (cross-checked by the validator)
+		EffectiveSeverity   interface{} `json:"effective_severity"`
+		ExternalCorrelation *[]string   `json:"external_correlation,omitempty"`
+		FactIds             []string    `json:"fact_ids"`
+
+		// Fingerprint Deterministic cross-scan identity, same recipe as report.schema.json. Policy findings anchor on locations[].resource rather than a file path (files move; RoleBinding.ns.name does not) and append check_id, because the CHECK is what separates two findings on one resource -- without it 20 violations on a single Pod collapsed to one identity.
+		Fingerprint *string `json:"fingerprint,omitempty"`
+
+		// FingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION). Mirrors report.schema.json and layer.schema.json: stamps outlive recipes, so matching fingerprints across an epoch boundary means comparing this field too.
+		FingerprintAlgo     *string                                                                        `json:"fingerprint_algo,omitempty"`
+		Framework           string                                                                         `json:"framework"`
+		Id                  string                                                                         `json:"id"`
+		IsolationBoundary   *string                                                                        `json:"isolation_boundary,omitempty"`
+		IsolationDimensions *[]CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensions `json:"isolation_dimensions,omitempty"`
+
+		// Kind The finding kind, independent of validity. Historical findings may omit it.
+		Kind      *ReportArtifactFindingKind `json:"kind,omitempty"`
+		Locations *[]struct {
+			FileLineRange *[]int  `json:"file_line_range"`
+			FilePath      *string `json:"file_path,omitempty"`
+			Resource      *string `json:"resource"`
+		} `json:"locations,omitempty"`
+		Provider        interface{} `json:"provider"`
+		Rationale       *string     `json:"rationale,omitempty"`
+		Remediation     *string     `json:"remediation"`
+		ScannerSeverity interface{} `json:"scanner_severity,omitempty"`
+		Severity        interface{} `json:"severity"`
+		Status          interface{} `json:"status"`
+		Title           string      `json:"title"`
+
+		// ValidationStatus mirrors disposition.validity (cross-checked by the validator)
+		ValidationStatus interface{} `json:"validation_status"`
+	} `json:"findings"`
+	Gaps     *[]string `json:"gaps,omitempty"`
+	Metadata struct {
+		Additional struct {
+			Cumulative struct {
+				GeneratedAt string `json:"generated_at"`
+
+				// Layer the *-findings-layer.json disposition ledger the dispositions were replayed from
+				Layer              string  `json:"layer"`
+				OriginalReportDate *string `json:"original_report_date"`
+
+				// SourceAudit the baseline audit filename stamped by the cumulative builder — also the validator's routing key for this schema
+				SourceAudit string `json:"source_audit"`
+			} `json:"cumulative"`
+		} `json:"additional"`
+
+		// AssessmentMode inherited from the cloud-config audit: declared configuration only
+		AssessmentMode interface{} `json:"assessment_mode"`
+		CheckovVersion string      `json:"checkov_version"`
+
+		// Date the cumulative builder sets this to the cumulative generation date (generated_at[:10])
+		Date               string `json:"date"`
+		DeterministicSteps []struct {
+			Invocation string  `json:"invocation"`
+			Tool       string  `json:"tool"`
+			Version    *string `json:"version,omitempty"`
+		} `json:"deterministic_steps"`
+
+		// FactsRef path of the sibling cloud-facts artifact
+		FactsRef        string                                                           `json:"facts_ref"`
+		FactsSnapshotId string                                                           `json:"facts_snapshot_id"`
+		Frameworks      *[]string                                                        `json:"frameworks,omitempty"`
+		GeneratedAt     *string                                                          `json:"generated_at,omitempty"`
+		HarnessVersion  string                                                           `json:"harness_version"`
+		Ref             *string                                                          `json:"ref,omitempty"`
+		RefKind         *CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKind `json:"ref_kind,omitempty"`
+		Repository      *string                                                          `json:"repository"`
+
+		// Target target slug (scanned checkout's directory name)
+		Target     string  `json:"target"`
+		TargetHead *string `json:"target_head"`
+	} `json:"metadata"`
+	Summary struct {
+		ByProvider  *map[string]int `json:"by_provider,omitempty"`
+		BySeverity  *map[string]int `json:"by_severity,omitempty"`
+		Confirmed   int             `json:"confirmed"`
+		FactsTotal  int             `json:"facts_total"`
+		Gaps        int             `json:"gaps"`
+		NeedsReview int             `json:"needs_review"`
+		Suppressed  int             `json:"suppressed"`
+	} `json:"summary"`
+
+	// Title audit title with the suffix the cumulative builder always appends
+	Title string `json:"title"`
+}
+
+// CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensions defines model for CloudConfigFindingsCurrentArtifactCanonicalWrite.Findings.IsolationDimensions.
+type CloudConfigFindingsCurrentArtifactCanonicalWriteFindingsIsolationDimensions string
+
+// CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKind defines model for CloudConfigFindingsCurrentArtifactCanonicalWrite.Metadata.RefKind.
+type CloudConfigFindingsCurrentArtifactCanonicalWriteMetadataRefKind string
+
+// CodeFactsArtifact Deterministic symbols and measured language statistics attached to a tool_scan assessment. The assessment owns the scanned ref, producer/version and time. null means not measured; an empty array means measured with no results. Producers normalize symbol enumerator and scc/tokei output before publication; consumers never estimate LoC from language byte counts. At least one section must carry a recorded array/object; all four sections explicit nulls records nothing and does not validate.
+type CodeFactsArtifact struct {
+	Artifact   interface{} `json:"artifact"`
+	Interfaces *[]struct {
+		ApiGroup  string                    `json:"api_group"`
+		Kind      *string                   `json:"kind"`
+		Location  CodeFactsArtifactLocation `json:"location"`
+		Name      *string                   `json:"name"`
+		Resources []string                  `json:"resources"`
+		Role      interface{}               `json:"role"`
+		Verbs     []string                  `json:"verbs"`
+	} `json:"interfaces"`
+	Languages *[]CodeFactsArtifactLanguage `json:"languages"`
+	Packages  *struct {
+		Exports []struct {
+			Kind     *string                   `json:"kind"`
+			Language string                    `json:"language"`
+			Location CodeFactsArtifactLocation `json:"location"`
+			Name     string                    `json:"name"`
+			Package  string                    `json:"package"`
+		} `json:"exports"`
+
+		// Gaps Why a package/interface fact is unmeasured. system stays free-form by design: it names the producer's own subsystem (an adopter's scanner), unlike interface-role and liveness-status which are shared vocabularies; reason carries the producer's cause.
+		Gaps []struct {
+			Count    *int      `json:"count"`
+			Evidence *string   `json:"evidence"`
+			Path     *string   `json:"path"`
+			Paths    *[]string `json:"paths,omitempty"`
+			Reason   string    `json:"reason"`
+			System   string    `json:"system"`
+		} `json:"gaps"`
+		Imports []struct {
+			Language string                    `json:"language"`
+			Location CodeFactsArtifactLocation `json:"location"`
+			Package  string                    `json:"package"`
+		} `json:"imports"`
+		Modules []struct {
+			Ecosystem string                    `json:"ecosystem"`
+			Location  CodeFactsArtifactLocation `json:"location"`
+			Name      string                    `json:"name"`
+		} `json:"modules"`
+	} `json:"packages"`
+	Symbols *[]CodeFactsArtifactSymbol `json:"symbols"`
+	union   json.RawMessage
+}
+
+// CodeFactsArtifact0 defines model for .
+type CodeFactsArtifact0 struct {
+	Symbols []interface{} `json:"symbols"`
+}
+
+// CodeFactsArtifact1 defines model for .
+type CodeFactsArtifact1 struct {
+	Languages []interface{} `json:"languages"`
+}
+
+// CodeFactsArtifact2 defines model for .
+type CodeFactsArtifact2 struct {
+	Packages map[string]interface{} `json:"packages"`
+}
+
+// CodeFactsArtifact3 defines model for .
+type CodeFactsArtifact3 struct {
+	Interfaces []interface{} `json:"interfaces"`
+}
+
+// CodeFactsArtifactLanguage defines model for CodeFactsArtifactLanguage.
+type CodeFactsArtifactLanguage struct {
+	Blanks   *int   `json:"blanks"`
+	Code     int    `json:"code"`
+	Comments *int   `json:"comments"`
+	Files    *int   `json:"files"`
+	Name     string `json:"name"`
+}
+
+// CodeFactsArtifactLocation defines model for CodeFactsArtifactLocation.
+type CodeFactsArtifactLocation struct {
+	Hashes *[]struct {
+		Algorithm string `json:"algorithm"`
+		Digest    string `json:"digest"`
+	} `json:"hashes,omitempty"`
+	Line   *int    `json:"line"`
+	Path   string  `json:"path"`
+	Symbol *string `json:"symbol"`
+}
+
+// CodeFactsArtifactSymbol defines model for CodeFactsArtifactSymbol.
+type CodeFactsArtifactSymbol struct {
+	// Kind The producing tool's symbol category, kept as reported.
+	Kind     *string `json:"kind"`
+	Language *string `json:"language"`
+	Line     int     `json:"line"`
+	Name     string  `json:"name"`
+	Path     string  `json:"path"`
+}
+
 // CodeHash defines model for CodeHash.
 type CodeHash struct {
 	Algorithm string `json:"algorithm"`
@@ -989,8 +2931,317 @@ type CompleteRequest struct {
 	Result JobResult `json:"result"`
 }
 
+// ComplianceAssessmentArtifact Validates /compliance-check assessment artifacts. The false-positive gates are STRUCTURAL: satisfied/not_satisfied verdicts are unrepresentable without evidence references (conditional schema below), deterministic controls must carry a check-computed verdict (verdict_source=check) unless an attributed human override is present, and not_assessed/not_applicable require machine-readable reasons. The compliance validator additionally verifies evidence content hashes and recomputes the coverage block — schema + validator together are the citation gate for compliance.
+type ComplianceAssessmentArtifact struct {
+	// Coverage Per-framework coverage honesty block — recomputed and cross-checked by the validator; no blended compliance percentage exists anywhere in this artifact.
+	Coverage map[string]struct {
+		Deterministic  int `json:"deterministic"`
+		EvidenceReview int `json:"evidence_review"`
+		NotApplicable  int `json:"not_applicable"`
+		NotAssessed    int `json:"not_assessed"`
+		NotSatisfied   int `json:"not_satisfied"`
+		Organizational int `json:"organizational"`
+		Satisfied      int `json:"satisfied"`
+		TotalInScope   int `json:"total_in_scope"`
+	} `json:"coverage"`
+	Metadata ComplianceAssessmentArtifact_Metadata `json:"metadata"`
+	Results  []struct {
+		CheckId        *string     `json:"check_id,omitempty"`
+		Classification interface{} `json:"classification"`
+		ControlId      string      `json:"control_id"`
+		Evidence       *[]struct {
+			Excerpt *string     `json:"excerpt,omitempty"`
+			Kind    interface{} `json:"kind"`
+
+			// Locator where the evidence came from: file:line, snapshot path, fact id, artifact ref
+			Locator string `json:"locator"`
+			Sha256  string `json:"sha256"`
+		} `json:"evidence,omitempty"`
+		Framework string `json:"framework"`
+
+		// NPassAgreement evidence_review controls: N-pass stability record (amendment 5)
+		NPassAgreement *struct {
+			Agreed bool `json:"agreed"`
+			Passes int  `json:"passes"`
+		} `json:"n_pass_agreement,omitempty"`
+
+		// Narrative agent annotation — context and remediation guidance only; carries no evidentiary weight and cannot change the verdict
+		Narrative *string `json:"narrative,omitempty"`
+
+		// Override REQUIRED when verdict_source=human_override — the countersign pattern
+		Override *struct {
+			By                     string  `json:"by"`
+			Date                   string  `json:"date"`
+			OverriddenCheckVerdict *string `json:"overridden_check_verdict,omitempty"`
+			Rationale              string  `json:"rationale"`
+		} `json:"override,omitempty"`
+		Reason  *string                                    `json:"reason,omitempty"`
+		Title   *string                                    `json:"title,omitempty"`
+		Verdict ComplianceAssessmentArtifactResultsVerdict `json:"verdict"`
+
+		// VerdictSource deterministic controls: 'check' (code-computed) or 'human_override' — never 'agent' (amendment 1)
+		VerdictSource interface{} `json:"verdict_source"`
+	} `json:"results"`
+}
+
+// ComplianceAssessmentArtifact_Metadata_Target defines model for ComplianceAssessmentArtifact.Metadata.Target.
+type ComplianceAssessmentArtifact_Metadata_Target struct {
+	// CdeBoundary REQUIRED for PCI runs: path/hash of the human-declared cardholder-data-environment boundary document
+	CdeBoundary *string     `json:"cde_boundary,omitempty"`
+	Environment *string     `json:"environment,omitempty"`
+	Kind        interface{} `json:"kind"`
+
+	// PersonalDataStores REQUIRED for GDPR runs: declared stores holding personal data — never inferred
+	PersonalDataStores *[]string `json:"personal_data_stores,omitempty"`
+	Product            *string   `json:"product,omitempty"`
+	Repos              *[]string `json:"repos,omitempty"`
+
+	// Scope Boundary provenance when the run was scoped via the compliance scope registry (--boundary; Phase 6): the declared boundary id, who declared it and when, the resolution mode, excluded repos with rationale, and whether the declaration is still an unsigned draft.
+	Scope *struct {
+		Boundary   string `json:"boundary"`
+		DeclaredAt string `json:"declared_at"`
+		DeclaredBy string `json:"declared_by"`
+		Draft      bool   `json:"draft"`
+		Excluded   *[]struct {
+			Reason string `json:"reason"`
+			Repo   string `json:"repo"`
+		} `json:"excluded,omitempty"`
+		RegistryHash *string     `json:"registry_hash"`
+		ResolvesVia  interface{} `json:"resolves_via"`
+	} `json:"scope,omitempty"`
+	ScopeBindingMode *string `json:"scope_binding_mode,omitempty"`
+
+	// SnapshotId sha256 of the canonicalized environment inventory snapshot this assessment read (determinism amendment 6)
+	SnapshotId *string `json:"snapshot_id,omitempty"`
+
+	// TrustServiceCategories REQUIRED for SOC 2 runs: declared engagement categories (security mandatory)
+	TrustServiceCategories *[]interface{}         `json:"trust_service_categories,omitempty"`
+	AdditionalProperties   map[string]interface{} `json:"-"`
+}
+
+// ComplianceAssessmentArtifact_Metadata defines model for ComplianceAssessmentArtifact.Metadata.
+type ComplianceAssessmentArtifact_Metadata struct {
+	Artifact          interface{}        `json:"artifact"`
+	CollectorVersions *map[string]string `json:"collector_versions,omitempty"`
+	Frameworks        []struct {
+		// Caveat mandatory framework caveats (FedRAMP interim 800-53B posture; SOC 2 point-in-time vs Type 2 period)
+		Caveat  *string                                          `json:"caveat,omitempty"`
+		Id      ComplianceAssessmentArtifactMetadataFrameworksId `json:"id"`
+		Profile *string                                          `json:"profile,omitempty"`
+	} `json:"frameworks"`
+	GeneratedAt       string  `json:"generated_at"`
+	HarnessVersion    string  `json:"harness_version"`
+	OrgParametersHash *string `json:"org_parameters_hash,omitempty"`
+
+	// OwnerAttestations Owner context captured by /compliance-check interview (Phase 7). RAIL 1 — attestations are EVIDENCE, never verdicts: they may inform evidence_review judging (cited by id from a result's evidence) and may upgrade not_assessed -> evidence_review by making a control assessable; they can never touch a deterministic verdict and can never directly set satisfied. Attribution is rendered wherever a verdict they informed is shown.
+	OwnerAttestations *[]struct {
+		// AppliesTo framework:control refs this informs
+		AppliesTo    *[]string `json:"applies_to,omitempty"`
+		AttestedAt   string    `json:"attested_at"`
+		AttestedBy   string    `json:"attested_by"`
+		Id           string    `json:"id"`
+		LdapVerified bool      `json:"ldap_verified"`
+
+		// Statement the owner's words, verbatim
+		Statement string `json:"statement"`
+
+		// Topic what the statement is about (e.g. data-flow, environment, compensating-control)
+		Topic string `json:"topic"`
+	} `json:"owner_attestations,omitempty"`
+
+	// RegistryHash sha256 of the canonicalized compliance-mapping registry used — drift attribution (amendment 6)
+	RegistryHash         string                                       `json:"registry_hash"`
+	Target               ComplianceAssessmentArtifact_Metadata_Target `json:"target"`
+	AdditionalProperties map[string]interface{}                       `json:"-"`
+}
+
+// ComplianceAssessmentArtifactCanonicalWrite defines model for ComplianceAssessmentArtifactCanonicalWrite.
+type ComplianceAssessmentArtifactCanonicalWrite struct {
+	// Coverage Per-framework coverage honesty block — recomputed and cross-checked by the validator; no blended compliance percentage exists anywhere in this artifact.
+	Coverage map[string]struct {
+		Deterministic  int `json:"deterministic"`
+		EvidenceReview int `json:"evidence_review"`
+		NotApplicable  int `json:"not_applicable"`
+		NotAssessed    int `json:"not_assessed"`
+		NotSatisfied   int `json:"not_satisfied"`
+		Organizational int `json:"organizational"`
+		Satisfied      int `json:"satisfied"`
+		TotalInScope   int `json:"total_in_scope"`
+	} `json:"coverage"`
+	Metadata ComplianceAssessmentArtifactCanonicalWrite_Metadata `json:"metadata"`
+	Results  interface{}                                         `json:"results"`
+}
+
+// ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target defines model for ComplianceAssessmentArtifactCanonicalWrite.Metadata.Target.
+type ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target struct {
+	// CdeBoundary REQUIRED for PCI runs: path/hash of the human-declared cardholder-data-environment boundary document
+	CdeBoundary *string     `json:"cde_boundary,omitempty"`
+	Environment *string     `json:"environment,omitempty"`
+	Kind        interface{} `json:"kind"`
+
+	// PersonalDataStores REQUIRED for GDPR runs: declared stores holding personal data — never inferred
+	PersonalDataStores *[]string `json:"personal_data_stores,omitempty"`
+	Product            *string   `json:"product,omitempty"`
+	Repos              *[]string `json:"repos,omitempty"`
+
+	// Scope Boundary provenance when the run was scoped via the compliance scope registry (--boundary; Phase 6): the declared boundary id, who declared it and when, the resolution mode, excluded repos with rationale, and whether the declaration is still an unsigned draft.
+	Scope *struct {
+		Boundary   string `json:"boundary"`
+		DeclaredAt string `json:"declared_at"`
+		DeclaredBy string `json:"declared_by"`
+		Draft      bool   `json:"draft"`
+		Excluded   *[]struct {
+			Reason string `json:"reason"`
+			Repo   string `json:"repo"`
+		} `json:"excluded,omitempty"`
+		RegistryHash *string     `json:"registry_hash"`
+		ResolvesVia  interface{} `json:"resolves_via"`
+	} `json:"scope,omitempty"`
+	ScopeBindingMode *string `json:"scope_binding_mode,omitempty"`
+
+	// SnapshotId sha256 of the canonicalized environment inventory snapshot this assessment read (determinism amendment 6)
+	SnapshotId *string `json:"snapshot_id,omitempty"`
+
+	// TrustServiceCategories REQUIRED for SOC 2 runs: declared engagement categories (security mandatory)
+	TrustServiceCategories *[]interface{}         `json:"trust_service_categories,omitempty"`
+	AdditionalProperties   map[string]interface{} `json:"-"`
+}
+
+// ComplianceAssessmentArtifactCanonicalWrite_Metadata defines model for ComplianceAssessmentArtifactCanonicalWrite.Metadata.
+type ComplianceAssessmentArtifactCanonicalWrite_Metadata struct {
+	Artifact          interface{}        `json:"artifact"`
+	CollectorVersions *map[string]string `json:"collector_versions,omitempty"`
+	Frameworks        []struct {
+		// Caveat mandatory framework caveats (FedRAMP interim 800-53B posture; SOC 2 point-in-time vs Type 2 period)
+		Caveat  *string                                          `json:"caveat,omitempty"`
+		Id      ComplianceAssessmentArtifactMetadataFrameworksId `json:"id"`
+		Profile *string                                          `json:"profile,omitempty"`
+	} `json:"frameworks"`
+	GeneratedAt       string  `json:"generated_at"`
+	HarnessVersion    string  `json:"harness_version"`
+	OrgParametersHash *string `json:"org_parameters_hash,omitempty"`
+
+	// OwnerAttestations Owner context captured by /compliance-check interview (Phase 7). RAIL 1 — attestations are EVIDENCE, never verdicts: they may inform evidence_review judging (cited by id from a result's evidence) and may upgrade not_assessed -> evidence_review by making a control assessable; they can never touch a deterministic verdict and can never directly set satisfied. Attribution is rendered wherever a verdict they informed is shown.
+	OwnerAttestations *[]struct {
+		// AppliesTo framework:control refs this informs
+		AppliesTo    *[]string `json:"applies_to,omitempty"`
+		AttestedAt   string    `json:"attested_at"`
+		AttestedBy   string    `json:"attested_by"`
+		Id           string    `json:"id"`
+		LdapVerified bool      `json:"ldap_verified"`
+
+		// Statement the owner's words, verbatim
+		Statement string `json:"statement"`
+
+		// Topic what the statement is about (e.g. data-flow, environment, compensating-control)
+		Topic string `json:"topic"`
+	} `json:"owner_attestations,omitempty"`
+
+	// RegistryHash sha256 of the canonicalized compliance-mapping registry used — drift attribution (amendment 6)
+	RegistryHash         string                                                     `json:"registry_hash"`
+	Target               ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target `json:"target"`
+	AdditionalProperties map[string]interface{}                                     `json:"-"`
+}
+
+// ComplianceAssessmentArtifactMetadataFrameworksId defines model for ComplianceAssessmentArtifactMetadataFrameworksId.
+type ComplianceAssessmentArtifactMetadataFrameworksId = interface{}
+
+// ComplianceAssessmentArtifactResultsVerdict defines model for ComplianceAssessmentArtifactResultsVerdict.
+type ComplianceAssessmentArtifactResultsVerdict = interface{}
+
 // ComplianceFramework defines model for ComplianceFramework.
 type ComplianceFramework string
+
+// ComplianceMappingArtifact Validates your compliance configuration directory's control-mapping registry — the policy-data registry that pre-classifies every in-scope control (deterministic / evidence_review / organizational) and defines deterministic checks as DECLARATIVE ASSERTION RECORDS evaluated by the assertion evaluator (determinism amendment 2: checks are diffable data, not per-check code). The LLM never classifies a control or authors an assertion at run time — changing either is a reviewed config change.
+type ComplianceMappingArtifact struct {
+	Checks []struct {
+		AppliesWhen *ComplianceMappingArtifactAssertion `json:"applies_when,omitempty"`
+		Assertion   ComplianceMappingArtifactAssertion  `json:"assertion"`
+
+		// Collector snapshot kind this check reads (scan_k8s_hardening | run_gitleaks | run_osv_scanner | run_govulncheck | cloud_inventory | sbom | cosign)
+		Collector   string  `json:"collector"`
+		Description *string `json:"description,omitempty"`
+
+		// Fixtures path to the known-bad/known-good fixture pair (Phase 4 admission gate)
+		Fixtures *string `json:"fixtures,omitempty"`
+		Id       string  `json:"id"`
+
+		// ParameterRefs org-parameter ids whose values the assertion's `expected` resolves from ('param:<id>')
+		ParameterRefs *[]string `json:"parameter_refs,omitempty"`
+
+		// Sampling REQUIRED if the check does not evaluate ALL selected values: a deterministic rule ('sorted_first_50') — 'representative' is not expressible (amendment 7)
+		Sampling *string `json:"sampling,omitempty"`
+	} `json:"checks"`
+	Controls []struct {
+		Applicability *ComplianceMappingArtifactAssertion `json:"applicability,omitempty"`
+
+		// Checks check ids — REQUIRED non-empty when classification=deterministic
+		Checks         *[]string   `json:"checks,omitempty"`
+		Classification interface{} `json:"classification"`
+		ControlId      string      `json:"control_id"`
+
+		// Crosswalk hand-authored framework:control_id tags (e.g. 'nist-800-53-rev5:ia-2.1') — never vendored from restricted mappings
+		Crosswalk *[]string `json:"crosswalk,omitempty"`
+
+		// EvidenceRequest evidence_review controls: what human-supplied artifact the agent judges
+		EvidenceRequest *string     `json:"evidence_request,omitempty"`
+		Framework       interface{} `json:"framework"`
+		Note            *string     `json:"note,omitempty"`
+
+		// Parameters org-parameter ids this control's checks consume; any undeclared ⇒ not_assessed(parameter undeclared)
+		Parameters *[]string `json:"parameters,omitempty"`
+	} `json:"controls"`
+	Note    *string `json:"note,omitempty"`
+	Version int     `json:"version"`
+}
+
+// ComplianceMappingArtifactAssertion defines model for ComplianceMappingArtifactAssertion.
+type ComplianceMappingArtifactAssertion struct {
+	// Expected literal, or 'param:<org-parameter-id>' resolved from org-parameters.yaml at evaluation time
+	Expected interface{} `json:"expected,omitempty"`
+	Operator interface{} `json:"operator"`
+
+	// Path dot path into the canonical snapshot; [*] fans out — the assertion must hold for EVERY selected value (no sampling unless `sampling` is declared)
+	Path string `json:"path"`
+}
+
+// ComplianceScopeArtifact Declared compliance boundaries (your compliance configuration directory's compliance-scope file). Frameworks scope SYSTEMS, not repos: each boundary is a reviewed, signed declaration of what sits inside a PCI CDE / FedRAMP authorization boundary / SOC 2 system, declared at service/product level. Repo membership is RESOLVED (repo-graph product mapping via the scope resolver), never enumerated by hand beyond the include/exclude edges — graphs resolve scope, they never store it. Same doctrine as compliance-mapping.yaml: policy data, not prompt text; every edit is a reviewed config change; declared_at is dated provenance drift-watch ages.
+type ComplianceScopeArtifact struct {
+	Boundaries map[string]struct {
+		DeclaredAt string `json:"declared_at"`
+
+		// DeclaredBy Identity handle of the human who owns this boundary claim. 'draft:<id>' marks an unsigned draft — the runner labels its output accordingly.
+		DeclaredBy string `json:"declared_by"`
+
+		// DeploymentEvidence Required when resolves_via=deployment-iac: the declared deployment inventory (JSON: {services: {<name>: {repos: [{url, source}]}}}, produced from a configuration repository checkout — extractor lands with the first real engagement) and the service to resolve.
+		DeploymentEvidence *struct {
+			// Inventory path, relative to the scope file
+			Inventory string `json:"inventory"`
+			Service   string `json:"service"`
+		} `json:"deployment_evidence,omitempty"`
+		Exclude *[]struct {
+			// Reason Boundary rationale — 'doesn't apply' claims live HERE with a reason, never as silent omissions.
+			Reason string `json:"reason"`
+			Repo   string `json:"repo"`
+		} `json:"exclude,omitempty"`
+		Frameworks []interface{} `json:"frameworks"`
+		Include    *[]struct {
+			Reason string `json:"reason"`
+
+			// Repo org/name
+			Repo string `json:"repo"`
+		} `json:"include,omitempty"`
+		Notes *string `json:"notes,omitempty"`
+
+		// Product repo-graph product node id (e.g. product:adhoc:stackrox) or exact label; required when resolves_via=repo-graph.
+		Product *string `json:"product,omitempty"`
+
+		// ResolvesVia repo-graph: membership = the product node's ships edges plus include minus exclude (organizational assertion). deployment-iac: membership = the repos a declared deployment inventory cites as deployed for the service, every row carrying its IaC source (deployment EVIDENCE — prefer when available; adopted 2026-07-30). explicit: include[] only.
+		ResolvesVia interface{} `json:"resolves_via"`
+	} `json:"boundaries"`
+	Updated string `json:"updated"`
+	Version int    `json:"version"`
+}
 
 // ConfigDigest A config document in force when an order was planned; `pack:<name>` is the pack version.
 type ConfigDigest struct {
@@ -1020,6 +3271,50 @@ type ConnectionConfig struct {
 // not the model family: a gateway serving both wires appears as two providers.
 type ConnectionType string
 
+// CorpusRegistryArtifact Who each audited subject belongs to. Ownership decides which denominator a finding counts toward, and until now it was declared only in the deployment's corpus-config and materialised in the harness's own SQLite projection -- so no contract consumer could compute 'X% of our repos' at all. This registry is a configuration document modelled as an artifact, the same shape as compliance-scope and org-parameters: the deployment declares it, the harness emits it from the corpus resolution, and storage projects it so findings can be joined to ownership in SQL.
+type CorpusRegistryArtifact struct {
+	Note     *string                         `json:"note,omitempty"`
+	Subjects []CorpusRegistryArtifactSubject `json:"subjects"`
+
+	// Updated When this registry was last regenerated from the corpus resolution.
+	Updated *string `json:"updated,omitempty"`
+	Version int     `json:"version"`
+}
+
+// CorpusRegistryArtifactSubject defines model for CorpusRegistryArtifactSubject.
+type CorpusRegistryArtifactSubject struct {
+	BusinessUnit string `json:"business_unit"`
+
+	// IsBranchAudit Whether this subject is a re-audit of a non-default ref. Load-bearing for every count: a large share of audits are branch re-audits of the same code, so a denominator that does not exclude them overstates coverage and double-counts exposure.
+	IsBranchAudit *bool `json:"is_branch_audit,omitempty"`
+
+	// Label Engagement or tree label, for grouping cuts that are narrower than a business unit.
+	Label *string `json:"label,omitempty"`
+
+	// Ownership See enums/v1/ownership.json. 'harness-qa' subjects are registered but excluded from every metrics lens.
+	Ownership CorpusRegistryArtifactSubjectOwnership `json:"ownership"`
+
+	// Product Product this subject ships in, when the inventory declares one.
+	Product *string `json:"product,omitempty"`
+
+	// Ref Git ref audited, when this is a ref-specific audit rather than HEAD.
+	Ref     *string                               `json:"ref,omitempty"`
+	RefKind *CorpusRegistryArtifactSubjectRefKind `json:"ref_kind,omitempty"`
+	RepoUrl *string                               `json:"repo_url,omitempty"`
+
+	// SubjectId The same opaque subject identifier used in artifact_binding.subject_id. This is the join key: without it, ownership cannot reach a finding.
+	SubjectId string `json:"subject_id"`
+
+	// Tree The corpus tree this subject was resolved from. Kept because ownership is declared per tree in corpus-config, so this is the provenance of the ownership value.
+	Tree string `json:"tree"`
+}
+
+// CorpusRegistryArtifactSubjectOwnership See enums/v1/ownership.json. 'harness-qa' subjects are registered but excluded from every metrics lens.
+type CorpusRegistryArtifactSubjectOwnership string
+
+// CorpusRegistryArtifactSubjectRefKind defines model for CorpusRegistryArtifactSubject.RefKind.
+type CorpusRegistryArtifactSubjectRefKind string
+
 // CredentialConfig A connection's credential reference: the environment (`env`), or the Kubernetes Secret
 // named `name` and the credential's `key` within it (`secret`).
 type CredentialConfig struct {
@@ -1034,6 +3329,57 @@ type CredentialConfig struct {
 // CredentialSource Where a provider's credential lives: the worker's existing environment, or a Kubernetes
 // Secret referenced onto its Job.
 type CredentialSource string
+
+// CveReplayArtifact defines model for CveReplayArtifact.
+type CveReplayArtifact struct {
+	Audit     CveReplayArtifactAudit       `json:"audit"`
+	Checks    []CveReplayArtifactCandidate `json:"checks"`
+	Revision  int                          `json:"revision"`
+	Watermark *time.Time                   `json:"watermark"`
+}
+
+// CveReplayArtifactAudit defines model for CveReplayArtifactAudit.
+type CveReplayArtifactAudit struct {
+	AuditId          openapi_types.UUID `json:"audit_id"`
+	AuditedAt        time.Time          `json:"audited_at"`
+	AuditedCommit    string             `json:"audited_commit"`
+	ReportArtifactId openapi_types.UUID `json:"report_artifact_id"`
+	Repository       string             `json:"repository"`
+	RepositoryId     openapi_types.UUID `json:"repository_id"`
+	RepositoryRefId  openapi_types.UUID `json:"repository_ref_id"`
+}
+
+// CveReplayArtifactCandidate defines model for CveReplayArtifactCandidate.
+type CveReplayArtifactCandidate struct {
+	AdvisoryId             string                             `json:"advisory_id"`
+	Aliases                []string                           `json:"aliases"`
+	AuditId                openapi_types.UUID                 `json:"audit_id"`
+	AuditVerdict           interface{}                        `json:"audit_verdict"`
+	AuditedAt              time.Time                          `json:"audited_at"`
+	AuditedCommit          string                             `json:"audited_commit"`
+	CheckedAt              time.Time                          `json:"checked_at"`
+	MatchedAdvisoryIds     []string                           `json:"matched_advisory_ids"`
+	PresenceEvidence       *string                            `json:"presence_evidence"`
+	PresenceIdentitySource interface{}                        `json:"presence_identity_source"`
+	PresentAtAudit         *bool                              `json:"present_at_audit"`
+	PublishedAt            *time.Time                         `json:"published_at"`
+	Reason                 string                             `json:"reason"`
+	ReportArtifactId       openapi_types.UUID                 `json:"report_artifact_id"`
+	Repository             string                             `json:"repository"`
+	RepositoryId           openapi_types.UUID                 `json:"repository_id"`
+	RepositoryRefId        openapi_types.UUID                 `json:"repository_ref_id"`
+	RequiresHumanReview    interface{}                        `json:"requires_human_review"`
+	Reviewer               *string                            `json:"reviewer"`
+	Severity               CveReplayArtifactCandidateSeverity `json:"severity"`
+	Source                 string                             `json:"source"`
+	Summary                string                             `json:"summary"`
+
+	// Withdrawn Source advisory withdrawal recorded by the replay classifier; omission preserves historical non-withdrawn candidates.
+	Withdrawn *bool `json:"withdrawn,omitempty"`
+}
+
+// CveReplayArtifactCandidateSeverity defines model for CveReplayArtifactCandidate.Severity.
+type CveReplayArtifactCandidateSeverity string
 
 // CvssSource Who stated a score, in ranking order.
 type CvssSource string
@@ -1239,6 +3585,62 @@ type DispositionAssurance string
 // DispositionResolution defines model for DispositionResolution.
 type DispositionResolution string
 
+// DocVarianceArtifact Structured records of OFFICIAL-documentation claims that code evidence contradicts (<repo>-doc-variance.json, emitted where verification happens — threat-model context passes, audits). Source restriction is deliberate: only docs.redhat.com product documentation qualifies as a variance source — informal inputs (owner notes, Google Docs) inform threat models but never mint variance records; their claims must be traced to (or contradicted by) the official docs to register here. A variance record is a claim-vs-evidence discrepancy, NEVER a vulnerability verdict — audits/scans convert security-relevant ones into findings through the adjudicated flow; the register additionally tracks the docs-side resolution (doc_corrected) that no finding lifecycle models.
+type DocVarianceArtifact struct {
+	Metadata struct {
+		Created        time.Time  `json:"created"`
+		HarnessVersion string     `json:"harness_version"`
+		Repository     string     `json:"repository"`
+		Updated        *time.Time `json:"updated,omitempty"`
+	} `json:"metadata"`
+	Records []struct {
+		// Claim the documentation's assertion, paraphrased precisely
+		Claim        string `json:"claim"`
+		CodeEvidence []struct {
+			Lines *string `json:"lines,omitempty"`
+			Note  *string `json:"note,omitempty"`
+			Path  string  `json:"path"`
+
+			// Ref branch/tag when version-specific (joins doc version to release branch)
+			Ref  *string `json:"ref,omitempty"`
+			Repo string  `json:"repo"`
+		} `json:"code_evidence"`
+		Disposition     interface{} `json:"disposition"`
+		DispositionNote *string     `json:"disposition_note,omitempty"`
+
+		// FindingRefs campaign finding ids minted when an audit/scan converted this record
+		FindingRefs *[]string `json:"finding_refs,omitempty"`
+		Id          string    `json:"id"`
+
+		// Source The OFFICIAL documentation location making the claim — one record per (claim, doc version) so multi-version variance is first-class.
+		Source struct {
+			Guide *string `json:"guide,omitempty"`
+
+			// ProductSlug docs.redhat.com slug, joined to repos via your product-to-documentation mapping file
+			ProductSlug string `json:"product_slug"`
+
+			// Quote short verbatim excerpt (CC-BY-SA attribution rides the url)
+			Quote *string `json:"quote,omitempty"`
+
+			// Url canonical section URL — the schema-enforced official-docs-only restriction
+			Url string `json:"url"`
+
+			// Version documentation version (e.g. 4.22, 1-latest); joins to code refs via metadata.ref where release-aligned
+			Version string `json:"version"`
+		} `json:"source"`
+
+		// ThreatRefs threat-model rows (e.g. TM-042) that carry this discrepancy
+		ThreatRefs *[]string `json:"threat_refs,omitempty"`
+
+		// Variance overclaim = docs promise more security than code delivers (the customer-trust class)
+		Variance interface{} `json:"variance,omitempty"`
+
+		// VerifiedAgainst repo@sha the evidence was read at
+		VerifiedAgainst *string   `json:"verified_against,omitempty"`
+		VerifiedAt      time.Time `json:"verified_at"`
+	} `json:"records"`
+}
+
 // Ecosystem defines model for Ecosystem.
 type Ecosystem string
 
@@ -1337,6 +3739,36 @@ type Finding_Kind struct {
 	union json.RawMessage
 }
 
+// FindingClaimArtifact defines model for FindingClaimArtifact.
+type FindingClaimArtifact struct {
+	AssessmentId openapi_types.UUID `json:"assessment_id"`
+	Base         struct {
+		ClaimDecisionId *openapi_types.UUID  `json:"claim_decision_id"`
+		Fingerprint     string               `json:"fingerprint"`
+		FingerprintAlgo string               `json:"fingerprint_algo"`
+		OccurrenceIds   []openapi_types.UUID `json:"occurrence_ids"`
+		Title           string               `json:"title"`
+	} `json:"base"`
+	Claim struct {
+		Category        *string  `json:"category"`
+		Cwes            []string `json:"cwes"`
+		Description     string   `json:"description"`
+		Fingerprint     string   `json:"fingerprint"`
+		FingerprintAlgo string   `json:"fingerprint_algo"`
+		Locations       []struct {
+			LineEnd   *int    `json:"line_end"`
+			LineStart *int    `json:"line_start"`
+			Path      string  `json:"path"`
+			Symbol    *string `json:"symbol"`
+		} `json:"locations"`
+		Title string `json:"title"`
+	} `json:"claim"`
+	FindingId     openapi_types.UUID `json:"finding_id"`
+	Label         string             `json:"label"`
+	RepositoryId  openapi_types.UUID `json:"repository_id"`
+	SchemaVersion interface{}        `json:"schema_version"`
+}
+
 // FindingContext defines model for FindingContext.
 type FindingContext struct {
 	Baseline   *[]FindingView `json:"baseline,omitempty"`
@@ -1366,6 +3798,20 @@ type FindingDimension string
 // `FindingState` — the worklist's "closed" merges resolved and risk_accepted, and its
 // "open" keeps everything not affirmatively closed, including `not_affected`.
 type FindingExposure string
+
+// FindingIntakeArtifact defines model for FindingIntakeArtifact.
+type FindingIntakeArtifact struct {
+	Bindings []struct {
+		Fingerprint     string `json:"fingerprint"`
+		FingerprintAlgo string `json:"fingerprint_algo"`
+		Label           string `json:"label"`
+	} `json:"bindings"`
+	Commit          string             `json:"commit"`
+	Repository      string             `json:"repository"`
+	RepositoryId    openapi_types.UUID `json:"repository_id"`
+	RepositoryRefId openapi_types.UUID `json:"repository_ref_id"`
+	SchemaVersion   interface{}        `json:"schema_version"`
+}
 
 // FindingKind defines model for FindingKind.
 type FindingKind string
@@ -1448,6 +3894,62 @@ type FindingView_Locations_Item struct {
 // FixStrategy defines model for FixStrategy.
 type FixStrategy string
 
+// FleetFixArtifact One reviewed transform applied across every repo affected by a systemic (Lens 3) pattern — capability C5. The spec IS the change: it must carry its own golden tests, and apply_fleet_fix.py refuses to run a spec whose tests fail. Appliers only modify working trees and emit diffs; committing, forking, and MR creation are the skill's later, human-gated stages.
+type FleetFixArtifact struct {
+	Description string `json:"description"`
+	Guards      struct {
+		MaxFilesChanged  *int  `json:"max_files_changed,omitempty"`
+		RequireCleanTree *bool `json:"require_clean_tree,omitempty"`
+	} `json:"guards"`
+	Id      string `json:"id"`
+	Matcher struct {
+		// ContextRegex pinned_ref_line: a line matching this must appear within context_window lines BEFORE the match line
+		ContextRegex  *string `json:"context_regex,omitempty"`
+		ContextWindow *int    `json:"context_window,omitempty"`
+
+		// FileGlob Repo-relative globs the matcher may touch — everything else is out of bounds
+		FileGlob []string    `json:"file_glob"`
+		Kind     interface{} `json:"kind"`
+
+		// Lang ast_grep: --lang value
+		Lang *string `json:"lang,omitempty"`
+
+		// MatchRegex pinned_ref_line: the line to rewrite; group 1 must capture leading indentation, group 2 the mutable ref
+		MatchRegex *string `json:"match_regex,omitempty"`
+
+		// Pattern ast_grep: the --pattern expression
+		Pattern *string `json:"pattern,omitempty"`
+
+		// UrlRegex pinned_ref_line: nearest PRECEDING line whose group 1 captures the git URL the resolver pins against
+		UrlRegex  *string `json:"url_regex,omitempty"`
+		UrlWindow *int    `json:"url_window,omitempty"`
+	} `json:"matcher"`
+
+	// PatternRef The systemic pattern this fixes (insecure-patterns CWE entry or PROGRESS.md rollup name)
+	PatternRef string `json:"pattern_ref"`
+	Resolver   *struct {
+		Kind interface{} `json:"kind,omitempty"`
+
+		// Ref remote ref whose current SHA replaces the mutable ref (per matched URL)
+		Ref *string `json:"ref,omitempty"`
+	} `json:"resolver,omitempty"`
+	Rewrite struct {
+		// Template Replacement line. Placeholders: {indent} {sha} {short_sha} {ref} {date} {id}. ast_grep kind uses this as the --rewrite expression instead.
+		Template string `json:"template"`
+	} `json:"rewrite"`
+
+	// Tests Golden tests run before ANY repo is touched (with a pinned test SHA); a failing test aborts the whole fleet application
+	Tests []struct {
+		AfterContains    []string  `json:"after_contains"`
+		AfterNotContains *[]string `json:"after_not_contains,omitempty"`
+		Before           string    `json:"before"`
+
+		// File repo-relative path the fixture is written to (must match file_glob)
+		File string `json:"file"`
+		Name string `json:"name"`
+	} `json:"tests"`
+}
+
 // ForgeFacts defines model for ForgeFacts.
 type ForgeFacts struct {
 	AheadBy             *int               `json:"ahead_by"`
@@ -1497,6 +3999,225 @@ type ForkHost string
 // ForkVisibility defines model for ForkVisibility.
 type ForkVisibility string
 
+// FuzzCampaignArtifact A supplied campaign snapshot, not fuzz execution evidence. Aggregate populations and analyst prose are retained with declared references; historical pattern counts are never redistributed into fabricated per-target observations.
+type FuzzCampaignArtifact struct {
+	AdvisoryFiles *[]string                    `json:"advisory_files,omitempty"`
+	Artifact      interface{}                  `json:"artifact"`
+	Batches       *[]FuzzCampaignArtifactBatch `json:"batches,omitempty"`
+	Bugs          *[]FuzzCampaignArtifactBug   `json:"bugs,omitempty"`
+	CampaignId    string                       `json:"campaign_id"`
+	Duration      *struct {
+		End   openapi_types.Date `json:"end"`
+		Start openapi_types.Date `json:"start"`
+	} `json:"duration,omitempty"`
+	Generated           openapi_types.Date             `json:"generated"`
+	HarnessVersion      *string                        `json:"harness_version,omitempty"`
+	ManifestGenerated   *openapi_types.Date            `json:"manifest_generated,omitempty"`
+	Narrative           *string                        `json:"narrative,omitempty"`
+	NegativeControls    *string                        `json:"negative_controls,omitempty"`
+	Patterns            *[]FuzzCampaignArtifactPattern `json:"patterns,omitempty"`
+	RemediationPriority *string                        `json:"remediation_priority,omitempty"`
+	Repositories        []string                       `json:"repositories"`
+	SourceReferences    []string                       `json:"source_references"`
+	Totals              *struct {
+		Advisories      *int `json:"advisories"`
+		Bugs            *int `json:"bugs"`
+		BugsByFuzz      *int `json:"bugs_by_fuzz"`
+		BugsMediumPlus  *int `json:"bugs_medium_plus"`
+		ExecutedTargets *int `json:"executed_targets"`
+		FuzzFunctions   *int `json:"fuzz_functions"`
+		FuzzedTargets   *int `json:"fuzzed_targets"`
+
+		// HitRate Single encoding of the hit-rate fact (narrative form, e.g. "1/2"); no duplicate numeric encoding ships in the same document.
+		HitRate    *string `json:"hit_rate,omitempty"`
+		Repos      *int    `json:"repos"`
+		RunsLogged *int    `json:"runs_logged"`
+		Targets    *int    `json:"targets"`
+	} `json:"totals,omitempty"`
+}
+
+// FuzzCampaignArtifactBatch defines model for FuzzCampaignArtifactBatch.
+type FuzzCampaignArtifactBatch struct {
+	Batch         string `json:"batch"`
+	Bugs          *int   `json:"bugs"`
+	FuzzFunctions *int   `json:"fuzz_functions"`
+	Targets       *int   `json:"targets"`
+}
+
+// FuzzCampaignArtifactBug defines model for FuzzCampaignArtifactBug.
+type FuzzCampaignArtifactBug struct {
+	Advisory   *string   `json:"advisory"`
+	Cvss       *string   `json:"cvss,omitempty"`
+	Cwe        *string   `json:"cwe,omitempty"`
+	Method     *string   `json:"method,omitempty"`
+	Narrative  *string   `json:"narrative,omitempty"`
+	Num        int       `json:"num"`
+	References *[]string `json:"references,omitempty"`
+	Target     string    `json:"target"`
+	Title      string    `json:"title"`
+}
+
+// FuzzCampaignArtifactPattern Supplied legacy aggregate counts per pattern. The content gate (validate.py) rejects a pattern whose vulnerable count exceeds its tested count.
+type FuzzCampaignArtifactPattern struct {
+	Advisory   *string   `json:"advisory"`
+	Name       string    `json:"name"`
+	Rate       *string   `json:"rate,omitempty"`
+	References *[]string `json:"references,omitempty"`
+	Tested     int       `json:"tested"`
+	Vulnerable int       `json:"vulnerable"`
+}
+
+// FuzzReportArtifact One fuzz run of one target, held by an assessment of kind `fuzz` (run-bound: the assessment owns the repository, commit, producer and time, so they are not repeated here). Records what ran, every crasher that is a candidate finding, measured coverage, and the surfaces that were not fuzzed and why. Crashers enter the finding lane through intake, one finding per crasher; this document is their evidence. Only fuzz execution produces a crasher: bugs confirmed by static review or a grep sweep are not recorded here. A run that found nothing records no crasher, never a claim of correctness. Run counts (clean, crashed, failed) derive from the harness outcomes and are not stored.
+type FuzzReportArtifact struct {
+	Artifact interface{} `json:"artifact"`
+	Batch    *string     `json:"batch,omitempty"`
+
+	// Coverage Code coverage of the final corpus, measured by a coverage tool. null: not measured.
+	Coverage *FuzzReportArtifactCoverage             `json:"coverage"`
+	Crashers []FuzzReportArtifactCrasher             `json:"crashers"`
+	Gaps     []FuzzReportArtifactGap                 `json:"gaps"`
+	Patterns *[]FuzzReportArtifactPatternObservation `json:"patterns,omitempty"`
+	Target   FuzzReportArtifactTarget                `json:"target"`
+}
+
+// FuzzReportArtifactCount defines model for FuzzReportArtifactCount.
+type FuzzReportArtifactCount = int
+
+// FuzzReportArtifactCoverage defines model for FuzzReportArtifactCoverage.
+type FuzzReportArtifactCoverage struct {
+	EdgesCovered *FuzzReportArtifactCount `json:"edges_covered"`
+	EdgesTotal   *FuzzReportArtifactCount `json:"edges_total"`
+	LinesCovered int                      `json:"lines_covered"`
+	LinesTotal   int                      `json:"lines_total"`
+	Tool         string                   `json:"tool"`
+}
+
+// FuzzReportArtifactCrashClass invariant_violation: a property the harness asserts failed (open redirect, integer wrap, path escape) without a crash. process_exit: the target exited the process (os.Exit, abort).
+type FuzzReportArtifactCrashClass = interface{}
+
+// FuzzReportArtifactCrasher defines model for FuzzReportArtifactCrasher.
+type FuzzReportArtifactCrasher struct {
+	Analysis *FuzzReportArtifactCrasherAnalysis `json:"analysis,omitempty"`
+	Cvss     *ReportArtifactFindingCvss         `json:"cvss,omitempty"`
+
+	// Cwes Empty when not yet classified.
+	Cwes []string `json:"cwes"`
+
+	// FindingId An existing finding this crasher confirms. Absent: intake mints a new finding.
+	FindingId  *openapi_types.UUID          `json:"finding_id,omitempty"`
+	Harness    FuzzReportArtifactName       `json:"harness"`
+	Id         FuzzReportArtifactName       `json:"id"`
+	Location   *ReportArtifactLocation      `json:"location,omitempty"`
+	Reproducer FuzzReportArtifactReproducer `json:"reproducer"`
+
+	// Sanitizer The sanitizer that reported the crash. null: none (memory-safe runtimes, property checks).
+	Sanitizer        *FuzzReportArtifactSanitizer `json:"sanitizer"`
+	SeverityProposal ReportArtifactSeverityLevel  `json:"severity_proposal"`
+	Signature        FuzzReportArtifactSignature  `json:"signature"`
+	Title            string                       `json:"title"`
+}
+
+// FuzzReportArtifactCrasherAnalysis defines model for FuzzReportArtifactCrasherAnalysis.
+type FuzzReportArtifactCrasherAnalysis struct {
+	Fix                       *string   `json:"fix,omitempty"`
+	Narrative                 *string   `json:"narrative,omitempty"`
+	NarrativeReferences       *[]string `json:"narrative_references,omitempty"`
+	NegativeControlReferences *[]string `json:"negative_control_references,omitempty"`
+	Priority                  *string   `json:"priority,omitempty"`
+}
+
+// FuzzReportArtifactEngine go_native: `go test -fuzz`. cargo_fuzz runs libFuzzer through cargo; jazzer_js is Jazzer.js.
+type FuzzReportArtifactEngine = interface{}
+
+// FuzzReportArtifactGap defines model for FuzzReportArtifactGap.
+type FuzzReportArtifactGap struct {
+	Harness *FuzzReportArtifactName `json:"harness,omitempty"`
+	Note    *string                 `json:"note,omitempty"`
+
+	// Reason no_harness: tracked without a fuzzer (static-confirmed or covered by another harness). fuzzed_upstream: already continuously fuzzed (e.g. OSS-Fuzz). trusted_input: input is not attacker-controlled. harness_defect: crashers came from the harness, not the target, so the surface is untested.
+	Reason FuzzReportArtifactGapReason `json:"reason"`
+
+	// Surface Function, package or path left unfuzzed.
+	Surface string `json:"surface"`
+}
+
+// FuzzReportArtifactGapReason no_harness: tracked without a fuzzer (static-confirmed or covered by another harness). fuzzed_upstream: already continuously fuzzed (e.g. OSS-Fuzz). trusted_input: input is not attacker-controlled. harness_defect: crashers came from the harness, not the target, so the surface is untested.
+type FuzzReportArtifactGapReason = interface{}
+
+// FuzzReportArtifactHarness defines model for FuzzReportArtifactHarness.
+type FuzzReportArtifactHarness struct {
+	CorpusEntries *FuzzReportArtifactCount `json:"corpus_entries"`
+
+	// DurationSeconds Wall-clock fuzz time spent.
+	DurationSeconds int `json:"duration_seconds"`
+
+	// Engine go_native: `go test -fuzz`. cargo_fuzz runs libFuzzer through cargo; jazzer_js is Jazzer.js.
+	Engine FuzzReportArtifactEngine `json:"engine"`
+	Execs  *FuzzReportArtifactCount `json:"execs"`
+	Name   FuzzReportArtifactName   `json:"name"`
+
+	// Outcome clean: ran its duration with no crasher. crashed: wrote at least one crashing input. failed: the harness or build failed without a crashing input. not_run: the engine found nothing to fuzz.
+	Outcome FuzzReportArtifactOutcome `json:"outcome"`
+
+	// Package Build package the engine ran (e.g. ./pkg/proxy).
+	Package *string `json:"package,omitempty"`
+
+	// Path Repository-relative path the harness was installed at.
+	Path string `json:"path"`
+}
+
+// FuzzReportArtifactName defines model for FuzzReportArtifactName.
+type FuzzReportArtifactName = string
+
+// FuzzReportArtifactOutcome clean: ran its duration with no crasher. crashed: wrote at least one crashing input. failed: the harness or build failed without a crashing input. not_run: the engine found nothing to fuzz.
+type FuzzReportArtifactOutcome = interface{}
+
+// FuzzReportArtifactPatternObservation defines model for FuzzReportArtifactPatternObservation.
+type FuzzReportArtifactPatternObservation struct {
+	Advisory   *string `json:"advisory,omitempty"`
+	Name       string  `json:"name"`
+	Reference  *string `json:"reference,omitempty"`
+	Tested     bool    `json:"tested"`
+	Vulnerable *bool   `json:"vulnerable"`
+}
+
+// FuzzReportArtifactReproducer defines model for FuzzReportArtifactReproducer.
+type FuzzReportArtifactReproducer struct {
+	// Path Repository-relative path the engine wrote it to (e.g. testdata/fuzz/FuzzX/<hash>).
+	Path *string `json:"path,omitempty"`
+
+	// Sha256 Digest of the minimized crashing input's exact bytes.
+	Sha256 string `json:"sha256"`
+
+	// Uri Where the bytes are kept (a location, never parsed for meaning).
+	Uri *string `json:"uri,omitempty"`
+}
+
+// FuzzReportArtifactSanitizer defines model for FuzzReportArtifactSanitizer.
+type FuzzReportArtifactSanitizer = interface{}
+
+// FuzzReportArtifactSignature defines model for FuzzReportArtifactSignature.
+type FuzzReportArtifactSignature struct {
+	// CrashClass invariant_violation: a property the harness asserts failed (open redirect, integer wrap, path escape) without a crash. process_exit: the target exited the process (os.Exit, abort).
+	CrashClass FuzzReportArtifactCrashClass `json:"crash_class"`
+
+	// Frames How many top frames the hash covers.
+	Frames *int `json:"frames,omitempty"`
+
+	// StackHash Hash of the normalized top frames, for dedupe across runs. null: no stack (property violation, timeout without a trace).
+	StackHash *string `json:"stack_hash"`
+}
+
+// FuzzReportArtifactTarget defines model for FuzzReportArtifactTarget.
+type FuzzReportArtifactTarget struct {
+	Harnesses []FuzzReportArtifactHarness `json:"harnesses"`
+	Id        FuzzReportArtifactName      `json:"id"`
+	Language  string                      `json:"language"`
+
+	// Module Module or package coordinate the harnesses import (e.g. a Go module path).
+	Module *string `json:"module,omitempty"`
+}
+
 // Gap Something that must be fixed before onboarding can run.
 type Gap struct {
 	Reason  string `json:"reason"`
@@ -1507,6 +4228,11 @@ type Gap struct {
 // URL (gone), wait (empty), check the network or token (unreachable) - so the UI carries
 // the reason, not just the disposition.
 type GoneReason string
+
+// HTTPValidationError defines model for HTTPValidationError.
+type HTTPValidationError struct {
+	Detail *[]ValidationError `json:"detail,omitempty"`
+}
 
 // Harness The harness a gateway connection fronts its wire with.
 type Harness string
@@ -1530,6 +4256,207 @@ type ImpactAnalysis struct {
 	Classification  ImpactClassification `json:"classification"`
 	FindingId       *openapi_types.UUID  `json:"finding_id"`
 	RepositoryRefId openapi_types.UUID   `json:"repository_ref_id"`
+}
+
+// ImpactAnalysisArtifact Schema for <cve>-impact-analysis.json artifacts produced by the impact-analysis skill. Records per-repo affectedness classification for a CVE across the portfolio, with tiered evidence from the portfolio graph, govulncheck, opengrep, and ELF binary scans.
+type ImpactAnalysisArtifact struct {
+	Metadata ImpactAnalysisArtifactMetadata `json:"metadata"`
+
+	// Repos Per-repo classification and evidence. Every repo in the blast radius appears exactly once.
+	Repos   []ImpactAnalysisArtifactRepoEntry `json:"repos"`
+	Summary ImpactAnalysisArtifactSummary     `json:"summary"`
+}
+
+// ImpactAnalysisArtifactEvidence defines model for ImpactAnalysisArtifactEvidence.
+type ImpactAnalysisArtifactEvidence struct {
+	// BinaryLinkedLibrary DT_NEEDED linked-library scan of shipped image binaries (C/C++).
+	BinaryLinkedLibrary *ImpactAnalysisArtifactEvidenceBinaryLinkedLibrary `json:"binary_linked_library"`
+
+	// BinaryStringScan ELF binary string scan result.
+	BinaryStringScan *ImpactAnalysisArtifactEvidenceBinaryStringScan `json:"binary_string_scan"`
+
+	// BinarySymbolScan Vulnerable symbol names present in the shipped binary's strings (.dynstr) — the binary references the vulnerable function, not just the library.
+	BinarySymbolScan *ImpactAnalysisArtifactEvidenceBinarySymbolScan `json:"binary_symbol_scan"`
+
+	// EvidenceLevel Strongest evidence tier that produced this classification: symbol (govulncheck reachability) > binary (ELF) > manifest (lockfile/source grep).
+	EvidenceLevel *ImpactAnalysisArtifactEvidenceEvidenceLevel `json:"evidence_level"`
+
+	// FeaturePatternMatches Number of feature-pattern rule matches.
+	FeaturePatternMatches *int `json:"feature_pattern_matches"`
+
+	// Govulncheck Govulncheck reachability classification.
+	Govulncheck *ImpactAnalysisArtifactEvidenceGovulncheck `json:"govulncheck"`
+
+	// GovulncheckTrace Caller-first call path from govulncheck (when symbol_reachable).
+	GovulncheckTrace *[]string `json:"govulncheck_trace"`
+
+	// L1DependsOn Module appears in the repo's dependency graph.
+	L1DependsOn *bool `json:"l1_depends_on"`
+
+	// L1VersionInRange Pinned version falls in the vulnerable range.
+	L1VersionInRange *bool `json:"l1_version_in_range"`
+
+	// L4PackageImported Vulnerable package (not just module) is imported per L4 symbol data.
+	L4PackageImported *bool `json:"l4_package_imported"`
+
+	// L4PackagesFound Specific vulnerable packages found imported.
+	L4PackagesFound *[]string `json:"l4_packages_found"`
+
+	// ManifestScan Lockfile/manifest scan result (Python/Rust/JS/Java — manifest-level evidence, never proves reachability).
+	ManifestScan *ImpactAnalysisArtifactEvidenceManifestScan `json:"manifest_scan"`
+
+	// ManifestVersion Version pinned in the manifest when the module was found.
+	ManifestVersion *string `json:"manifest_version"`
+
+	// NeedsManualTrace True when unsafe/reflect/cgo usage detected that may hide reachability from static analysis.
+	NeedsManualTrace *bool `json:"needs_manual_trace"`
+
+	// Notes Free-text notes about this repo's analysis.
+	Notes *string `json:"notes"`
+
+	// SbomScan Cross-check against syft SBOMs of shipped images: what the delivered artifact actually contains.
+	SbomScan *ImpactAnalysisArtifactEvidenceSbomScan `json:"sbom_scan"`
+
+	// SbomShippedVersion Module version found in the shipped image SBOM.
+	SbomShippedVersion *string `json:"sbom_shipped_version"`
+
+	// SourceImportScan Source-level import/include grep for the module.
+	SourceImportScan *ImpactAnalysisArtifactEvidenceSourceImportScan `json:"source_import_scan"`
+
+	// SymbolUsageScan Source grep for the advisory's vulnerable symbol names — textual API usage, stronger than a pin, weaker than reachability.
+	SymbolUsageScan *ImpactAnalysisArtifactEvidenceSymbolUsageScan `json:"symbol_usage_scan"`
+}
+
+// ImpactAnalysisArtifactEvidenceBinaryLinkedLibrary DT_NEEDED linked-library scan of shipped image binaries (C/C++).
+type ImpactAnalysisArtifactEvidenceBinaryLinkedLibrary string
+
+// ImpactAnalysisArtifactEvidenceBinaryStringScan ELF binary string scan result.
+type ImpactAnalysisArtifactEvidenceBinaryStringScan string
+
+// ImpactAnalysisArtifactEvidenceBinarySymbolScan Vulnerable symbol names present in the shipped binary's strings (.dynstr) — the binary references the vulnerable function, not just the library.
+type ImpactAnalysisArtifactEvidenceBinarySymbolScan string
+
+// ImpactAnalysisArtifactEvidenceEvidenceLevel Strongest evidence tier that produced this classification: symbol (govulncheck reachability) > binary (ELF) > manifest (lockfile/source grep).
+type ImpactAnalysisArtifactEvidenceEvidenceLevel string
+
+// ImpactAnalysisArtifactEvidenceGovulncheck Govulncheck reachability classification.
+type ImpactAnalysisArtifactEvidenceGovulncheck string
+
+// ImpactAnalysisArtifactEvidenceManifestScan Lockfile/manifest scan result (Python/Rust/JS/Java — manifest-level evidence, never proves reachability).
+type ImpactAnalysisArtifactEvidenceManifestScan string
+
+// ImpactAnalysisArtifactEvidenceSbomScan Cross-check against syft SBOMs of shipped images: what the delivered artifact actually contains.
+type ImpactAnalysisArtifactEvidenceSbomScan string
+
+// ImpactAnalysisArtifactEvidenceSourceImportScan Source-level import/include grep for the module.
+type ImpactAnalysisArtifactEvidenceSourceImportScan string
+
+// ImpactAnalysisArtifactEvidenceSymbolUsageScan Source grep for the advisory's vulnerable symbol names — textual API usage, stronger than a pin, weaker than reachability.
+type ImpactAnalysisArtifactEvidenceSymbolUsageScan string
+
+// ImpactAnalysisArtifactMetadata defines model for ImpactAnalysisArtifactMetadata.
+type ImpactAnalysisArtifactMetadata struct {
+	// AdvisorySources URLs of advisory sources consulted.
+	AdvisorySources *[]string `json:"advisory_sources,omitempty"`
+
+	// Cve Advisory identifier. CVE-YYYY-NNNN or any OSV advisory id (GHSA-/MAL-/PYSEC-/GO-/RUSTSEC-/OSV-). CVE ids remain valid (strict superset of the legacy CVE-only pattern).
+	Cve string `json:"cve"`
+
+	// Ecosystem Package ecosystem of the affected module; the same vocabulary as report.schema.json finding.dependency.ecosystem (enums/v1/ecosystem.json). actions/docker/helm are manifest-level dependency surfaces (no reachability tier); rpm/deb/apk are distro ecosystems for C/C++ packages (no reachability tier). Optional (defaults to go semantics when absent) and non-breaking.
+	Ecosystem *ImpactAnalysisArtifactMetadataEcosystem `json:"ecosystem,omitempty"`
+
+	// FeatureDescription Human-readable description of the feature/capability that must be in use.
+	FeatureDescription *string `json:"feature_description"`
+
+	// FixedVersion First safe version, if known.
+	FixedVersion *string `json:"fixed_version"`
+
+	// GeneratedAt ISO 8601 timestamp of report generation.
+	GeneratedAt time.Time `json:"generated_at"`
+
+	// HarnessVersion Harness version (semver-shortsha).
+	HarnessVersion string `json:"harness_version"`
+
+	// Module Affected module path (e.g. google.golang.org/grpc).
+	Module string `json:"module"`
+
+	// Options CLI options used for this run.
+	Options struct {
+		BinaryScan  *bool `json:"binary_scan,omitempty"`
+		Govulncheck *bool `json:"govulncheck,omitempty"`
+		Sweep       *bool `json:"sweep,omitempty"`
+	} `json:"options"`
+
+	// PortfolioGraphDb Path to the portfolio-graph.db used.
+	PortfolioGraphDb *string `json:"portfolio_graph_db"`
+
+	// PortfolioGraphVersion Date or version of the portfolio graph data.
+	PortfolioGraphVersion *string `json:"portfolio_graph_version"`
+
+	// PreparationScope The complete package/version snapshot prepared for this advisory and commit. Readers promote a replacement snapshot only after every declared member has recorded evidence; an incomplete run cannot clear prior exposure. digest: SHA-256 over the UTF-8 JSON encoding of the snapshot object (prepared_at, advisory, manifest_sbom_id, images, members) with sort_keys=true and default separators, as traust-core ExposureService.prepare computes it (sha256_hex(json.dumps(snapshot, sort_keys=True))); members serialize as objects with exactly the keys ecosystem, module, version, the member list sorted by (ecosystem, module, version). A producer diverging from this canonical form is a producer bug, not a schema interpretation.
+	PreparationScope *struct {
+		Digest  string `json:"digest"`
+		Members []struct {
+			// Ecosystem Package ecosystem of the affected module; the same vocabulary as report.schema.json finding.dependency.ecosystem (enums/v1/ecosystem.json). actions/docker/helm are manifest-level dependency surfaces (no reachability tier); rpm/deb/apk are distro ecosystems for C/C++ packages (no reachability tier). Optional (defaults to go semantics when absent) and non-breaking.
+			Ecosystem ImpactAnalysisArtifactMetadataEcosystem `json:"ecosystem"`
+			Module    string                                  `json:"module"`
+			Version   *string                                 `json:"version"`
+		} `json:"members"`
+	} `json:"preparation_scope,omitempty"`
+
+	// TiersExecuted Which analysis tiers were executed.
+	TiersExecuted []ImpactAnalysisArtifactMetadataTiersExecuted `json:"tiers_executed"`
+
+	// VulnerablePackages Packages containing the vulnerable code.
+	VulnerablePackages *[]string `json:"vulnerable_packages,omitempty"`
+
+	// VulnerableRange Version constraint describing the vulnerable range (e.g. '< v1.64.1').
+	VulnerableRange string `json:"vulnerable_range"`
+
+	// VulnerableSymbols Known vulnerable symbols from the advisory or fix diff.
+	VulnerableSymbols *[]string `json:"vulnerable_symbols,omitempty"`
+}
+
+// ImpactAnalysisArtifactMetadataTiersExecuted defines model for ImpactAnalysisArtifactMetadata.TiersExecuted.
+type ImpactAnalysisArtifactMetadataTiersExecuted string
+
+// ImpactAnalysisArtifactMetadataEcosystem Package ecosystem of the affected module; the same vocabulary as report.schema.json finding.dependency.ecosystem (enums/v1/ecosystem.json). actions/docker/helm are manifest-level dependency surfaces (no reachability tier); rpm/deb/apk are distro ecosystems for C/C++ packages (no reachability tier). Optional (defaults to go semantics when absent) and non-breaking.
+type ImpactAnalysisArtifactMetadataEcosystem string
+
+// ImpactAnalysisArtifactRepoEntry defines model for ImpactAnalysisArtifactRepoEntry.
+type ImpactAnalysisArtifactRepoEntry struct {
+	Classification ImpactAnalysisArtifactRepoEntryClassification `json:"classification"`
+
+	// Direct Whether the dependency is direct (not indirect/transitive).
+	Direct   *bool                          `json:"direct"`
+	Evidence ImpactAnalysisArtifactEvidence `json:"evidence"`
+
+	// Products Products that ship this repo.
+	Products *[]string `json:"products,omitempty"`
+
+	// Repo Repository identifier (e.g. 'repo:github.com/openshift/foo').
+	Repo string `json:"repo"`
+
+	// Version Pinned version of the affected module in this repo.
+	Version *string `json:"version"`
+}
+
+// ImpactAnalysisArtifactRepoEntryClassification defines model for ImpactAnalysisArtifactRepoEntry.Classification.
+type ImpactAnalysisArtifactRepoEntryClassification string
+
+// ImpactAnalysisArtifactSummary defines model for ImpactAnalysisArtifactSummary.
+type ImpactAnalysisArtifactSummary struct {
+	Affected       int `json:"affected"`
+	Inconclusive   int `json:"inconclusive"`
+	LikelyAffected int `json:"likely_affected"`
+	NotImported    int `json:"not_imported"`
+	NotObserved    int `json:"not_observed"`
+
+	// ProductSurfaces Product surfaces that include repos in the blast radius.
+	ProductSurfaces    *[]string `json:"product_surfaces,omitempty"`
+	ReposInBlastRadius int       `json:"repos_in_blast_radius"`
+	VersionInRange     int       `json:"version_in_range"`
+	VersionNotInRange  int       `json:"version_not_in_range"`
 }
 
 // ImpactClassification defines model for ImpactClassification.
@@ -1657,10 +4584,77 @@ type ImpactScopeMember struct {
 // ImpactTier defines model for ImpactTier.
 type ImpactTier string
 
+// InsightBuildsArtifact One GLOBAL census observation, with no product, team or permission scope. The producer stamps built_at on each completed cadence build so unchanged views and watermark do not reuse an older publication. The artifact row's created_at remains the authoritative publication time and serving-age bound. folded_after is a separate pre-fold decision watermark, not the observation or publication time. Core validates each view and owns freshness checks; callers apply their authorization after serving.
+type InsightBuildsArtifact struct {
+	// BuiltAt When this cadence observation completed. The producer supplies a fresh value on each build, including unchanged or returning view content. Not the database publication time or the decision watermark.
+	BuiltAt time.Time `json:"built_at"`
+
+	// FoldedAfter The newest qualifying actor statement's database recording time sampled before folding; null when none existed. Qualifying statements have an actor other than the canonical machine: namespace, conservatively including legacy or unknown actor spellings without granting them human authority.
+	FoldedAfter *time.Time `json:"folded_after"`
+
+	// Views The census view models by view name (findings-rollup, coverage, remediation-index, findings-trend, ...). Every value is the model that view's build would return for an unscoped read.
+	Views map[string]map[string]interface{} `json:"views"`
+}
+
 // IntakeResult Each candidate's finding by its report label, and the findings this intake created.
 type IntakeResult struct {
 	Created  *[]openapi_types.UUID         `json:"created,omitempty"`
 	Findings map[string]openapi_types.UUID `json:"findings"`
+}
+
+// IsolationReviewArtifact Service-level tenant-isolation review (PEACH applied by reference only — framework cited by name/URL, all check wording original to this repository). Enforcement gate: schema validation script (mirror of this schema). Every partial/no dimension result MUST cite evidence (file:line or finding IDs). Reports land under your isolation review output directory per service.
+type IsolationReviewArtifact struct {
+	Gaps       []IsolationReviewArtifactGap       `json:"gaps"`
+	Interfaces []IsolationReviewArtifactInterface `json:"interfaces"`
+	Metadata   struct {
+		Framework      *string  `json:"framework,omitempty"`
+		GraphRef       string   `json:"graph_ref"`
+		HarnessVersion string   `json:"harness_version"`
+		Repos          []string `json:"repos"`
+		ReviewedAt     string   `json:"reviewed_at"`
+		Service        string   `json:"service"`
+	} `json:"metadata"`
+	Notes   *string `json:"notes,omitempty"`
+	Posture struct {
+		DimensionRollup    *map[string]int `json:"dimension_rollup,omitempty"`
+		InterfacesReviewed *int            `json:"interfaces_reviewed,omitempty"`
+		Overall            interface{}     `json:"overall"`
+		Summary            string          `json:"summary"`
+	} `json:"posture"`
+	Title string `json:"title"`
+}
+
+// IsolationReviewArtifactDimension defines model for IsolationReviewArtifactDimension.
+type IsolationReviewArtifactDimension struct {
+	Evidence  *[]string   `json:"evidence,omitempty"`
+	Rationale *string     `json:"rationale,omitempty"`
+	Result    interface{} `json:"result"`
+}
+
+// IsolationReviewArtifactGap defines model for IsolationReviewArtifactGap.
+type IsolationReviewArtifactGap struct {
+	Description string      `json:"description"`
+	InterfaceId string      `json:"interface_id"`
+	Remediation string      `json:"remediation"`
+	Severity    interface{} `json:"severity"`
+}
+
+// IsolationReviewArtifactInterface defines model for IsolationReviewArtifactInterface.
+type IsolationReviewArtifactInterface struct {
+	Complexity interface{} `json:"complexity"`
+	Dimensions struct {
+		Authentication IsolationReviewArtifactDimension `json:"authentication"`
+		Connectivity   IsolationReviewArtifactDimension `json:"connectivity"`
+		Encryption     IsolationReviewArtifactDimension `json:"encryption"`
+		Hygiene        IsolationReviewArtifactDimension `json:"hygiene"`
+		Privilege      IsolationReviewArtifactDimension `json:"privilege"`
+	} `json:"dimensions"`
+	Exposure       interface{} `json:"exposure"`
+	Id             string      `json:"id"`
+	Kind           interface{} `json:"kind"`
+	Name           string      `json:"name"`
+	Repos          *[]string   `json:"repos,omitempty"`
+	SharedInstance *bool       `json:"shared_instance"`
 }
 
 // JobResult defines model for JobResult.
@@ -1692,6 +4686,352 @@ type Layer struct {
 	UpdatedAt             *time.Time          `json:"updated_at"`
 }
 
+// LayerArtifact Schema for *-findings-layer.json ledgers produced by the track-findings harness. An append-only record of human triage and machine validation events against the findings of one security-audit report, plus a needs-review queue for disposition statements that require human confirmation before they may change state. The layer is replayed by the cumulative builder to produce a *-findings-current.{json,md} cumulative report.
+type LayerArtifact struct {
+	// BaselineClaims Finding id -> sha256 claim hash, pinned at baseline time. Produced before this schema declared it: early layers carried it as an undeclared root property and failed validation under additionalProperties:false.
+	BaselineClaims *map[string]string `json:"baseline_claims,omitempty"`
+
+	// Events Append-only disposition events, in chronological order. Events are never edited or deleted — a restatement is a new event.
+	Events   []LayerArtifactEvent       `json:"events"`
+	Metadata LayerArtifactLayerMetadata `json:"metadata"`
+
+	// NeedsReview Disposition-like statements that did not meet the tier-1 auto-record bar (explicit grammar + identity-provider-verified author + authority). No state change until a human confirms.
+	NeedsReview []LayerArtifactReviewItem `json:"needs_review"`
+}
+
+// LayerArtifactActor defines model for LayerArtifactActor.
+type LayerArtifactActor struct {
+	DisplayName *string `json:"display_name,omitempty"`
+
+	// EmployeeStatus Directory enrichment result: active, terminated, contingent, or not_found.
+	EmployeeStatus *string `json:"employee_status,omitempty"`
+
+	// Identity Canonical email for humans; skill/report name for machines.
+	Identity *string `json:"identity,omitempty"`
+
+	// IdentityIssuer Credential issuer (OIDC issuer URL, LDAP server URI, key fingerprint, etc.).
+	IdentityIssuer *string `json:"identity_issuer,omitempty"`
+
+	// IdentityProvider Which IdP type authenticated this actor: oidc, ldap, bearer, keypair, mtls, etc.
+	IdentityProvider *string `json:"identity_provider,omitempty"`
+
+	// IdentitySubject Raw IdP subject before canonicalization (OIDC sub UUID, LDAP uid, etc.) for audit reversibility.
+	IdentitySubject *string `json:"identity_subject,omitempty"`
+
+	// IdentityVerified True when an authentication mechanism confirmed this identity (OIDC, LDAP bind, keypair, etc.).
+	IdentityVerified *bool                  `json:"identity_verified,omitempty"`
+	Kind             LayerArtifactActorKind `json:"kind"`
+
+	// LdapVerified Legacy. True when the human identity was verified via LDAP. Superseded by identity_verified + employee_status; retained for backward compatibility with existing events.
+	LdapVerified *bool `json:"ldap_verified,omitempty"`
+}
+
+// LayerArtifactActorKind defines model for LayerArtifactActor.Kind.
+type LayerArtifactActorKind string
+
+// LayerArtifactDisposition What this event asserts about the finding. Required to state something for every source EXCEPT rebaseline, which records a rename; that rule lives on the event, next to the source it depends on.
+type LayerArtifactDisposition struct {
+	// Embargo Embargo handling assertion (harness >= 0.274.0): whether this finding must be handled under security team embargo criteria (remote code execution, authentication bypass, privilege escalation, sensitive data exposure, network-accessible vulnerability). 'required' = meets the criteria, not yet embargoed; 'active' = an embargoed tracker already exists (put its URL in evidence_refs); 'not_required' = assessed and does not meet the criteria; 'uncertain' = needs security team consultation. HUMAN-ONLY - the validator rejects machine actors carrying disposition.embargo, on the same identity-provider-verified footing as disposition.severity. ORTHOGONAL to validity and resolution: an embargoed finding is still tracked on both axes, and embargo alone never changes finding state. Consumed by embargo workflows that apply restricted tracker security levels when active. Idempotency: the status is encoded in source.ref (interactive:<date>:embargo:<status>), so the canonical event_id formula is unchanged.
+	Embargo    *LayerArtifactDispositionEmbargo `json:"embargo,omitempty"`
+	Resolution *LayerArtifactResolution         `json:"resolution,omitempty"`
+
+	// Severity Human severity override (harness >= 0.128.0): the signer's re-assessment of this finding's severity, recorded via the countersign workbench with a mandatory own-words rationale. HUMAN-ONLY - the validator rejects machine actors carrying disposition.severity. The audit report's original severity is never rewritten; the cumulative builder surfaces the latest identity-provider-verified human severity event as the finding's effective_severity, keeping original by-severity counts stable for downstream dashboards. Idempotency: the level is encoded in source.ref (interactive:<date>:severity:<level>), so the canonical event_id formula is unchanged.
+	Severity *LayerArtifactDispositionSeverity `json:"severity,omitempty"`
+	Validity *LayerArtifactValidity            `json:"validity,omitempty"`
+}
+
+// LayerArtifactDispositionEmbargo Embargo handling assertion (harness >= 0.274.0): whether this finding must be handled under security team embargo criteria (remote code execution, authentication bypass, privilege escalation, sensitive data exposure, network-accessible vulnerability). 'required' = meets the criteria, not yet embargoed; 'active' = an embargoed tracker already exists (put its URL in evidence_refs); 'not_required' = assessed and does not meet the criteria; 'uncertain' = needs security team consultation. HUMAN-ONLY - the validator rejects machine actors carrying disposition.embargo, on the same identity-provider-verified footing as disposition.severity. ORTHOGONAL to validity and resolution: an embargoed finding is still tracked on both axes, and embargo alone never changes finding state. Consumed by embargo workflows that apply restricted tracker security levels when active. Idempotency: the status is encoded in source.ref (interactive:<date>:embargo:<status>), so the canonical event_id formula is unchanged.
+type LayerArtifactDispositionEmbargo string
+
+// LayerArtifactDispositionSeverity Human severity override (harness >= 0.128.0): the signer's re-assessment of this finding's severity, recorded via the countersign workbench with a mandatory own-words rationale. HUMAN-ONLY - the validator rejects machine actors carrying disposition.severity. The audit report's original severity is never rewritten; the cumulative builder surfaces the latest identity-provider-verified human severity event as the finding's effective_severity, keeping original by-severity counts stable for downstream dashboards. Idempotency: the level is encoded in source.ref (interactive:<date>:severity:<level>), so the canonical event_id formula is unchanged.
+type LayerArtifactDispositionSeverity string
+
+// LayerArtifactEvent defines model for LayerArtifactEvent.
+type LayerArtifactEvent struct {
+	// Alias Rebaseline mapping carried ON THE EVENT (P2). Projected by the events module aliases_from_events() and merged OVER the legacy metadata.finding_aliases table by build_cumulative, so events are authoritative and the table is a rebuildable projection. The event's finding_ref is the superseded id; new_finding_ref is its successor.
+	Alias *LayerArtifactEventAlias `json:"alias,omitempty"`
+
+	// AutoAcceptTier True on a machine false_positive event that met the auto-accept bar (unanimous, verdict-citation-lint clean, mean confidence >= 8, claimed severity low/informational). The merge engine lets such events set validity without a human countersign; a deterministic 10% sample is still queued for human audit.
+	AutoAcceptTier *bool `json:"auto_accept_tier,omitempty"`
+
+	// Disposition What this event asserts about the finding. Required to state something for every source EXCEPT rebaseline, which records a rename; that rule lives on the event, next to the source it depends on.
+	Disposition LayerArtifactDisposition `json:"disposition"`
+
+	// EventId sha256 of '<source.ref>|<finding_ref>|<disposition.validity or "">|<disposition.resolution or "">'. Deterministic, so re-ingesting the same source is idempotent (validator-enforced).
+	EventId string `json:"event_id"`
+
+	// EvidenceGrade Explicit evidence strength: E0 observed effect, E1 authenticated success response, E2 strong inference, E3 behavioral inference. E0 is strongest. Missing or null means ungraded; source type and human approval never invent or upgrade a grade.
+	EvidenceGrade *LayerArtifactEventEvidenceGrade `json:"evidence_grade"`
+	EvidenceRefs  *[]string                        `json:"evidence_refs,omitempty"`
+
+	// Finding A finding discovered between audits, carried ON THE EVENT because only baseline-writing audit skills may write a baseline. build_cumulative unions these with the baseline's findings when computing current state. The required keys are exactly the canonical claim fields metadata.claim_hashes hashes, so an event-carried claim is pinnable on the same terms as a baselined one. Extra keys mirroring report.schema.json $defs/finding are permitted.
+	Finding *LayerArtifactEventFinding `json:"finding,omitempty"`
+
+	// FindingRef Finding ID in the annotated audit report.
+	FindingRef string `json:"finding_ref"`
+
+	// Fingerprint The annotated finding's identity as observed when this event was recorded, copied from the baseline report's finding.fingerprint. Stamped by the sanctioned write path (the events module attach_identity), never model-authored. Makes the event self-contained: finding_ref is scan-scoped and changes on re-audit, so replay previously depended on metadata.finding_aliases — a mutable table outside the Merkle tree. Under leaf_format 2 the stamp is tamper-evident for free. A historical observation, never corrected in place: if the identity later changes (moved file, recategorised CWE, algo bump) that is a NEW event.
+	Fingerprint *string `json:"fingerprint,omitempty"`
+
+	// FingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION, re-exported as the events module FINGERPRINT_ALGO_CURRENT); 'v2' since 2026-08-18, when empty-canonicalizing location paths were dropped from the hashed set. Recorded per event because stamps outlive recipes: both versions coexist by design (a stamp is a historical observation, never re-computed in place), so matching fingerprints across an epoch boundary means comparing this field too.
+	FingerprintAlgo *string `json:"fingerprint_algo,omitempty"`
+	HarnessVersion  *string `json:"harness_version,omitempty"`
+
+	// OccurredAt When the underlying determination actually happened — commit author date, Jira transition date, MR comment date, machine report date. Trend tooling buckets by this when present (falling back to recorded_at), so late ingestion does not distort time series. Should not be later than recorded_at.
+	OccurredAt *time.Time `json:"occurred_at,omitempty"`
+
+	// Rationale Verbatim quote of the human statement, the Jira resolution comment, or the machine verdict explanation.
+	Rationale string `json:"rationale"`
+
+	// RecordedAt When the event was appended to the ledger. Monotonic across the events array (validator-enforced).
+	RecordedAt time.Time `json:"recorded_at"`
+
+	// Restatement An administrative restatement of signature-bound layer metadata: claim_hashes, audit_report_sha256, artifact_digests. Those fields are mutable, but rewriting one destroys the prior value, so an authorised restatement and a tampering rewrite were previously indistinguishable. Appending this event moves the Merkle root, which drops the stale signature and re-signs through the normal write path -- no new signature format is needed, because format 4 already binds the root and all three digests. DELTA, NOT SNAPSHOT: for map-valued targets, before and after carry only the entries being changed, so an event's size tracks the change rather than the layer. Restating the same key twice appends two small events instead of two copies of the whole map. Restatements stack in append order and a wrong one is superseded by another, never removed; a restatement may not restore a value the chain already retired -- that reverses an earlier decision and needs its own stated reason. EVENT CONTENT IS NOT A TARGET: events are immutable and are corrected by appending a superseding determination. finding_aliases is not a target either: a rebaseline event already records a rename in the Merkle-covered event stream, so the metadata table is a rebuildable projection rather than authority.
+	Restatement *LayerArtifactEventRestatement `json:"restatement,omitempty"`
+
+	// RiskWeight Emission-time-resolved hardening risk weight (triage_report hardening events). Recorded so ledger replays never re-derive weights and stay deterministic under future weight-table changes.
+	RiskWeight *struct {
+		Lambda float32 `json:"lambda"`
+
+		// ProfileSource Artifact the profile was derived from, e.g. 'peach_isolation_review.applicable', 'threat_model', or 'override'.
+		ProfileSource  string                                     `json:"profile_source"`
+		TenancyProfile LayerArtifactEventRiskWeightTenancyProfile `json:"tenancy_profile"`
+
+		// WeightsVersion version field of config/hardening-risk-weights.json at emission time.
+		WeightsVersion string `json:"weights_version"`
+	} `json:"risk_weight,omitempty"`
+	Source struct {
+		Actor LayerArtifactActor `json:"actor"`
+
+		// Ref Permalink to the MR comment, commit URL/SHA, Jira key, report path, or 'interactive:<session-date>'.
+		Ref string `json:"ref"`
+
+		// ReportedBy Original commenter/reporter when the event was confirmed from the needs_review queue by a different human.
+		ReportedBy *string                 `json:"reported_by,omitempty"`
+		Type       LayerArtifactSourceType `json:"type"`
+	} `json:"source"`
+}
+
+// LayerArtifactEventRiskWeightTenancyProfile defines model for LayerArtifactEvent.RiskWeight.TenancyProfile.
+type LayerArtifactEventRiskWeightTenancyProfile string
+
+// LayerArtifactEventAlias Rebaseline mapping carried ON THE EVENT (P2). Projected by the events module aliases_from_events() and merged OVER the legacy metadata.finding_aliases table by build_cumulative, so events are authoritative and the table is a rebuildable projection. The event's finding_ref is the superseded id; new_finding_ref is its successor.
+type LayerArtifactEventAlias struct {
+	// Confirmed A human confirmed the mapping. Attribution comes from source.actor.identity, never duplicated here.
+	Confirmed *bool `json:"confirmed,omitempty"`
+
+	// FromReport Basename of the superseded report.
+	FromReport *string `json:"from_report,omitempty"`
+
+	// MatchedBy 'fingerprint' matches auto-confirm; looser tiers pend in needs_review.
+	MatchedBy interface{} `json:"matched_by"`
+
+	// NewFindingRef Successor finding id in the newer baseline.
+	NewFindingRef string   `json:"new_finding_ref"`
+	Note          *string  `json:"note,omitempty"`
+	PathOverlap   *float32 `json:"path_overlap,omitempty"`
+
+	// Rejected A human refused the mapping; recorded rather than deleted (append-only).
+	Rejected   *bool    `json:"rejected,omitempty"`
+	Similarity *float32 `json:"similarity,omitempty"`
+}
+
+// LayerArtifactEventEvidenceGrade Explicit evidence strength: E0 observed effect, E1 authenticated success response, E2 strong inference, E3 behavioral inference. E0 is strongest. Missing or null means ungraded; source type and human approval never invent or upgrade a grade.
+type LayerArtifactEventEvidenceGrade string
+
+// LayerArtifactEventFinding A finding discovered between audits, carried ON THE EVENT because only baseline-writing audit skills may write a baseline. build_cumulative unions these with the baseline's findings when computing current state. The required keys are exactly the canonical claim fields metadata.claim_hashes hashes, so an event-carried claim is pinnable on the same terms as a baselined one. Extra keys mirroring report.schema.json $defs/finding are permitted.
+type LayerArtifactEventFinding struct {
+	Cwes        []string                 `json:"cwes"`
+	Description string                   `json:"description"`
+	Id          string                   `json:"id"`
+	Locations   []map[string]interface{} `json:"locations"`
+
+	// Origin Producing skill (vuln-scan, impact-analysis, verify-remediation) — provenance for the extraction migration and for audit trails.
+	Origin      *string                           `json:"origin,omitempty"`
+	Remediation string                            `json:"remediation"`
+	Severity    LayerArtifactEventFindingSeverity `json:"severity"`
+
+	// SourceFindings Refs into the producer's own report.
+	SourceFindings *[]string `json:"source_findings,omitempty"`
+	Title          string    `json:"title"`
+
+	// ValidationStatus 'not_verified' on arrival — nothing at scan time sets 'confirmed'; that takes execution evidence or a human, and those verdicts flow through the ledger.
+	ValidationStatus *string `json:"validation_status,omitempty"`
+}
+
+// LayerArtifactEventFindingSeverity defines model for LayerArtifactEventFinding.Severity.
+type LayerArtifactEventFindingSeverity string
+
+// LayerArtifactEventRestatement An administrative restatement of signature-bound layer metadata: claim_hashes, audit_report_sha256, artifact_digests. Those fields are mutable, but rewriting one destroys the prior value, so an authorised restatement and a tampering rewrite were previously indistinguishable. Appending this event moves the Merkle root, which drops the stale signature and re-signs through the normal write path -- no new signature format is needed, because format 4 already binds the root and all three digests. DELTA, NOT SNAPSHOT: for map-valued targets, before and after carry only the entries being changed, so an event's size tracks the change rather than the layer. Restating the same key twice appends two small events instead of two copies of the whole map. Restatements stack in append order and a wrong one is superseded by another, never removed; a restatement may not restore a value the chain already retired -- that reverses an earlier decision and needs its own stated reason. EVENT CONTENT IS NOT A TARGET: events are immutable and are corrected by appending a superseding determination. finding_aliases is not a target either: a rebaseline event already records a rename in the Merkle-covered event stream, so the metadata table is a rebuildable projection rather than authority.
+type LayerArtifactEventRestatement struct {
+	// After The replacement entries. For a map-valued target this is the changed keys only; the writer merges them over the stored map. A null value deletes that key.
+	After     interface{} `json:"after"`
+	Authority struct {
+		ApprovedBy *string `json:"approved_by,omitempty"`
+
+		// Ticket The change record this restatement was authorised under. Required: an unattributed restatement is indistinguishable from the rewrite this mechanism exists to prevent.
+		Ticket string `json:"ticket"`
+	} `json:"authority"`
+
+	// Before The entries being replaced, as they stand. For a map-valued target this is the changed keys only, never the whole map. Required: a restatement asserts what it replaces, and a writer refuses one whose before disagrees with what is stored.
+	Before interface{} `json:"before"`
+
+	// Reason Why the data was wrong. 'baseline_rewrite' is the legitimate re-audit/reissue case that previously surfaced only as an unexplained digest mismatch; 'schema_migration' is a mechanical v1->v2 reshape and must name both versions.
+	Reason     LayerArtifactEventRestatementReason `json:"reason"`
+	SchemaFrom *string                             `json:"schema_from,omitempty"`
+	SchemaTo   *string                             `json:"schema_to,omitempty"`
+
+	// Target The metadata field being restated. The restatement is the authority for that field's new value, and a verifier replays the chain to check it.
+	Target LayerArtifactEventRestatementTarget `json:"target"`
+}
+
+// LayerArtifactEventRestatementReason Why the data was wrong. 'baseline_rewrite' is the legitimate re-audit/reissue case that previously surfaced only as an unexplained digest mismatch; 'schema_migration' is a mechanical v1->v2 reshape and must name both versions.
+type LayerArtifactEventRestatementReason string
+
+// LayerArtifactEventRestatementTarget The metadata field being restated. The restatement is the authority for that field's new value, and a verifier replays the chain to check it.
+type LayerArtifactEventRestatementTarget string
+
+// LayerArtifactLayerMetadata defines model for LayerArtifactLayerMetadata.
+type LayerArtifactLayerMetadata struct {
+	// ArtifactDigests Filename -> sha256 for every non-layer artifact belonging to this layer's base (triage, threat model, findings-current, verification, privilege profile, ...). Its digest is inside the signature under format 4. Without it only the ONE report named by audit_report_sha256 is verifiable, i.e. 15% of what a migration to object storage copies; the other 85% could not be checked against anything once the git copy was deleted. Keys are filenames relative to the layer's own directory, never paths.
+	ArtifactDigests *map[string]string `json:"artifact_digests,omitempty"`
+
+	// AuditCommit metadata.commit of the annotated audit report: a git SHA (7-40 hex) or, for container-audit baselines, the image manifest digest hex (64 chars).
+	AuditCommit *string `json:"audit_commit,omitempty"`
+
+	// AuditReport Path to the baseline report this layer annotates (relative to the layer file): a *-security-audit.json, *-cloud-config-audit.json, or *-container-audit.json.
+	AuditReport string `json:"audit_report"`
+
+	// AuditReportRef Opaque location of the annotated baseline report — an object-storage key/URI once reports move out of git, absent while they sit beside the layer. Deliberately opaque: consumers resolve it through the report_store accessor, never by string-munging a path, so the same layer works against a local checkout, a bucket, or a future ledger database without edits.
+	AuditReportRef *string `json:"audit_report_ref,omitempty"`
+
+	// AuditReportSha256 sha256 of the annotated baseline report's exact bytes. Makes the layer's link to its report CONTENT-addressed rather than path-addressed, which is the prerequisite for reports living anywhere but beside the layer (e.g. object storage while the ledger stays in git). Complements metadata.claim_hashes, which pins the semantic claims of each finding: the digest answers 'are these the bytes I annotated?', the claim hashes answer 'did any finding's claim change?'. Recomputed whenever the baseline is legitimately rewritten (a re-audit, or a corpus migration such as the v1->v2 fingerprint re-stamp); a mismatch is surfaced, never auto-healed, on the same footing as a claim-hash mismatch. NOT covered by merkle_signature_payload today — see the format-3 note before relying on it as tamper-evidence.
+	AuditReportSha256 *string `json:"audit_report_sha256,omitempty"`
+
+	// ClaimHashes Baseline tamper-evidence (harness >= 0.39.0): finding id -> sha256 of the finding's canonical claim fields (id, title, severity, cwes, locations, description, remediation — validation_status excluded). Recorded by the baseline claims tool when a finding is first baselined; never overwritten except by an explicit --rebaseline of a 'corrected' finding. Verified by the validator on every layer validation and by the cumulative builder before every rebuild.
+	ClaimHashes *map[string]string `json:"claim_hashes,omitempty"`
+	Created     time.Time          `json:"created"`
+
+	// ExternalRefs Provenance map: finding id -> identifiers the finding was escalated to or reconciled against in an external system (CVE, Bugzilla, GHSA, Jira). Written by the CVE-provenance reconciler; DERIVED and re-computable, so it lives in metadata beside finding_aliases rather than in the Merkle-signed event chain, and it asserts nothing about validity, resolution or severity. Answers 'which CVE did our finding become' from the ledger instead of from a person's memory.
+	ExternalRefs *map[string][]struct {
+		// Confidence 'confirmed' = title match at or above the auto-stamp threshold, or corroborated by an overlapping CWE. 'probable' = weaker signal (the auditing organization is the CNA, no external party credited, publication postdates the audit). Only 'confirmed' belongs in a headline metric.
+		Confidence *LayerArtifactLayerMetadataExternalRefsConfidence `json:"confidence,omitempty"`
+		Id         string                                            `json:"id"`
+
+		// MatchedOn How the link was derived, e.g. 'title-similarity:0.82' or 'cna-uncredited'. Makes a stamp auditable and lets a re-run supersede a weaker match.
+		MatchedOn *string                                      `json:"matched_on,omitempty"`
+		StampedAt *string                                      `json:"stamped_at,omitempty"`
+		System    LayerArtifactLayerMetadataExternalRefsSystem `json:"system"`
+		Url       *string                                      `json:"url,omitempty"`
+	} `json:"external_refs,omitempty"`
+
+	// FindingAliases Rebaseline mapping: old scan-scoped finding id -> its successor in a newer audit. Events are never rewritten; build_cumulative resolves refs through this table at replay. matched_by 'fingerprint' mappings are auto-confirmed; others pend in needs_review.
+	FindingAliases *map[string]struct {
+		Confirmed   *bool       `json:"confirmed,omitempty"`
+		ConfirmedAt *string     `json:"confirmed_at,omitempty"`
+		ConfirmedBy *string     `json:"confirmed_by,omitempty"`
+		FromReport  *string     `json:"from_report,omitempty"`
+		MappedAt    string      `json:"mapped_at"`
+		MatchedBy   interface{} `json:"matched_by"`
+		NewId       string      `json:"new_id"`
+		Note        *string     `json:"note,omitempty"`
+		PathOverlap *float32    `json:"path_overlap,omitempty"`
+		Rejected    *bool       `json:"rejected,omitempty"`
+		RejectedAt  *string     `json:"rejected_at,omitempty"`
+		RejectedBy  *string     `json:"rejected_by,omitempty"`
+		Similarity  *float32    `json:"similarity,omitempty"`
+	} `json:"finding_aliases,omitempty"`
+
+	// HarnessVersion Harness version that created the layer. Individual events carry their own harness_version when appended by a later version.
+	HarnessVersion string `json:"harness_version"`
+
+	// LeafFormat Merkle leaf format: 1 = legacy event_id-only binding (verifies with a content-unbound warning); 2 = full canonical event content (current — any edit to any event field breaks the root).
+	LeafFormat *LayerArtifactLayerMetadataLeafFormat `json:"leaf_format,omitempty"`
+
+	// MerkleAlgorithm Hash algorithm for the Merkle tree.
+	MerkleAlgorithm *LayerArtifactLayerMetadataMerkleAlgorithm `json:"merkle_algorithm,omitempty"`
+
+	// MerkleEpoch Event index where Merkle tracking begins; events before this index are covered by pre_merkle_checkpoint.
+	MerkleEpoch *int `json:"merkle_epoch,omitempty"`
+
+	// MerkleRoot SHA-256 Merkle tree root over post-epoch events (RFC 9162 §2.1 MTH).
+	MerkleRoot *string `json:"merkle_root,omitempty"`
+
+	// MerkleRootSignature Optional signature over merkle_root (base64 for keypair, JSON bundle for identity).
+	MerkleRootSignature *string `json:"merkle_root_signature,omitempty"`
+
+	// MerkleSignatureFormat Signed-payload format: 1 = legacy bare-root signature (verifies with a content-unbound warning); 2 = digest over root + leaf_format + epoch + size + pre-epoch checkpoint + claim-hashes digest; 3 = format 2 plus audit_report_sha256, binding the signature to the exact report bytes the layer annotates; 4 = format 3 plus a digest over metadata.artifact_digests, extending tamper-evidence from the one annotated report to every sibling artifact (plan R1, the precondition for deleting the git copies).
+	MerkleSignatureFormat *LayerArtifactLayerMetadataMerkleSignatureFormat `json:"merkle_signature_format,omitempty"`
+
+	// MerkleSigningMethod Signing method used to produce merkle_root_signature (e.g. 'keypair', 'identity'). Used to dispatch to the correct verification backend.
+	MerkleSigningMethod *string `json:"merkle_signing_method,omitempty"`
+
+	// MerkleSize Number of leaves in the Merkle tree (events from merkle_epoch onward).
+	MerkleSize *int `json:"merkle_size,omitempty"`
+
+	// PreMerkleCheckpoint SHA-256 of the JSON-serialized pre-epoch events array, pinning pre-Merkle history.
+	PreMerkleCheckpoint *string `json:"pre_merkle_checkpoint,omitempty"`
+	Repository          string  `json:"repository"`
+
+	// Updated Timestamp of the most recent append.
+	Updated *time.Time `json:"updated,omitempty"`
+}
+
+// LayerArtifactLayerMetadataExternalRefsConfidence 'confirmed' = title match at or above the auto-stamp threshold, or corroborated by an overlapping CWE. 'probable' = weaker signal (the auditing organization is the CNA, no external party credited, publication postdates the audit). Only 'confirmed' belongs in a headline metric.
+type LayerArtifactLayerMetadataExternalRefsConfidence string
+
+// LayerArtifactLayerMetadataExternalRefsSystem defines model for LayerArtifactLayerMetadata.ExternalRefs.System.
+type LayerArtifactLayerMetadataExternalRefsSystem string
+
+// LayerArtifactLayerMetadataLeafFormat Merkle leaf format: 1 = legacy event_id-only binding (verifies with a content-unbound warning); 2 = full canonical event content (current — any edit to any event field breaks the root).
+type LayerArtifactLayerMetadataLeafFormat int
+
+// LayerArtifactLayerMetadataMerkleAlgorithm Hash algorithm for the Merkle tree.
+type LayerArtifactLayerMetadataMerkleAlgorithm string
+
+// LayerArtifactLayerMetadataMerkleSignatureFormat Signed-payload format: 1 = legacy bare-root signature (verifies with a content-unbound warning); 2 = digest over root + leaf_format + epoch + size + pre-epoch checkpoint + claim-hashes digest; 3 = format 2 plus audit_report_sha256, binding the signature to the exact report bytes the layer annotates; 4 = format 3 plus a digest over metadata.artifact_digests, extending tamper-evidence from the one annotated report to every sibling artifact (plan R1, the precondition for deleting the git copies).
+type LayerArtifactLayerMetadataMerkleSignatureFormat int
+
+// LayerArtifactResolution defines model for LayerArtifactResolution.
+type LayerArtifactResolution string
+
+// LayerArtifactReviewItem defines model for LayerArtifactReviewItem.
+type LayerArtifactReviewItem struct {
+	// Author Username of the original author (may be unverified — that can be why it was queued).
+	Author      string                              `json:"author"`
+	QueueReason *LayerArtifactReviewItemQueueReason `json:"queue_reason,omitempty"`
+	QueuedAt    time.Time                           `json:"queued_at"`
+
+	// Quote Verbatim text of the statement.
+	Quote string `json:"quote"`
+
+	// ResolutionNote Why the item was accepted, rejected or administratively closed, and by whom; historical confirmed notes remain valid.
+	ResolutionNote *string `json:"resolution_note,omitempty"`
+
+	// SourceRef Permalink to the comment/commit/ticket that triggered queueing.
+	SourceRef string `json:"source_ref"`
+
+	// Status Review queue state, independent of finding validity. 'accepted' is an actual review acceptance; historical 'confirmed' is its deprecated spelling. 'rejected' is an actual review rejection. 'closed_unreviewed' is administrative closure without review, not acceptance or rejection. Historical payloads remain valid; rejecting deprecated values at new writes is separate core record-door work.
+	Status      LayerArtifactReviewItemStatus `json:"status"`
+	SubmittedBy *LayerArtifactActor           `json:"submitted_by,omitempty"`
+
+	// SuggestedDisposition What this event asserts about the finding. Required to state something for every source EXCEPT rebaseline, which records a rename; that rule lives on the event, next to the source it depends on.
+	SuggestedDisposition *LayerArtifactDisposition `json:"suggested_disposition,omitempty"`
+	SuggestedFindingRef  *string                   `json:"suggested_finding_ref,omitempty"`
+}
+
+// LayerArtifactReviewItemQueueReason defines model for LayerArtifactReviewItem.QueueReason.
+type LayerArtifactReviewItemQueueReason string
+
+// LayerArtifactReviewItemStatus Review queue state, independent of finding validity. 'accepted' is an actual review acceptance; historical 'confirmed' is its deprecated spelling. 'rejected' is an actual review rejection. 'closed_unreviewed' is administrative closure without review, not acceptance or rejection. Historical payloads remain valid; rejecting deprecated values at new writes is separate core record-door work.
+type LayerArtifactReviewItemStatus string
+
+// LayerArtifactSourceType defines model for LayerArtifactSourceType.
+type LayerArtifactSourceType string
+
+// LayerArtifactValidity defines model for LayerArtifactValidity.
+type LayerArtifactValidity string
+
 // LeaseRequest defines model for LeaseRequest.
 type LeaseRequest struct {
 	LeaseSeconds int `json:"lease_seconds"`
@@ -1711,6 +5051,28 @@ type Location struct {
 	Path         string              `json:"path"`
 	Symbol       *string             `json:"symbol"`
 }
+
+// ManifestCoverageArtifact What the SBOM tool could not resolve when it read one commit's dependency manifests, keyed by ecosystem and canonical repository-relative manifest path. Stored as the artifact of the current manifest_sbom assessment, not tool_scan. Readers must match assessment_id to both the owning assessment and the commit's current manifest_sbom scan assessment, and sbom_id to the commit's current manifest_sbom_id; reject mismatches. The database-generated assessment identifies this scan even when normalized SBOM content is unchanged. A package missing from the SBOM in an unresolved ecosystem is unknown, never absent. An empty unresolved object proves a complete read only for the matching scan and SBOM; absent or unmatched coverage is unknown, never complete. A newer scan without coverage must not reuse older coverage.
+type ManifestCoverageArtifact struct {
+	Artifact interface{} `json:"artifact"`
+
+	// AssessmentId The database-generated UUID of the owning, current manifest_sbom assessment for this scan, not a synthesized identifier or SBOM content identity.
+	AssessmentId openapi_types.UUID `json:"assessment_id"`
+
+	// SbomId The native database SBOM UUID at the commit's current manifest_sbom_id, not a content digest.
+	SbomId openapi_types.UUID `json:"sbom_id"`
+	Tool   struct {
+		Name    string `json:"name"`
+		Version string `json:"version"`
+	} `json:"tool"`
+	Unresolved map[string]map[string]ManifestCoverageArtifactReason `json:"unresolved"`
+}
+
+// ManifestCoverageArtifactPath The canonical manifest path relative to the repository root: no absolute paths, drive prefixes, backslashes, empty segments, or dot segments.
+type ManifestCoverageArtifactPath = string
+
+// ManifestCoverageArtifactReason no-lockfile: a manifest whose versions only a lockfile pins, with none beside it or above it in the tree. unpinned: a manifest the tool reads directly that declares requirements without an exact version (a requirements file's ranges), which it drops.
+type ManifestCoverageArtifactReason string
 
 // Measure What a query counts or sums; the catalog serves a subset.
 type Measure string
@@ -1835,6 +5197,96 @@ type OnboardingResult struct {
 	RepositoryIds *[]openapi_types.UUID `json:"repository_ids,omitempty"`
 }
 
+// OperatorPrivProfileArtifact The privilege an operator ASKS FOR, read from its shipped manifests: workloads and their host/privilege posture, the RBAC rules its bundle declares, the SCCs it requests and ships, and the install modes its OperatorGroup allows. This is a DECLARED-STATE profile -- it is parsed from manifests in the repository and never from a live cluster, so it answers 'what would this grant if installed' and not 'what is granted right now'. Runtime SCC assignment needs a separate capture and is out of scope by design.
+type OperatorPrivProfileArtifact struct {
+	// ExampleOrTestManifestsExcluded What was deliberately left out. Recorded because a profile that silently swallowed sample manifests would report privilege the operator never asks for in production.
+	ExampleOrTestManifestsExcluded *map[string]interface{} `json:"example_or_test_manifests_excluded,omitempty"`
+
+	// InstallModes Which OperatorGroup install modes the CSV permits. AllNamespaces is the one that turns a namespaced ask into a cluster-wide one.
+	InstallModes   *map[string]interface{}   `json:"install_modes,omitempty"`
+	Namespaces     *[]string                 `json:"namespaces,omitempty"`
+	Operatorgroups *[]map[string]interface{} `json:"operatorgroups,omitempty"`
+
+	// RbacFlags Rules matching a high-privilege pattern, grouped by pattern. A key is present ONLY when it matched, so an absent key means no match rather than unknown.
+	RbacFlags *OperatorPrivProfileArtifact_RbacFlags `json:"rbac_flags,omitempty"`
+
+	// RbacRules The policy rules the bundle declares, as parsed. Kept whole because a least-privilege review reads the actual rule, not a count of rules.
+	RbacRules *[]map[string]interface{} `json:"rbac_rules,omitempty"`
+	Repo      string                    `json:"repo"`
+
+	// SccRequests SCCs the bundle explicitly requests.
+	SccRequests *[]map[string]interface{} `json:"scc_requests,omitempty"`
+
+	// SccsShipped SCC objects the bundle ships. Shipping an SCC is not the same as requesting one, and the two are counted separately for that reason.
+	SccsShipped *[]map[string]interface{}           `json:"sccs_shipped,omitempty"`
+	Summary     OperatorPrivProfileArtifact_Summary `json:"summary"`
+
+	// Tier Which capture tiers this profile covers, stated in prose because the boundary matters when reading any count here: static manifest tiers only, unless a runtime capture was folded in.
+	Tier *string `json:"tier,omitempty"`
+
+	// Tier2RequiredVsGranted Kubebuilder RBAC markers in source compared with what the bundle actually ships. `shipped_not_declared` is privilege present in the bundle with no marker asking for it.
+	Tier2RequiredVsGranted *map[string]interface{}                `json:"tier2_required_vs_granted,omitempty"`
+	Workloads              *[]OperatorPrivProfileArtifactWorkload `json:"workloads,omitempty"`
+}
+
+// OperatorPrivProfileArtifact_RbacFlags Rules matching a high-privilege pattern, grouped by pattern. A key is present ONLY when it matched, so an absent key means no match rather than unknown.
+type OperatorPrivProfileArtifact_RbacFlags struct {
+	// EscalateBindImpersonate The three verbs that let a principal grant itself more than it holds. The highest-signal group here.
+	EscalateBindImpersonate *[]string `json:"escalate_bind_impersonate,omitempty"`
+	NodesAccess             *[]string `json:"nodes_access,omitempty"`
+	PodsExec                *[]string `json:"pods_exec,omitempty"`
+
+	// RbacWrite Write access to RBAC itself. Distinct from escalate/bind because it is a slower path to the same place.
+	RbacWrite            *[]string           `json:"rbac_write,omitempty"`
+	SecretsAccess        *[]string           `json:"secrets_access,omitempty"`
+	WildcardResources    *[]string           `json:"wildcard_resources,omitempty"`
+	WildcardVerbs        *[]string           `json:"wildcard_verbs,omitempty"`
+	AdditionalProperties map[string][]string `json:"-"`
+}
+
+// OperatorPrivProfileArtifact_Summary defines model for OperatorPrivProfileArtifact.Summary.
+type OperatorPrivProfileArtifact_Summary struct {
+	ClusterScopedRules     *int `json:"cluster_scoped_rules,omitempty"`
+	DistinctClusterTriples *int `json:"distinct_cluster_triples,omitempty"`
+
+	// DistinctRuleTriples Distinct (apiGroup, resource, verb) triples. The de-duplicated size of the ask -- rule COUNT inflates with how the bundle is authored, this does not.
+	DistinctRuleTriples *int `json:"distinct_rule_triples,omitempty"`
+
+	// NoSccRequestRecorded True when no SCC request was found. Explicitly distinct from an empty request list, because 'asked for nothing' and 'we could not tell' must not read the same.
+	NoSccRequestRecorded *bool `json:"no_scc_request_recorded,omitempty"`
+
+	// PrivilegedOrHostWorkloads Workloads asking for privileged mode or a host namespace. The headline least-privilege number.
+	PrivilegedOrHostWorkloads *int                   `json:"privileged_or_host_workloads,omitempty"`
+	RbacRules                 int                    `json:"rbac_rules"`
+	SccRequests               *[]string              `json:"scc_requests,omitempty"`
+	WildcardRules             *int                   `json:"wildcard_rules,omitempty"`
+	Workloads                 int                    `json:"workloads"`
+	AdditionalProperties      map[string]interface{} `json:"-"`
+}
+
+// OperatorPrivProfileArtifactWorkload defines model for OperatorPrivProfileArtifactWorkload.
+type OperatorPrivProfileArtifactWorkload struct {
+	Containers      *[]map[string]interface{} `json:"containers,omitempty"`
+	HostIPC         *bool                     `json:"hostIPC,omitempty"`
+	HostNetwork     *bool                     `json:"hostNetwork,omitempty"`
+	HostPID         *bool                     `json:"hostPID,omitempty"`
+	HostPathVolumes *int                      `json:"hostPath_volumes,omitempty"`
+	Kind            string                    `json:"kind"`
+	Manifest        *string                   `json:"manifest,omitempty"`
+
+	// Name Null for a manifest fragment that patches a workload without naming it -- kustomize patches and sidecar overlays. Measured: 32 such workloads across the live corpus. Always a STRING when present: a Kubernetes name is an RFC 1123 label, and a producer must coerce it, because YAML parses an unquoted `name: 0` as an integer while `name: "0"` on the same object is a string.
+	Name                 *string                 `json:"name"`
+	PodSecurityContext   *map[string]interface{} `json:"pod_securityContext,omitempty"`
+	ServiceAccountName   *string                 `json:"serviceAccountName"`
+	AdditionalProperties map[string]interface{}  `json:"-"`
+}
+
+// OrderApproval Who let a human-gated order run, and when (the run manifest's `approval`).
+type OrderApproval struct {
+	ApprovedAt time.Time `json:"approved_at"`
+	Approver   string    `json:"approver"`
+}
+
 // OrderManifest defines model for OrderManifest.
 type OrderManifest map[string]interface{}
 
@@ -1886,6 +5338,21 @@ type OrderSortBy string
 
 // OrderSortOrder defines model for OrderSortOrder.
 type OrderSortOrder string
+
+// OrgParametersArtifact Validates your compliance configuration directory's organization-defined parameters file — declared values for NIST 800-53 '[Assignment: organization-defined ...]' slots and analogous knobs in other frameworks (determinism amendment 4). A check whose parameter is undeclared verdicts not_assessed(parameter undeclared); the LLM never assumes a value.
+type OrgParametersArtifact struct {
+	// DeclaredBy who owns these values (team/role)
+	DeclaredBy string  `json:"declared_by"`
+	DeclaredOn *string `json:"declared_on,omitempty"`
+	Note       *string `json:"note,omitempty"`
+	Parameters map[string]struct {
+		// Controls framework:control_id slots this value fills
+		Controls []string    `json:"controls"`
+		Note     *string     `json:"note,omitempty"`
+		Value    interface{} `json:"value"`
+	} `json:"parameters"`
+	Version int `json:"version"`
+}
 
 // Outcome defines model for Outcome.
 type Outcome string
@@ -1993,6 +5460,535 @@ type PlannedOrder struct {
 	Repo  string `json:"repo"`
 }
 
+// PqcBlockersArtifact defines model for PqcBlockersArtifact.
+type PqcBlockersArtifact struct {
+	Artifact         interface{} `json:"artifact"`
+	ExecutiveSummary struct {
+		Prose          string                 `json:"prose"`
+		SeverityCounts map[string]interface{} `json:"severity_counts"`
+	} `json:"executive_summary"`
+	Findings        []PqcBlockersArtifactFinding `json:"findings"`
+	FindingsSummary []struct {
+		Count      int                              `json:"count"`
+		FindingIds []string                         `json:"finding_ids"`
+		Severity   PqcBlockersArtifactSeverityLevel `json:"severity"`
+	} `json:"findings_summary"`
+	Metadata struct {
+		Additional *struct {
+			AdapterVersion       *string  `json:"adapter_version,omitempty"`
+			ExcludedRemediations []string `json:"excluded_remediations"`
+			HarnessVersion       *string  `json:"harness_version,omitempty"`
+			ReadinessStatus      *string  `json:"readiness_status,omitempty"`
+			SourceArtifact       string   `json:"source_artifact"`
+			WhoSetsTls           string   `json:"who_sets_tls"`
+		} `json:"additional,omitempty"`
+		Commit      *string `json:"commit"`
+		Date        string  `json:"date"`
+		Framework   *string `json:"framework,omitempty"`
+		Methodology *string `json:"methodology,omitempty"`
+		Repository  string  `json:"repository"`
+		Scope       string  `json:"scope"`
+	} `json:"metadata"`
+	RemediationRoadmap []struct {
+		Action          string      `json:"action"`
+		Addresses       []string    `json:"addresses"`
+		BlockedExternal interface{} `json:"blocked_external,omitempty"`
+		Effort          interface{} `json:"effort,omitempty"`
+		Priority        string      `json:"priority"`
+	} `json:"remediation_roadmap"`
+	SeverityCriteria []struct {
+		Definition string                           `json:"definition"`
+		Level      PqcBlockersArtifactSeverityLevel `json:"level"`
+	} `json:"severity_criteria"`
+	Title string `json:"title"`
+}
+
+// PqcBlockersArtifactCanonicalWrite defines model for PqcBlockersArtifactCanonicalWrite.
+type PqcBlockersArtifactCanonicalWrite struct {
+	Artifact         interface{} `json:"artifact"`
+	ExecutiveSummary struct {
+		Prose          string                 `json:"prose"`
+		SeverityCounts map[string]interface{} `json:"severity_counts"`
+	} `json:"executive_summary"`
+	Findings        interface{} `json:"findings"`
+	FindingsSummary []struct {
+		Count      int                              `json:"count"`
+		FindingIds []string                         `json:"finding_ids"`
+		Severity   PqcBlockersArtifactSeverityLevel `json:"severity"`
+	} `json:"findings_summary"`
+	Metadata struct {
+		Additional *struct {
+			AdapterVersion       *string  `json:"adapter_version,omitempty"`
+			ExcludedRemediations []string `json:"excluded_remediations"`
+			HarnessVersion       *string  `json:"harness_version,omitempty"`
+			ReadinessStatus      *string  `json:"readiness_status,omitempty"`
+			SourceArtifact       string   `json:"source_artifact"`
+			WhoSetsTls           string   `json:"who_sets_tls"`
+		} `json:"additional,omitempty"`
+		Commit      *string `json:"commit"`
+		Date        string  `json:"date"`
+		Framework   *string `json:"framework,omitempty"`
+		Methodology *string `json:"methodology,omitempty"`
+		Repository  string  `json:"repository"`
+		Scope       string  `json:"scope"`
+	} `json:"metadata"`
+	RemediationRoadmap interface{} `json:"remediation_roadmap"`
+	SeverityCriteria   []struct {
+		Definition string                           `json:"definition"`
+		Level      PqcBlockersArtifactSeverityLevel `json:"level"`
+	} `json:"severity_criteria"`
+	Title string `json:"title"`
+}
+
+// PqcBlockersArtifactFinding defines model for PqcBlockersArtifactFinding.
+type PqcBlockersArtifactFinding struct {
+	BlockedExternal interface{} `json:"blocked_external,omitempty"`
+	Category        interface{} `json:"category"`
+	Cwes            []string    `json:"cwes"`
+	Description     string      `json:"description"`
+	Id              string      `json:"id"`
+	Locations       []struct {
+		Lines *string `json:"lines,omitempty"`
+		Path  string  `json:"path"`
+	} `json:"locations"`
+	PqcClassification PqcBlockersArtifactFindingPqcClassification  `json:"pqc_classification"`
+	Remediation       string                                       `json:"remediation"`
+	RemediationEffort *PqcBlockersArtifactFindingRemediationEffort `json:"remediation_effort"`
+	Severity          PqcBlockersArtifactSeverityLevel             `json:"severity"`
+	Title             string                                       `json:"title"`
+	ValidationStatus  interface{}                                  `json:"validation_status"`
+}
+
+// PqcBlockersArtifactFindingPqcClassification defines model for PqcBlockersArtifactFinding.PqcClassification.
+type PqcBlockersArtifactFindingPqcClassification string
+
+// PqcBlockersArtifactFindingRemediationEffort defines model for PqcBlockersArtifactFinding.RemediationEffort.
+type PqcBlockersArtifactFindingRemediationEffort string
+
+// PqcBlockersArtifactSeverityLevel defines model for PqcBlockersArtifactSeverityLevel.
+type PqcBlockersArtifactSeverityLevel string
+
+// PqcDecisionTreeArtifact Validates the PQC readiness decision tree artifact — the machine-readable provenance tree, remediation-effort mapping, readiness-bucket rules, TLS-control crosswalk, and FIPS interaction rules (plan v1.3 sections 4.3/4.5-4.7). Structural gate; rule semantics are exercised by the pilot cross-validation.
+type PqcDecisionTreeArtifact struct {
+	FipsInteraction struct {
+		UnderscoreComment *string `json:"_comment,omitempty"`
+		Rules             []struct {
+			TreatAs *string     `json:"treat_as,omitempty"`
+			Verdict interface{} `json:"verdict"`
+			When    string      `json:"when"`
+		} `json:"rules"`
+	} `json:"fips_interaction"`
+	Plan                 *string                                      `json:"plan,omitempty"`
+	PqcClassificationMap PqcDecisionTreeArtifact_PqcClassificationMap `json:"pqc_classification_map"`
+	ProvenanceTree       struct {
+		UnderscoreComment *string `json:"_comment,omitempty"`
+		Rules             []struct {
+			Provenance PqcDecisionTreeArtifactProvenance `json:"provenance"`
+			When       string                            `json:"when"`
+		} `json:"rules"`
+	} `json:"provenance_tree"`
+	ReadinessBuckets struct {
+		UnderscoreComment *string     `json:"_comment,omitempty"`
+		Buckets           interface{} `json:"buckets"`
+		Rules             []struct {
+			Bucket PqcDecisionTreeArtifactBucket `json:"bucket"`
+			When   string                        `json:"when"`
+		} `json:"rules"`
+		ScorePartialMin float32 `json:"score_partial_min"`
+		ScoreReadyMin   float32 `json:"score_ready_min"`
+	} `json:"readiness_buckets"`
+	RemediationEffort struct {
+		UnderscoreComment *string                                           `json:"_comment,omitempty"`
+		Classes           PqcDecisionTreeArtifact_RemediationEffort_Classes `json:"classes"`
+		Rules             []struct {
+			BlockedExternal interface{}                   `json:"blocked_external,omitempty"`
+			Effort          PqcDecisionTreeArtifactEffort `json:"effort"`
+			When            string                        `json:"when"`
+		} `json:"rules"`
+	} `json:"remediation_effort"`
+	Schema *string `json:"schema,omitempty"`
+
+	// ServerSideCaveat Infrastructure-governance scoring ceilings (harness >= 0.131.1): infrastructure-governed decision points cannot claim PQC capability from the client toolchain alone; these rules cap the relevant check results until runtime evidence confirms the server side.
+	ServerSideCaveat *struct {
+		UnderscoreComment *string `json:"_comment,omitempty"`
+		Rules             []struct {
+			UnderscoreComment *string     `json:"_comment,omitempty"`
+			Caveat            string      `json:"caveat"`
+			ScoringCeiling    interface{} `json:"scoring_ceiling,omitempty"`
+			TreatAs           *string     `json:"treat_as,omitempty"`
+			When              string      `json:"when"`
+		} `json:"rules"`
+	} `json:"server_side_caveat,omitempty"`
+	TlsControlCrosswalk struct {
+		UnderscoreComment *string                         `json:"_comment,omitempty"`
+		AppControlled     PqcDecisionTreeArtifactProvList `json:"app-controlled"`
+		InfraControlled   PqcDecisionTreeArtifactProvList `json:"infra-controlled"`
+		VendorControlled  PqcDecisionTreeArtifactProvList `json:"vendor-controlled"`
+	} `json:"tls_control_crosswalk"`
+	TreeVersion string `json:"tree_version"`
+}
+
+// PqcDecisionTreeArtifact_PqcClassificationMap defines model for PqcDecisionTreeArtifact.PqcClassificationMap.
+type PqcDecisionTreeArtifact_PqcClassificationMap struct {
+	UnderscoreComment    *string                `json:"_comment,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// PqcDecisionTreeArtifactRemediationEffortClasses0 defines model for .
+type PqcDecisionTreeArtifactRemediationEffortClasses0 = interface{}
+
+// PqcDecisionTreeArtifactRemediationEffortClasses1 defines model for .
+type PqcDecisionTreeArtifactRemediationEffortClasses1 = interface{}
+
+// PqcDecisionTreeArtifact_RemediationEffort_Classes defines model for PqcDecisionTreeArtifact.RemediationEffort.Classes.
+type PqcDecisionTreeArtifact_RemediationEffort_Classes struct {
+	union json.RawMessage
+}
+
+// PqcDecisionTreeArtifactBucket defines model for PqcDecisionTreeArtifactBucket.
+type PqcDecisionTreeArtifactBucket = interface{}
+
+// PqcDecisionTreeArtifactCanonicalWrite defines model for PqcDecisionTreeArtifactCanonicalWrite.
+type PqcDecisionTreeArtifactCanonicalWrite struct {
+	FipsInteraction struct {
+		UnderscoreComment *string `json:"_comment,omitempty"`
+		Rules             []struct {
+			TreatAs *string     `json:"treat_as,omitempty"`
+			Verdict interface{} `json:"verdict"`
+			When    string      `json:"when"`
+		} `json:"rules"`
+	} `json:"fips_interaction"`
+	Plan                 *string                                                    `json:"plan,omitempty"`
+	PqcClassificationMap PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap `json:"pqc_classification_map"`
+	ProvenanceTree       struct {
+		UnderscoreComment *string `json:"_comment,omitempty"`
+		Rules             []struct {
+			Provenance PqcDecisionTreeArtifactProvenance `json:"provenance"`
+			When       string                            `json:"when"`
+		} `json:"rules"`
+	} `json:"provenance_tree"`
+	ReadinessBuckets struct {
+		UnderscoreComment *string     `json:"_comment,omitempty"`
+		Buckets           interface{} `json:"buckets"`
+		Rules             []struct {
+			Bucket PqcDecisionTreeArtifactBucket `json:"bucket"`
+			When   string                        `json:"when"`
+		} `json:"rules"`
+		ScorePartialMin float32 `json:"score_partial_min"`
+		ScoreReadyMin   float32 `json:"score_ready_min"`
+	} `json:"readiness_buckets"`
+	RemediationEffort struct {
+		Classes interface{} `json:"classes,omitempty"`
+		Rules   interface{} `json:"rules,omitempty"`
+	} `json:"remediation_effort"`
+	Schema *string `json:"schema,omitempty"`
+
+	// ServerSideCaveat Infrastructure-governance scoring ceilings (harness >= 0.131.1): infrastructure-governed decision points cannot claim PQC capability from the client toolchain alone; these rules cap the relevant check results until runtime evidence confirms the server side.
+	ServerSideCaveat *struct {
+		UnderscoreComment *string `json:"_comment,omitempty"`
+		Rules             []struct {
+			UnderscoreComment *string     `json:"_comment,omitempty"`
+			Caveat            string      `json:"caveat"`
+			ScoringCeiling    interface{} `json:"scoring_ceiling,omitempty"`
+			TreatAs           *string     `json:"treat_as,omitempty"`
+			When              string      `json:"when"`
+		} `json:"rules"`
+	} `json:"server_side_caveat,omitempty"`
+	TlsControlCrosswalk struct {
+		UnderscoreComment *string                         `json:"_comment,omitempty"`
+		AppControlled     PqcDecisionTreeArtifactProvList `json:"app-controlled"`
+		InfraControlled   PqcDecisionTreeArtifactProvList `json:"infra-controlled"`
+		VendorControlled  PqcDecisionTreeArtifactProvList `json:"vendor-controlled"`
+	} `json:"tls_control_crosswalk"`
+	TreeVersion string `json:"tree_version"`
+}
+
+// PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap defines model for PqcDecisionTreeArtifactCanonicalWrite.PqcClassificationMap.
+type PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap struct {
+	UnderscoreComment    *string                `json:"_comment,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// PqcDecisionTreeArtifactEffort defines model for PqcDecisionTreeArtifactEffort.
+type PqcDecisionTreeArtifactEffort = interface{}
+
+// PqcDecisionTreeArtifactProvList defines model for PqcDecisionTreeArtifactProvList.
+type PqcDecisionTreeArtifactProvList = []PqcDecisionTreeArtifactProvenance
+
+// PqcDecisionTreeArtifactProvenance defines model for PqcDecisionTreeArtifactProvenance.
+type PqcDecisionTreeArtifactProvenance = interface{}
+
+// PqcFactsArtifact Deterministic *-pqc-facts.json artifact written by the pqc-readiness adapter (over the pinned pqc-scan binary). Facts never contain verdicts. Consumers: pqc-readiness Layer 2 scoring, /patch pqc ingest, bulk prescan, L2 prepass, PQC dashboards. Strict on the fields those consumers key on; permissive on additions (new adapter versions may add fields).
+type PqcFactsArtifact struct {
+	Artifact interface{} `json:"artifact"`
+	Coverage struct {
+		AssessmentBasis           interface{} `json:"assessment_basis"`
+		NoCryptoDetectedAssertion *string     `json:"no_crypto_detected_assertion,omitempty"`
+		RulesInPack               *int        `json:"rules_in_pack"`
+		ScannedFiles              *int        `json:"scanned_files"`
+		SkippedFiles              *int        `json:"skipped_files"`
+	} `json:"coverage"`
+	Facts      []PqcFactsArtifactFact `json:"facts"`
+	Repository string                 `json:"repository"`
+	Stamps     struct {
+		AdapterVersion string  `json:"adapter_version"`
+		BinarySha256   *string `json:"binary_sha256,omitempty"`
+		PqcScanCommit  string  `json:"pqc_scan_commit"`
+		RulesSha256    string  `json:"rules_sha256"`
+	} `json:"stamps"`
+	Summary struct {
+		ByPathClass      PqcFactsArtifactCountMap `json:"by_path_class"`
+		ByProvenanceHint PqcFactsArtifactCountMap `json:"by_provenance_hint"`
+		ByQclass         PqcFactsArtifactCountMap `json:"by_qclass"`
+		ByRule           PqcFactsArtifactCountMap `json:"by_rule"`
+	} `json:"summary"`
+}
+
+// PqcFactsArtifactCountMap defines model for PqcFactsArtifactCountMap.
+type PqcFactsArtifactCountMap map[string]int
+
+// PqcFactsArtifactFact defines model for PqcFactsArtifactFact.
+type PqcFactsArtifactFact struct {
+	CapabilityHint *string  `json:"capability_hint,omitempty"`
+	Confidence     *float32 `json:"confidence"`
+	Detail         string   `json:"detail"`
+	FactId         string   `json:"fact_id"`
+	File           string   `json:"file"`
+	FindingId      *string  `json:"finding_id"`
+	FipsMode       *bool    `json:"fips_mode,omitempty"`
+	Ir8547         struct {
+		Clock *struct {
+			DeprecatedAfter *int    `json:"deprecated_after"`
+			DisallowedAfter *int    `json:"disallowed_after"`
+			StatusNow       *string `json:"status_now,omitempty"`
+		} `json:"clock"`
+		MatchedPrefix  *string `json:"matched_prefix,omitempty"`
+		Qclass         string  `json:"qclass"`
+		QclassResolved *string `json:"qclass_resolved,omitempty"`
+		Usage          string  `json:"usage"`
+	} `json:"ir8547"`
+	Line           *int        `json:"line"`
+	Match          *string     `json:"match,omitempty"`
+	PathClass      interface{} `json:"path_class"`
+	PqcCapable     *bool       `json:"pqc_capable,omitempty"`
+	ProvenanceHint string      `json:"provenance_hint"`
+	Provider       *string     `json:"provider,omitempty"`
+	Risk           *string     `json:"risk"`
+	RuleId         string      `json:"rule_id"`
+	Severity       *string     `json:"severity"`
+}
+
+// PqcReadinessArtifact Layer-2 agent-authored PQC readiness report. Enforcement gate: pqc_facts.py --validate-readiness (mirror of this schema). Every non-yes check result MUST cite fact IDs from the sibling pqc-facts artifact.
+type PqcReadinessArtifact struct {
+	ClockItems *[]struct {
+		BlastRadius       interface{} `json:"blast_radius,omitempty"`
+		BlockedExternal   interface{} `json:"blocked_external,omitempty"`
+		DeprecatedAfter   *int        `json:"deprecated_after"`
+		DisallowedAfter   *int        `json:"disallowed_after"`
+		FactIds           []string    `json:"fact_ids"`
+		Primitive         string      `json:"primitive"`
+		RemediationEffort interface{} `json:"remediation_effort,omitempty"`
+	} `json:"clock_items,omitempty"`
+	FipsInteraction *struct {
+		FactIds   []string    `json:"fact_ids"`
+		Rationale *string     `json:"rationale,omitempty"`
+		Verdict   interface{} `json:"verdict"`
+	} `json:"fips_interaction,omitempty"`
+	Flags struct {
+		Has2030ClockItems           bool `json:"has_2030_clock_items"`
+		HndlPriority                bool `json:"hndl_priority"`
+		RuntimeVerificationRequired bool `json:"runtime_verification_required"`
+	} `json:"flags"`
+	Metadata struct {
+		AssessedAt      *string     `json:"assessed_at,omitempty"`
+		AssessmentBasis interface{} `json:"assessment_basis"`
+		CbomRef         *string     `json:"cbom_ref"`
+		Commit          *string     `json:"commit"`
+		FactsRef        *string     `json:"facts_ref,omitempty"`
+		Repository      string      `json:"repository"`
+		Tool            struct {
+			AdapterVersion *string `json:"adapter_version,omitempty"`
+			BinarySha256   *string `json:"binary_sha256"`
+			PqcScanCommit  string  `json:"pqc_scan_commit"`
+			RulesSha256    string  `json:"rules_sha256"`
+		} `json:"tool"`
+	} `json:"metadata"`
+	Notes             *string `json:"notes,omitempty"`
+	ProvenanceSummary struct {
+		Counts   map[string]int `json:"counts"`
+		Dominant interface{}    `json:"dominant"`
+	} `json:"provenance_summary"`
+	ReadinessBucket interface{} `json:"readiness_bucket,omitempty"`
+	Remediations    *[]struct {
+		Action            string      `json:"action"`
+		BlastRadius       interface{} `json:"blast_radius,omitempty"`
+		BlockedExternal   *bool       `json:"blocked_external,omitempty"`
+		BlockedOn         *string     `json:"blocked_on"`
+		Category          interface{} `json:"category"`
+		Deadline          *int        `json:"deadline"`
+		Details           *string     `json:"details"`
+		FactIds           *[]string   `json:"fact_ids,omitempty"`
+		Id                string      `json:"id"`
+		Locations         *[]string   `json:"locations,omitempty"`
+		Recipe            *string     `json:"recipe"`
+		RemediationEffort interface{} `json:"remediation_effort,omitempty"`
+		Target            *string     `json:"target"`
+	} `json:"remediations,omitempty"`
+	RuntimeEvidence *struct {
+		ClosedRuntimeVerification *bool               `json:"closed_runtime_verification,omitempty"`
+		PqcCaps                   *[]string           `json:"pqc_caps,omitempty"`
+		RuntimeConfirmedAt        *openapi_types.Date `json:"runtime_confirmed_at,omitempty"`
+		StalenessWindowDays       *int                `json:"staleness_window_days,omitempty"`
+		ValidationReportRef       *string             `json:"validation_report_ref,omitempty"`
+	} `json:"runtime_evidence,omitempty"`
+	Scores struct {
+		AGIL    PqcReadinessArtifactDomain `json:"AGIL"`
+		HNDL    PqcReadinessArtifactDomain `json:"HNDL"`
+		PQCA    PqcReadinessArtifactDomain `json:"PQCA"`
+		VULN    PqcReadinessArtifactDomain `json:"VULN"`
+		Overall float32                    `json:"overall"`
+	} `json:"scores"`
+	ServerSideCaveats *[]struct {
+		CaveatType interface{} `json:"caveat_type"`
+		FactIds    []string    `json:"fact_ids"`
+		Rationale  *string     `json:"rationale,omitempty"`
+	} `json:"server_side_caveats,omitempty"`
+	Title string `json:"title"`
+}
+
+// PqcReadinessArtifactCanonicalWrite defines model for PqcReadinessArtifactCanonicalWrite.
+type PqcReadinessArtifactCanonicalWrite struct {
+	ClockItems      interface{} `json:"clock_items,omitempty"`
+	FipsInteraction *struct {
+		FactIds   []string    `json:"fact_ids"`
+		Rationale *string     `json:"rationale,omitempty"`
+		Verdict   interface{} `json:"verdict"`
+	} `json:"fips_interaction,omitempty"`
+	Flags struct {
+		Has2030ClockItems           bool `json:"has_2030_clock_items"`
+		HndlPriority                bool `json:"hndl_priority"`
+		RuntimeVerificationRequired bool `json:"runtime_verification_required"`
+	} `json:"flags"`
+	Metadata struct {
+		AssessedAt      *string     `json:"assessed_at,omitempty"`
+		AssessmentBasis interface{} `json:"assessment_basis"`
+		CbomRef         *string     `json:"cbom_ref"`
+		Commit          *string     `json:"commit"`
+		FactsRef        *string     `json:"facts_ref,omitempty"`
+		Repository      string      `json:"repository"`
+		Tool            struct {
+			AdapterVersion *string `json:"adapter_version,omitempty"`
+			BinarySha256   *string `json:"binary_sha256"`
+			PqcScanCommit  string  `json:"pqc_scan_commit"`
+			RulesSha256    string  `json:"rules_sha256"`
+		} `json:"tool"`
+	} `json:"metadata"`
+	Notes             *string `json:"notes,omitempty"`
+	ProvenanceSummary struct {
+		Counts   map[string]int `json:"counts"`
+		Dominant interface{}    `json:"dominant"`
+	} `json:"provenance_summary"`
+	ReadinessBucket interface{} `json:"readiness_bucket,omitempty"`
+	Remediations    interface{} `json:"remediations,omitempty"`
+	RuntimeEvidence *struct {
+		ClosedRuntimeVerification *bool               `json:"closed_runtime_verification,omitempty"`
+		PqcCaps                   *[]string           `json:"pqc_caps,omitempty"`
+		RuntimeConfirmedAt        *openapi_types.Date `json:"runtime_confirmed_at,omitempty"`
+		StalenessWindowDays       *int                `json:"staleness_window_days,omitempty"`
+		ValidationReportRef       *string             `json:"validation_report_ref,omitempty"`
+	} `json:"runtime_evidence,omitempty"`
+	Scores struct {
+		AGIL    PqcReadinessArtifactDomain `json:"AGIL"`
+		HNDL    PqcReadinessArtifactDomain `json:"HNDL"`
+		PQCA    PqcReadinessArtifactDomain `json:"PQCA"`
+		VULN    PqcReadinessArtifactDomain `json:"VULN"`
+		Overall float32                    `json:"overall"`
+	} `json:"scores"`
+	ServerSideCaveats *[]struct {
+		CaveatType interface{} `json:"caveat_type"`
+		FactIds    []string    `json:"fact_ids"`
+		Rationale  *string     `json:"rationale,omitempty"`
+	} `json:"server_side_caveats,omitempty"`
+	Title string `json:"title"`
+}
+
+// PqcReadinessArtifactDomain defines model for PqcReadinessArtifactDomain.
+type PqcReadinessArtifactDomain struct {
+	AssessableChecks *int `json:"assessable_checks,omitempty"`
+	Checks           []struct {
+		CryptoGovernance *struct {
+			Class            interface{} `json:"class,omitempty"`
+			DetectionFacts   *[]string   `json:"detection_facts,omitempty"`
+			EvaluationTarget *string     `json:"evaluation_target,omitempty"`
+			Governor         *string     `json:"governor,omitempty"`
+		} `json:"crypto_governance,omitempty"`
+		FactIds   *[]string   `json:"fact_ids,omitempty"`
+		Id        string      `json:"id"`
+		Points    *float32    `json:"points,omitempty"`
+		Rationale *string     `json:"rationale,omitempty"`
+		Result    interface{} `json:"result"`
+	} `json:"checks"`
+	Score float32 `json:"score"`
+}
+
+// PqcVendorClaimsArtifact Curated, dated claims about the post-quantum roadmap of the vendors and dependencies a fleet cannot fix locally (the delegated / blocked-external class). A declared reference document (scope-ref): imported with no assessment and published whole, so a review is a successor version with a higher `version`, never an edit; readers take the latest. Claims are as-reviewed on `last_reviewed` and are re-verified before external use. Fleet counts (repositories depending on a vendor, blocked-external repositories) are derived by the reader from recorded facts and are never stored here.
+type PqcVendorClaimsArtifact struct {
+	Artifact interface{}                     `json:"artifact"`
+	Note     *string                         `json:"note,omitempty"`
+	Updated  openapi_types.Date              `json:"updated"`
+	Vendors  []PqcVendorClaimsArtifactVendor `json:"vendors"`
+
+	// Version Increases with each published successor.
+	Version int `json:"version"`
+}
+
+// PqcVendorClaimsArtifactPackage defines model for PqcVendorClaimsArtifactPackage.
+type PqcVendorClaimsArtifactPackage struct {
+	// Ecosystem Package ecosystem of the affected module; the same vocabulary as report.schema.json finding.dependency.ecosystem (enums/v1/ecosystem.json). actions/docker/helm are manifest-level dependency surfaces (no reachability tier); rpm/deb/apk are distro ecosystems for C/C++ packages (no reachability tier). Optional (defaults to go semantics when absent) and non-breaking.
+	Ecosystem *ImpactAnalysisArtifactMetadataEcosystem `json:"ecosystem,omitempty"`
+	Name      string                                   `json:"name"`
+}
+
+// PqcVendorClaimsArtifactSource defines model for PqcVendorClaimsArtifactSource.
+type PqcVendorClaimsArtifactSource struct {
+	Retrieved openapi_types.Date `json:"retrieved"`
+	Title     *string            `json:"title,omitempty"`
+	Url       string             `json:"url"`
+}
+
+// PqcVendorClaimsArtifactStatus available: PQC algorithms shipped and usable. partial: some (e.g. key exchange but not signatures). in_progress: announced or in preview. none: no public roadmap.
+type PqcVendorClaimsArtifactStatus = interface{}
+
+// PqcVendorClaimsArtifactVendor defines model for PqcVendorClaimsArtifactVendor.
+type PqcVendorClaimsArtifactVendor struct {
+	// Claim What the vendor ships or has announced, as reviewed.
+	Claim string `json:"claim"`
+
+	// Class provider: a crypto provider or toolchain (OpenSSL, Go, JDK). library: a crypto library packages depend on. ecosystem: a signing or identity ecosystem (Sigstore, GnuPG, Kerberos). service: a hosted service the fleet calls. internal: the organization's own shared services.
+	Class PqcVendorClaimsArtifactVendorClass `json:"class"`
+
+	// Id Unique within the document (the recording service checks).
+	Id           string             `json:"id"`
+	LastReviewed openapi_types.Date `json:"last_reviewed"`
+	Name         string             `json:"name"`
+
+	// Packages Dependencies that carry this vendor's crypto into the fleet, matched against recorded dependency names. Empty: reached only through a provider, toolchain or service, not a package.
+	Packages []PqcVendorClaimsArtifactPackage `json:"packages"`
+
+	// Reviewer Who reviewed the claim (team or role).
+	Reviewer string                          `json:"reviewer"`
+	Sources  []PqcVendorClaimsArtifactSource `json:"sources"`
+
+	// Status available: PQC algorithms shipped and usable. partial: some (e.g. key exchange but not signatures). in_progress: announced or in preview. none: no public roadmap.
+	Status PqcVendorClaimsArtifactStatus `json:"status"`
+
+	// Watch The signal that would move the status.
+	Watch *string `json:"watch,omitempty"`
+}
+
+// PqcVendorClaimsArtifactVendorClass provider: a crypto provider or toolchain (OpenSSL, Go, JDK). library: a crypto library packages depend on. ecosystem: a signing or identity ecosystem (Sigstore, GnuPG, Kerberos). service: a hosted service the fleet calls. internal: the organization's own shared services.
+type PqcVendorClaimsArtifactVendorClass = interface{}
+
 // Precedent defines model for Precedent.
 type Precedent struct {
 	// Decision A judgement on a finding; corrections are new decisions (restates_id).
@@ -2068,6 +6064,19 @@ type Product struct {
 	UpdatedAt *time.Time          `json:"updated_at"`
 }
 
+// ProductDefinitionsMapArtifact Reviewed findings-package/repo -> ps_product mappings (human-asserted), recorded into traust-core as an imported document; the newest recorded version is the one product lookups use. Permissive by design: the mappings container carries packages and repos maps whose keys and values are deployment-specific; only the top-level shape is validated.
+type ProductDefinitionsMapArtifact struct {
+	Mappings             ProductDefinitionsMapArtifact_Mappings `json:"mappings"`
+	AdditionalProperties map[string]interface{}                 `json:"-"`
+}
+
+// ProductDefinitionsMapArtifact_Mappings defines model for ProductDefinitionsMapArtifact.Mappings.
+type ProductDefinitionsMapArtifact_Mappings struct {
+	Packages             *map[string]string     `json:"packages,omitempty"`
+	Repos                *map[string]string     `json:"repos,omitempty"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
 // ProgressReport An attempt's end reported from outside a run: merged (the commit it merged as) or
 // abandoned — a run's own statuses come from its report, never this door.
 type ProgressReport struct {
@@ -2108,6 +6117,52 @@ type RefRegistration struct {
 	Sha  string   `json:"sha"`
 }
 
+// RefutedRegisterArtifact Integrity-bound register of triage or validation refutations retained for later execution evidence and countersign.
+type RefutedRegisterArtifact struct {
+	Entries     []RefutedRegisterArtifactEntry `json:"entries"`
+	GeneratedAt time.Time                      `json:"generated_at"`
+	Source      string                         `json:"source"`
+	Sources     *[]string                      `json:"sources,omitempty"`
+}
+
+// RefutedRegisterArtifactCanonicalWrite defines model for RefutedRegisterArtifactCanonicalWrite.
+type RefutedRegisterArtifactCanonicalWrite struct {
+	Entries     interface{} `json:"entries"`
+	GeneratedAt time.Time   `json:"generated_at"`
+	Source      string      `json:"source"`
+	Sources     *[]string   `json:"sources,omitempty"`
+}
+
+// RefutedRegisterArtifactEntry defines model for RefutedRegisterArtifactEntry.
+type RefutedRegisterArtifactEntry struct {
+	AssertedAt      time.Time                                   `json:"asserted_at"`
+	AssertedBy      string                                      `json:"asserted_by"`
+	Category        *string                                     `json:"category"`
+	ClaimedSeverity *string                                     `json:"claimed_severity"`
+	EvidenceRefs    []string                                    `json:"evidence_refs"`
+	ExclusionRule   *RefutedRegisterArtifactEntry_ExclusionRule `json:"exclusion_rule"`
+	File            *string                                     `json:"file"`
+	FindingRef      string                                      `json:"finding_ref"`
+	Line            *int                                        `json:"line"`
+	Note            string                                      `json:"note"`
+	RefuteReasons   []string                                    `json:"refute_reasons"`
+	Source          *string                                     `json:"source,omitempty"`
+	Tier            string                                      `json:"tier"`
+	Title           string                                      `json:"title"`
+	TriageId        *string                                     `json:"triage_id,omitempty"`
+}
+
+// RefutedRegisterArtifactEntryExclusionRule0 defines model for .
+type RefutedRegisterArtifactEntryExclusionRule0 = string
+
+// RefutedRegisterArtifactEntryExclusionRule1 defines model for .
+type RefutedRegisterArtifactEntryExclusionRule1 = int
+
+// RefutedRegisterArtifactEntry_ExclusionRule defines model for RefutedRegisterArtifactEntry.ExclusionRule.
+type RefutedRegisterArtifactEntry_ExclusionRule struct {
+	union json.RawMessage
+}
+
 // Release defines model for Release.
 type Release struct {
 	CreatedAt *time.Time          `json:"created_at"`
@@ -2115,6 +6170,230 @@ type Release struct {
 	ProductId openapi_types.UUID  `json:"product_id"`
 	UpdatedAt *time.Time          `json:"updated_at"`
 	Version   string              `json:"version"`
+}
+
+// RemediationArtifact Schema for *-remediation.json reports produced by the remediate-finding harness. Records the patch produced for one or more security findings on a private fork, the local build/test outcome, and (optionally) the live re-validation verdict.
+type RemediationArtifact struct {
+	// Checks Local verification results (compile, lint, unit tests). At least one check is required so a remediation report always carries an explicit local verdict.
+	Checks []RemediationArtifactCheck `json:"checks"`
+
+	// Evidence Typed base-versus-patch evidence. Each item states what kind of claim it makes and what was observed on the unpatched and patched revisions; an item may only claim 'proves' or 'fails_to_prove' if it recorded both observations, so a check that never ran cannot count as evidence. Distinct from 'checks' (local pass/fail with no before/after) and from 'revalidation' (which stays the live-validation channel). What each kind may legitimately conclude is bounded by the per-path evidence ceilings in the harness's docs/disposition-ledger.md §8a.
+	Evidence *[]RemediationArtifactPatchEvidence    `json:"evidence,omitempty"`
+	Footer   *string                                `json:"footer,omitempty"`
+	Fork     RemediationArtifactFork                `json:"fork"`
+	Metadata RemediationArtifactRemediationMetadata `json:"metadata"`
+
+	// Notes Free-form auditor/agent notes — caveats, follow-ups, anything a human reviewer should know that does not fit a structured field.
+	Notes        *string                          `json:"notes,omitempty"`
+	Patch        RemediationArtifactPatch         `json:"patch"`
+	PullRequest  *RemediationArtifactPullRequest  `json:"pull_request,omitempty"`
+	Revalidation *RemediationArtifactRevalidation `json:"revalidation,omitempty"`
+
+	// SourceFindings Findings this remediation addresses. Usually one; may be several when a single patch closes multiple findings.
+	SourceFindings []RemediationArtifactSourceFinding `json:"source_findings"`
+	Summary        RemediationArtifactSummary         `json:"summary"`
+	Title          string                             `json:"title"`
+}
+
+// RemediationArtifactCheck defines model for RemediationArtifactCheck.
+type RemediationArtifactCheck struct {
+	Command         string   `json:"command"`
+	DurationSeconds *float32 `json:"duration_seconds,omitempty"`
+	LogPath         *string  `json:"log_path,omitempty"`
+
+	// Name e.g. 'go build', 'go vet', 'unit-tests', 'golangci-lint'
+	Name    string                          `json:"name"`
+	Outcome RemediationArtifactCheckOutcome `json:"outcome"`
+	Summary *string                         `json:"summary,omitempty"`
+}
+
+// RemediationArtifactCheckOutcome defines model for RemediationArtifactCheck.Outcome.
+type RemediationArtifactCheckOutcome string
+
+// RemediationArtifactFixStrategy defines model for RemediationArtifactFixStrategy.
+type RemediationArtifactFixStrategy string
+
+// RemediationArtifactFork defines model for RemediationArtifactFork.
+type RemediationArtifactFork struct {
+	BaseCommit *string `json:"base_commit,omitempty"`
+
+	// BaseRef Branch or commit in the fork that the fix branch was cut from.
+	BaseRef string `json:"base_ref"`
+
+	// FixBranch e.g. security/FIND-005-unbounded-read
+	FixBranch            string                       `json:"fix_branch"`
+	FixCommit            *string                      `json:"fix_commit,omitempty"`
+	Host                 *RemediationArtifactForkHost `json:"host,omitempty"`
+	SyncedFromUpstreamAt *time.Time                   `json:"synced_from_upstream_at,omitempty"`
+
+	// UpstreamRemote URL of the upstream this fork mirrors (should equal metadata.repository).
+	UpstreamRemote *string `json:"upstream_remote,omitempty"`
+
+	// Url URL of the private fork/mirror where the fix is pushed.
+	Url        string                            `json:"url"`
+	Visibility RemediationArtifactForkVisibility `json:"visibility"`
+}
+
+// RemediationArtifactForkHost defines model for RemediationArtifactFork.Host.
+type RemediationArtifactForkHost string
+
+// RemediationArtifactForkVisibility defines model for RemediationArtifactFork.Visibility.
+type RemediationArtifactForkVisibility string
+
+// RemediationArtifactPatch defines model for RemediationArtifactPatch.
+type RemediationArtifactPatch struct {
+	// BehaviourChange User-visible behaviour or API change introduced by the fix, or 'none'.
+	BehaviourChange *string `json:"behaviour_change,omitempty"`
+
+	// DiffPath Relative path to the unified diff on disk (e.g. patch.diff).
+	DiffPath   *string `json:"diff_path,omitempty"`
+	DiffSha256 *string `json:"diff_sha256,omitempty"`
+	Diffstat   struct {
+		Additions int `json:"additions"`
+		Deletions int `json:"deletions"`
+		Files     int `json:"files"`
+	} `json:"diffstat"`
+	FilesChanged []struct {
+		Additions  *int                                           `json:"additions,omitempty"`
+		ChangeType RemediationArtifactPatchFilesChangedChangeType `json:"change_type"`
+		Deletions  *int                                           `json:"deletions,omitempty"`
+		Hunks      *int                                           `json:"hunks,omitempty"`
+		Path       string                                         `json:"path"`
+	} `json:"files_changed"`
+
+	// Rationale Why this change closes the finding. Must reference the root cause from the triage rationale, not just restate the diff.
+	Rationale string `json:"rationale"`
+
+	// ResidualRisk Anything the patch deliberately does NOT fix (e.g. 'does not address the SSRF in proxyURL — separate finding f004').
+	ResidualRisk *string                        `json:"residual_risk,omitempty"`
+	Strategy     RemediationArtifactFixStrategy `json:"strategy"`
+
+	// TestsAdded Names/paths of regression tests added to prove the fix.
+	TestsAdded *[]string `json:"tests_added,omitempty"`
+}
+
+// RemediationArtifactPatchFilesChangedChangeType defines model for RemediationArtifactPatch.FilesChanged.ChangeType.
+type RemediationArtifactPatchFilesChangedChangeType string
+
+// RemediationArtifactPatchEvidence defines model for RemediationArtifactPatchEvidence.
+type RemediationArtifactPatchEvidence struct {
+	// BaseObservation What was observed on the UNPATCHED revision, e.g. 'test_auth_bypass fails', 'mutant 7 survives at oauth.go:212'.
+	BaseObservation *string `json:"base_observation,omitempty"`
+
+	// Command Command actually executed, so a reader can re-run it.
+	Command *string `json:"command,omitempty"`
+
+	// DeterministicSteps 'ran' or 'skipped: <reason>' — the harness's existing answer to 'prove it ran'.
+	DeterministicSteps *string                              `json:"deterministic_steps,omitempty"`
+	Kind               RemediationArtifactPatchEvidenceKind `json:"kind"`
+	LogPath            *string                              `json:"log_path,omitempty"`
+
+	// Outcome 'proves' / 'fails_to_prove' require both observations (enforced below). 'not_attempted: <reason>' carries its reason inline, the same shape as deterministic_steps.
+	Outcome string `json:"outcome"`
+
+	// PatchedObservation What was observed on the PATCHED revision, at the same revision-pair and by the same command as base_observation.
+	PatchedObservation *string `json:"patched_observation,omitempty"`
+
+	// Tool Tool and version that produced the observations, e.g. 'mewt 4.0.0', 'go test'.
+	Tool *string `json:"tool,omitempty"`
+}
+
+// RemediationArtifactPatchEvidenceKind defines model for RemediationArtifactPatchEvidenceKind.
+type RemediationArtifactPatchEvidenceKind string
+
+// RemediationArtifactPullRequest defines model for RemediationArtifactPullRequest.
+type RemediationArtifactPullRequest struct {
+	BaseBranch *string                              `json:"base_branch,omitempty"`
+	Number     *int                                 `json:"number,omitempty"`
+	Reviewers  *[]string                            `json:"reviewers,omitempty"`
+	State      *RemediationArtifactPullRequestState `json:"state,omitempty"`
+
+	// Target Where the PR is opened. Stage-9 remediation MUST be 'private-fork' or 'downstream'; 'upstream' is reserved for an explicit human-driven disclosure step.
+	Target RemediationArtifactPullRequestTarget `json:"target"`
+	Url    string                               `json:"url"`
+}
+
+// RemediationArtifactPullRequestState defines model for RemediationArtifactPullRequest.State.
+type RemediationArtifactPullRequestState string
+
+// RemediationArtifactPullRequestTarget Where the PR is opened. Stage-9 remediation MUST be 'private-fork' or 'downstream'; 'upstream' is reserved for an explicit human-driven disclosure step.
+type RemediationArtifactPullRequestTarget string
+
+// RemediationArtifactRemStatus defines model for RemediationArtifactRemStatus.
+type RemediationArtifactRemStatus string
+
+// RemediationArtifactRemediationMetadata defines model for RemediationArtifactRemediationMetadata.
+type RemediationArtifactRemediationMetadata struct {
+	// AuditedCommit The exact upstream commit the finding's file:line references resolve to (from triage_context.repo).
+	AuditedCommit  *string            `json:"audited_commit,omitempty"`
+	Date           openapi_types.Date `json:"date"`
+	HarnessVersion string             `json:"harness_version"`
+	JiraKeys       *[]string          `json:"jira_keys,omitempty"`
+	Language       *string            `json:"language,omitempty"`
+
+	// LogicalProduct Logical product / OLM package this repo belongs to (matches validation manifest).
+	LogicalProduct string `json:"logical_product"`
+
+	// Operator Agent or human who produced this remediation.
+	Operator *string `json:"operator,omitempty"`
+
+	// Repository Upstream repository URL the finding was reported against.
+	Repository string `json:"repository"`
+}
+
+// RemediationArtifactRevalidation defines model for RemediationArtifactRevalidation.
+type RemediationArtifactRevalidation struct {
+	AfterVerdict  *RemediationArtifactRevalidationAfterVerdict  `json:"after_verdict,omitempty"`
+	BeforeVerdict *RemediationArtifactRevalidationBeforeVerdict `json:"before_verdict,omitempty"`
+
+	// Fixed True iff before_verdict was 'confirmed' and after_verdict is 'refuted'.
+	Fixed *bool `json:"fixed,omitempty"`
+
+	// ImageRef Container image built from the fix branch and deployed for re-validation.
+	ImageRef             *string                                `json:"image_ref,omitempty"`
+	Method               *RemediationArtifactRevalidationMethod `json:"method,omitempty"`
+	Performed            bool                                   `json:"performed"`
+	ValidationReportPath *string                                `json:"validation_report_path,omitempty"`
+}
+
+// RemediationArtifactRevalidationAfterVerdict defines model for RemediationArtifactRevalidation.AfterVerdict.
+type RemediationArtifactRevalidationAfterVerdict string
+
+// RemediationArtifactRevalidationBeforeVerdict defines model for RemediationArtifactRevalidation.BeforeVerdict.
+type RemediationArtifactRevalidationBeforeVerdict string
+
+// RemediationArtifactRevalidationMethod defines model for RemediationArtifactRevalidation.Method.
+type RemediationArtifactRevalidationMethod string
+
+// RemediationArtifactSourceFinding defines model for RemediationArtifactSourceFinding.
+type RemediationArtifactSourceFinding struct {
+	AuditReportPath *string  `json:"audit_report_path,omitempty"`
+	Cwes            []string `json:"cwes"`
+
+	// FindingRef Stable reference to the source finding, e.g. 'my-service-triage.json#f005' or 'my-service-security-audit.json#FIND-005'.
+	FindingRef           string                                             `json:"finding_ref"`
+	Locations            []ReportArtifactLocation                           `json:"locations"`
+	Severity             RemediationArtifactSourceFindingSeverity           `json:"severity"`
+	Title                string                                             `json:"title"`
+	TriageConfidence     *float32                                           `json:"triage_confidence,omitempty"`
+	TriageReportPath     *string                                            `json:"triage_report_path,omitempty"`
+	ValidationReportPath *string                                            `json:"validation_report_path,omitempty"`
+	ValidationVerdict    *RemediationArtifactSourceFindingValidationVerdict `json:"validation_verdict,omitempty"`
+}
+
+// RemediationArtifactSourceFindingSeverity defines model for RemediationArtifactSourceFinding.Severity.
+type RemediationArtifactSourceFindingSeverity string
+
+// RemediationArtifactSourceFindingValidationVerdict defines model for RemediationArtifactSourceFinding.ValidationVerdict.
+type RemediationArtifactSourceFindingValidationVerdict string
+
+// RemediationArtifactSummary defines model for RemediationArtifactSummary.
+type RemediationArtifactSummary struct {
+	ChecksPassed      int                          `json:"checks_passed"`
+	ChecksTotal       int                          `json:"checks_total"`
+	FindingsAddressed *int                         `json:"findings_addressed,omitempty"`
+	ReadyForReview    *bool                        `json:"ready_for_review,omitempty"`
+	Status            RemediationArtifactRemStatus `json:"status"`
 }
 
 // RemediationFindingRequest A finding to schedule, named with the repository it belongs to.
@@ -2172,6 +6451,79 @@ type RemediationRequest struct {
 // RemediationStatus defines model for RemediationStatus.
 type RemediationStatus string
 
+// RepoLivenessArtifact The latest availability facts recorded by the forge observation owner (traust-core portfolio.liveness), keyed by stable inventory repository UUID. repository_id MUST equal the map key it sits under (validate.py content gate); status_since is retained across consecutive observations of the same status; unknown observations are not evidence of deletion. Unqueried repositories have no entry.
+type RepoLivenessArtifact struct {
+	// Generated When the forge observation owner produced this snapshot. A consumer holding an older snapshot replaces it whole: per-repo observed_at orders observations within one snapshot, generated orders snapshots.
+	Generated    time.Time                               `json:"generated"`
+	Repositories map[string]RepoLivenessArtifactLiveness `json:"repositories"`
+}
+
+// RepoLivenessArtifactLiveness defines model for RepoLivenessArtifactLiveness.
+type RepoLivenessArtifactLiveness struct {
+	Archived     *bool                              `json:"archived,omitempty"`
+	CanonicalUrl *string                            `json:"canonical_url,omitempty"`
+	ObservedAt   time.Time                          `json:"observed_at"`
+	PushedAt     *time.Time                         `json:"pushed_at,omitempty"`
+	Reason       *string                            `json:"reason,omitempty"`
+	RepositoryId openapi_types.UUID                 `json:"repository_id"`
+	Status       RepoLivenessArtifactLivenessStatus `json:"status"`
+
+	// StatusSince Start of the current unchanged status. The observation owner carries status_since across consecutive observations of the same status and resets it to observed_at on a status change; a producer that resets it every observation misstates the semantics.
+	StatusSince time.Time                          `json:"status_since"`
+	Unobserved  *RepoStateArtifactComparisonStatus `json:"unobserved,omitempty"`
+	Url         string                             `json:"url"`
+}
+
+// RepoLivenessArtifactLivenessStatus defines model for RepoLivenessArtifactLiveness.Status.
+type RepoLivenessArtifactLivenessStatus string
+
+// RepoStateArtifact One forge observation of a repository: its default-branch head, compared with its latest audit when it was pushed since. Stored as the artifact of an assessment of kind repo-state on the observed head ref (baseline_assessment_id = the audit). Recorded only when the forge answered; an unreachable or quota-deferred observation is the run order's outcome, not a document. Repository-level facts (public, upstream, archived) live on the repository row; fork_of keeps the parent the forge reported, the evidence behind repository.upstream_id.
+type RepoStateArtifact struct {
+	// Comparison The head compared with the audited commit; absent when the repository was not pushed since the audit. The file counts (first_party_files, iac_files, threat_model_files, tree_first_party_files) and secret_hits are optional: observations recorded before they were measured lack them.
+	Comparison *RepoStateArtifactComparison `json:"comparison,omitempty"`
+
+	// Fork Whether the forge calls this repository a fork; absent when it didn't say. false is the forge's answer that it isn't one, which an absent fork_of alone cannot tell from no answer.
+	Fork *bool `json:"fork,omitempty"`
+
+	// ForkOf The repository this one forks, as the forge reported it (https URL); absent when it isn't a fork or the forge named no parent. The observation that brings an upstream into the inventory.
+	ForkOf     *string   `json:"fork_of,omitempty"`
+	ObservedAt time.Time `json:"observed_at"`
+
+	// PushedAt Last push the forge reported; drives dormancy and whether a comparison was due.
+	PushedAt *time.Time                        `json:"pushed_at,omitempty"`
+	Status   RepoStateArtifactComparisonStatus `json:"status"`
+}
+
+// RepoStateArtifactComparison The head compared with the audited commit; absent when the repository was not pushed since the audit. The file counts (first_party_files, iac_files, threat_model_files, tree_first_party_files) and secret_hits are optional: observations recorded before they were measured lack them.
+type RepoStateArtifactComparison struct {
+	AheadBy      int  `json:"ahead_by"`
+	ChangedLines int  `json:"changed_lines"`
+	DepsOnly     bool `json:"deps_only"`
+
+	// FirstPartyFiles Changed files that count as first-party (vendored, generated and docs excluded): the numerator of the diff-refusal ratio.
+	FirstPartyFiles *int `json:"first_party_files,omitempty"`
+
+	// IacFiles Changed first-party IaC files (Terraform, CloudFormation, ARM/Bicep): code the cloud-config lane assesses and a code audit does not.
+	IacFiles *int `json:"iac_files,omitempty"`
+
+	// SecretHits Secret-scanner (gitleaks) hits in the change's patch text, scanned during the observation: the router's tripwire. Absent when not scanned (no lines changed, no patch, or the scanner unavailable or failed).
+	SecretHits       *int `json:"secret_hits,omitempty"`
+	SensitiveChanged bool `json:"sensitive_changed"`
+	SensitiveLines   int  `json:"sensitive_lines"`
+
+	// ThreatModelFiles Changed first-party interface-bearing files (entry-point directories, main files, OpenAPI/Swagger, protobuf): new entry points or trust boundaries a threat model may miss.
+	ThreatModelFiles *int `json:"threat_model_files,omitempty"`
+
+	// TreeFirstPartyFiles First-party files in the head's tree, counted only when enough first-party files changed for the diff-refusal ratio to matter; absent when not counted (no cheap listing on the forge, or the forge truncated the tree).
+	TreeFirstPartyFiles *int `json:"tree_first_party_files,omitempty"`
+
+	// Truncated The forge capped the file list; line counts are a lower bound.
+	Truncated bool `json:"truncated"`
+}
+
+// RepoStateArtifactComparisonStatus defines model for RepoStateArtifactComparisonStatus.
+type RepoStateArtifactComparisonStatus string
+
 // Report One build of a report: the order that runs it and, once ready, the file it produced.
 type Report struct {
 	ArtifactId *openapi_types.UUID `json:"artifact_id"`
@@ -2191,6 +6543,679 @@ type Report struct {
 	Scope  ViewFilterOutput `json:"scope"`
 	Status ReportStatus     `json:"status"`
 }
+
+// ReportArtifact Schema for security audit/assessment reports.
+type ReportArtifact struct {
+	AsvsCoverage       *[]ReportArtifactAsvsChapter       `json:"asvs_coverage,omitempty"`
+	DependencyAudit    *ReportArtifactDependencyAudit     `json:"dependency_audit,omitempty"`
+	DispositionSummary *ReportArtifactDispositionSummary  `json:"disposition_summary,omitempty"`
+	ExecutiveSummary   ReportArtifactExecutiveSummary     `json:"executive_summary"`
+	Findings           []ReportArtifactFinding            `json:"findings"`
+	FindingsSummary    []ReportArtifactSeverityCountEntry `json:"findings_summary"`
+	Footer             *string                            `json:"footer,omitempty"`
+	Metadata           ReportArtifactMetadata             `json:"metadata"`
+	NegativeResults    *[]ReportArtifactNegativeResult    `json:"negative_results,omitempty"`
+
+	// NotAffected Advisory matches the audit identified and eliminated as not affected (validity `not_affected`: the issue exists but does not apply to this repository, version or deployment), each with the dependency evidence and a rationale. A narrative paper trail rendered with the report; never ingested as findings.
+	NotAffected *[]ReportArtifactNotAffectedEntry `json:"not_affected,omitempty"`
+
+	// PeachIsolationReview PEACH tenant-isolation review. Records multi-tenancy applicability and, when applicable, one entry per customer-facing interface with its complexity, sharing model, boundary type, and P.E.A.C.H. hardening gaps.
+	PeachIsolationReview *ReportArtifactPeachIsolationReview `json:"peach_isolation_review,omitempty"`
+	RemediationRoadmap   []ReportArtifactRoadmapItem         `json:"remediation_roadmap"`
+
+	// ReviewSurfaceCoverage Coverage of the review surfaces (traust-contracts enums/v1/review-surface.json): one entry per surface, recording whether the audit answered it with a finding, a negative result, not-applicable, or not assessed. A deterministic record, so coverage is checked by schema, not inferred from prose. llm-integration is allowed but not in required: the report checks require it for audits dated from 2026-11-02, so earlier reports stay valid.
+	ReviewSurfaceCoverage *map[string]ReportArtifactReviewSurfaceEntry `json:"review_surface_coverage,omitempty"`
+	ScannerCorrelation    *[]ReportArtifactScannerEntry                `json:"scanner_correlation,omitempty"`
+	SeverityCriteria      []ReportArtifactSeverityCriterion            `json:"severity_criteria"`
+	Title                 string                                       `json:"title"`
+}
+
+// ReportArtifactAsvsChapter defines model for ReportArtifactAsvsChapter.
+type ReportArtifactAsvsChapter struct {
+	Area                 string                       `json:"area"`
+	Chapter              string                       `json:"chapter"`
+	HighestSeverity      *ReportArtifactSeverityLevel `json:"highest_severity,omitempty"`
+	RequirementsAssessed *int                         `json:"requirements_assessed,omitempty"`
+	Violations           *int                         `json:"violations,omitempty"`
+}
+
+// ReportArtifactCanonicalFinding defines model for ReportArtifactCanonicalFinding.
+type ReportArtifactCanonicalFinding struct {
+	AsvsReferences  *ReportArtifactFindingAsvsReferences `json:"asvs_references,omitempty"`
+	AttackPattern   *ReportArtifactFindingAttackPattern  `json:"attack_pattern,omitempty"`
+	BlockedExternal *bool                                `json:"blocked_external,omitempty"`
+	Capec           *ReportArtifactFindingCapec          `json:"capec,omitempty"`
+	Category        *ReportArtifactFindingCategory       `json:"category,omitempty"`
+	Cvss            *ReportArtifactFindingCvss           `json:"cvss,omitempty"`
+	Cwes            []ReportArtifactFindingCwes          `json:"cwes"`
+
+	// Dependency Supply-chain provenance for a dependency finding, so the finding is SELF-DESCRIBING and does not depend on a sibling impact-analysis artifact resolving by relative path. Required once findings live in object storage, and the join key for consumers that build their own database rather than reading the local SQLite projection. Optional; present when origin is 'impact-analysis' or the finding is otherwise advisory-derived.
+	Dependency        *ReportArtifactFindingDependency        `json:"dependency,omitempty"`
+	Description       string                                  `json:"description"`
+	Disposition       *ReportArtifactFindingDisposition       `json:"disposition,omitempty"`
+	EffectiveSeverity *ReportArtifactFindingEffectiveSeverity `json:"effective_severity,omitempty"`
+	Evidence          *ReportArtifactFindingEvidence          `json:"evidence,omitempty"`
+
+	// Fingerprint Deterministic cross-scan identity: sha256(canonical repo URL | ';'-joined sorted set of lineless location paths | primary CWE). One implementation, the identity module fingerprint function; stamped by the finding-identity utility, never model-authored. Only the harness computes identity — a non-harness producer submits unstamped rather than inventing a value. Validation recomputes every stamp and compares (check_finding_identity), so a forged or drifted value is an error rather than a silent identity split. Secondary correlation key — the scan-scoped id stays the primary key, and a fingerprint is never the sole key of a disposition record.
+	Fingerprint *ReportArtifactFindingFingerprint `json:"fingerprint,omitempty"`
+
+	// FingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION). Mirrors layer.schema.json's event field of the same name, and for the same reason: stamps outlive recipes, so matching fingerprints across an epoch boundary means comparing this field too. Absent on findings stamped before 2026-09-18 -- those predate the field rather than declaring an unknown version, and were separable only because exactly two recipes existed to try.
+	FingerprintAlgo     *ReportArtifactFindingFingerprintAlgo     `json:"fingerprint_algo,omitempty"`
+	Id                  string                                    `json:"id"`
+	IsolationBoundary   *ReportArtifactFindingIsolationBoundary   `json:"isolation_boundary,omitempty"`
+	IsolationDimensions *ReportArtifactFindingIsolationDimensions `json:"isolation_dimensions,omitempty"`
+
+	// Kind The finding kind, independent of validity. Historical findings may omit it.
+	Kind      *ReportArtifactFindingKind     `json:"kind,omitempty"`
+	Locations ReportArtifactFindingLocations `json:"locations"`
+	Origin    *ReportArtifactFindingOrigin   `json:"origin,omitempty"`
+
+	// OwaspLlmReferences OWASP Top 10 for LLM Applications (2025) category IDs this finding falls under. Set on findings about LLM, agent or MCP application code; the category ID is cited, never OWASP text.
+	OwaspLlmReferences *ReportArtifactFindingOwaspLlmReferences `json:"owasp_llm_references,omitempty"`
+
+	// Passes Audit passes that independently surfaced this finding (dual-pass union-merge, harness >= 0.144.0). [1,2] = both passes; [2] = second pass only. Optional; single-pass reports omit it.
+	Passes *ReportArtifactFindingPasses `json:"passes,omitempty"`
+
+	// PeachReferences PEACH tenant-isolation hardening parameter(s) this finding violates. Only set when the audited component is multi-tenant.
+	PeachReferences   *ReportArtifactFindingPeachReferences   `json:"peach_references,omitempty"`
+	PqcClassification *ReportArtifactFindingPqcClassification `json:"pqc_classification,omitempty"`
+	Remediation       string                                  `json:"remediation"`
+
+	// RemediationEffort Ordered effort-size labels; null means unknown size. Blocking is independent, and no duration thresholds are defined.
+	RemediationEffort *ReportArtifactEffort                  `json:"remediation_effort"`
+	Severity          ReportArtifactFindingSeverity          `json:"severity"`
+	SourceFindings    *ReportArtifactFindingSourceFindings   `json:"source_findings,omitempty"`
+	Title             string                                 `json:"title"`
+	ValidationStatus  *ReportArtifactFindingValidationStatus `json:"validation_status,omitempty"`
+}
+
+// ReportArtifactCanonicalWrite defines model for ReportArtifactCanonicalWrite.
+type ReportArtifactCanonicalWrite struct {
+	AsvsCoverage       *[]ReportArtifactAsvsChapter   `json:"asvs_coverage,omitempty"`
+	DependencyAudit    *ReportArtifactDependencyAudit `json:"dependency_audit,omitempty"`
+	DispositionSummary *struct {
+		SeverityOverrides interface{} `json:"severity_overrides,omitempty"`
+	} `json:"disposition_summary,omitempty"`
+	ExecutiveSummary ReportArtifactExecutiveSummary     `json:"executive_summary"`
+	Findings         interface{}                        `json:"findings"`
+	FindingsSummary  []ReportArtifactSeverityCountEntry `json:"findings_summary"`
+	Footer           *string                            `json:"footer,omitempty"`
+	Metadata         ReportArtifactMetadata             `json:"metadata"`
+	NegativeResults  *[]ReportArtifactNegativeResult    `json:"negative_results,omitempty"`
+
+	// NotAffected Advisory matches the audit identified and eliminated as not affected (validity `not_affected`: the issue exists but does not apply to this repository, version or deployment), each with the dependency evidence and a rationale. A narrative paper trail rendered with the report; never ingested as findings.
+	NotAffected *[]ReportArtifactNotAffectedEntry `json:"not_affected,omitempty"`
+
+	// PeachIsolationReview PEACH tenant-isolation review. Records multi-tenancy applicability and, when applicable, one entry per customer-facing interface with its complexity, sharing model, boundary type, and P.E.A.C.H. hardening gaps.
+	PeachIsolationReview *ReportArtifactPeachIsolationReview `json:"peach_isolation_review,omitempty"`
+	RemediationRoadmap   interface{}                         `json:"remediation_roadmap"`
+
+	// ReviewSurfaceCoverage Coverage of the review surfaces (traust-contracts enums/v1/review-surface.json): one entry per surface, recording whether the audit answered it with a finding, a negative result, not-applicable, or not assessed. A deterministic record, so coverage is checked by schema, not inferred from prose. llm-integration is allowed but not in required: the report checks require it for audits dated from 2026-11-02, so earlier reports stay valid.
+	ReviewSurfaceCoverage *map[string]ReportArtifactReviewSurfaceEntry `json:"review_surface_coverage,omitempty"`
+	ScannerCorrelation    *[]ReportArtifactScannerEntry                `json:"scanner_correlation,omitempty"`
+	SeverityCriteria      []ReportArtifactSeverityCriterion            `json:"severity_criteria"`
+	Title                 string                                       `json:"title"`
+}
+
+// ReportArtifactDependencyAudit defines model for ReportArtifactDependencyAudit.
+type ReportArtifactDependencyAudit struct {
+	Entries *[]struct {
+		Notes   *string `json:"notes,omitempty"`
+		Package string  `json:"package"`
+		Status  string  `json:"status"`
+		Version string  `json:"version"`
+	} `json:"entries,omitempty"`
+	Prose *string `json:"prose,omitempty"`
+}
+
+// ReportArtifactDisposition defines model for ReportArtifactDisposition.
+type ReportArtifactDisposition struct {
+	// Assurance Highest evidence class that has spoken on this finding's validity: execution_proven (reproducing exploit/crash), human_reviewed (identity-provider-verified human), machine_verified (triage/audit machine verdict), claimed (audit only).
+	Assurance *ReportArtifactDispositionAssurance `json:"assurance,omitempty"`
+
+	// Conflict True when the layer contains both 'confirmed' and 'false_positive' validity events for this finding — surfaced for human re-review, never silently resolved.
+	Conflict *bool `json:"conflict,omitempty"`
+
+	// Events event_id values from the disposition layer, chronological.
+	Events []string `json:"events"`
+
+	// EvidenceGrade Explicit evidence strength: E0 observed effect, E1 authenticated success response, E2 strong inference, E3 behavioral inference. E0 is strongest. Missing or null means ungraded; source type and human approval never invent or upgrade a grade.
+	EvidenceGrade *LayerArtifactEventEvidenceGrade `json:"evidence_grade"`
+
+	// FpOverridden True when execution-verified evidence confirmed the finding over a prior human false_positive assertion. Surfaced loudly; the ledger preserves both events with attribution.
+	FpOverridden *bool `json:"fp_overridden,omitempty"`
+
+	// FpReassertionBlocked True when a single human false_positive assertion post-dates execution-verified confirmation — re-asserting FP against a reproducing PoC requires two independent identity-provider-verified humans (two-person rule).
+	FpReassertionBlocked *bool     `json:"fp_reassertion_blocked,omitempty"`
+	LastUpdated          time.Time `json:"last_updated"`
+
+	// RefutedAwaitingSignoff True when machine validation refuted the finding but no identity-provider-verified human has countersigned the false_positive determination yet.
+	RefutedAwaitingSignoff *bool                               `json:"refuted_awaiting_signoff,omitempty"`
+	Resolution             ReportArtifactDispositionResolution `json:"resolution"`
+
+	// SeverityOverride Present only on cumulative reports when an identity-provider-verified human recorded a severity override in the disposition layer (latest human severity event wins). The finding's original severity field is preserved; effective_severity carries the override.
+	SeverityOverride *struct {
+		// At when the override was made (occurred_at of the latest human severity event)
+		At string `json:"at"`
+
+		// By identity handle of the verified signer
+		By        string                                            `json:"by"`
+		Rationale *string                                           `json:"rationale,omitempty"`
+		Severity  ReportArtifactDispositionSeverityOverrideSeverity `json:"severity"`
+	} `json:"severity_override,omitempty"`
+	Validity ReportArtifactDispositionValidity `json:"validity"`
+}
+
+// ReportArtifactDispositionAssurance Highest evidence class that has spoken on this finding's validity: execution_proven (reproducing exploit/crash), human_reviewed (identity-provider-verified human), machine_verified (triage/audit machine verdict), claimed (audit only).
+type ReportArtifactDispositionAssurance string
+
+// ReportArtifactDispositionResolution defines model for ReportArtifactDisposition.Resolution.
+type ReportArtifactDispositionResolution string
+
+// ReportArtifactDispositionSeverityOverrideSeverity defines model for ReportArtifactDisposition.SeverityOverride.Severity.
+type ReportArtifactDispositionSeverityOverrideSeverity string
+
+// ReportArtifactDispositionValidity defines model for ReportArtifactDisposition.Validity.
+type ReportArtifactDispositionValidity string
+
+// ReportArtifactDispositionSummary defines model for ReportArtifactDispositionSummary.
+type ReportArtifactDispositionSummary struct {
+	ByResolution struct {
+		FixInProgress        int `json:"fix_in_progress"`
+		Open                 int `json:"open"`
+		PartiallyResolved    int `json:"partially_resolved"`
+		RegressionIntroduced int `json:"regression_introduced"`
+		Resolved             int `json:"resolved"`
+		RiskAccepted         int `json:"risk_accepted"`
+	} `json:"by_resolution"`
+	ByValidity struct {
+		Confirmed     int  `json:"confirmed"`
+		Corrected     int  `json:"corrected"`
+		FalsePositive int  `json:"false_positive"`
+		Hardening     *int `json:"hardening,omitempty"`
+		NotAffected   *int `json:"not_affected,omitempty"`
+		NotVerified   int  `json:"not_verified"`
+		TruePositive  *int `json:"true_positive,omitempty"`
+	} `json:"by_validity"`
+
+	// Conflicts Finding IDs whose disposition.conflict is true.
+	Conflicts   *[]string `json:"conflicts,omitempty"`
+	GeneratedAt time.Time `json:"generated_at"`
+
+	// LayerRef Relative path to the *-findings-layer.json this report was generated from.
+	LayerRef string `json:"layer_ref"`
+
+	// NeedsReviewCount Count of pending items in the layer's needs_review queue.
+	NeedsReviewCount *int `json:"needs_review_count,omitempty"`
+
+	// SeverityOverrides Every finding whose severity an identity-provider-verified human overrode via the countersign workbench (harness >= 0.128.0). Original severities stay in place; effective_severity carries the override per finding.
+	SeverityOverrides *[]struct {
+		At      string `json:"at"`
+		By      string `json:"by"`
+		Finding string `json:"finding"`
+
+		// From the audit report's original severity
+		From      *string                                                   `json:"from"`
+		Rationale *string                                                   `json:"rationale,omitempty"`
+		Severity  ReportArtifactDispositionSummarySeverityOverridesSeverity `json:"severity"`
+	} `json:"severity_overrides,omitempty"`
+}
+
+// ReportArtifactDispositionSummarySeverityOverridesSeverity defines model for ReportArtifactDispositionSummary.SeverityOverrides.Severity.
+type ReportArtifactDispositionSummarySeverityOverridesSeverity string
+
+// ReportArtifactEffort Ordered effort-size labels; null means unknown size. Blocking is independent, and no duration thresholds are defined.
+type ReportArtifactEffort string
+
+// ReportArtifactEvidenceBlock defines model for ReportArtifactEvidenceBlock.
+type ReportArtifactEvidenceBlock struct {
+	Caption  *string `json:"caption,omitempty"`
+	Code     string  `json:"code"`
+	Language *string `json:"language,omitempty"`
+}
+
+// ReportArtifactExecutiveSummary defines model for ReportArtifactExecutiveSummary.
+type ReportArtifactExecutiveSummary struct {
+	KeyRisks             *[]string `json:"key_risks,omitempty"`
+	PositiveObservations *[]string `json:"positive_observations,omitempty"`
+	Prose                string    `json:"prose"`
+	SeverityCounts       struct {
+		Critical      int `json:"critical"`
+		High          int `json:"high"`
+		Informational int `json:"informational"`
+		Low           int `json:"low"`
+		Medium        int `json:"medium"`
+	} `json:"severity_counts"`
+}
+
+// ReportArtifactFinding defines model for ReportArtifactFinding.
+type ReportArtifactFinding struct {
+	AsvsReferences *ReportArtifactFindingAsvsReferences `json:"asvs_references,omitempty"`
+	AttackPattern  *ReportArtifactFindingAttackPattern  `json:"attack_pattern,omitempty"`
+
+	// BlockedExternal An external dependency blocks this item; independent of effort size.
+	BlockedExternal *ReportArtifactFindingBlockedExternal `json:"blocked_external,omitempty"`
+	Capec           *ReportArtifactFindingCapec           `json:"capec,omitempty"`
+	Category        *ReportArtifactFindingCategory        `json:"category,omitempty"`
+	Cvss            *ReportArtifactFindingCvss            `json:"cvss,omitempty"`
+	Cwes            []ReportArtifactFindingCwes           `json:"cwes"`
+
+	// Dependency Supply-chain provenance for a dependency finding, so the finding is SELF-DESCRIBING and does not depend on a sibling impact-analysis artifact resolving by relative path. Required once findings live in object storage, and the join key for consumers that build their own database rather than reading the local SQLite projection. Optional; present when origin is 'impact-analysis' or the finding is otherwise advisory-derived.
+	Dependency        *ReportArtifactFindingDependency        `json:"dependency,omitempty"`
+	Description       string                                  `json:"description"`
+	Disposition       *ReportArtifactFindingDisposition       `json:"disposition,omitempty"`
+	EffectiveSeverity *ReportArtifactFindingEffectiveSeverity `json:"effective_severity,omitempty"`
+	Evidence          *ReportArtifactFindingEvidence          `json:"evidence,omitempty"`
+
+	// Fingerprint Deterministic cross-scan identity: sha256(canonical repo URL | ';'-joined sorted set of lineless location paths | primary CWE). One implementation, the identity module fingerprint function; stamped by the finding-identity utility, never model-authored. Only the harness computes identity — a non-harness producer submits unstamped rather than inventing a value. Validation recomputes every stamp and compares (check_finding_identity), so a forged or drifted value is an error rather than a silent identity split. Secondary correlation key — the scan-scoped id stays the primary key, and a fingerprint is never the sole key of a disposition record.
+	Fingerprint *ReportArtifactFindingFingerprint `json:"fingerprint,omitempty"`
+
+	// FingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION). Mirrors layer.schema.json's event field of the same name, and for the same reason: stamps outlive recipes, so matching fingerprints across an epoch boundary means comparing this field too. Absent on findings stamped before 2026-09-18 -- those predate the field rather than declaring an unknown version, and were separable only because exactly two recipes existed to try.
+	FingerprintAlgo     *ReportArtifactFindingFingerprintAlgo     `json:"fingerprint_algo,omitempty"`
+	Id                  string                                    `json:"id"`
+	IsolationBoundary   *ReportArtifactFindingIsolationBoundary   `json:"isolation_boundary,omitempty"`
+	IsolationDimensions *ReportArtifactFindingIsolationDimensions `json:"isolation_dimensions,omitempty"`
+
+	// Kind The finding kind, independent of validity. Historical findings may omit it.
+	Kind      *ReportArtifactFindingKind     `json:"kind,omitempty"`
+	Locations ReportArtifactFindingLocations `json:"locations"`
+	Origin    *ReportArtifactFindingOrigin   `json:"origin,omitempty"`
+
+	// OwaspLlmReferences OWASP Top 10 for LLM Applications (2025) category IDs this finding falls under. Set on findings about LLM, agent or MCP application code; the category ID is cited, never OWASP text.
+	OwaspLlmReferences *ReportArtifactFindingOwaspLlmReferences `json:"owasp_llm_references,omitempty"`
+
+	// Passes Audit passes that independently surfaced this finding (dual-pass union-merge, harness >= 0.144.0). [1,2] = both passes; [2] = second pass only. Optional; single-pass reports omit it.
+	Passes *ReportArtifactFindingPasses `json:"passes,omitempty"`
+
+	// PeachReferences PEACH tenant-isolation hardening parameter(s) this finding violates. Only set when the audited component is multi-tenant.
+	PeachReferences   *ReportArtifactFindingPeachReferences   `json:"peach_references,omitempty"`
+	PqcClassification *ReportArtifactFindingPqcClassification `json:"pqc_classification,omitempty"`
+	Remediation       string                                  `json:"remediation"`
+	RemediationEffort *ReportArtifactFindingRemediationEffort `json:"remediation_effort"`
+	Severity          ReportArtifactFindingSeverity           `json:"severity"`
+	SourceFindings    *ReportArtifactFindingSourceFindings    `json:"source_findings,omitempty"`
+	Title             string                                  `json:"title"`
+	ValidationStatus  *ReportArtifactFindingValidationStatus  `json:"validation_status,omitempty"`
+}
+
+// ReportArtifactFindingAsvsReferences defines model for ReportArtifactFindingAsvsReferences.
+type ReportArtifactFindingAsvsReferences = []string
+
+// ReportArtifactFindingAttackPattern defines model for ReportArtifactFindingAttackPattern.
+type ReportArtifactFindingAttackPattern = string
+
+// ReportArtifactFindingBlockedExternal An external dependency blocks this item; independent of effort size.
+type ReportArtifactFindingBlockedExternal = bool
+
+// ReportArtifactFindingCapec defines model for ReportArtifactFindingCapec.
+type ReportArtifactFindingCapec = []string
+
+// ReportArtifactFindingCategory defines model for ReportArtifactFindingCategory.
+type ReportArtifactFindingCategory = string
+
+// ReportArtifactFindingCvss defines model for ReportArtifactFindingCvss.
+type ReportArtifactFindingCvss struct {
+	Score  float32 `json:"score"`
+	Vector string  `json:"vector"`
+}
+
+// ReportArtifactFindingCwes defines model for ReportArtifactFindingCwes.
+type ReportArtifactFindingCwes = string
+
+// ReportArtifactFindingDependency Supply-chain provenance for a dependency finding, so the finding is SELF-DESCRIBING and does not depend on a sibling impact-analysis artifact resolving by relative path. Required once findings live in object storage, and the join key for consumers that build their own database rather than reading the local SQLite projection. Optional; present when origin is 'impact-analysis' or the finding is otherwise advisory-derived.
+type ReportArtifactFindingDependency struct {
+	// Advisory Advisory id as published — CVE-, GHSA-, RHSA-, MAL-, PYSEC-, GO-, RUSTSEC-, OSV-.
+	Advisory       string                                         `json:"advisory"`
+	Classification *ReportArtifactFindingDependencyClassification `json:"classification,omitempty"`
+
+	// Ecosystem Package ecosystem; the same vocabulary as impact-analysis metadata.ecosystem (enums/v1/ecosystem.json), including the distro ecosystems rpm/deb/apk for C/C++.
+	Ecosystem *ReportArtifactFindingDependencyEcosystem `json:"ecosystem,omitempty"`
+
+	// EvidenceLevel Tier that justified the classification; 'manifest' and 'symbol-usage' both ceiling at likely_affected.
+	EvidenceLevel *ReportArtifactFindingDependencyEvidenceLevel `json:"evidence_level,omitempty"`
+	FixedVersion  *string                                       `json:"fixed_version,omitempty"`
+
+	// ImpactArtifact Reference to the impact-analysis artifact this was routed from. A provenance pointer, NOT the source of truth — the fields above stand alone if it cannot be resolved.
+	ImpactArtifact *string `json:"impact_artifact,omitempty"`
+
+	// InstalledVersion Version observed in the manifest or SBOM that matched the range.
+	InstalledVersion *string `json:"installed_version,omitempty"`
+
+	// Module Package identity in its ecosystem's native form (org.postgresql:postgresql, golang.org/x/crypto, lodash).
+	Module string `json:"module"`
+
+	// Purl Package URL when available — the portable identity for cross-system joins.
+	Purl            *string `json:"purl,omitempty"`
+	VulnerableRange *string `json:"vulnerable_range,omitempty"`
+}
+
+// ReportArtifactFindingDependencyClassification defines model for ReportArtifactFindingDependency.Classification.
+type ReportArtifactFindingDependencyClassification string
+
+// ReportArtifactFindingDependencyEcosystem Package ecosystem; the same vocabulary as impact-analysis metadata.ecosystem (enums/v1/ecosystem.json), including the distro ecosystems rpm/deb/apk for C/C++.
+type ReportArtifactFindingDependencyEcosystem string
+
+// ReportArtifactFindingDependencyEvidenceLevel Tier that justified the classification; 'manifest' and 'symbol-usage' both ceiling at likely_affected.
+type ReportArtifactFindingDependencyEvidenceLevel string
+
+// ReportArtifactFindingDisposition defines model for ReportArtifactFindingDisposition.
+type ReportArtifactFindingDisposition = ReportArtifactDisposition
+
+// ReportArtifactFindingEffectiveSeverity defines model for ReportArtifactFindingEffectiveSeverity.
+type ReportArtifactFindingEffectiveSeverity string
+
+// ReportArtifactFindingEvidence defines model for ReportArtifactFindingEvidence.
+type ReportArtifactFindingEvidence = []ReportArtifactEvidenceBlock
+
+// ReportArtifactFindingFingerprint Deterministic cross-scan identity: sha256(canonical repo URL | ';'-joined sorted set of lineless location paths | primary CWE). One implementation, the identity module fingerprint function; stamped by the finding-identity utility, never model-authored. Only the harness computes identity — a non-harness producer submits unstamped rather than inventing a value. Validation recomputes every stamp and compares (check_finding_identity), so a forged or drifted value is an error rather than a silent identity split. Secondary correlation key — the scan-scoped id stays the primary key, and a fingerprint is never the sole key of a disposition record.
+type ReportArtifactFindingFingerprint = string
+
+// ReportArtifactFindingFingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION). Mirrors layer.schema.json's event field of the same name, and for the same reason: stamps outlive recipes, so matching fingerprints across an epoch boundary means comparing this field too. Absent on findings stamped before 2026-09-18 -- those predate the field rather than declaring an unknown version, and were separable only because exactly two recipes existed to try.
+type ReportArtifactFindingFingerprintAlgo = string
+
+// ReportArtifactFindingIsolationBoundary defines model for ReportArtifactFindingIsolationBoundary.
+type ReportArtifactFindingIsolationBoundary = string
+
+// ReportArtifactFindingIsolationDimensions defines model for ReportArtifactFindingIsolationDimensions.
+type ReportArtifactFindingIsolationDimensions = []string
+
+// ReportArtifactFindingKind The finding kind, independent of validity. Historical findings may omit it.
+type ReportArtifactFindingKind = interface{}
+
+// ReportArtifactFindingLocations defines model for ReportArtifactFindingLocations.
+type ReportArtifactFindingLocations = []ReportArtifactLocation
+
+// ReportArtifactFindingOrigin defines model for ReportArtifactFindingOrigin.
+type ReportArtifactFindingOrigin string
+
+// ReportArtifactFindingOwaspLlmReferences OWASP Top 10 for LLM Applications (2025) category IDs this finding falls under. Set on findings about LLM, agent or MCP application code; the category ID is cited, never OWASP text.
+type ReportArtifactFindingOwaspLlmReferences = []interface{}
+
+// ReportArtifactFindingPasses Audit passes that independently surfaced this finding (dual-pass union-merge, harness >= 0.144.0). [1,2] = both passes; [2] = second pass only. Optional; single-pass reports omit it.
+type ReportArtifactFindingPasses = []int
+
+// ReportArtifactFindingPeachReferences PEACH tenant-isolation hardening parameter(s) this finding violates. Only set when the audited component is multi-tenant.
+type ReportArtifactFindingPeachReferences = []string
+
+// ReportArtifactFindingPqcClassification defines model for ReportArtifactFindingPqcClassification.
+type ReportArtifactFindingPqcClassification string
+
+// ReportArtifactFindingRemediationEffort defines model for ReportArtifactFindingRemediationEffort.
+type ReportArtifactFindingRemediationEffort string
+
+// ReportArtifactFindingSeverity defines model for ReportArtifactFindingSeverity.
+type ReportArtifactFindingSeverity = ReportArtifactSeverityLevel
+
+// ReportArtifactFindingSourceFindings defines model for ReportArtifactFindingSourceFindings.
+type ReportArtifactFindingSourceFindings = []string
+
+// ReportArtifactFindingValidationStatus defines model for ReportArtifactFindingValidationStatus.
+type ReportArtifactFindingValidationStatus string
+
+// ReportArtifactLocation defines model for ReportArtifactLocation.
+type ReportArtifactLocation struct {
+	Description *string `json:"description,omitempty"`
+	Lines       *string `json:"lines,omitempty"`
+
+	// Path Repository-relative path of the artifact this finding concerns, including an artifact that SHOULD exist and does not (an absent SECURITY.md is still `SECURITY.md`). Never a repo-root marker: `.`, `/`, `./` and `/./` all canonicalize to empty, which collapses the ledger fingerprint to (repo, '', cwe). When a finding genuinely concerns no artifact (e.g. 'repository appears unmaintained'), use a controlled pseudo-path from enums/v1/repo-scope-path.json. Not a notes field: prose in this field silently feeds identity.
+	Path string `json:"path"`
+}
+
+// ReportArtifactMetadata defines model for ReportArtifactMetadata.
+type ReportArtifactMetadata struct {
+	// Additional Producer-declared provenance and run records. harness_version identifies the producing harness release; contracts_version pins the contract surface it was validated against. The other declared fields are the run records the report-producing skills (code, rpm and container profiles) specify. The object stays open: an undeclared key is allowed, but a declared key must match its shape.
+	Additional *struct {
+		// AssertiveInference Assertive reporting posture for languages with thin or no deterministic rule coverage. Changes the report-or-omit decision only, never severity or validation_status.
+		AssertiveInference *struct {
+			Languages []string `json:"languages"`
+
+			// Trigger Why the posture applied, e.g. 'thin per opengrep coverage block'.
+			Trigger string `json:"trigger"`
+		} `json:"assertive_inference,omitempty"`
+
+		// AuditPasses Number of independent review passes merged into the report. Recorded when it differs from the two-pass default.
+		AuditPasses *int `json:"audit_passes,omitempty"`
+
+		// CompanionLanes Other scan lanes the tree needs that this audit does not cover (e.g. 'cloud-config-audit' when IaC is present). A declaration only; the router turns it into worklist rows.
+		CompanionLanes *[]string `json:"companion_lanes,omitempty"`
+
+		// ContractsVersion Version of traust-contracts this report was validated against.
+		ContractsVersion *string `json:"contracts_version,omitempty"`
+
+		// CoverageGaps Systems a pre-scan or review lane could not examine (unexpanded config systems, unenumerated frameworks, classes a scoped audit did not cover). Aggregated fleet-wide: an audit that skipped something says so here instead of reading as clean.
+		CoverageGaps *[]struct {
+			// Count Number of files or items affected, when known.
+			Count  *int   `json:"count,omitempty"`
+			Reason string `json:"reason"`
+
+			// System What was not examined.
+			System string `json:"system"`
+
+			// Tool Pre-scan or lane that recorded the gap.
+			Tool string `json:"tool"`
+		} `json:"coverage_gaps,omitempty"`
+
+		// Degraded True when the run lost coverage (a lane or tool unavailable). A degraded report must not be read as full coverage.
+		Degraded *bool `json:"degraded,omitempty"`
+
+		// DeterministicSteps Fate of every deterministic pre-scan, keyed by step name (e.g. opengrep, gitleaks, osv-scanner, sbom-grype, k8s-hardening, priv-profile, fork-advisory-lag, route-guards, config-matrix, yara, crypto-audit, crypto). Value: 'ran', 'skipped: <reason>', or a step-specific state ('list', '<n> records'). A skipped step means that area was reviewed by hand only; consumers must not read missing scanner facts as a clean result.
+		DeterministicSteps *map[string]string `json:"deterministic_steps,omitempty"`
+
+		// HarnessVersion Semver (+ optional -sha) of the producing harness release. Its presence marks the report as modern-producer output, which requires stamped finding identity (see the root allOf rule).
+		HarnessVersion *string `json:"harness_version,omitempty"`
+
+		// ModelRouting The routed model decision that produced the report.
+		ModelRouting *struct {
+			// Floor Model-class floor that applied.
+			Floor *string `json:"floor,omitempty"`
+			Model string  `json:"model"`
+
+			// RegistrySha Short sha of the model registry revision that made the decision.
+			RegistrySha *string `json:"registry_sha,omitempty"`
+			Role        string  `json:"role"`
+		} `json:"model_routing,omitempty"`
+
+		// PrecisionGates Precision Gate pass record. A report that files critical/high findings without this block is an incomplete run.
+		PrecisionGates *struct {
+			// CritHighEvaluated Every critical/high candidate evaluated, filed or gated.
+			CritHighEvaluated int `json:"crit_high_evaluated"`
+
+			// Fired Each gate that changed a candidate's disposition. An empty list is legitimate.
+			Fired []struct {
+				Action ReportArtifactMetadataAdditionalPrecisionGatesFiredAction `json:"action"`
+
+				// Candidate Short title or finding id.
+				Candidate string `json:"candidate"`
+
+				// Gate Gate name from the skill's Precision Gate section.
+				Gate string `json:"gate"`
+			} `json:"fired"`
+		} `json:"precision_gates,omitempty"`
+
+		// SourceAudit Container profile: path of the source repository's code-profile report that this image audit cross-links.
+		SourceAudit *string `json:"source_audit,omitempty"`
+	} `json:"additional,omitempty"`
+
+	// AuditProfile Report profile discriminator: 'code' = secure-code-audit (source/manifest audit), 'rpm' = secure-rpm-audit (dist-git packaging audit), 'container' = secure-container-audit (registry image audit via skopeo/syft/grype). Shared finding/severity/ID vocabulary; framework sections differ by profile.
+	AuditProfile interface{}        `json:"audit_profile,omitempty"`
+	Auditor      *string            `json:"auditor,omitempty"`
+	Commit       *string            `json:"commit,omitempty"`
+	Date         openapi_types.Date `json:"date"`
+	Framework    *string            `json:"framework,omitempty"`
+
+	// LocBreakdown Structured lines-of-code count for the audited ref, produced by tokei/cloc/scc.
+	LocBreakdown *struct {
+		ByLanguage *map[string]int `json:"by_language,omitempty"`
+
+		// Excludes Paths or globs excluded from the count (e.g. vendor/, node_modules/).
+		Excludes *[]string `json:"excludes,omitempty"`
+
+		// Tool Tool used to compute the count (tokei, cloc, scc, wc).
+		Tool  *string `json:"tool,omitempty"`
+		Total int     `json:"total"`
+	} `json:"loc_breakdown,omitempty"`
+
+	// LocReviewed Total lines of source code reviewed. Prefer an integer; string is accepted for backward compatibility with earlier reports.
+	LocReviewed *ReportArtifactMetadata_LocReviewed `json:"loc_reviewed,omitempty"`
+	Methodology *string                             `json:"methodology,omitempty"`
+	Ref         *string                             `json:"ref,omitempty"`
+	RefKind     *ReportArtifactMetadataRefKind      `json:"ref_kind,omitempty"`
+	Repository  *string                             `json:"repository,omitempty"`
+	Scope       string                              `json:"scope"`
+	Tools       *[]string                           `json:"tools,omitempty"`
+}
+
+// ReportArtifactMetadataAdditionalPrecisionGatesFiredAction defines model for ReportArtifactMetadata.Additional.PrecisionGates.Fired.Action.
+type ReportArtifactMetadataAdditionalPrecisionGatesFiredAction string
+
+// ReportArtifactMetadataLocReviewed0 defines model for .
+type ReportArtifactMetadataLocReviewed0 = int
+
+// ReportArtifactMetadataLocReviewed1 defines model for .
+type ReportArtifactMetadataLocReviewed1 = string
+
+// ReportArtifactMetadata_LocReviewed Total lines of source code reviewed. Prefer an integer; string is accepted for backward compatibility with earlier reports.
+type ReportArtifactMetadata_LocReviewed struct {
+	union json.RawMessage
+}
+
+// ReportArtifactMetadataRefKind defines model for ReportArtifactMetadata.RefKind.
+type ReportArtifactMetadataRefKind string
+
+// ReportArtifactNegativeResult defines model for ReportArtifactNegativeResult.
+type ReportArtifactNegativeResult struct {
+	Area   string  `json:"area"`
+	Files  *string `json:"files,omitempty"`
+	Result string  `json:"result"`
+}
+
+// ReportArtifactNotAffectedEntry One scanner-matched advisory eliminated as not affected, and why: by an impact-analysis row (version_not_in_range or not_imported) or a vendor statement cited in reference. govulncheck's not_observed is evidence for triage, never an elimination route here.
+type ReportArtifactNotAffectedEntry struct {
+	// Dependency Supply-chain provenance for a dependency finding, so the finding is SELF-DESCRIBING and does not depend on a sibling impact-analysis artifact resolving by relative path. Required once findings live in object storage, and the join key for consumers that build their own database rather than reading the local SQLite projection. Optional; present when origin is 'impact-analysis' or the finding is otherwise advisory-derived.
+	Dependency ReportArtifactFindingDependency `json:"dependency"`
+
+	// Rationale Why the evidence eliminates the match, in prose.
+	Rationale string `json:"rationale"`
+
+	// Reference Where a vendor not-affected statement or fixed NVR is recorded, when that is the evidence instead of dependency.impact_artifact.
+	Reference *string `json:"reference,omitempty"`
+	union     json.RawMessage
+}
+
+// ReportArtifactNotAffectedEntry0 Impact-analysis: out of range or not in the dependency graph.
+type ReportArtifactNotAffectedEntry0 struct {
+	Dependency *struct {
+		Classification ReportArtifactNotAffectedEntry_0_Dependency_Classification `json:"classification"`
+		ImpactArtifact string                                                     `json:"impact_artifact"`
+	} `json:"dependency,omitempty"`
+}
+
+// ReportArtifactNotAffectedEntry0DependencyClassification0 defines model for .
+type ReportArtifactNotAffectedEntry0DependencyClassification0 = interface{}
+
+// ReportArtifactNotAffectedEntry0DependencyClassification1 defines model for .
+type ReportArtifactNotAffectedEntry0DependencyClassification1 = interface{}
+
+// ReportArtifactNotAffectedEntry_0_Dependency_Classification defines model for ReportArtifactNotAffectedEntry.0.Dependency.Classification.
+type ReportArtifactNotAffectedEntry_0_Dependency_Classification struct {
+	union json.RawMessage
+}
+
+// ReportArtifactNotAffectedEntry1 A vendor not-affected statement or fixed NVR, cited in reference; the dependency never says affected.
+type ReportArtifactNotAffectedEntry1 struct {
+	Dependency interface{} `json:"dependency,omitempty"`
+	Reference  string      `json:"reference"`
+}
+
+// ReportArtifactPeachIsolationReview PEACH tenant-isolation review. Records multi-tenancy applicability and, when applicable, one entry per customer-facing interface with its complexity, sharing model, boundary type, and P.E.A.C.H. hardening gaps.
+type ReportArtifactPeachIsolationReview struct {
+	// Applicable True if one deployment of this component serves more than one tenant/customer/trust domain.
+	Applicable bool `json:"applicable"`
+	Interfaces *[]struct {
+		BoundaryType  ReportArtifactPeachIsolationReviewInterfacesBoundaryType `json:"boundary_type"`
+		Complexity    ReportArtifactPeachIsolationReviewInterfacesComplexity   `json:"complexity"`
+		FindingIds    *[]string                                                `json:"finding_ids,omitempty"`
+		HardeningGaps *[]string                                                `json:"hardening_gaps,omitempty"`
+		Name          string                                                   `json:"name"`
+		Notes         *string                                                  `json:"notes,omitempty"`
+
+		// Shared True if all tenants hit the same running instance; false if duplicated per tenant.
+		Shared bool `json:"shared"`
+	} `json:"interfaces,omitempty"`
+
+	// Rationale Why the component is or is not multi-tenant.
+	Rationale *string `json:"rationale,omitempty"`
+}
+
+// ReportArtifactPeachIsolationReviewInterfacesBoundaryType defines model for ReportArtifactPeachIsolationReview.Interfaces.BoundaryType.
+type ReportArtifactPeachIsolationReviewInterfacesBoundaryType string
+
+// ReportArtifactPeachIsolationReviewInterfacesComplexity defines model for ReportArtifactPeachIsolationReview.Interfaces.Complexity.
+type ReportArtifactPeachIsolationReviewInterfacesComplexity string
+
+// ReportArtifactReviewSurfaceEntry One review surface's outcome. finding: finding_ids name the report findings on it. negative: a negative_results entry whose area is the surface id records what was examined. not_applicable / not_assessed / out_of_scope: note says why; a not_assessed surface also belongs in metadata.additional.coverage_gaps. out_of_scope is for a diff-scoped scan whose diff does not touch the surface.
+type ReportArtifactReviewSurfaceEntry struct {
+	FindingIds *[]string                              `json:"finding_ids,omitempty"`
+	Note       *string                                `json:"note,omitempty"`
+	Status     ReportArtifactReviewSurfaceEntryStatus `json:"status"`
+}
+
+// ReportArtifactReviewSurfaceEntryStatus defines model for ReportArtifactReviewSurfaceEntry.Status.
+type ReportArtifactReviewSurfaceEntryStatus string
+
+// ReportArtifactRoadmapItem defines model for ReportArtifactRoadmapItem.
+type ReportArtifactRoadmapItem struct {
+	Action          string   `json:"action"`
+	Addresses       []string `json:"addresses"`
+	BlockedExternal *bool    `json:"blocked_external,omitempty"`
+	Effort          *string  `json:"effort"`
+	Priority        string   `json:"priority"`
+}
+
+// ReportArtifactRoadmapPriority Priority labels in numeric order; no urgency or deadline mapping is defined. P0-P4 are accepted uppercase spellings of p0-p4 (enums/v1/roadmap-priority.json): readers normalise them and writers store lowercase.
+type ReportArtifactRoadmapPriority string
+
+// ReportArtifactScanReviewSurfaceCoverage Review-surface coverage recorded by a scan that follows an audit (vuln-findings.schema.json, verification.schema.json). Same keys and statuses as the report's review_surface_coverage, but a scan has no negative_results, so a negative entry carries its evidence in note. The cumulative builder merges these records into the cumulative report.
+type ReportArtifactScanReviewSurfaceCoverage map[string]ReportArtifactScanReviewSurfaceEntry
+
+// ReportArtifactScanReviewSurfaceEntry One review surface's outcome. finding: finding_ids name the report findings on it. negative: a negative_results entry whose area is the surface id records what was examined. not_applicable / not_assessed / out_of_scope: note says why; a not_assessed surface also belongs in metadata.additional.coverage_gaps. out_of_scope is for a diff-scoped scan whose diff does not touch the surface.
+type ReportArtifactScanReviewSurfaceEntry = ReportArtifactReviewSurfaceEntry
+
+// ReportArtifactScannerEntry defines model for ReportArtifactScannerEntry.
+type ReportArtifactScannerEntry struct {
+	Configured *bool `json:"configured,omitempty"`
+
+	// FindingIds Finding(s) the fact was promoted into; absent for dismissals.
+	FindingIds *[]string `json:"finding_ids,omitempty"`
+
+	// Location file:line of the judged fact.
+	Location *string `json:"location,omitempty"`
+	Notes    *string `json:"notes,omitempty"`
+
+	// Result Free text; for per-fact judge decisions on deterministic pre-scan facts use the tokens 'promoted' or 'dismissed' so the precision tracker can compute per-rule precision.
+	Result string `json:"result"`
+
+	// RuleId Scanner rule that produced the judged fact (e.g. an opengrep rule id).
+	RuleId *string `json:"rule_id,omitempty"`
+	Tool   string  `json:"tool"`
+}
+
+// ReportArtifactSeverityCountEntry defines model for ReportArtifactSeverityCountEntry.
+type ReportArtifactSeverityCountEntry struct {
+	Count      int                         `json:"count"`
+	FindingIds []string                    `json:"finding_ids"`
+	Severity   ReportArtifactSeverityLevel `json:"severity"`
+}
+
+// ReportArtifactSeverityCriterion defines model for ReportArtifactSeverityCriterion.
+type ReportArtifactSeverityCriterion struct {
+	CvssRange  *string                     `json:"cvss_range"`
+	Definition string                      `json:"definition"`
+	Level      ReportArtifactSeverityLevel `json:"level"`
+}
+
+// ReportArtifactSeverityLevel defines model for ReportArtifactSeverityLevel.
+type ReportArtifactSeverityLevel string
 
 // ReportFormat A rendered report's format: markdown and html for every insight, csv for one with an
 // export table, json for the view itself (the contract-checked model a page renders). Each
@@ -2355,6 +7380,80 @@ type ReviewItemStatus string
 // ReviewReason defines model for ReviewReason.
 type ReviewReason string
 
+// RiskRatingMethodologyArtifact Validates the risk-rating methodology artifact — the machine-readable definition of how per-finding OWASP risk bands are derived (likelihood x impact, factors from CVSS 3.x vectors). The schema enforces the methodology's structural invariants: every CVSS metric value is mapped, all nine matrix cells are present, factor scores stay on the OWASP 0-9 scale, and the vector-less fallback likelihood can never reach the HIGH bucket. Enforced by tests/test_build_trends.py.
+type RiskRatingMethodologyArtifact struct {
+	Bands            []RiskRatingMethodologyArtifactBand `json:"bands"`
+	BucketThresholds struct {
+		HighMin   float32 `json:"high_min"`
+		MediumMin float32 `json:"medium_min"`
+	} `json:"bucket_thresholds"`
+	Documentation *string `json:"documentation,omitempty"`
+	Fallback      struct {
+		// DefaultLikelihood Likelihood for vector-less findings. Bounded below the HIGH bucket: unknown exploitability is never assumed HIGH, so vector-less findings cannot reach the critical band.
+		DefaultLikelihood float32 `json:"default_likelihood"`
+		SeverityImpact    struct {
+			Critical      RiskRatingMethodologyArtifactScore `json:"critical"`
+			High          RiskRatingMethodologyArtifactScore `json:"high"`
+			Informational RiskRatingMethodologyArtifactScore `json:"informational"`
+			Low           RiskRatingMethodologyArtifactScore `json:"low"`
+			Medium        RiskRatingMethodologyArtifactScore `json:"medium"`
+		} `json:"severity_impact"`
+	} `json:"fallback"`
+	ImpactFactors struct {
+		A RiskRatingMethodologyArtifactCiaMap `json:"A"`
+		C RiskRatingMethodologyArtifactCiaMap `json:"C"`
+		I RiskRatingMethodologyArtifactCiaMap `json:"I"`
+	} `json:"impact_factors"`
+	LikelihoodFactors struct {
+		AC RiskRatingMethodologyArtifactFactorMap `json:"AC"`
+		AV RiskRatingMethodologyArtifactFactorMap `json:"AV"`
+		PR RiskRatingMethodologyArtifactFactorMap `json:"PR"`
+		UI RiskRatingMethodologyArtifactFactorMap `json:"UI"`
+	} `json:"likelihood_factors"`
+	Matrix struct {
+		HIGH   RiskRatingMethodologyArtifactMatrixRow `json:"HIGH"`
+		LOW    RiskRatingMethodologyArtifactMatrixRow `json:"LOW"`
+		MEDIUM RiskRatingMethodologyArtifactMatrixRow `json:"MEDIUM"`
+	} `json:"matrix"`
+	Methodology        interface{} `json:"methodology"`
+	MethodologyVersion string      `json:"methodology_version"`
+	Schema             *string     `json:"schema,omitempty"`
+	Source             string      `json:"source"`
+
+	// ThreatIntelFactor Optional exploitation-evidence likelihood factor (EPSS/KEV). Scores stay on the OWASP 0-9 scale; epss_bands must be ordered by descending min_epss and cover 0.0.
+	ThreatIntelFactor *struct {
+		Description *string `json:"description,omitempty"`
+		EpssBands   []struct {
+			MinEpss float32 `json:"min_epss"`
+			Score   float32 `json:"score"`
+		} `json:"epss_bands"`
+		KevScore float32 `json:"kev_score"`
+	} `json:"threat_intel_factor,omitempty"`
+}
+
+// RiskRatingMethodologyArtifactBand defines model for RiskRatingMethodologyArtifactBand.
+type RiskRatingMethodologyArtifactBand = interface{}
+
+// RiskRatingMethodologyArtifactCiaMap defines model for RiskRatingMethodologyArtifactCiaMap.
+type RiskRatingMethodologyArtifactCiaMap struct {
+	H RiskRatingMethodologyArtifactScore `json:"H"`
+	L RiskRatingMethodologyArtifactScore `json:"L"`
+	N RiskRatingMethodologyArtifactScore `json:"N"`
+}
+
+// RiskRatingMethodologyArtifactFactorMap defines model for RiskRatingMethodologyArtifactFactorMap.
+type RiskRatingMethodologyArtifactFactorMap map[string]RiskRatingMethodologyArtifactScore
+
+// RiskRatingMethodologyArtifactMatrixRow defines model for RiskRatingMethodologyArtifactMatrixRow.
+type RiskRatingMethodologyArtifactMatrixRow struct {
+	HIGH   RiskRatingMethodologyArtifactBand `json:"HIGH"`
+	LOW    RiskRatingMethodologyArtifactBand `json:"LOW"`
+	MEDIUM RiskRatingMethodologyArtifactBand `json:"MEDIUM"`
+}
+
+// RiskRatingMethodologyArtifactScore defines model for RiskRatingMethodologyArtifactScore.
+type RiskRatingMethodologyArtifactScore = float32
+
 // Role defines model for Role.
 type Role string
 
@@ -2368,6 +7467,95 @@ type RoleRouting struct {
 	Model      string           `json:"model"`
 	Provider   string           `json:"provider"`
 }
+
+// RunManifestArtifact Per-order detail that is read one order at a time (data model §4a, Appendix G): the config in force, the budget verdict at admission, the approval, progress and degraded keys. run_order.artifact_id points at the latest manifest; each change is a new artifact (artifacts are append-only), so earlier manifests stay as history. The manifest does not name its order, so orders in the same state share one artifact.
+type RunManifestArtifact struct {
+	Approval *struct {
+		ApprovedAt time.Time `json:"approved_at"`
+
+		// Approver The verified principal, as rows store actors.
+		Approver string `json:"approver"`
+	} `json:"approval,omitempty"`
+	Artifact interface{} `json:"artifact"`
+
+	// Budget The lane's budget verdict when admission decided this order.
+	Budget *struct {
+		BudgetUsd   *RunManifestArtifactUsd               `json:"budget_usd"`
+		Enforcement *RunManifestArtifactBudgetEnforcement `json:"enforcement"`
+
+		// EstimateUsd null = unknown cost
+		EstimateUsd *RunManifestArtifactUsd         `json:"estimate_usd"`
+		Lane        string                          `json:"lane"`
+		SpentUsd    RunManifestArtifactUsd          `json:"spent_usd"`
+		Status      RunManifestArtifactBudgetStatus `json:"status"`
+	} `json:"budget,omitempty"`
+
+	// Config Config documents in force when the order was planned, by digest (the pack file's digest is the pack version).
+	Config *[]struct {
+		// ArtifactId The stored document, when it is kept as an artifact.
+		ArtifactId *openapi_types.UUID `json:"artifact_id,omitempty"`
+
+		// Digest sha256 of the document's bytes
+		Digest string `json:"digest"`
+
+		// Name e.g. pack:security, budget-policy
+		Name string `json:"name"`
+	} `json:"config,omitempty"`
+
+	// Degraded What the run could not see, by key (e.g. unreachable, quota-deferred, db-stale), with a count. A degraded order is never reported green.
+	Degraded *map[string]int `json:"degraded,omitempty"`
+
+	// Outputs Artifacts the run produced that belong to no assessment (a report's file): what the order wrote, read one order at a time. An assessment's documents are found through the assessment, never here.
+	Outputs *[]openapi_types.UUID `json:"outputs,omitempty"`
+
+	// Progress Where a running order has got to, so a re-leased order resumes.
+	Progress *struct {
+		ShardsDone *[]string `json:"shards_done,omitempty"`
+
+		// Step Steps (phases, stages) done.
+		Step      *int      `json:"step"`
+		UpdatedAt time.Time `json:"updated_at"`
+	} `json:"progress,omitempty"`
+
+	// Sessions Runner-computed evidence of staged inputs and the declared output, including failed sessions. Entries are append-only; an identical retry is not appended twice.
+	Sessions *[]RunManifestArtifactSession `json:"sessions,omitempty"`
+}
+
+// RunManifestArtifactBudgetEnforcement defines model for RunManifestArtifact.Budget.Enforcement.
+type RunManifestArtifactBudgetEnforcement string
+
+// RunManifestArtifactBudgetStatus defines model for RunManifestArtifact.Budget.Status.
+type RunManifestArtifactBudgetStatus string
+
+// RunManifestArtifactDegradedKey Historical-compatible key shape. New Core completions enforce the degraded_key vocabulary or registered feed/view identifiers; dynamic subject identifiers retain their own coverage counts.
+type RunManifestArtifactDegradedKey = string
+
+// RunManifestArtifactSession defines model for RunManifestArtifactSession.
+type RunManifestArtifactSession struct {
+	ExecutorSession *string `json:"executor_session"`
+
+	// Inputs One entry per task-relative file path, sorted by path. The recording boundary enforces unique paths in linear time.
+	Inputs []struct {
+		Bytes  int                       `json:"bytes"`
+		Path   SessionTaskArtifactPath   `json:"path"`
+		Sha256 RunManifestArtifactSha256 `json:"sha256"`
+	} `json:"inputs"`
+	Mode   SessionTaskArtifactName   `json:"mode"`
+	Models SessionTaskArtifactModels `json:"models"`
+	Output struct {
+		ArtifactId *openapi_types.UUID        `json:"artifact_id"`
+		Path       string                     `json:"path"`
+		Sha256     *RunManifestArtifactSha256 `json:"sha256"`
+	} `json:"output"`
+	Skill      SessionTaskArtifactName   `json:"skill"`
+	TaskSha256 RunManifestArtifactSha256 `json:"task_sha256"`
+}
+
+// RunManifestArtifactSha256 defines model for RunManifestArtifactSha256.
+type RunManifestArtifactSha256 = string
+
+// RunManifestArtifactUsd defines model for RunManifestArtifactUsd.
+type RunManifestArtifactUsd = string
 
 // RunOrder 4a · one unit of work; queued, leased by a worker, finished with an outcome.
 type RunOrder struct {
@@ -2429,12 +7617,12 @@ type ScheduledEffort struct {
 
 // SelectedCvss The statement a finding's score follows, chosen by precedence: never an unscored one.
 type SelectedCvss struct {
-	AcquiredAt *time.Time `json:"acquired_at"`
-	Band       Severity   `json:"band"`
-	Document   string     `json:"document"`
-	Reason     *string    `json:"reason,omitempty"`
-	Score      *string    `json:"score"`
-	ScoredBy   *string    `json:"scored_by"`
+	AcquiredAt *time.Time          `json:"acquired_at"`
+	Band       Severity            `json:"band"`
+	Document   string              `json:"document"`
+	Reason     *SelectedCvssReason `json:"reason,omitempty"`
+	Score      *string             `json:"score"`
+	ScoredBy   *string             `json:"scored_by"`
 
 	// Source Who stated a score, in ranking order.
 	Source  CvssSource          `json:"source"`
@@ -2442,8 +7630,80 @@ type SelectedCvss struct {
 	Version SelectedCvssVersion `json:"version"`
 }
 
+// SelectedCvssReason defines model for SelectedCvss.Reason.
+type SelectedCvssReason string
+
 // SelectedCvssVersion defines model for SelectedCvss.Version.
 type SelectedCvssVersion string
+
+// SessionFile defines model for SessionFile.
+type SessionFile struct {
+	Bytes  int    `json:"bytes"`
+	Path   string `json:"path"`
+	Sha256 string `json:"sha256"`
+}
+
+// SessionOutput defines model for SessionOutput.
+type SessionOutput struct {
+	ArtifactId *openapi_types.UUID `json:"artifact_id"`
+	Path       string              `json:"path"`
+	Sha256     *string             `json:"sha256"`
+}
+
+// SessionRecord defines model for SessionRecord.
+type SessionRecord struct {
+	ExecutorSession *string           `json:"executor_session"`
+	Inputs          []SessionFile     `json:"inputs"`
+	Mode            string            `json:"mode"`
+	Models          map[string]string `json:"models"`
+	Output          SessionOutput     `json:"output"`
+	Skill           string            `json:"skill"`
+	TaskSha256      string            `json:"task_sha256"`
+}
+
+// SessionResultArtifact Executor identity, measured model usage and an optional error; the judged document is the task's declared output, not this envelope.
+type SessionResultArtifact struct {
+	Error   *string                      `json:"error"`
+	Session string                       `json:"session"`
+	Usage   []SessionResultArtifactUsage `json:"usage"`
+}
+
+// SessionResultArtifactUsage defines model for SessionResultArtifactUsage.
+type SessionResultArtifactUsage struct {
+	CacheCreation *int      `json:"cache_creation,omitempty"`
+	CacheRead     *int      `json:"cache_read,omitempty"`
+	Model         string    `json:"model"`
+	OccurredAt    time.Time `json:"occurred_at"`
+	Provider      string    `json:"provider"`
+	Session       *string   `json:"session"`
+	Skill         *string   `json:"skill"`
+	TokensIn      int       `json:"tokens_in"`
+	TokensOut     int       `json:"tokens_out"`
+}
+
+// SessionTaskArtifact Runner-staged input and the one output a judgement session may produce. Paths are task-relative, never deployment paths. A manual session has no run order.
+type SessionTaskArtifact struct {
+	Args   []string                  `json:"args"`
+	Input  []SessionTaskArtifactPath `json:"input"`
+	Mode   SessionTaskArtifactName   `json:"mode"`
+	Models SessionTaskArtifactModels `json:"models"`
+	Output struct {
+		Path   string                  `json:"path"`
+		Schema SessionTaskArtifactName `json:"schema"`
+	} `json:"output"`
+	RunId         *openapi_types.UUID     `json:"run_id"`
+	SchemaVersion interface{}             `json:"schema_version"`
+	Skill         SessionTaskArtifactName `json:"skill"`
+}
+
+// SessionTaskArtifactModels defines model for SessionTaskArtifactModels.
+type SessionTaskArtifactModels map[string]string
+
+// SessionTaskArtifactName defines model for SessionTaskArtifactName.
+type SessionTaskArtifactName = string
+
+// SessionTaskArtifactPath defines model for SessionTaskArtifactPath.
+type SessionTaskArtifactPath = string
 
 // Severity defines model for Severity.
 type Severity string
@@ -2454,6 +7714,41 @@ type SeverityBasis string
 
 // Signing How signing a layer's root went (traust-ledger `SignAttempt.status`).
 type Signing string
+
+// SlaPolicyArtifact Validates the SLA policy consumed by the SLA view builder. SLAs are POLICY DATA, never code: the shipped default reflects your organization's SLA policy configuration, and any other input — customer contracts, per-BU policies — is a different file passed via --policy, not an edit to the script. The severity_mapping block exists because external severity vocabularies (e.g. Critical/Important/Moderate/Low per your vulnerability management workflow manual) and the harness severity enum are different languages; the join must be auditable and swappable with the rest of the policy.
+type SlaPolicyArtifact struct {
+	// ClockStart Which timestamp starts a finding's SLA clock. first_routed_or_filed: earliest routing/filing ledger event, falling back to first_event, falling back to audit_date.
+	ClockStart interface{} `json:"clock_start,omitempty"`
+	PolicyName string      `json:"policy_name"`
+	Profiles   map[string]struct {
+		// CvssFloorDays Override: findings with cvss >= threshold get this resolve clock regardless of severity (e.g. a FedRAMP CVSS-floor requirement).
+		CvssFloorDays *struct {
+			ResolveDays int     `json:"resolve_days"`
+			Threshold   float32 `json:"threshold"`
+		} `json:"cvss_floor_days,omitempty"`
+		Default     *bool   `json:"default,omitempty"`
+		Description *string `json:"description,omitempty"`
+
+		// Slas Per harness severity. resolve_days null = no SLA (tracked, never overdue). Severities absent from the map are unclocked under this profile.
+		Slas map[string]struct {
+			AcknowledgeDays *int `json:"acknowledge_days"`
+			ResolveDays     *int `json:"resolve_days"`
+		} `json:"slas"`
+	} `json:"profiles"`
+
+	// SeverityMapping External severity label (lowercased) -> harness severity. Explicit data, never hardcoded.
+	SeverityMapping map[string]interface{} `json:"severity_mapping"`
+
+	// Source Provenance of the numbers — where they came from and when they were last verified there.
+	Source struct {
+		Name string  `json:"name"`
+		Note *string `json:"note,omitempty"`
+
+		// Retrieved A real calendar date (YYYY-MM-DD): traust-core reads it as a date, so 2026-02-30 is refused at recording, not when a view is built.
+		Retrieved openapi_types.Date `json:"retrieved"`
+		Url       *string            `json:"url,omitempty"`
+	} `json:"source"`
+}
 
 // SortDirection Which way a sorted listing orders its column; the id tiebreak is asc either way.
 type SortDirection string
@@ -2532,6 +7827,295 @@ type Team struct {
 	UpdatedAt *time.Time          `json:"updated_at"`
 }
 
+// ThreatModelArtifact One subject's threat model. The authored artifact is Markdown, because a threat model is written and edited by people; its structure has always been a contract, stated in prose in the skill's schema.md and enforced by regex in the linter. This is that contract as a machine-readable schema, so the model joins every other artifact family instead of being parsed out of prose by three hand-maintained copies of the column list.
+type ThreatModelArtifact struct {
+	// Assets Section 2. One entry per thing worth protecting.
+	Assets *[]ThreatModelArtifactAsset `json:"assets,omitempty"`
+
+	// AttackScenarios Section 9, optional. The narrative layer for the top 3-5 threats: each scenario tells the attack as it unfolds, in prose.
+	AttackScenarios *[]ThreatModelArtifactAttackScenario `json:"attack_scenarios,omitempty"`
+
+	// Deprioritized Section 5. Retired threats. An id here is NEVER reused -- it records that a threat was considered and set aside, which is a different claim from never having considered it.
+	Deprioritized *[]ThreatModelArtifactDeprioritizedThreat `json:"deprioritized,omitempty"`
+
+	// EntryPoints Section 3. One entry per place untrusted input enters the system or privilege level changes.
+	EntryPoints *[]ThreatModelArtifactEntryPoint `json:"entry_points,omitempty"`
+
+	// Mitigations Section 8, optional and additive. Each entry is one CLASS-LEVEL control, not a per-finding patch.
+	Mitigations   *[]ThreatModelArtifactMitigation `json:"mitigations,omitempty"`
+	OpenQuestions *[]string                        `json:"open_questions,omitempty"`
+
+	// Provenance Section 7. How this model came to exist.
+	Provenance ThreatModelArtifactProvenance `json:"provenance"`
+
+	// SubjectId The corpus subject, matching artifact_binding.subject_id. Without it a threat cannot reach its owner.
+	SubjectId *string `json:"subject_id,omitempty"`
+
+	// System The system this model covers.
+	System        string  `json:"system"`
+	SystemContext *string `json:"system_context,omitempty"`
+
+	// TenantBoundaries Section 10, optional, MULTI-TENANT SERVICES ONLY. Single-tenant targets omit it; its absence is not a gap. Vocabulary is shared with isolation-review so boundary rows and full reviews line up.
+	TenantBoundaries *[]ThreatModelArtifactTenantBoundary `json:"tenant_boundaries,omitempty"`
+
+	// Threats Section 4. The threat model proper: one row per actor-wants-outcome pair, at the abstraction level where it survives a patch.
+	Threats []ThreatModelArtifactThreat `json:"threats"`
+
+	// UpdateHistory Appended by an update or review pass. Additive: `mode` in provenance keeps its original value.
+	UpdateHistory *[]ThreatModelArtifactHistoryEntry `json:"update_history,omitempty"`
+}
+
+// ThreatModelArtifactAsset defines model for ThreatModelArtifactAsset.
+type ThreatModelArtifactAsset struct {
+	Asset       string `json:"asset"`
+	Description string `json:"description"`
+
+	// ExampleRecords Concrete field or record names, e.g. `name, email, address` or `kubeconfig, pull-secret`.
+	ExampleRecords *string `json:"example_records,omitempty"`
+
+	// RegulatoryScope Comma-separated regimes governing the asset (GDPR, CCPA, HIPAA, PCI-DSS, SOX, export-control, ...), or `none`.
+	RegulatoryScope *string     `json:"regulatory_scope,omitempty"`
+	Sensitivity     interface{} `json:"sensitivity"`
+}
+
+// ThreatModelArtifactAttackScenario defines model for ThreatModelArtifactAttackScenario.
+type ThreatModelArtifactAttackScenario struct {
+	// Id The section-4 threat this scenario narrates.
+	Id string `json:"id"`
+
+	// Steps The scenario's prose, one paragraph per entry.
+	Steps  []string `json:"steps"`
+	Threat *string  `json:"threat,omitempty"`
+}
+
+// ThreatModelArtifactCanonicalWrite defines model for ThreatModelArtifactCanonicalWrite.
+type ThreatModelArtifactCanonicalWrite struct {
+	// Assets Section 2. One entry per thing worth protecting.
+	Assets *[]ThreatModelArtifactAsset `json:"assets,omitempty"`
+
+	// AttackScenarios Section 9, optional. The narrative layer for the top 3-5 threats: each scenario tells the attack as it unfolds, in prose.
+	AttackScenarios *[]ThreatModelArtifactAttackScenario `json:"attack_scenarios,omitempty"`
+
+	// Deprioritized Section 5. Retired threats. An id here is NEVER reused -- it records that a threat was considered and set aside, which is a different claim from never having considered it.
+	Deprioritized *[]ThreatModelArtifactDeprioritizedThreat `json:"deprioritized,omitempty"`
+
+	// EntryPoints Section 3. One entry per place untrusted input enters the system or privilege level changes.
+	EntryPoints   *[]ThreatModelArtifactEntryPoint `json:"entry_points,omitempty"`
+	Mitigations   interface{}                      `json:"mitigations,omitempty"`
+	OpenQuestions *[]string                        `json:"open_questions,omitempty"`
+
+	// Provenance Section 7. How this model came to exist.
+	Provenance ThreatModelArtifactProvenance `json:"provenance"`
+
+	// SubjectId The corpus subject, matching artifact_binding.subject_id. Without it a threat cannot reach its owner.
+	SubjectId *string `json:"subject_id,omitempty"`
+
+	// System The system this model covers.
+	System        string  `json:"system"`
+	SystemContext *string `json:"system_context,omitempty"`
+
+	// TenantBoundaries Section 10, optional, MULTI-TENANT SERVICES ONLY. Single-tenant targets omit it; its absence is not a gap. Vocabulary is shared with isolation-review so boundary rows and full reviews line up.
+	TenantBoundaries *[]ThreatModelArtifactTenantBoundary `json:"tenant_boundaries,omitempty"`
+
+	// Threats Section 4. The threat model proper: one row per actor-wants-outcome pair, at the abstraction level where it survives a patch.
+	Threats []ThreatModelArtifactThreat `json:"threats"`
+
+	// UpdateHistory Appended by an update or review pass. Additive: `mode` in provenance keeps its original value.
+	UpdateHistory *[]ThreatModelArtifactHistoryEntry `json:"update_history,omitempty"`
+}
+
+// ThreatModelArtifactDeprioritizedThreat defines model for ThreatModelArtifactDeprioritizedThreat.
+type ThreatModelArtifactDeprioritizedThreat struct {
+	Reason string `json:"reason"`
+
+	// ReviewSurfaces Review surfaces (traust-contracts enums/v1/review-surface.json). Optional: an untagged threat, entry point or deprioritized threat is simply not mapped.
+	ReviewSurfaces *ThreatModelArtifactReviewSurfaces `json:"review_surfaces,omitempty"`
+	Threat         string                             `json:"threat"`
+}
+
+// ThreatModelArtifactEntryPoint defines model for ThreatModelArtifactEntryPoint.
+type ThreatModelArtifactEntryPoint struct {
+	Description string `json:"description"`
+	EntryPoint  string `json:"entry_point"`
+
+	// Kind Entry-point kinds (traust-contracts enums/v1/entry-point-kind.json).
+	Kind *ThreatModelArtifactEntryPointKind `json:"kind,omitempty"`
+
+	// ReachableAssets Comma-separated names of section-2 assets reachable through this entry point.
+	ReachableAssets string `json:"reachable_assets"`
+
+	// ReviewSurfaces Review surfaces (traust-contracts enums/v1/review-surface.json). Optional: an untagged threat, entry point or deprioritized threat is simply not mapped.
+	ReviewSurfaces *ThreatModelArtifactReviewSurfaces `json:"review_surfaces,omitempty"`
+
+	// TrustBoundary The crossing, in free text, e.g. `untrusted file -> process memory`.
+	TrustBoundary string `json:"trust_boundary"`
+}
+
+// ThreatModelArtifactEntryPointKind Entry-point kinds (traust-contracts enums/v1/entry-point-kind.json).
+type ThreatModelArtifactEntryPointKind string
+
+// ThreatModelArtifactHistoryEntry defines model for ThreatModelArtifactHistoryEntry.
+type ThreatModelArtifactHistoryEntry struct {
+	Changes string             `json:"changes"`
+	Date    openapi_types.Date `json:"date"`
+	Reason  string             `json:"reason"`
+}
+
+// ThreatModelArtifactMitigation defines model for ThreatModelArtifactMitigation.
+type ThreatModelArtifactMitigation struct {
+	BlockedExternal *bool `json:"blocked_external,omitempty"`
+
+	// ClosesClass `no` is worthwhile defence in depth that does not close the class -- recorded rather than dropped.
+	ClosesClass interface{} `json:"closes_class"`
+	Effort      interface{} `json:"effort"`
+	Mitigation  string      `json:"mitigation"`
+	ThreatIds   []string    `json:"threat_ids"`
+}
+
+// ThreatModelArtifactOwaspFactor defines model for ThreatModelArtifactOwaspFactor.
+type ThreatModelArtifactOwaspFactor = int
+
+// ThreatModelArtifactOwaspLevel defines model for ThreatModelArtifactOwaspLevel.
+type ThreatModelArtifactOwaspLevel = interface{}
+
+// ThreatModelArtifactOwaspRiskRating Risk rating per the OWASP Risk Rating Methodology (OWASP Foundation, https://owasp.org/www-community/OWASP_Risk_Rating_Methodology, CC BY-SA 4.0; reimplemented here in original wording). Every factor is scored 0 to 9. The likelihood score is the mean of its eight factors; the impact score is the mean of the technical or the business factors, per basis. A score below 3 is low, below 6 medium, otherwise high. Severity combines the impact and likelihood levels by the methodology's severity table. Scores, levels and severity are derived values; traust_contracts.v1.risk_rating computes and checks them.
+type ThreatModelArtifactOwaspRiskRating struct {
+	Impact struct {
+		// Basis Which factor set sets the impact score. The methodology prefers business impact when it is known, and technical impact otherwise.
+		Basis    interface{} `json:"basis"`
+		Business *struct {
+			Financial     ThreatModelArtifactOwaspFactor `json:"financial"`
+			NonCompliance ThreatModelArtifactOwaspFactor `json:"non_compliance"`
+			Privacy       ThreatModelArtifactOwaspFactor `json:"privacy"`
+			Reputation    ThreatModelArtifactOwaspFactor `json:"reputation"`
+		} `json:"business,omitempty"`
+		Level     ThreatModelArtifactOwaspLevel `json:"level"`
+		Score     ThreatModelArtifactOwaspScore `json:"score"`
+		Technical struct {
+			Accountability  ThreatModelArtifactOwaspFactor `json:"accountability"`
+			Availability    ThreatModelArtifactOwaspFactor `json:"availability"`
+			Confidentiality ThreatModelArtifactOwaspFactor `json:"confidentiality"`
+			Integrity       ThreatModelArtifactOwaspFactor `json:"integrity"`
+		} `json:"technical"`
+	} `json:"impact"`
+	Likelihood struct {
+		// Factors Threat-agent factors (skill_level, motive, opportunity, population_size) and vulnerability factors (ease_of_discovery, ease_of_exploit, awareness, intrusion_detection). Higher means more likely.
+		Factors struct {
+			Awareness          ThreatModelArtifactOwaspFactor `json:"awareness"`
+			EaseOfDiscovery    ThreatModelArtifactOwaspFactor `json:"ease_of_discovery"`
+			EaseOfExploit      ThreatModelArtifactOwaspFactor `json:"ease_of_exploit"`
+			IntrusionDetection ThreatModelArtifactOwaspFactor `json:"intrusion_detection"`
+			Motive             ThreatModelArtifactOwaspFactor `json:"motive"`
+			Opportunity        ThreatModelArtifactOwaspFactor `json:"opportunity"`
+			PopulationSize     ThreatModelArtifactOwaspFactor `json:"population_size"`
+			SkillLevel         ThreatModelArtifactOwaspFactor `json:"skill_level"`
+		} `json:"factors"`
+		Level ThreatModelArtifactOwaspLevel `json:"level"`
+		Score ThreatModelArtifactOwaspScore `json:"score"`
+	} `json:"likelihood"`
+	Method interface{} `json:"method"`
+
+	// Rationale One short reason per factor, keyed by factor name, so a reviewer can check each score.
+	Rationale *map[string]string `json:"rationale,omitempty"`
+
+	// Severity Overall severity from the impact and likelihood levels.
+	Severity interface{} `json:"severity"`
+}
+
+// ThreatModelArtifactOwaspScore defines model for ThreatModelArtifactOwaspScore.
+type ThreatModelArtifactOwaspScore = float32
+
+// ThreatModelArtifactProvenance Section 7. How this model came to exist.
+type ThreatModelArtifactProvenance struct {
+	Date openapi_types.Date `json:"date"`
+
+	// HarnessVersion Marks the schema/taxonomy epoch, as metadata.harness_version does for reports. Legacy models predate it.
+	HarnessVersion *string     `json:"harness_version,omitempty"`
+	Inputs         *string     `json:"inputs,omitempty"`
+	Mode           interface{} `json:"mode"`
+
+	// Owner Set for an interview, absent for a bootstrap: a model nobody reviewed must not look reviewed.
+	Owner *string `json:"owner,omitempty"`
+
+	// Target Path or repo URL at a commit. What was actually modelled.
+	Target string `json:"target"`
+}
+
+// ThreatModelArtifactReviewSurfaces Review surfaces (traust-contracts enums/v1/review-surface.json). Optional: an untagged threat, entry point or deprioritized threat is simply not mapped.
+type ThreatModelArtifactReviewSurfaces = []interface{}
+
+// ThreatModelArtifactTenantBoundary defines model for ThreatModelArtifactTenantBoundary.
+type ThreatModelArtifactTenantBoundary struct {
+	Authentication *string `json:"authentication,omitempty"`
+
+	// BoundaryId Stable, never renumbered or reused. Aligned with isolation_review.interfaces[].id when a full review exists.
+	BoundaryId   string      `json:"boundary_id"`
+	Complexity   interface{} `json:"complexity,omitempty"`
+	Connectivity *string     `json:"connectivity,omitempty"`
+	Encryption   *string     `json:"encryption,omitempty"`
+
+	// Exposure `public` is reachable without tenant credentials; `internal` is control-plane only but carries tenant data.
+	Exposure           interface{} `json:"exposure"`
+	Hygiene            *string     `json:"hygiene,omitempty"`
+	Interface          string      `json:"interface"`
+	IsolationReviewRef *string     `json:"isolation_review_ref,omitempty"`
+	Kind               interface{} `json:"kind"`
+	Privilege          *string     `json:"privilege,omitempty"`
+	ThreatIds          *[]string   `json:"threat_ids,omitempty"`
+}
+
+// ThreatModelArtifactThreat defines model for ThreatModelArtifactThreat.
+type ThreatModelArtifactThreat struct {
+	// Actor Weakest-position actor FIRST: scoring reads the first entry.
+	Actor []interface{} `json:"actor"`
+	Asset *string       `json:"asset,omitempty"`
+
+	// AtlasRefs Optional. MITRE ATLAS technique or sub-technique IDs (AML.T0051, AML.T0051.000) for a threat against an LLM, agent or MCP component, validated against the pinned ATLAS table like attack_refs.
+	AtlasRefs *[]string `json:"atlas_refs,omitempty"`
+
+	// AttackRefs MITRE ATT&CK technique ids, validated against the pinned table. Column 11, default for new emissions since harness 0.82.0; this is what an ATT&CK coverage rollup reads.
+	AttackRefs *[]string `json:"attack_refs,omitempty"`
+	Controls   *string   `json:"controls,omitempty"`
+
+	// Evidence Finding or validation identifiers. EMPTY means modelled but not evidenced -- a different claim from unmitigated.
+	Evidence *[]string `json:"evidence,omitempty"`
+
+	// Id T1, T2, ... Stable across edits and NEVER renumbered: a removed id is retired, and the next new threat takes the next never-used number. Unique only within this model.
+	Id string `json:"id"`
+
+	// Impact LEGACY label, valid only for threats not yet re-rated; new ratings use risk_rating. Consequence if realised, modelled before reachability is known. Deliberately not the finding severity enum -- `existential` has no severity counterpart.
+	Impact interface{} `json:"impact,omitempty"`
+
+	// IsolationDimensions Column 12, optional, multi-tenant only. Which isolation dimension this threat stresses.
+	IsolationDimensions *[]interface{} `json:"isolation_dimensions,omitempty"`
+
+	// Likelihood LEGACY label, valid only for threats not yet re-rated; new ratings use risk_rating.
+	Likelihood interface{} `json:"likelihood,omitempty"`
+
+	// OwaspLlmReferences Optional. OWASP Top 10 for LLM Applications (2025) category IDs for a threat against an LLM, agent or MCP component, the same IDs report findings carry; the category ID is cited, never OWASP text.
+	OwaspLlmReferences *[]interface{} `json:"owasp_llm_references,omitempty"`
+
+	// ReviewSurfaces Review surfaces (traust-contracts enums/v1/review-surface.json). Optional: an untagged threat, entry point or deprioritized threat is simply not mapped.
+	ReviewSurfaces *ThreatModelArtifactReviewSurfaces `json:"review_surfaces,omitempty"`
+
+	// RiskRating Risk rating per the OWASP Risk Rating Methodology (OWASP Foundation, https://owasp.org/www-community/OWASP_Risk_Rating_Methodology, CC BY-SA 4.0; reimplemented here in original wording). Every factor is scored 0 to 9. The likelihood score is the mean of its eight factors; the impact score is the mean of the technical or the business factors, per basis. A score below 3 is low, below 6 medium, otherwise high. Severity combines the impact and likelihood levels by the methodology's severity table. Scores, levels and severity are derived values; traust_contracts.v1.risk_rating computes and checks them.
+	RiskRating *ThreatModelArtifactOwaspRiskRating `json:"risk_rating,omitempty"`
+
+	// Status `partially_mitigated` is its own state and the largest bucket in practice; folding it into `mitigated` overstates coverage more than any other collapse here.
+	Status  interface{} `json:"status"`
+	Surface *string     `json:"surface,omitempty"`
+
+	// Threat One sentence, active voice, naming the outcome. A leading `linddun:` tag marks a row produced by the optional privacy overlay.
+	Threat string `json:"threat"`
+	union  json.RawMessage
+}
+
+// ThreatModelArtifactThreat0 defines model for .
+type ThreatModelArtifactThreat0 = interface{}
+
+// ThreatModelArtifactThreat1 defines model for .
+type ThreatModelArtifactThreat1 = interface{}
+
 // TimeBucket defines model for TimeBucket.
 type TimeBucket string
 
@@ -2539,6 +8123,171 @@ type TimeBucket string
 type TimeWindow struct {
 	End   time.Time `json:"end"`
 	Start time.Time `json:"start"`
+}
+
+// TriageArtifact Output contract of the triage skill (TRIAGE.json / <repo>-triage.json). Finding kind is independent of the triage verdict: verified defense-in-depth gaps use true_positive with kind weakness. Historical hardening verdicts remain readable, but canonical_write rejects them. Omitted kind remains unknown. Severity, finding-kind and date vocabularies are shared with report.schema.json.
+type TriageArtifact struct {
+	Findings []TriageArtifactFinding `json:"findings"`
+	Summary  TriageArtifactSummary   `json:"summary"`
+
+	// TriageCompleted Date the verification run completed (not the re-emit date; see triage_context.reemitted).
+	TriageCompleted openapi_types.Date          `json:"triage_completed"`
+	TriageContext   TriageArtifactTriageContext `json:"triage_context"`
+}
+
+// TriageArtifactCanonicalWrite defines model for TriageArtifactCanonicalWrite.
+type TriageArtifactCanonicalWrite struct {
+	Findings interface{}           `json:"findings"`
+	Summary  TriageArtifactSummary `json:"summary"`
+
+	// TriageCompleted Date the verification run completed (not the re-emit date; see triage_context.reemitted).
+	TriageCompleted openapi_types.Date          `json:"triage_completed"`
+	TriageContext   TriageArtifactTriageContext `json:"triage_context"`
+}
+
+// TriageArtifactFinding defines model for TriageArtifactFinding.
+type TriageArtifactFinding struct {
+	Absorbed        *[]string                            `json:"absorbed,omitempty"`
+	AccessLevel     *string                              `json:"access_level"`
+	Category        *string                              `json:"category"`
+	ClaimedSeverity *string                              `json:"claimed_severity"`
+	Component       *string                              `json:"component"`
+	Confidence      *float32                             `json:"confidence"`
+	DuplicateOf     *string                              `json:"duplicate_of"`
+	ExclusionRule   *TriageArtifactFinding_ExclusionRule `json:"exclusion_rule"`
+	File            *string                              `json:"file"`
+
+	// Fingerprint Deterministic cross-scan identity (identity module fingerprint). Optional here -- no artifact of this kind carries one today -- but DECLARED, because additionalProperties is false and an undeclared identity field makes every stamped artifact invalid the moment a producer starts emitting it. That has happened twice: report.schema.json omitted fingerprint_algo for 16 days, and the cloud-config schema declared neither, so stamping the policy findings invalidated nearly every report in one command.
+	Fingerprint *string `json:"fingerprint,omitempty"`
+
+	// FingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION). Declared for the same reason as `fingerprint` above.
+	FingerprintAlgo *string   `json:"fingerprint_algo,omitempty"`
+	FirstLinks      *[]string `json:"first_links,omitempty"`
+
+	// Id Triage-local sequential id.
+	Id string `json:"id"`
+
+	// Kind The finding kind, independent of validity. Historical findings may omit it.
+	Kind          *ReportArtifactFindingKind `json:"kind,omitempty"`
+	Line          *int                       `json:"line"`
+	MissingFields *[]string                  `json:"missing_fields,omitempty"`
+
+	// OrigId The source scanner's finding id. When the input is a harness audit report this is the canonical {REPO_SLUG}-{SHORTSHA}-{NNN} id and is cross-checked.
+	OrigId        *string   `json:"orig_id"`
+	OwnerHint     *string   `json:"owner_hint"`
+	Preconditions *[]string `json:"preconditions,omitempty"`
+	Rationale     *string   `json:"rationale"`
+
+	// Recommendation Remediation guidance carried through verbatim from the input finding (e.g. a secure-code-audit report's remediation field), so /patch receives it on the canonical audit -> triage -> patch path. Null when the input had none.
+	Recommendation *string   `json:"recommendation"`
+	RefuteReasons  *[]string `json:"refute_reasons,omitempty"`
+
+	// Severity Precondition-derived severity; set only on actionable non-weakness true positives (null for confirmed weaknesses and other verdicts).
+	Severity          *TriageArtifactSeverityLevel             `json:"severity"`
+	SeverityAlignment *TriageArtifactFinding_SeverityAlignment `json:"severity_alignment"`
+	SeverityLabel     *string                                  `json:"severity_label"`
+	Source            *string                                  `json:"source"`
+	ThreatMatch       *string                                  `json:"threat_match"`
+	Title             string                                   `json:"title"`
+	Verdict           TriageArtifactVerdict                    `json:"verdict"`
+
+	// VerifyVerdict exploitable|mitigated|needs_manual_test are the skill's canonical values; confirmed|refuted|hardening are accepted presentation aliases.
+	VerifyVerdict *TriageArtifactFindingVerifyVerdict `json:"verify_verdict"`
+	VoteBreakdown *TriageArtifactVoteBreakdown        `json:"vote_breakdown"`
+}
+
+// TriageArtifactFindingExclusionRule0 defines model for .
+type TriageArtifactFindingExclusionRule0 = string
+
+// TriageArtifactFindingExclusionRule1 defines model for .
+type TriageArtifactFindingExclusionRule1 = int
+
+// TriageArtifactFinding_ExclusionRule defines model for TriageArtifactFinding.ExclusionRule.
+type TriageArtifactFinding_ExclusionRule struct {
+	union json.RawMessage
+}
+
+// TriageArtifactFindingSeverityAlignment0 defines model for .
+type TriageArtifactFindingSeverityAlignment0 = string
+
+// TriageArtifactFindingSeverityAlignment1 defines model for .
+type TriageArtifactFindingSeverityAlignment1 = float32
+
+// TriageArtifactFinding_SeverityAlignment defines model for TriageArtifactFinding.SeverityAlignment.
+type TriageArtifactFinding_SeverityAlignment struct {
+	union json.RawMessage
+}
+
+// TriageArtifactFindingVerifyVerdict exploitable|mitigated|needs_manual_test are the skill's canonical values; confirmed|refuted|hardening are accepted presentation aliases.
+type TriageArtifactFindingVerifyVerdict string
+
+// TriageArtifactSeverityLevel defines model for TriageArtifactSeverityLevel.
+type TriageArtifactSeverityLevel string
+
+// TriageArtifactSummary defines model for TriageArtifactSummary.
+type TriageArtifactSummary struct {
+	// BySeverity Severity distribution of actionable non-weakness true positives only, using the report.schema.json severity vocabulary.
+	BySeverity struct {
+		Critical      int  `json:"critical"`
+		High          int  `json:"high"`
+		Informational *int `json:"informational,omitempty"`
+		Low           int  `json:"low"`
+		Medium        int  `json:"medium"`
+	} `json:"by_severity"`
+	Duplicates     int `json:"duplicates"`
+	FalsePositives int `json:"false_positives"`
+
+	// Hardening Historical hardening verdicts and true_positive findings with kind weakness; excludes the true_positives bucket.
+	Hardening       int  `json:"hardening"`
+	InputCount      int  `json:"input_count"`
+	NeedsManualTest *int `json:"needs_manual_test,omitempty"`
+
+	// TruePositives Actionable true_positive findings whose kind is not weakness; excludes the disjoint hardening bucket.
+	TruePositives        int                    `json:"true_positives"`
+	Undetermined         int                    `json:"undetermined"`
+	AdditionalProperties map[string]interface{} `json:"-"`
+}
+
+// TriageArtifactTriageContext defines model for TriageArtifactTriageContext.
+type TriageArtifactTriageContext struct {
+	Environment  string  `json:"environment"`
+	FindingsPath *string `json:"findings_path,omitempty"`
+
+	// HarnessVersion Harness semver + short SHA at triage (or re-emit) time, e.g. 0.24.0-e240e87. Pins the verdict-taxonomy epoch.
+	HarnessVersion       string                                   `json:"harness_version"`
+	Mode                 *string                                  `json:"mode,omitempty"`
+	NoiseTolerance       *string                                  `json:"noise_tolerance,omitempty"`
+	ReemitMethod         *string                                  `json:"reemit_method,omitempty"`
+	Reemitted            *openapi_types.Date                      `json:"reemitted,omitempty"`
+	Repo                 string                                   `json:"repo"`
+	RerunOf              *string                                  `json:"rerun_of,omitempty"`
+	Scoring              *string                                  `json:"scoring,omitempty"`
+	SourceReport         *string                                  `json:"source_report,omitempty"`
+	ThreatModel          *TriageArtifactTriageContext_ThreatModel `json:"threat_model,omitempty"`
+	VotesPerFinding      int                                      `json:"votes_per_finding"`
+	AdditionalProperties map[string]interface{}                   `json:"-"`
+}
+
+// TriageArtifactTriageContextThreatModel0 defines model for .
+type TriageArtifactTriageContextThreatModel0 = []string
+
+// TriageArtifactTriageContextThreatModel1 defines model for .
+type TriageArtifactTriageContextThreatModel1 = string
+
+// TriageArtifactTriageContext_ThreatModel defines model for TriageArtifactTriageContext.ThreatModel.
+type TriageArtifactTriageContext_ThreatModel struct {
+	union json.RawMessage
+}
+
+// TriageArtifactVerdict defines model for TriageArtifactVerdict.
+type TriageArtifactVerdict string
+
+// TriageArtifactVoteBreakdown defines model for TriageArtifactVoteBreakdown.
+type TriageArtifactVoteBreakdown struct {
+	CannotVerify  int `json:"cannot_verify"`
+	FalsePositive int `json:"false_positive"`
+	Hardening     int `json:"hardening"`
+	TruePositive  int `json:"true_positive"`
 }
 
 // TriageInput defines model for TriageInput.
@@ -2582,6 +8331,317 @@ type UrlCorrection struct {
 	Url string `json:"url"`
 }
 
+// ValidationArtifact Schema for *-validation.json reports produced by the validate-findings harness. Records replay, attack-chain, and novel-attack results against a live authorized target.
+type ValidationArtifact struct {
+	AttackChains []ValidationArtifactAttackChain `json:"attack_chains"`
+
+	// ExecutionLogRef Relative path to the append-only validation-audit.jsonl
+	ExecutionLogRef    string                               `json:"execution_log_ref"`
+	ExecutionLogSha256 *string                              `json:"execution_log_sha256,omitempty"`
+	Footer             *string                              `json:"footer,omitempty"`
+	Metadata           ValidationArtifactValidationMetadata `json:"metadata"`
+	NegativeResults    *[]ReportArtifactNegativeResult      `json:"negative_results,omitempty"`
+	NovelFindings      []ValidationArtifactNovelFinding     `json:"novel_findings"`
+	SourceReports      []ValidationArtifactSourceReport     `json:"source_reports"`
+	Summary            ValidationArtifactSummary            `json:"summary"`
+	Title              string                               `json:"title"`
+	ValidatedFindings  []ValidationArtifactValidatedFinding `json:"validated_findings"`
+}
+
+// ValidationArtifactAdapter defines model for ValidationArtifactAdapter.
+type ValidationArtifactAdapter string
+
+// ValidationArtifactAttackChain defines model for ValidationArtifactAttackChain.
+type ValidationArtifactAttackChain struct {
+	ChainId         string                         `json:"chain_id"`
+	EntryPoint      string                         `json:"entry_point"`
+	MitreAttackRefs *[]string                      `json:"mitre_attack_refs,omitempty"`
+	Name            string                         `json:"name"`
+	Narrative       *string                        `json:"narrative,omitempty"`
+	Steps           []ValidationArtifactStepResult `json:"steps"`
+	TerminalAsset   string                         `json:"terminal_asset"`
+	Verdict         ValidationArtifactVerdict      `json:"verdict"`
+}
+
+// ValidationArtifactCanonicalWrite defines model for ValidationArtifactCanonicalWrite.
+type ValidationArtifactCanonicalWrite struct {
+	AttackChains []ValidationArtifactAttackChain `json:"attack_chains"`
+
+	// ExecutionLogRef Relative path to the append-only validation-audit.jsonl
+	ExecutionLogRef    string                               `json:"execution_log_ref"`
+	ExecutionLogSha256 *string                              `json:"execution_log_sha256,omitempty"`
+	Footer             *string                              `json:"footer,omitempty"`
+	Metadata           ValidationArtifactValidationMetadata `json:"metadata"`
+	NegativeResults    *[]ReportArtifactNegativeResult      `json:"negative_results,omitempty"`
+	NovelFindings      interface{}                          `json:"novel_findings"`
+	SourceReports      []ValidationArtifactSourceReport     `json:"source_reports"`
+	Summary            ValidationArtifactSummary            `json:"summary"`
+	Title              string                               `json:"title"`
+	ValidatedFindings  []ValidationArtifactValidatedFinding `json:"validated_findings"`
+}
+
+// ValidationArtifactClassification defines model for ValidationArtifactClassification.
+type ValidationArtifactClassification string
+
+// ValidationArtifactDifferentialProbe P3 differential probe for authz claims: probe the claimed action AND a neighbor with a known-different expected outcome in the same session. Enforced by the soundness gate (non-discriminating-oracle).
+type ValidationArtifactDifferentialProbe struct {
+	// ClaimedObserved Outcome of the claimed action, for side-by-side comparison.
+	ClaimedObserved *string `json:"claimed_observed"`
+
+	// Discriminated The two outcomes differed as expected — the oracle can tell allowed from denied. Identical outcomes = non-discriminating oracle = the refutation is unsound regardless of direction.
+	Discriminated bool `json:"discriminated"`
+
+	// NeighborAction The paired action with a KNOWN-DIFFERENT expected outcome (e.g. same subject, a verb it IS allowed; same route, a role that IS authorized).
+	NeighborAction   string  `json:"neighbor_action"`
+	NeighborExpected *string `json:"neighbor_expected"`
+	NeighborObserved *string `json:"neighbor_observed"`
+}
+
+// ValidationArtifactEvidenceArtifact defines model for ValidationArtifactEvidenceArtifact.
+type ValidationArtifactEvidenceArtifact struct {
+	Caption *string `json:"caption,omitempty"`
+	Path    string  `json:"path"`
+
+	// Redacted True when this evidence file had secrets stripped before it was retained. Chain of custody: a consumer must be able to tell sanitised evidence from raw, and dropping the flag would make the two indistinguishable.
+	Redacted *bool                                  `json:"redacted,omitempty"`
+	Sha256   *string                                `json:"sha256,omitempty"`
+	Type     ValidationArtifactEvidenceArtifactType `json:"type"`
+}
+
+// ValidationArtifactEvidenceArtifactType defines model for ValidationArtifactEvidenceArtifact.Type.
+type ValidationArtifactEvidenceArtifactType string
+
+// ValidationArtifactFingerprint defines model for ValidationArtifactFingerprint.
+type ValidationArtifactFingerprint struct {
+	Adapter ValidationArtifactAdapter `json:"adapter"`
+	Details *map[string]interface{}   `json:"details,omitempty"`
+	Digest  *string                   `json:"digest,omitempty"`
+
+	// Identity kube context name, container id, or wasm artifact path
+	Identity string  `json:"identity"`
+	Version  *string `json:"version,omitempty"`
+}
+
+// ValidationArtifactNovelFinding defines model for ValidationArtifactNovelFinding.
+type ValidationArtifactNovelFinding = ReportArtifactFinding
+
+// ValidationArtifactPositiveControl P1 assay-validity control paired with a refutation-capable probe: a same-path action that MUST succeed (or MUST be denied) independent of the finding. A refuted verdict without a passing control is quarantined by the soundness gate (missing-positive-control / failed-positive-control) for reports at/after harness 0.177.0.
+type ValidationArtifactPositiveControl struct {
+	// Kind Expected behavior of the control action, independent of the finding under test.
+	Kind ValidationArtifactPositiveControlKind `json:"kind"`
+
+	// Name What the control proves, e.g. 'same-client allowed-action succeeds' or 'planted canary secret readable'.
+	Name string `json:"name"`
+
+	// Observed What actually happened (truncated transcript).
+	Observed *string `json:"observed"`
+
+	// Ok Control behaved as its kind expects — the assay is proven live.
+	Ok     bool    `json:"ok"`
+	Target *string `json:"target"`
+	Verb   *string `json:"verb"`
+}
+
+// ValidationArtifactPositiveControlKind Expected behavior of the control action, independent of the finding under test.
+type ValidationArtifactPositiveControlKind string
+
+// ValidationArtifactReplayArtifact P8: every probe records a replay artifact so a countersign human — or a later re-adjudication — can re-run the exact probe instead of trusting the transcript.
+type ValidationArtifactReplayArtifact struct {
+	// ClusterFingerprintSha sha256 of the target-attestation.json fingerprint block at probe time — replay is only meaningful against a matching environment.
+	ClusterFingerprintSha *string `json:"cluster_fingerprint_sha"`
+
+	// InputsRef Path of recorded inputs (request bodies, manifests) the script consumes.
+	InputsRef *string `json:"inputs_ref"`
+
+	// ScriptRef Path (relative to the validation dir) of the self-contained replay script for this probe, e.g. artifacts/replay/S3.sh.
+	ScriptRef string `json:"script_ref"`
+}
+
+// ValidationArtifactScopeBindingMode defines model for ValidationArtifactScopeBindingMode.
+type ValidationArtifactScopeBindingMode string
+
+// ValidationArtifactSeverityValidation P9: severity validated from live observations. Downgrades are as valuable as upgrades (e.g. exploitation demonstrably required cluster-admin).
+type ValidationArtifactSeverityValidation struct {
+	ClaimedScore  *float32 `json:"claimed_score"`
+	ClaimedVector *string  `json:"claimed_vector"`
+
+	// Delta demonstrated_score_estimate - claimed_score (signed).
+	Delta *float32 `json:"delta"`
+
+	// Demonstrated CVSS v3.1 vector components as OBSERVATIONS from the live run.
+	Demonstrated struct {
+		// AttackVector Vector the exploit ACTUALLY used.
+		AttackVector *ValidationArtifactSeverityValidationDemonstratedAttackVector `json:"attack_vector"`
+
+		// Impacts Impact axes actually evidenced (what was read/written/disrupted).
+		Impacts *[]ValidationArtifactSeverityValidationDemonstratedImpacts `json:"impacts"`
+
+		// PrivilegesRequired Privileges the probe identity ACTUALLY held at success time.
+		PrivilegesRequired *ValidationArtifactSeverityValidationDemonstratedPrivilegesRequired `json:"privileges_required"`
+
+		// ScopeCrossed Did the observed effect cross a namespace/tenant/node boundary (from the E0 artifact)?
+		ScopeCrossed    *bool                                                            `json:"scope_crossed"`
+		UserInteraction *ValidationArtifactSeverityValidationDemonstratedUserInteraction `json:"user_interaction"`
+	} `json:"demonstrated"`
+
+	// DemonstratedScoreEstimate Score recomputed with demonstrated components substituted into the claimed vector.
+	DemonstratedScoreEstimate *float32 `json:"demonstrated_score_estimate"`
+
+	// Proposal Machine severity-adjustment PROPOSAL (emitted when |delta| >= 1.0 and the finding's evidence_grade is E0/E1/E2 — never E3). Routed to the countersign queue; machines never write disposition.severity.
+	Proposal *struct {
+		Rationale string                                               `json:"rationale"`
+		Severity  ValidationArtifactSeverityValidationProposalSeverity `json:"severity"`
+	} `json:"proposal"`
+}
+
+// ValidationArtifactSeverityValidationDemonstratedAttackVector Vector the exploit ACTUALLY used.
+type ValidationArtifactSeverityValidationDemonstratedAttackVector string
+
+// ValidationArtifactSeverityValidationDemonstratedImpacts defines model for ValidationArtifactSeverityValidation.Demonstrated.Impacts.
+type ValidationArtifactSeverityValidationDemonstratedImpacts string
+
+// ValidationArtifactSeverityValidationDemonstratedPrivilegesRequired Privileges the probe identity ACTUALLY held at success time.
+type ValidationArtifactSeverityValidationDemonstratedPrivilegesRequired string
+
+// ValidationArtifactSeverityValidationDemonstratedUserInteraction defines model for ValidationArtifactSeverityValidation.Demonstrated.UserInteraction.
+type ValidationArtifactSeverityValidationDemonstratedUserInteraction string
+
+// ValidationArtifactSeverityValidationProposalSeverity defines model for ValidationArtifactSeverityValidation.Proposal.Severity.
+type ValidationArtifactSeverityValidationProposalSeverity string
+
+// ValidationArtifactSourceReport defines model for ValidationArtifactSourceReport.
+type ValidationArtifactSourceReport struct {
+	Kind   ValidationArtifactSourceReportKind `json:"kind"`
+	Path   string                             `json:"path"`
+	Sha256 *string                            `json:"sha256,omitempty"`
+}
+
+// ValidationArtifactSourceReportKind defines model for ValidationArtifactSourceReport.Kind.
+type ValidationArtifactSourceReportKind string
+
+// ValidationArtifactStepResult defines model for ValidationArtifactStepResult.
+type ValidationArtifactStepResult struct {
+	Adapter        ValidationArtifactAdapter            `json:"adapter"`
+	Classification ValidationArtifactClassification     `json:"classification"`
+	Controls       *[]ValidationArtifactPositiveControl `json:"controls"`
+	Differential   *ValidationArtifactDifferentialProbe `json:"differential"`
+	DurationMs     *int                                 `json:"duration_ms,omitempty"`
+
+	// Error Environmental failure note (e.g. probe-target-not-found).
+	Error             *string                               `json:"error,omitempty"`
+	Evidence          *[]ValidationArtifactEvidenceArtifact `json:"evidence,omitempty"`
+	Expected          *string                               `json:"expected,omitempty"`
+	FindingRef        *string                               `json:"finding_ref"`
+	NovelRef          *string                               `json:"novel_ref"`
+	Observed          *string                               `json:"observed,omitempty"`
+	Replay            *ValidationArtifactReplayArtifact     `json:"replay"`
+	RollbackOutput    *string                               `json:"rollback_output,omitempty"`
+	RollbackPerformed *bool                                 `json:"rollback_performed"`
+	ScopeReason       *string                               `json:"scope_reason,omitempty"`
+
+	// SoundnessFlag Set when a refuted verdict was gated to inconclusive by the refutation-soundness gate: error-signature:<name> | rbac-zero-subjects | rbac-template-placeholder | target-not-deployed.
+	SoundnessFlag *string                   `json:"soundness_flag,omitempty"`
+	StepId        string                    `json:"step_id"`
+	Target        *map[string]interface{}   `json:"target,omitempty"`
+	Verb          string                    `json:"verb"`
+	Verdict       ValidationArtifactVerdict `json:"verdict"`
+}
+
+// ValidationArtifactSummary defines model for ValidationArtifactSummary.
+type ValidationArtifactSummary struct {
+	ByTechnique map[string]int `json:"by_technique"`
+	ByVerdict   struct {
+		BlockedByScope int `json:"blocked_by_scope"`
+		Confirmed      int `json:"confirmed"`
+		Inconclusive   int `json:"inconclusive"`
+		NotAttempted   int `json:"not_attempted"`
+		Refuted        int `json:"refuted"`
+	} `json:"by_verdict"`
+	ChainCount         *int    `json:"chain_count,omitempty"`
+	HighestImpactChain *string `json:"highest_impact_chain"`
+	NovelCount         *int    `json:"novel_count,omitempty"`
+	Prose              *string `json:"prose,omitempty"`
+}
+
+// ValidationArtifactTechnique defines model for ValidationArtifactTechnique.
+type ValidationArtifactTechnique string
+
+// ValidationArtifactValidatedFinding defines model for ValidationArtifactValidatedFinding.
+type ValidationArtifactValidatedFinding struct {
+	// ChainContext P9 chain amplification: membership in a demonstrated attack chain is severity evidence for the constituent — cite it in the severity proposal rationale.
+	ChainContext *struct {
+		ChainId       string                                                      `json:"chain_id"`
+		ChainSeverity ValidationArtifactValidatedFindingChainContextChainSeverity `json:"chain_severity"`
+
+		// Role This finding's role in the demonstrated chain (e.g. 'initial access', 'privilege pivot', 'necessary link').
+		Role string `json:"role"`
+	} `json:"chain_context"`
+	ClaimedSeverity    *ReportArtifactSeverityLevel          `json:"claimed_severity,omitempty"`
+	DeviationFromClaim *string                               `json:"deviation_from_claim,omitempty"`
+	Evidence           *[]ValidationArtifactEvidenceArtifact `json:"evidence,omitempty"`
+
+	// EvidenceGrade P4 confirmation grade: E0 observed effect artifact; E1 authenticated success response to the exploit action itself; E2 strong inference (config + reachable path shown separately); E3 error-message/behavioral inference only. Required on confirmed verdicts at/after harness 0.179.0. Only E0/E1 carry class-1 (override) power.
+	EvidenceGrade *ValidationArtifactValidatedFindingEvidenceGrade `json:"evidence_grade"`
+
+	// GradeRationale Why this grade: name the artifact (E0), the response (E1), or the inference chain (E2/E3).
+	GradeRationale     *string                               `json:"grade_rationale"`
+	NotAttemptedReason *string                               `json:"not_attempted_reason,omitempty"`
+	ObservedImpact     *string                               `json:"observed_impact,omitempty"`
+	RollbackPerformed  *bool                                 `json:"rollback_performed"`
+	SeverityValidation *ValidationArtifactSeverityValidation `json:"severity_validation"`
+
+	// SoundnessFlag Machine-readable reason the driving refutation was un-emittable (soundness gate). Findings carrying this flag route to needs_review, never to the false-positive/countersign path.
+	SoundnessFlag *string `json:"soundness_flag,omitempty"`
+
+	// SourceId Finding ID in the source security-audit / triage report
+	SourceId     string                          `json:"source_id"`
+	SourceReport string                          `json:"source_report"`
+	Steps        *[]ValidationArtifactStepResult `json:"steps,omitempty"`
+	Technique    ValidationArtifactTechnique     `json:"technique"`
+	Title        *string                         `json:"title,omitempty"`
+	Verdict      ValidationArtifactVerdict       `json:"verdict"`
+}
+
+// ValidationArtifactValidatedFindingChainContextChainSeverity defines model for ValidationArtifactValidatedFinding.ChainContext.ChainSeverity.
+type ValidationArtifactValidatedFindingChainContextChainSeverity string
+
+// ValidationArtifactValidatedFindingEvidenceGrade P4 confirmation grade: E0 observed effect artifact; E1 authenticated success response to the exploit action itself; E2 strong inference (config + reachable path shown separately); E3 error-message/behavioral inference only. Required on confirmed verdicts at/after harness 0.179.0. Only E0/E1 carry class-1 (override) power.
+type ValidationArtifactValidatedFindingEvidenceGrade string
+
+// ValidationArtifactValidationMetadata defines model for ValidationArtifactValidationMetadata.
+type ValidationArtifactValidationMetadata struct {
+	Additional *map[string]interface{} `json:"additional,omitempty"`
+	Approval   *struct {
+		At          *time.Time                                        `json:"at,omitempty"`
+		By          *string                                           `json:"by,omitempty"`
+		Environment *string                                           `json:"environment,omitempty"`
+		Mode        *ValidationArtifactValidationMetadataApprovalMode `json:"mode,omitempty"`
+	} `json:"approval,omitempty"`
+	AuthorizedBy     *string                            `json:"authorized_by,omitempty"`
+	Date             openapi_types.Date                 `json:"date"`
+	Engagement       *string                            `json:"engagement,omitempty"`
+	Expires          *openapi_types.Date                `json:"expires,omitempty"`
+	Flags            *[]string                          `json:"flags,omitempty"`
+	HarnessVersion   string                             `json:"harness_version"`
+	ScopeBindingMode ValidationArtifactScopeBindingMode `json:"scope_binding_mode"`
+
+	// ScopeSource Path to targets.yaml or summary of inline/inferred scope
+	ScopeSource *string `json:"scope_source,omitempty"`
+
+	// TargetAttestation P2 pre-flight attestation summary (attest_target.py): {attested, checks[], fingerprint}. The full artifact lives beside the report as target-attestation.json; reports at/after harness 0.176.0 without one cannot ledger verdicts (emitter routes everything to environment_invalid/needs_review).
+	TargetAttestation *map[string]interface{} `json:"target_attestation"`
+
+	// TargetEnvironment What this run was executed AGAINST -- the bound cluster context(s), a cluster role, an environment id. Named target_environment, beside target_fingerprint and target_attestation, because `environment` alone is already taken in this domain: /validate-findings uses it for the SAFETY class of an engagement (`environment: lab` gates --auto), which is a different fact. Two runs of the same finding set against different target environments are not re-runs of each other and neither supersedes the other -- measured, a hub run and a spoke run of one subject covered the same findings and disagreed on a material share of the verdicts, some confirmed against one target and refuted against the other. Optional, because artifacts predate it -- but ABSENT means UNKNOWN, not 'the same as the others', and a consumer must not merge unknowns.
+	TargetEnvironment *string                         `json:"target_environment,omitempty"`
+	TargetFingerprint []ValidationArtifactFingerprint `json:"target_fingerprint"`
+}
+
+// ValidationArtifactValidationMetadataApprovalMode defines model for ValidationArtifactValidationMetadataApprovalMode.
+type ValidationArtifactValidationMetadataApprovalMode string
+
+// ValidationArtifactVerdict defines model for ValidationArtifactVerdict.
+type ValidationArtifactVerdict string
+
 // ValidationAttempt One recorded validation run's outcome for one finding, as `record` stored it.
 type ValidationAttempt struct {
 	ArtifactId         openapi_types.UUID  `json:"artifact_id"`
@@ -2600,6 +8660,91 @@ type ValidationAttempt struct {
 	SourceId           string              `json:"source_id"`
 	SourceReport       string              `json:"source_report"`
 	Verdict            ValidationVerdict   `json:"verdict"`
+}
+
+// ValidationAuthorizationArtifact The reviewed plan digest and complete rules-of-engagement snapshot approved for a validation run. Possession of these bytes is not proof of identity; the service verifies the approver before publication and rechecks the scope at execution.
+type ValidationAuthorizationArtifact struct {
+	ApprovedAt        time.Time                            `json:"approved_at"`
+	ApprovedBy        string                               `json:"approved_by"`
+	Artifact          interface{}                          `json:"artifact"`
+	Mode              ValidationAuthorizationArtifactMode  `json:"mode"`
+	PermitDestructive bool                                 `json:"permit_destructive"`
+	PlanDigest        string                               `json:"plan_digest"`
+	PlanId            openapi_types.UUID                   `json:"plan_id"`
+	Scope             ValidationAuthorizationArtifactScope `json:"scope"`
+	SkipStepIds       []string                             `json:"skip_step_ids"`
+}
+
+// ValidationAuthorizationArtifactMode defines model for ValidationAuthorizationArtifact.Mode.
+type ValidationAuthorizationArtifactMode string
+
+// ValidationAuthorizationArtifactBrowser defines model for ValidationAuthorizationArtifactBrowser.
+type ValidationAuthorizationArtifactBrowser struct {
+	AllowedVerbs    ValidationAuthorizationArtifactNames `json:"allowed_verbs"`
+	AttackerOrigins ValidationAuthorizationArtifactNames `json:"attacker_origins"`
+	VictimOrigin    string                               `json:"victim_origin"`
+}
+
+// ValidationAuthorizationArtifactCluster defines model for ValidationAuthorizationArtifactCluster.
+type ValidationAuthorizationArtifactCluster struct {
+	Context            string                               `json:"context"`
+	ExplicitNamespaces ValidationAuthorizationArtifactNames `json:"explicit_namespaces"`
+	Namespaces         ValidationAuthorizationArtifactNames `json:"namespaces"`
+	VerbsDenied        ValidationAuthorizationArtifactNames `json:"verbs_denied"`
+}
+
+// ValidationAuthorizationArtifactNames defines model for ValidationAuthorizationArtifactNames.
+type ValidationAuthorizationArtifactNames = []string
+
+// ValidationAuthorizationArtifactOffLimit defines model for ValidationAuthorizationArtifactOffLimit.
+type ValidationAuthorizationArtifactOffLimit struct {
+	Context   *string `json:"context"`
+	Image     *string `json:"image"`
+	Name      *string `json:"name"`
+	Namespace *string `json:"namespace"`
+	Resource  *string `json:"resource"`
+	Verb      *string `json:"verb"`
+}
+
+// ValidationAuthorizationArtifactScope defines model for ValidationAuthorizationArtifactScope.
+type ValidationAuthorizationArtifactScope struct {
+	AuthorizedBy             *string                                     `json:"authorized_by"`
+	Browser                  []ValidationAuthorizationArtifactBrowser    `json:"browser"`
+	Clusters                 []ValidationAuthorizationArtifactCluster    `json:"clusters"`
+	Containers               ValidationAuthorizationArtifactNames        `json:"containers"`
+	CredentialProbeClasses   ValidationAuthorizationArtifactNames        `json:"credential_probe_classes"`
+	Engagement               *string                                     `json:"engagement"`
+	Environment              *string                                     `json:"environment"`
+	Expires                  *openapi_types.Date                         `json:"expires"`
+	Images                   ValidationAuthorizationArtifactNames        `json:"images"`
+	InventoryAwsProfiles     ValidationAuthorizationArtifactNames        `json:"inventory_aws_profiles"`
+	InventoryClusterContexts ValidationAuthorizationArtifactNames        `json:"inventory_cluster_contexts"`
+	Modes                    []ValidationAuthorizationArtifactScopeModes `json:"modes"`
+	OffLimits                []ValidationAuthorizationArtifactOffLimit   `json:"off_limits"`
+	WasmArtifactIds          []openapi_types.UUID                        `json:"wasm_artifact_ids"`
+}
+
+// ValidationAuthorizationArtifactScopeModes defines model for ValidationAuthorizationArtifactScope.Modes.
+type ValidationAuthorizationArtifactScopeModes string
+
+// ValidationError defines model for ValidationError.
+type ValidationError struct {
+	Ctx   *map[string]interface{}    `json:"ctx,omitempty"`
+	Input interface{}                `json:"input,omitempty"`
+	Loc   []ValidationError_Loc_Item `json:"loc"`
+	Msg   string                     `json:"msg"`
+	Type  string                     `json:"type"`
+}
+
+// ValidationErrorLoc0 defines model for .
+type ValidationErrorLoc0 = string
+
+// ValidationErrorLoc1 defines model for .
+type ValidationErrorLoc1 = int
+
+// ValidationError_Loc_Item defines model for ValidationError.loc.Item.
+type ValidationError_Loc_Item struct {
+	union json.RawMessage
 }
 
 // ValidationFindingBinding defines model for ValidationFindingBinding.
@@ -2622,6 +8767,63 @@ type ValidationFindingResult struct {
 	SourceId      string                `json:"source_id"`
 	SourceReport  string                `json:"source_report"`
 	Verdict       ValidationVerdict     `json:"verdict"`
+}
+
+// ValidationPlanArtifact Prepared validate-findings plan. Structural checks only: execution still requires scope, authorization and adapter classification checks.
+type ValidationPlanArtifact struct {
+	Chains           []ValidationPlanArtifactChain      `json:"chains"`
+	Engagement       *string                            `json:"engagement"`
+	ScopeBindingMode ValidationArtifactScopeBindingMode `json:"scope_binding_mode"`
+	Steps            []ValidationPlanArtifactStep       `json:"steps"`
+	Target           string                             `json:"target"`
+}
+
+// ValidationPlanArtifactChain defines model for ValidationPlanArtifactChain.
+type ValidationPlanArtifactChain struct {
+	ChainId         string   `json:"chain_id"`
+	EntryPoint      string   `json:"entry_point"`
+	FindingIds      []string `json:"finding_ids"`
+	MitreAttackRefs []string `json:"mitre_attack_refs"`
+	Name            string   `json:"name"`
+	Narrative       string   `json:"narrative"`
+	Path            []string `json:"path"`
+	TerminalAsset   string   `json:"terminal_asset"`
+}
+
+// ValidationPlanArtifactStep defines model for ValidationPlanArtifactStep.
+type ValidationPlanArtifactStep struct {
+	Adapter              ValidationArtifactAdapter        `json:"adapter"`
+	ChainRef             *string                          `json:"chain_ref,omitempty"`
+	Classification       ValidationArtifactClassification `json:"classification"`
+	Cmd                  *string                          `json:"cmd,omitempty"`
+	Expected             *string                          `json:"expected,omitempty"`
+	FindingRef           *string                          `json:"finding_ref,omitempty"`
+	Id                   string                           `json:"id"`
+	NovelRef             *string                          `json:"novel_ref,omitempty"`
+	Payload              *string                          `json:"payload,omitempty"`
+	Preconditions        *[]string                        `json:"preconditions,omitempty"`
+	Rollback             *string                          `json:"rollback,omitempty"`
+	Skip                 *string                          `json:"skip,omitempty"`
+	Summary              *string                          `json:"summary,omitempty"`
+	Target               ValidationPlanArtifactStepTarget `json:"target"`
+	Technique            ValidationArtifactTechnique      `json:"technique"`
+	TriageWasNeedsReview *bool                            `json:"triage_was_needs_review,omitempty"`
+	Verb                 string                           `json:"verb"`
+}
+
+// ValidationPlanArtifactStepTarget defines model for ValidationPlanArtifactStepTarget.
+type ValidationPlanArtifactStepTarget struct {
+	Artifact  *string `json:"artifact"`
+	Context   *string `json:"context"`
+	Image     *string `json:"image"`
+	Method    *string `json:"method,omitempty"`
+	Name      *string `json:"name"`
+	Namespace *string `json:"namespace"`
+	Path      *string `json:"path,omitempty"`
+	Port      *int    `json:"port,omitempty"`
+	Pqc       *bool   `json:"pqc,omitempty"`
+	Resource  *string `json:"resource"`
+	Runtime   *string `json:"runtime,omitempty"`
 }
 
 // ValidationRecordInput defines model for ValidationRecordInput.
@@ -2667,6 +8869,212 @@ type Verification struct {
 	VerificationId  openapi_types.UUID    `json:"verification_id"`
 	VerifiedAt      time.Time             `json:"verified_at"`
 	WorkItemIds     *[]openapi_types.UUID `json:"work_item_ids,omitempty"`
+}
+
+// VerificationArtifact Schema for *-remediation-verification.json reports produced by the verify-remediation harness. Records the per-finding verdict of a targeted re-audit of a previous secure-code-audit report against a patched version of the repository, commit-level attribution of each fix, and any regressions introduced by the patch.
+type VerificationArtifact struct {
+	// CommitTimeline Chronological list of all remediation commits across all findings.
+	CommitTimeline []VerificationArtifactTimelineEntry `json:"commit_timeline"`
+
+	// Evidence Typed base-versus-patch evidence gathered by this verification run, or carried forward from the remediation report that produced the patch. Shares one definition with the remediation family (remediation.schema.json#/$defs/patch_evidence) so a `proves` claim means the same thing on both sides and neither can drift. A targeted re-audit is analysis: it reads the two revisions but executes neither, so a verification report that carries no evidence item is making an analysis-only claim — which is the honest default, not a defect. See the per-path evidence ceilings in the harness's docs/disposition-ledger.md §8a.
+	Evidence *[]RemediationArtifactPatchEvidence      `json:"evidence,omitempty"`
+	Footer   *string                                  `json:"footer,omitempty"`
+	Metadata VerificationArtifactVerificationMetadata `json:"metadata"`
+
+	// Notes Free-form auditor/agent notes — attribution caveats (force-pushed history, squash merges), scoping decisions for the regression scan, anything a human reviewer should know.
+	Notes           *string   `json:"notes,omitempty"`
+	Recommendations *[]string `json:"recommendations,omitempty"`
+
+	// Regressions New vulnerabilities introduced by the patch. Empty array when none were found.
+	Regressions []VerificationArtifactRegression `json:"regressions"`
+
+	// ReviewSurfaceCoverage Review-surface coverage recorded by a scan that follows an audit (vuln-findings.schema.json, verification.schema.json). Same keys and statuses as the report's review_surface_coverage, but a scan has no negative_results, so a negative entry carries its evidence in note. The cumulative builder merges these records into the cumulative report.
+	ReviewSurfaceCoverage *ReportArtifactScanReviewSurfaceCoverage `json:"review_surface_coverage,omitempty"`
+	Summary               VerificationArtifactSummary              `json:"summary"`
+	Title                 string                                   `json:"title"`
+
+	// VerifiedFindings One entry per finding in the original audit report — findings are never silently skipped.
+	VerifiedFindings []VerificationArtifactVerifiedFinding `json:"verified_findings"`
+}
+
+// VerificationArtifactCrossRepo Present when the fix lives in a DIFFERENT repository than the finding. The finding's identity stays in the original repo; this block is evidence attached to it. Hard rule (validator-enforced): propagation 'pending' forbids verdict 'resolved' — upstream merging a fix does not resolve a finding the product still ships vulnerable.
+type VerificationArtifactCrossRepo struct {
+	// FixRef Commit SHA or ref of the fix in fix_repo.
+	FixRef *string `json:"fix_ref"`
+
+	// FixRepo URL of the repository the fix landed in (differs from metadata.repository).
+	FixRepo string `json:"fix_repo"`
+
+	// Propagation Whether the ORIGINAL repo has consumed the fix: consumed = lockfile/vendor/SBOM at or past the fixed version; pending = still on a vulnerable version; module_absent = dependency no longer present (removal is also a fix — verifier judges); not_applicable = Shape 2/3 (fix legitimately lives only in fix_repo, e.g. config/policy repo).
+	Propagation VerificationArtifactCrossRepoPropagation `json:"propagation"`
+
+	// PropagationEvidence What was checked: file + pinned version, vendor/modules.txt line, SBOM component version (from the fix-propagation checker).
+	PropagationEvidence *string `json:"propagation_evidence"`
+}
+
+// VerificationArtifactCrossRepoPropagation Whether the ORIGINAL repo has consumed the fix: consumed = lockfile/vendor/SBOM at or past the fixed version; pending = still on a vulnerable version; module_absent = dependency no longer present (removal is also a fix — verifier judges); not_applicable = Shape 2/3 (fix legitimately lives only in fix_repo, e.g. config/policy repo).
+type VerificationArtifactCrossRepoPropagation string
+
+// VerificationArtifactRegression defines model for VerificationArtifactRegression.
+type VerificationArtifactRegression struct {
+	AttackPattern *string `json:"attack_pattern,omitempty"`
+
+	// BlockedExternal An external dependency blocks this item; independent of effort size.
+	BlockedExternal *ReportArtifactFindingBlockedExternal `json:"blocked_external,omitempty"`
+	Category        *string                               `json:"category,omitempty"`
+	Cvss            *struct {
+		Score  float32 `json:"score"`
+		Vector string  `json:"vector"`
+	} `json:"cvss,omitempty"`
+	Cwes        []string                       `json:"cwes"`
+	Description string                         `json:"description"`
+	Evidence    *[]ReportArtifactEvidenceBlock `json:"evidence,omitempty"`
+
+	// Fingerprint Deterministic cross-scan identity (identity module fingerprint). Optional here -- no artifact of this kind carries one today -- but DECLARED, because additionalProperties is false and an undeclared identity field makes every stamped artifact invalid the moment a producer starts emitting it. That has happened twice: report.schema.json omitted fingerprint_algo for 16 days, and the cloud-config schema declared neither, so stamping the policy findings invalidated nearly every report in one command.
+	Fingerprint *string `json:"fingerprint,omitempty"`
+
+	// FingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION). Declared for the same reason as `fingerprint` above.
+	FingerprintAlgo *string `json:"fingerprint_algo,omitempty"`
+
+	// Id Canonical regression ID: {REPO_SLUG}-{PATCHED_SHORTSHA}-REG-{NNN}.
+	Id string `json:"id"`
+
+	// IntroducedBy Commit SHA or PR/MR reference that introduced this regression.
+	IntroducedBy      string                                  `json:"introduced_by"`
+	Locations         []ReportArtifactLocation                `json:"locations"`
+	PqcClassification *ReportArtifactFindingPqcClassification `json:"pqc_classification,omitempty"`
+	Remediation       string                                  `json:"remediation"`
+	RemediationEffort *ReportArtifactFindingRemediationEffort `json:"remediation_effort"`
+
+	// RoutedId Campaign finding ID this regression was routed to in the repo's baseline audit report (harness >= 0.196.0, the regression router): {REPO_SLUG}-{PATCHED_SHORTSHA}-{NNN}, numbering continuing where the repo's existing findings at that sha leave off. The REG id stays here as provenance; the routed finding carries the REG id in its source_findings. Absent on regressions not yet routed.
+	RoutedId *string                     `json:"routed_id,omitempty"`
+	Severity ReportArtifactSeverityLevel `json:"severity"`
+	Title    string                      `json:"title"`
+}
+
+// VerificationArtifactRemediationCommit defines model for VerificationArtifactRemediationCommit.
+type VerificationArtifactRemediationCommit struct {
+	Author string    `json:"author"`
+	Date   time.Time `json:"date"`
+
+	// PrNumber GitHub PR number (#NN) or GitLab MR number (!NN) extracted from the commit message, null if none.
+	PrNumber  *int                                           `json:"pr_number"`
+	Relevance VerificationArtifactRemediationCommitRelevance `json:"relevance"`
+	Sha       string                                         `json:"sha"`
+	ShortSha  string                                         `json:"short_sha"`
+	Subject   string                                         `json:"subject"`
+}
+
+// VerificationArtifactRemediationCommitRelevance defines model for VerificationArtifactRemediationCommit.Relevance.
+type VerificationArtifactRemediationCommitRelevance string
+
+// VerificationArtifactSummary defines model for VerificationArtifactSummary.
+type VerificationArtifactSummary struct {
+	ByVerdict struct {
+		FalsePositive     int `json:"false_positive"`
+		NewApproach       int `json:"new_approach"`
+		PartiallyResolved int `json:"partially_resolved"`
+		Regression        int `json:"regression"`
+		Resolved          int `json:"resolved"`
+		RiskAccepted      int `json:"risk_accepted"`
+		Unresolved        int `json:"unresolved"`
+	} `json:"by_verdict"`
+	Prose *string `json:"prose,omitempty"`
+
+	// Regressions Count of entries in the top-level regressions[] array.
+	Regressions   int `json:"regressions"`
+	TotalFindings int `json:"total_findings"`
+}
+
+// VerificationArtifactTimelineEntry defines model for VerificationArtifactTimelineEntry.
+type VerificationArtifactTimelineEntry struct {
+	// Addresses Original finding IDs this commit addresses.
+	Addresses []string  `json:"addresses"`
+	Author    string    `json:"author"`
+	Date      time.Time `json:"date"`
+	FullSha   string    `json:"full_sha"`
+	PrNumber  *int      `json:"pr_number"`
+	Sha       string    `json:"sha"`
+	Subject   string    `json:"subject"`
+}
+
+// VerificationArtifactVerdict defines model for VerificationArtifactVerdict.
+type VerificationArtifactVerdict string
+
+// VerificationArtifactVerificationMetadata defines model for VerificationArtifactVerificationMetadata.
+type VerificationArtifactVerificationMetadata struct {
+	Additional *map[string]interface{} `json:"additional,omitempty"`
+	Auditor    *string                 `json:"auditor,omitempty"`
+	Date       openapi_types.Date      `json:"date"`
+
+	// FixRef Ref verified in fix_repository.
+	FixRef *string `json:"fix_ref"`
+
+	// FixRepository When the whole verification ran against a fix repo (--fix-repo), its URL.
+	FixRepository *string `json:"fix_repository"`
+
+	// Framework Framework list, same as the original audit.
+	Framework      *string `json:"framework,omitempty"`
+	HarnessVersion string  `json:"harness_version"`
+
+	// OriginalCommit Full SHA of the commit the original audit findings were identified against.
+	OriginalCommit string `json:"original_commit"`
+
+	// OriginalReport Path to the original *-security-audit.{json,md} report this verification is based on.
+	OriginalReport string `json:"original_report"`
+
+	// PatchedCommit Full SHA of the patched HEAD that was verified (branch head, PR/MR head, or default-branch tip).
+	PatchedCommit string `json:"patched_commit"`
+
+	// PatchedRef Human-readable ref the patched commit came from, e.g. 'fix-branch', 'pull/42/head', 'merge-requests/17/head', or 'main'.
+	PatchedRef *string                                          `json:"patched_ref,omitempty"`
+	Ref        *string                                          `json:"ref,omitempty"`
+	RefKind    *VerificationArtifactVerificationMetadataRefKind `json:"ref_kind,omitempty"`
+
+	// Repository Repository URL the patched code was obtained from.
+	Repository string  `json:"repository"`
+	Scope      *string `json:"scope,omitempty"`
+}
+
+// VerificationArtifactVerificationMetadataRefKind defines model for VerificationArtifactVerificationMetadata.RefKind.
+type VerificationArtifactVerificationMetadataRefKind string
+
+// VerificationArtifactVerifiedFinding defines model for VerificationArtifactVerifiedFinding.
+type VerificationArtifactVerifiedFinding struct {
+	// CrossRepo Present when the fix lives in a DIFFERENT repository than the finding. The finding's identity stays in the original repo; this block is evidence attached to it. Hard rule (validator-enforced): propagation 'pending' forbids verdict 'resolved' — upstream merging a fix does not resolve a finding the product still ships vulnerable.
+	CrossRepo *VerificationArtifactCrossRepo `json:"cross_repo,omitempty"`
+
+	// DispositionRationale Required for false_positive and risk_accepted verdicts: who made the determination and why (link to the triage record, MR discussion, or risk-acceptance decision).
+	DispositionRationale *string `json:"disposition_rationale"`
+	Evidence             struct {
+		// Explanation How the change addresses (or fails to address) the root cause.
+		Explanation string `json:"explanation"`
+
+		// FrameworkReference Same CWE, K-ID, CIS section, STIG ID, SLSA level, or PEACH parameter as the original finding.
+		FrameworkReference string `json:"framework_reference"`
+
+		// OriginalCode Code at the finding location in the original commit.
+		OriginalCode *string `json:"original_code,omitempty"`
+
+		// PatchedCode Code at the finding location in the patched commit, or confirmation the file/section was removed.
+		PatchedCode *string `json:"patched_code,omitempty"`
+	} `json:"evidence"`
+
+	// OriginalId Finding ID from the original audit report.
+	OriginalId         string                                  `json:"original_id"`
+	OriginalSeverity   ReportArtifactSeverityLevel             `json:"original_severity"`
+	OriginalTitle      string                                  `json:"original_title"`
+	RemediationCommits []VerificationArtifactRemediationCommit `json:"remediation_commits"`
+
+	// ResidualRisk Remaining risk when partially_resolved or new_approach, null otherwise.
+	ResidualRisk *string `json:"residual_risk"`
+
+	// ResidualSeverity Recalculated severity when partially_resolved, null otherwise.
+	ResidualSeverity *ReportArtifactSeverityLevel `json:"residual_severity"`
+
+	// Unattributed True when no commit could be identified that addresses this finding (unresolved, fix predates the audit, disposition without code change, or commit history unavailable).
+	Unattributed bool                        `json:"unattributed"`
+	Verdict      VerificationArtifactVerdict `json:"verdict"`
 }
 
 // VerificationInput What the skill verifies: the work item (its fork, branch and report), its findings, the
@@ -2767,6 +9175,157 @@ type ViewFilterOutput struct {
 // ViewName defines model for ViewName.
 type ViewName string
 
+// VulnFindingsArtifact Output contract of the vuln-scan skill (<repo>-vuln-findings.json, harness >= 0.38.0). Shares vocabulary with report.schema.json: the severity_level enum is identical and finding ids use the canonical {REPO_SLUG}-{SHORTSHA}-{NNN} campaign pattern. Findings are UNVERIFIED candidates ('claimed' in findings-lifecycle terms) awaiting /triage; known_findings are candidates deduped against the target's *-security-audit.json baseline. Legacy VULN-FINDINGS.json files (pre-0.38.0) do not conform and are not auto-detected against this schema.
+type VulnFindingsArtifact struct {
+	Findings      []VulnFindingsArtifactFinding       `json:"findings"`
+	FocusAreas    []string                            `json:"focus_areas"`
+	KnownFindings *[]VulnFindingsArtifactKnownFinding `json:"known_findings,omitempty"`
+	Metadata      VulnFindingsArtifactMetadata        `json:"metadata"`
+
+	// NotAffected Advisory matches the audit identified and eliminated as not affected (validity `not_affected`: the issue exists but does not apply to this repository, version or deployment), each with the dependency evidence and a rationale. A narrative paper trail rendered with the report; never ingested as findings.
+	NotAffected *[]VulnFindingsArtifactNotAffectedEntry `json:"not_affected,omitempty"`
+
+	// ReviewSurfaceCoverage Review-surface coverage recorded by a scan that follows an audit (vuln-findings.schema.json, verification.schema.json). Same keys and statuses as the report's review_surface_coverage, but a scan has no negative_results, so a negative entry carries its evidence in note. The cumulative builder merges these records into the cumulative report.
+	ReviewSurfaceCoverage *ReportArtifactScanReviewSurfaceCoverage `json:"review_surface_coverage,omitempty"`
+
+	// ScannedAt ISO-8601 timestamp of the scan.
+	ScannedAt string                      `json:"scanned_at"`
+	Summary   VulnFindingsArtifactSummary `json:"summary"`
+	Target    string                      `json:"target"`
+}
+
+// VulnFindingsArtifactFinding defines model for VulnFindingsArtifactFinding.
+type VulnFindingsArtifactFinding struct {
+	Category         string                     `json:"category"`
+	Confidence       float32                    `json:"confidence"`
+	ConfidenceReason *string                    `json:"confidence_reason,omitempty"`
+	Cvss             *ReportArtifactFindingCvss `json:"cvss,omitempty"`
+
+	// Cwe Primary CWE for the category; feeds the baseline fold-in's required cwes[].
+	Cwe *string `json:"cwe,omitempty"`
+
+	// Dependency Supply-chain provenance for a dependency finding, so the finding is SELF-DESCRIBING and does not depend on a sibling impact-analysis artifact resolving by relative path. Required once findings live in object storage, and the join key for consumers that build their own database rather than reading the local SQLite projection. Optional; present when origin is 'impact-analysis' or the finding is otherwise advisory-derived.
+	Dependency      *ReportArtifactFindingDependency `json:"dependency,omitempty"`
+	Description     string                           `json:"description"`
+	ExploitScenario *string                          `json:"exploit_scenario,omitempty"`
+	File            string                           `json:"file"`
+
+	// Fingerprint Deterministic cross-scan identity (identity module fingerprint). Optional here -- no artifact of this kind carries one today -- but DECLARED, because additionalProperties is false and an undeclared identity field makes every stamped artifact invalid the moment a producer starts emitting it. That has happened twice: report.schema.json omitted fingerprint_algo for 16 days, and the cloud-config schema declared neither, so stamping the policy findings invalidated nearly every report in one command.
+	Fingerprint *string `json:"fingerprint,omitempty"`
+
+	// FingerprintAlgo Algorithm version of `fingerprint` (the identity module ALGO_VERSION). Declared for the same reason as `fingerprint` above.
+	FingerprintAlgo *string `json:"fingerprint_algo,omitempty"`
+	Id              string  `json:"id"`
+	Line            *int    `json:"line"`
+	Recommendation  string  `json:"recommendation"`
+
+	// ScannerRef The review subagent's working id (F-<focus>-<n>), kept for traceability.
+	ScannerRef *string                           `json:"scanner_ref,omitempty"`
+	Severity   VulnFindingsArtifactSeverityLevel `json:"severity"`
+	Title      string                            `json:"title"`
+}
+
+// VulnFindingsArtifactKnownFinding defines model for VulnFindingsArtifactKnownFinding.
+type VulnFindingsArtifactKnownFinding struct {
+	// MatchesBaselineId The baseline audit finding this candidate duplicates.
+	MatchesBaselineId string `json:"matches_baseline_id"`
+	Title             string `json:"title"`
+}
+
+// VulnFindingsArtifactMetadata defines model for VulnFindingsArtifactMetadata.
+type VulnFindingsArtifactMetadata struct {
+	// Additional Extension bag (same convention as report.schema.json): deterministic_steps recording, the --diff mode coverage_diff stamp, and the spend calibration stamp. Undeclared keys stay allowed.
+	Additional *struct {
+		// CoverageDiff Present exactly when the scan was diff-scoped (/vuln-scan --diff): what the diff was taken against and what of it the scan covered. A full scan omits it. A review_surface_coverage entry may be out_of_scope only when this is present.
+		CoverageDiff *struct {
+			// Anchor The commit the diff starts from (the baseline's metadata.commit).
+			Anchor string `json:"anchor"`
+
+			// BaselineReport The audit report the diff was resolved against.
+			BaselineReport string `json:"baseline_report"`
+
+			// CallersCovered Callers of changed code the scan reviewed.
+			CallersCovered []string `json:"callers_covered"`
+
+			// ChangedFilesCovered Changed first-party files the scan reviewed.
+			ChangedFilesCovered []string `json:"changed_files_covered"`
+
+			// RefusedOrSkipped Each changed file or step not covered, as '<file or step>: <reason>'.
+			RefusedOrSkipped []string `json:"refused_or_skipped"`
+
+			// ResolutionSource How the baseline and anchor were chosen: auto (the resolver) or override (--since / --baseline).
+			ResolutionSource string `json:"resolution_source"`
+		} `json:"coverage_diff,omitempty"`
+	} `json:"additional,omitempty"`
+
+	// Baseline Path of the matched <repo>-security-audit.json, or null when the target has no audit baseline.
+	Baseline         *string `json:"baseline"`
+	BaselineFindings int     `json:"baseline_findings"`
+
+	// HarnessVersion Harness semver + short SHA at scan time, e.g. 0.38.0-de5a090.
+	HarnessVersion string `json:"harness_version"`
+	Repo           string `json:"repo"`
+
+	// RepoSlug Repo name uppercased, [^A-Z0-9] -> '_', truncated to 24 chars — the id prefix.
+	RepoSlug string `json:"repo_slug"`
+
+	// ScannedRef Short SHA of the scanned commit (7 lowercase hex), or '0000000 (not a git checkout)'.
+	ScannedRef string `json:"scanned_ref"`
+}
+
+// VulnFindingsArtifactNotAffectedEntry One scanner-matched advisory eliminated as not affected, and why: by an impact-analysis row (version_not_in_range or not_imported) or a vendor statement cited in reference. govulncheck's not_observed is evidence for triage, never an elimination route here.
+type VulnFindingsArtifactNotAffectedEntry struct {
+	// Dependency Supply-chain provenance for a dependency finding, so the finding is SELF-DESCRIBING and does not depend on a sibling impact-analysis artifact resolving by relative path. Required once findings live in object storage, and the join key for consumers that build their own database rather than reading the local SQLite projection. Optional; present when origin is 'impact-analysis' or the finding is otherwise advisory-derived.
+	Dependency ReportArtifactFindingDependency `json:"dependency"`
+
+	// Rationale Why the evidence eliminates the match, in prose.
+	Rationale string `json:"rationale"`
+
+	// Reference Where a vendor not-affected statement or fixed NVR is recorded, when that is the evidence instead of dependency.impact_artifact.
+	Reference *string `json:"reference,omitempty"`
+	union     json.RawMessage
+}
+
+// VulnFindingsArtifactNotAffectedEntry0 Impact-analysis: out of range or not in the dependency graph.
+type VulnFindingsArtifactNotAffectedEntry0 struct {
+	Dependency *struct {
+		Classification VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification `json:"classification"`
+		ImpactArtifact string                                                           `json:"impact_artifact"`
+	} `json:"dependency,omitempty"`
+}
+
+// VulnFindingsArtifactNotAffectedEntry0DependencyClassification0 defines model for .
+type VulnFindingsArtifactNotAffectedEntry0DependencyClassification0 = interface{}
+
+// VulnFindingsArtifactNotAffectedEntry0DependencyClassification1 defines model for .
+type VulnFindingsArtifactNotAffectedEntry0DependencyClassification1 = interface{}
+
+// VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification defines model for VulnFindingsArtifactNotAffectedEntry.0.Dependency.Classification.
+type VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification struct {
+	union json.RawMessage
+}
+
+// VulnFindingsArtifactNotAffectedEntry1 A vendor not-affected statement or fixed NVR, cited in reference; the dependency never says affected.
+type VulnFindingsArtifactNotAffectedEntry1 struct {
+	Dependency interface{} `json:"dependency,omitempty"`
+	Reference  string      `json:"reference"`
+}
+
+// VulnFindingsArtifactSeverityLevel defines model for VulnFindingsArtifactSeverityLevel.
+type VulnFindingsArtifactSeverityLevel string
+
+// VulnFindingsArtifactSummary defines model for VulnFindingsArtifactSummary.
+type VulnFindingsArtifactSummary struct {
+	Critical      int `json:"critical"`
+	High          int `json:"high"`
+	Informational int `json:"informational"`
+	Known         int `json:"known"`
+	Low           int `json:"low"`
+	LowConfidence int `json:"low_confidence"`
+	Medium        int `json:"medium"`
+	Total         int `json:"total"`
+}
+
 // VulnerableSymbol A function the advisory's fix touched, with where it was read: a wrong symbol is worse
 // than none, so callers gate on `confidence` and `source`.
 type VulnerableSymbol struct {
@@ -2821,7 +9380,7 @@ type ListAssessmentsParams struct {
 
 // ListAssessmentArtifactsParams defines parameters for ListAssessmentArtifacts.
 type ListAssessmentArtifactsParams struct {
-	Kind *string `form:"kind,omitempty" json:"kind,omitempty"`
+	Kind *ArtifactKind `form:"kind,omitempty" json:"kind,omitempty"`
 }
 
 // SummarizeExposureParams defines parameters for SummarizeExposure.
@@ -3097,6 +9656,1588 @@ type RecordValidationJSONRequestBody = RecordValidation
 // RecordVerificationJSONRequestBody defines body for RecordVerification for application/json ContentType.
 type RecordVerificationJSONRequestBody = VerificationRecordBody
 
+// Getter for additional properties for ComplianceAssessmentArtifact_Metadata_Target. Returns the specified
+// element and whether it was found
+func (a ComplianceAssessmentArtifact_Metadata_Target) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ComplianceAssessmentArtifact_Metadata_Target
+func (a *ComplianceAssessmentArtifact_Metadata_Target) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ComplianceAssessmentArtifact_Metadata_Target to handle AdditionalProperties
+func (a *ComplianceAssessmentArtifact_Metadata_Target) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["cde_boundary"]; found {
+		err = json.Unmarshal(raw, &a.CdeBoundary)
+		if err != nil {
+			return fmt.Errorf("error reading 'cde_boundary': %w", err)
+		}
+		delete(object, "cde_boundary")
+	}
+
+	if raw, found := object["environment"]; found {
+		err = json.Unmarshal(raw, &a.Environment)
+		if err != nil {
+			return fmt.Errorf("error reading 'environment': %w", err)
+		}
+		delete(object, "environment")
+	}
+
+	if raw, found := object["kind"]; found {
+		err = json.Unmarshal(raw, &a.Kind)
+		if err != nil {
+			return fmt.Errorf("error reading 'kind': %w", err)
+		}
+		delete(object, "kind")
+	}
+
+	if raw, found := object["personal_data_stores"]; found {
+		err = json.Unmarshal(raw, &a.PersonalDataStores)
+		if err != nil {
+			return fmt.Errorf("error reading 'personal_data_stores': %w", err)
+		}
+		delete(object, "personal_data_stores")
+	}
+
+	if raw, found := object["product"]; found {
+		err = json.Unmarshal(raw, &a.Product)
+		if err != nil {
+			return fmt.Errorf("error reading 'product': %w", err)
+		}
+		delete(object, "product")
+	}
+
+	if raw, found := object["repos"]; found {
+		err = json.Unmarshal(raw, &a.Repos)
+		if err != nil {
+			return fmt.Errorf("error reading 'repos': %w", err)
+		}
+		delete(object, "repos")
+	}
+
+	if raw, found := object["scope"]; found {
+		err = json.Unmarshal(raw, &a.Scope)
+		if err != nil {
+			return fmt.Errorf("error reading 'scope': %w", err)
+		}
+		delete(object, "scope")
+	}
+
+	if raw, found := object["scope_binding_mode"]; found {
+		err = json.Unmarshal(raw, &a.ScopeBindingMode)
+		if err != nil {
+			return fmt.Errorf("error reading 'scope_binding_mode': %w", err)
+		}
+		delete(object, "scope_binding_mode")
+	}
+
+	if raw, found := object["snapshot_id"]; found {
+		err = json.Unmarshal(raw, &a.SnapshotId)
+		if err != nil {
+			return fmt.Errorf("error reading 'snapshot_id': %w", err)
+		}
+		delete(object, "snapshot_id")
+	}
+
+	if raw, found := object["trust_service_categories"]; found {
+		err = json.Unmarshal(raw, &a.TrustServiceCategories)
+		if err != nil {
+			return fmt.Errorf("error reading 'trust_service_categories': %w", err)
+		}
+		delete(object, "trust_service_categories")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ComplianceAssessmentArtifact_Metadata_Target to handle AdditionalProperties
+func (a ComplianceAssessmentArtifact_Metadata_Target) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.CdeBoundary != nil {
+		object["cde_boundary"], err = json.Marshal(a.CdeBoundary)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'cde_boundary': %w", err)
+		}
+	}
+
+	if a.Environment != nil {
+		object["environment"], err = json.Marshal(a.Environment)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'environment': %w", err)
+		}
+	}
+
+	object["kind"], err = json.Marshal(a.Kind)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
+	}
+
+	if a.PersonalDataStores != nil {
+		object["personal_data_stores"], err = json.Marshal(a.PersonalDataStores)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'personal_data_stores': %w", err)
+		}
+	}
+
+	if a.Product != nil {
+		object["product"], err = json.Marshal(a.Product)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'product': %w", err)
+		}
+	}
+
+	if a.Repos != nil {
+		object["repos"], err = json.Marshal(a.Repos)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'repos': %w", err)
+		}
+	}
+
+	if a.Scope != nil {
+		object["scope"], err = json.Marshal(a.Scope)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'scope': %w", err)
+		}
+	}
+
+	if a.ScopeBindingMode != nil {
+		object["scope_binding_mode"], err = json.Marshal(a.ScopeBindingMode)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'scope_binding_mode': %w", err)
+		}
+	}
+
+	if a.SnapshotId != nil {
+		object["snapshot_id"], err = json.Marshal(a.SnapshotId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'snapshot_id': %w", err)
+		}
+	}
+
+	if a.TrustServiceCategories != nil {
+		object["trust_service_categories"], err = json.Marshal(a.TrustServiceCategories)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trust_service_categories': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ComplianceAssessmentArtifact_Metadata. Returns the specified
+// element and whether it was found
+func (a ComplianceAssessmentArtifact_Metadata) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ComplianceAssessmentArtifact_Metadata
+func (a *ComplianceAssessmentArtifact_Metadata) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ComplianceAssessmentArtifact_Metadata to handle AdditionalProperties
+func (a *ComplianceAssessmentArtifact_Metadata) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["artifact"]; found {
+		err = json.Unmarshal(raw, &a.Artifact)
+		if err != nil {
+			return fmt.Errorf("error reading 'artifact': %w", err)
+		}
+		delete(object, "artifact")
+	}
+
+	if raw, found := object["collector_versions"]; found {
+		err = json.Unmarshal(raw, &a.CollectorVersions)
+		if err != nil {
+			return fmt.Errorf("error reading 'collector_versions': %w", err)
+		}
+		delete(object, "collector_versions")
+	}
+
+	if raw, found := object["frameworks"]; found {
+		err = json.Unmarshal(raw, &a.Frameworks)
+		if err != nil {
+			return fmt.Errorf("error reading 'frameworks': %w", err)
+		}
+		delete(object, "frameworks")
+	}
+
+	if raw, found := object["generated_at"]; found {
+		err = json.Unmarshal(raw, &a.GeneratedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'generated_at': %w", err)
+		}
+		delete(object, "generated_at")
+	}
+
+	if raw, found := object["harness_version"]; found {
+		err = json.Unmarshal(raw, &a.HarnessVersion)
+		if err != nil {
+			return fmt.Errorf("error reading 'harness_version': %w", err)
+		}
+		delete(object, "harness_version")
+	}
+
+	if raw, found := object["org_parameters_hash"]; found {
+		err = json.Unmarshal(raw, &a.OrgParametersHash)
+		if err != nil {
+			return fmt.Errorf("error reading 'org_parameters_hash': %w", err)
+		}
+		delete(object, "org_parameters_hash")
+	}
+
+	if raw, found := object["owner_attestations"]; found {
+		err = json.Unmarshal(raw, &a.OwnerAttestations)
+		if err != nil {
+			return fmt.Errorf("error reading 'owner_attestations': %w", err)
+		}
+		delete(object, "owner_attestations")
+	}
+
+	if raw, found := object["registry_hash"]; found {
+		err = json.Unmarshal(raw, &a.RegistryHash)
+		if err != nil {
+			return fmt.Errorf("error reading 'registry_hash': %w", err)
+		}
+		delete(object, "registry_hash")
+	}
+
+	if raw, found := object["target"]; found {
+		err = json.Unmarshal(raw, &a.Target)
+		if err != nil {
+			return fmt.Errorf("error reading 'target': %w", err)
+		}
+		delete(object, "target")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ComplianceAssessmentArtifact_Metadata to handle AdditionalProperties
+func (a ComplianceAssessmentArtifact_Metadata) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["artifact"], err = json.Marshal(a.Artifact)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'artifact': %w", err)
+	}
+
+	if a.CollectorVersions != nil {
+		object["collector_versions"], err = json.Marshal(a.CollectorVersions)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'collector_versions': %w", err)
+		}
+	}
+
+	object["frameworks"], err = json.Marshal(a.Frameworks)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'frameworks': %w", err)
+	}
+
+	object["generated_at"], err = json.Marshal(a.GeneratedAt)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'generated_at': %w", err)
+	}
+
+	object["harness_version"], err = json.Marshal(a.HarnessVersion)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'harness_version': %w", err)
+	}
+
+	if a.OrgParametersHash != nil {
+		object["org_parameters_hash"], err = json.Marshal(a.OrgParametersHash)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'org_parameters_hash': %w", err)
+		}
+	}
+
+	if a.OwnerAttestations != nil {
+		object["owner_attestations"], err = json.Marshal(a.OwnerAttestations)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'owner_attestations': %w", err)
+		}
+	}
+
+	object["registry_hash"], err = json.Marshal(a.RegistryHash)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'registry_hash': %w", err)
+	}
+
+	object["target"], err = json.Marshal(a.Target)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'target': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target. Returns the specified
+// element and whether it was found
+func (a ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target
+func (a *ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target to handle AdditionalProperties
+func (a *ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["cde_boundary"]; found {
+		err = json.Unmarshal(raw, &a.CdeBoundary)
+		if err != nil {
+			return fmt.Errorf("error reading 'cde_boundary': %w", err)
+		}
+		delete(object, "cde_boundary")
+	}
+
+	if raw, found := object["environment"]; found {
+		err = json.Unmarshal(raw, &a.Environment)
+		if err != nil {
+			return fmt.Errorf("error reading 'environment': %w", err)
+		}
+		delete(object, "environment")
+	}
+
+	if raw, found := object["kind"]; found {
+		err = json.Unmarshal(raw, &a.Kind)
+		if err != nil {
+			return fmt.Errorf("error reading 'kind': %w", err)
+		}
+		delete(object, "kind")
+	}
+
+	if raw, found := object["personal_data_stores"]; found {
+		err = json.Unmarshal(raw, &a.PersonalDataStores)
+		if err != nil {
+			return fmt.Errorf("error reading 'personal_data_stores': %w", err)
+		}
+		delete(object, "personal_data_stores")
+	}
+
+	if raw, found := object["product"]; found {
+		err = json.Unmarshal(raw, &a.Product)
+		if err != nil {
+			return fmt.Errorf("error reading 'product': %w", err)
+		}
+		delete(object, "product")
+	}
+
+	if raw, found := object["repos"]; found {
+		err = json.Unmarshal(raw, &a.Repos)
+		if err != nil {
+			return fmt.Errorf("error reading 'repos': %w", err)
+		}
+		delete(object, "repos")
+	}
+
+	if raw, found := object["scope"]; found {
+		err = json.Unmarshal(raw, &a.Scope)
+		if err != nil {
+			return fmt.Errorf("error reading 'scope': %w", err)
+		}
+		delete(object, "scope")
+	}
+
+	if raw, found := object["scope_binding_mode"]; found {
+		err = json.Unmarshal(raw, &a.ScopeBindingMode)
+		if err != nil {
+			return fmt.Errorf("error reading 'scope_binding_mode': %w", err)
+		}
+		delete(object, "scope_binding_mode")
+	}
+
+	if raw, found := object["snapshot_id"]; found {
+		err = json.Unmarshal(raw, &a.SnapshotId)
+		if err != nil {
+			return fmt.Errorf("error reading 'snapshot_id': %w", err)
+		}
+		delete(object, "snapshot_id")
+	}
+
+	if raw, found := object["trust_service_categories"]; found {
+		err = json.Unmarshal(raw, &a.TrustServiceCategories)
+		if err != nil {
+			return fmt.Errorf("error reading 'trust_service_categories': %w", err)
+		}
+		delete(object, "trust_service_categories")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target to handle AdditionalProperties
+func (a ComplianceAssessmentArtifactCanonicalWrite_Metadata_Target) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.CdeBoundary != nil {
+		object["cde_boundary"], err = json.Marshal(a.CdeBoundary)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'cde_boundary': %w", err)
+		}
+	}
+
+	if a.Environment != nil {
+		object["environment"], err = json.Marshal(a.Environment)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'environment': %w", err)
+		}
+	}
+
+	object["kind"], err = json.Marshal(a.Kind)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
+	}
+
+	if a.PersonalDataStores != nil {
+		object["personal_data_stores"], err = json.Marshal(a.PersonalDataStores)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'personal_data_stores': %w", err)
+		}
+	}
+
+	if a.Product != nil {
+		object["product"], err = json.Marshal(a.Product)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'product': %w", err)
+		}
+	}
+
+	if a.Repos != nil {
+		object["repos"], err = json.Marshal(a.Repos)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'repos': %w", err)
+		}
+	}
+
+	if a.Scope != nil {
+		object["scope"], err = json.Marshal(a.Scope)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'scope': %w", err)
+		}
+	}
+
+	if a.ScopeBindingMode != nil {
+		object["scope_binding_mode"], err = json.Marshal(a.ScopeBindingMode)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'scope_binding_mode': %w", err)
+		}
+	}
+
+	if a.SnapshotId != nil {
+		object["snapshot_id"], err = json.Marshal(a.SnapshotId)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'snapshot_id': %w", err)
+		}
+	}
+
+	if a.TrustServiceCategories != nil {
+		object["trust_service_categories"], err = json.Marshal(a.TrustServiceCategories)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'trust_service_categories': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ComplianceAssessmentArtifactCanonicalWrite_Metadata. Returns the specified
+// element and whether it was found
+func (a ComplianceAssessmentArtifactCanonicalWrite_Metadata) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ComplianceAssessmentArtifactCanonicalWrite_Metadata
+func (a *ComplianceAssessmentArtifactCanonicalWrite_Metadata) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ComplianceAssessmentArtifactCanonicalWrite_Metadata to handle AdditionalProperties
+func (a *ComplianceAssessmentArtifactCanonicalWrite_Metadata) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["artifact"]; found {
+		err = json.Unmarshal(raw, &a.Artifact)
+		if err != nil {
+			return fmt.Errorf("error reading 'artifact': %w", err)
+		}
+		delete(object, "artifact")
+	}
+
+	if raw, found := object["collector_versions"]; found {
+		err = json.Unmarshal(raw, &a.CollectorVersions)
+		if err != nil {
+			return fmt.Errorf("error reading 'collector_versions': %w", err)
+		}
+		delete(object, "collector_versions")
+	}
+
+	if raw, found := object["frameworks"]; found {
+		err = json.Unmarshal(raw, &a.Frameworks)
+		if err != nil {
+			return fmt.Errorf("error reading 'frameworks': %w", err)
+		}
+		delete(object, "frameworks")
+	}
+
+	if raw, found := object["generated_at"]; found {
+		err = json.Unmarshal(raw, &a.GeneratedAt)
+		if err != nil {
+			return fmt.Errorf("error reading 'generated_at': %w", err)
+		}
+		delete(object, "generated_at")
+	}
+
+	if raw, found := object["harness_version"]; found {
+		err = json.Unmarshal(raw, &a.HarnessVersion)
+		if err != nil {
+			return fmt.Errorf("error reading 'harness_version': %w", err)
+		}
+		delete(object, "harness_version")
+	}
+
+	if raw, found := object["org_parameters_hash"]; found {
+		err = json.Unmarshal(raw, &a.OrgParametersHash)
+		if err != nil {
+			return fmt.Errorf("error reading 'org_parameters_hash': %w", err)
+		}
+		delete(object, "org_parameters_hash")
+	}
+
+	if raw, found := object["owner_attestations"]; found {
+		err = json.Unmarshal(raw, &a.OwnerAttestations)
+		if err != nil {
+			return fmt.Errorf("error reading 'owner_attestations': %w", err)
+		}
+		delete(object, "owner_attestations")
+	}
+
+	if raw, found := object["registry_hash"]; found {
+		err = json.Unmarshal(raw, &a.RegistryHash)
+		if err != nil {
+			return fmt.Errorf("error reading 'registry_hash': %w", err)
+		}
+		delete(object, "registry_hash")
+	}
+
+	if raw, found := object["target"]; found {
+		err = json.Unmarshal(raw, &a.Target)
+		if err != nil {
+			return fmt.Errorf("error reading 'target': %w", err)
+		}
+		delete(object, "target")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ComplianceAssessmentArtifactCanonicalWrite_Metadata to handle AdditionalProperties
+func (a ComplianceAssessmentArtifactCanonicalWrite_Metadata) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["artifact"], err = json.Marshal(a.Artifact)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'artifact': %w", err)
+	}
+
+	if a.CollectorVersions != nil {
+		object["collector_versions"], err = json.Marshal(a.CollectorVersions)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'collector_versions': %w", err)
+		}
+	}
+
+	object["frameworks"], err = json.Marshal(a.Frameworks)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'frameworks': %w", err)
+	}
+
+	object["generated_at"], err = json.Marshal(a.GeneratedAt)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'generated_at': %w", err)
+	}
+
+	object["harness_version"], err = json.Marshal(a.HarnessVersion)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'harness_version': %w", err)
+	}
+
+	if a.OrgParametersHash != nil {
+		object["org_parameters_hash"], err = json.Marshal(a.OrgParametersHash)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'org_parameters_hash': %w", err)
+		}
+	}
+
+	if a.OwnerAttestations != nil {
+		object["owner_attestations"], err = json.Marshal(a.OwnerAttestations)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'owner_attestations': %w", err)
+		}
+	}
+
+	object["registry_hash"], err = json.Marshal(a.RegistryHash)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'registry_hash': %w", err)
+	}
+
+	object["target"], err = json.Marshal(a.Target)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'target': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OperatorPrivProfileArtifact_RbacFlags. Returns the specified
+// element and whether it was found
+func (a OperatorPrivProfileArtifact_RbacFlags) Get(fieldName string) (value []string, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OperatorPrivProfileArtifact_RbacFlags
+func (a *OperatorPrivProfileArtifact_RbacFlags) Set(fieldName string, value []string) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string][]string)
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OperatorPrivProfileArtifact_RbacFlags to handle AdditionalProperties
+func (a *OperatorPrivProfileArtifact_RbacFlags) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["escalate_bind_impersonate"]; found {
+		err = json.Unmarshal(raw, &a.EscalateBindImpersonate)
+		if err != nil {
+			return fmt.Errorf("error reading 'escalate_bind_impersonate': %w", err)
+		}
+		delete(object, "escalate_bind_impersonate")
+	}
+
+	if raw, found := object["nodes_access"]; found {
+		err = json.Unmarshal(raw, &a.NodesAccess)
+		if err != nil {
+			return fmt.Errorf("error reading 'nodes_access': %w", err)
+		}
+		delete(object, "nodes_access")
+	}
+
+	if raw, found := object["pods_exec"]; found {
+		err = json.Unmarshal(raw, &a.PodsExec)
+		if err != nil {
+			return fmt.Errorf("error reading 'pods_exec': %w", err)
+		}
+		delete(object, "pods_exec")
+	}
+
+	if raw, found := object["rbac_write"]; found {
+		err = json.Unmarshal(raw, &a.RbacWrite)
+		if err != nil {
+			return fmt.Errorf("error reading 'rbac_write': %w", err)
+		}
+		delete(object, "rbac_write")
+	}
+
+	if raw, found := object["secrets_access"]; found {
+		err = json.Unmarshal(raw, &a.SecretsAccess)
+		if err != nil {
+			return fmt.Errorf("error reading 'secrets_access': %w", err)
+		}
+		delete(object, "secrets_access")
+	}
+
+	if raw, found := object["wildcard_resources"]; found {
+		err = json.Unmarshal(raw, &a.WildcardResources)
+		if err != nil {
+			return fmt.Errorf("error reading 'wildcard_resources': %w", err)
+		}
+		delete(object, "wildcard_resources")
+	}
+
+	if raw, found := object["wildcard_verbs"]; found {
+		err = json.Unmarshal(raw, &a.WildcardVerbs)
+		if err != nil {
+			return fmt.Errorf("error reading 'wildcard_verbs': %w", err)
+		}
+		delete(object, "wildcard_verbs")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string][]string)
+		for fieldName, fieldBuf := range object {
+			var fieldVal []string
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OperatorPrivProfileArtifact_RbacFlags to handle AdditionalProperties
+func (a OperatorPrivProfileArtifact_RbacFlags) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.EscalateBindImpersonate != nil {
+		object["escalate_bind_impersonate"], err = json.Marshal(a.EscalateBindImpersonate)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'escalate_bind_impersonate': %w", err)
+		}
+	}
+
+	if a.NodesAccess != nil {
+		object["nodes_access"], err = json.Marshal(a.NodesAccess)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'nodes_access': %w", err)
+		}
+	}
+
+	if a.PodsExec != nil {
+		object["pods_exec"], err = json.Marshal(a.PodsExec)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'pods_exec': %w", err)
+		}
+	}
+
+	if a.RbacWrite != nil {
+		object["rbac_write"], err = json.Marshal(a.RbacWrite)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'rbac_write': %w", err)
+		}
+	}
+
+	if a.SecretsAccess != nil {
+		object["secrets_access"], err = json.Marshal(a.SecretsAccess)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'secrets_access': %w", err)
+		}
+	}
+
+	if a.WildcardResources != nil {
+		object["wildcard_resources"], err = json.Marshal(a.WildcardResources)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'wildcard_resources': %w", err)
+		}
+	}
+
+	if a.WildcardVerbs != nil {
+		object["wildcard_verbs"], err = json.Marshal(a.WildcardVerbs)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'wildcard_verbs': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OperatorPrivProfileArtifact_Summary. Returns the specified
+// element and whether it was found
+func (a OperatorPrivProfileArtifact_Summary) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OperatorPrivProfileArtifact_Summary
+func (a *OperatorPrivProfileArtifact_Summary) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OperatorPrivProfileArtifact_Summary to handle AdditionalProperties
+func (a *OperatorPrivProfileArtifact_Summary) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["cluster_scoped_rules"]; found {
+		err = json.Unmarshal(raw, &a.ClusterScopedRules)
+		if err != nil {
+			return fmt.Errorf("error reading 'cluster_scoped_rules': %w", err)
+		}
+		delete(object, "cluster_scoped_rules")
+	}
+
+	if raw, found := object["distinct_cluster_triples"]; found {
+		err = json.Unmarshal(raw, &a.DistinctClusterTriples)
+		if err != nil {
+			return fmt.Errorf("error reading 'distinct_cluster_triples': %w", err)
+		}
+		delete(object, "distinct_cluster_triples")
+	}
+
+	if raw, found := object["distinct_rule_triples"]; found {
+		err = json.Unmarshal(raw, &a.DistinctRuleTriples)
+		if err != nil {
+			return fmt.Errorf("error reading 'distinct_rule_triples': %w", err)
+		}
+		delete(object, "distinct_rule_triples")
+	}
+
+	if raw, found := object["no_scc_request_recorded"]; found {
+		err = json.Unmarshal(raw, &a.NoSccRequestRecorded)
+		if err != nil {
+			return fmt.Errorf("error reading 'no_scc_request_recorded': %w", err)
+		}
+		delete(object, "no_scc_request_recorded")
+	}
+
+	if raw, found := object["privileged_or_host_workloads"]; found {
+		err = json.Unmarshal(raw, &a.PrivilegedOrHostWorkloads)
+		if err != nil {
+			return fmt.Errorf("error reading 'privileged_or_host_workloads': %w", err)
+		}
+		delete(object, "privileged_or_host_workloads")
+	}
+
+	if raw, found := object["rbac_rules"]; found {
+		err = json.Unmarshal(raw, &a.RbacRules)
+		if err != nil {
+			return fmt.Errorf("error reading 'rbac_rules': %w", err)
+		}
+		delete(object, "rbac_rules")
+	}
+
+	if raw, found := object["scc_requests"]; found {
+		err = json.Unmarshal(raw, &a.SccRequests)
+		if err != nil {
+			return fmt.Errorf("error reading 'scc_requests': %w", err)
+		}
+		delete(object, "scc_requests")
+	}
+
+	if raw, found := object["wildcard_rules"]; found {
+		err = json.Unmarshal(raw, &a.WildcardRules)
+		if err != nil {
+			return fmt.Errorf("error reading 'wildcard_rules': %w", err)
+		}
+		delete(object, "wildcard_rules")
+	}
+
+	if raw, found := object["workloads"]; found {
+		err = json.Unmarshal(raw, &a.Workloads)
+		if err != nil {
+			return fmt.Errorf("error reading 'workloads': %w", err)
+		}
+		delete(object, "workloads")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OperatorPrivProfileArtifact_Summary to handle AdditionalProperties
+func (a OperatorPrivProfileArtifact_Summary) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.ClusterScopedRules != nil {
+		object["cluster_scoped_rules"], err = json.Marshal(a.ClusterScopedRules)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'cluster_scoped_rules': %w", err)
+		}
+	}
+
+	if a.DistinctClusterTriples != nil {
+		object["distinct_cluster_triples"], err = json.Marshal(a.DistinctClusterTriples)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'distinct_cluster_triples': %w", err)
+		}
+	}
+
+	if a.DistinctRuleTriples != nil {
+		object["distinct_rule_triples"], err = json.Marshal(a.DistinctRuleTriples)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'distinct_rule_triples': %w", err)
+		}
+	}
+
+	if a.NoSccRequestRecorded != nil {
+		object["no_scc_request_recorded"], err = json.Marshal(a.NoSccRequestRecorded)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'no_scc_request_recorded': %w", err)
+		}
+	}
+
+	if a.PrivilegedOrHostWorkloads != nil {
+		object["privileged_or_host_workloads"], err = json.Marshal(a.PrivilegedOrHostWorkloads)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'privileged_or_host_workloads': %w", err)
+		}
+	}
+
+	object["rbac_rules"], err = json.Marshal(a.RbacRules)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'rbac_rules': %w", err)
+	}
+
+	if a.SccRequests != nil {
+		object["scc_requests"], err = json.Marshal(a.SccRequests)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'scc_requests': %w", err)
+		}
+	}
+
+	if a.WildcardRules != nil {
+		object["wildcard_rules"], err = json.Marshal(a.WildcardRules)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'wildcard_rules': %w", err)
+		}
+	}
+
+	object["workloads"], err = json.Marshal(a.Workloads)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'workloads': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for OperatorPrivProfileArtifactWorkload. Returns the specified
+// element and whether it was found
+func (a OperatorPrivProfileArtifactWorkload) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for OperatorPrivProfileArtifactWorkload
+func (a *OperatorPrivProfileArtifactWorkload) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for OperatorPrivProfileArtifactWorkload to handle AdditionalProperties
+func (a *OperatorPrivProfileArtifactWorkload) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["containers"]; found {
+		err = json.Unmarshal(raw, &a.Containers)
+		if err != nil {
+			return fmt.Errorf("error reading 'containers': %w", err)
+		}
+		delete(object, "containers")
+	}
+
+	if raw, found := object["hostIPC"]; found {
+		err = json.Unmarshal(raw, &a.HostIPC)
+		if err != nil {
+			return fmt.Errorf("error reading 'hostIPC': %w", err)
+		}
+		delete(object, "hostIPC")
+	}
+
+	if raw, found := object["hostNetwork"]; found {
+		err = json.Unmarshal(raw, &a.HostNetwork)
+		if err != nil {
+			return fmt.Errorf("error reading 'hostNetwork': %w", err)
+		}
+		delete(object, "hostNetwork")
+	}
+
+	if raw, found := object["hostPID"]; found {
+		err = json.Unmarshal(raw, &a.HostPID)
+		if err != nil {
+			return fmt.Errorf("error reading 'hostPID': %w", err)
+		}
+		delete(object, "hostPID")
+	}
+
+	if raw, found := object["hostPath_volumes"]; found {
+		err = json.Unmarshal(raw, &a.HostPathVolumes)
+		if err != nil {
+			return fmt.Errorf("error reading 'hostPath_volumes': %w", err)
+		}
+		delete(object, "hostPath_volumes")
+	}
+
+	if raw, found := object["kind"]; found {
+		err = json.Unmarshal(raw, &a.Kind)
+		if err != nil {
+			return fmt.Errorf("error reading 'kind': %w", err)
+		}
+		delete(object, "kind")
+	}
+
+	if raw, found := object["manifest"]; found {
+		err = json.Unmarshal(raw, &a.Manifest)
+		if err != nil {
+			return fmt.Errorf("error reading 'manifest': %w", err)
+		}
+		delete(object, "manifest")
+	}
+
+	if raw, found := object["name"]; found {
+		err = json.Unmarshal(raw, &a.Name)
+		if err != nil {
+			return fmt.Errorf("error reading 'name': %w", err)
+		}
+		delete(object, "name")
+	}
+
+	if raw, found := object["pod_securityContext"]; found {
+		err = json.Unmarshal(raw, &a.PodSecurityContext)
+		if err != nil {
+			return fmt.Errorf("error reading 'pod_securityContext': %w", err)
+		}
+		delete(object, "pod_securityContext")
+	}
+
+	if raw, found := object["serviceAccountName"]; found {
+		err = json.Unmarshal(raw, &a.ServiceAccountName)
+		if err != nil {
+			return fmt.Errorf("error reading 'serviceAccountName': %w", err)
+		}
+		delete(object, "serviceAccountName")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for OperatorPrivProfileArtifactWorkload to handle AdditionalProperties
+func (a OperatorPrivProfileArtifactWorkload) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Containers != nil {
+		object["containers"], err = json.Marshal(a.Containers)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'containers': %w", err)
+		}
+	}
+
+	if a.HostIPC != nil {
+		object["hostIPC"], err = json.Marshal(a.HostIPC)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'hostIPC': %w", err)
+		}
+	}
+
+	if a.HostNetwork != nil {
+		object["hostNetwork"], err = json.Marshal(a.HostNetwork)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'hostNetwork': %w", err)
+		}
+	}
+
+	if a.HostPID != nil {
+		object["hostPID"], err = json.Marshal(a.HostPID)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'hostPID': %w", err)
+		}
+	}
+
+	if a.HostPathVolumes != nil {
+		object["hostPath_volumes"], err = json.Marshal(a.HostPathVolumes)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'hostPath_volumes': %w", err)
+		}
+	}
+
+	object["kind"], err = json.Marshal(a.Kind)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'kind': %w", err)
+	}
+
+	if a.Manifest != nil {
+		object["manifest"], err = json.Marshal(a.Manifest)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'manifest': %w", err)
+		}
+	}
+
+	if a.Name != nil {
+		object["name"], err = json.Marshal(a.Name)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'name': %w", err)
+		}
+	}
+
+	if a.PodSecurityContext != nil {
+		object["pod_securityContext"], err = json.Marshal(a.PodSecurityContext)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'pod_securityContext': %w", err)
+		}
+	}
+
+	if a.ServiceAccountName != nil {
+		object["serviceAccountName"], err = json.Marshal(a.ServiceAccountName)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'serviceAccountName': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for PqcDecisionTreeArtifact_PqcClassificationMap. Returns the specified
+// element and whether it was found
+func (a PqcDecisionTreeArtifact_PqcClassificationMap) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for PqcDecisionTreeArtifact_PqcClassificationMap
+func (a *PqcDecisionTreeArtifact_PqcClassificationMap) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for PqcDecisionTreeArtifact_PqcClassificationMap to handle AdditionalProperties
+func (a *PqcDecisionTreeArtifact_PqcClassificationMap) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["_comment"]; found {
+		err = json.Unmarshal(raw, &a.UnderscoreComment)
+		if err != nil {
+			return fmt.Errorf("error reading '_comment': %w", err)
+		}
+		delete(object, "_comment")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for PqcDecisionTreeArtifact_PqcClassificationMap to handle AdditionalProperties
+func (a PqcDecisionTreeArtifact_PqcClassificationMap) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.UnderscoreComment != nil {
+		object["_comment"], err = json.Marshal(a.UnderscoreComment)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '_comment': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap. Returns the specified
+// element and whether it was found
+func (a PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap
+func (a *PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap to handle AdditionalProperties
+func (a *PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["_comment"]; found {
+		err = json.Unmarshal(raw, &a.UnderscoreComment)
+		if err != nil {
+			return fmt.Errorf("error reading '_comment': %w", err)
+		}
+		delete(object, "_comment")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap to handle AdditionalProperties
+func (a PqcDecisionTreeArtifactCanonicalWrite_PqcClassificationMap) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.UnderscoreComment != nil {
+		object["_comment"], err = json.Marshal(a.UnderscoreComment)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '_comment': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ProductDefinitionsMapArtifact. Returns the specified
+// element and whether it was found
+func (a ProductDefinitionsMapArtifact) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ProductDefinitionsMapArtifact
+func (a *ProductDefinitionsMapArtifact) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ProductDefinitionsMapArtifact to handle AdditionalProperties
+func (a *ProductDefinitionsMapArtifact) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["mappings"]; found {
+		err = json.Unmarshal(raw, &a.Mappings)
+		if err != nil {
+			return fmt.Errorf("error reading 'mappings': %w", err)
+		}
+		delete(object, "mappings")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ProductDefinitionsMapArtifact to handle AdditionalProperties
+func (a ProductDefinitionsMapArtifact) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["mappings"], err = json.Marshal(a.Mappings)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'mappings': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for ProductDefinitionsMapArtifact_Mappings. Returns the specified
+// element and whether it was found
+func (a ProductDefinitionsMapArtifact_Mappings) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for ProductDefinitionsMapArtifact_Mappings
+func (a *ProductDefinitionsMapArtifact_Mappings) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for ProductDefinitionsMapArtifact_Mappings to handle AdditionalProperties
+func (a *ProductDefinitionsMapArtifact_Mappings) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["packages"]; found {
+		err = json.Unmarshal(raw, &a.Packages)
+		if err != nil {
+			return fmt.Errorf("error reading 'packages': %w", err)
+		}
+		delete(object, "packages")
+	}
+
+	if raw, found := object["repos"]; found {
+		err = json.Unmarshal(raw, &a.Repos)
+		if err != nil {
+			return fmt.Errorf("error reading 'repos': %w", err)
+		}
+		delete(object, "repos")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for ProductDefinitionsMapArtifact_Mappings to handle AdditionalProperties
+func (a ProductDefinitionsMapArtifact_Mappings) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	if a.Packages != nil {
+		object["packages"], err = json.Marshal(a.Packages)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'packages': %w", err)
+		}
+	}
+
+	if a.Repos != nil {
+		object["repos"], err = json.Marshal(a.Repos)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'repos': %w", err)
+		}
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
 // Getter for additional properties for TargetAttestation. Returns the specified
 // element and whether it was found
 func (a TargetAttestation) Get(fieldName string) (value interface{}, found bool) {
@@ -3152,6 +11293,405 @@ func (a TargetAttestation) MarshalJSON() ([]byte, error) {
 	object["attested"], err = json.Marshal(a.Attested)
 	if err != nil {
 		return nil, fmt.Errorf("error marshaling 'attested': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for TriageArtifactSummary. Returns the specified
+// element and whether it was found
+func (a TriageArtifactSummary) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for TriageArtifactSummary
+func (a *TriageArtifactSummary) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for TriageArtifactSummary to handle AdditionalProperties
+func (a *TriageArtifactSummary) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["by_severity"]; found {
+		err = json.Unmarshal(raw, &a.BySeverity)
+		if err != nil {
+			return fmt.Errorf("error reading 'by_severity': %w", err)
+		}
+		delete(object, "by_severity")
+	}
+
+	if raw, found := object["duplicates"]; found {
+		err = json.Unmarshal(raw, &a.Duplicates)
+		if err != nil {
+			return fmt.Errorf("error reading 'duplicates': %w", err)
+		}
+		delete(object, "duplicates")
+	}
+
+	if raw, found := object["false_positives"]; found {
+		err = json.Unmarshal(raw, &a.FalsePositives)
+		if err != nil {
+			return fmt.Errorf("error reading 'false_positives': %w", err)
+		}
+		delete(object, "false_positives")
+	}
+
+	if raw, found := object["hardening"]; found {
+		err = json.Unmarshal(raw, &a.Hardening)
+		if err != nil {
+			return fmt.Errorf("error reading 'hardening': %w", err)
+		}
+		delete(object, "hardening")
+	}
+
+	if raw, found := object["input_count"]; found {
+		err = json.Unmarshal(raw, &a.InputCount)
+		if err != nil {
+			return fmt.Errorf("error reading 'input_count': %w", err)
+		}
+		delete(object, "input_count")
+	}
+
+	if raw, found := object["needs_manual_test"]; found {
+		err = json.Unmarshal(raw, &a.NeedsManualTest)
+		if err != nil {
+			return fmt.Errorf("error reading 'needs_manual_test': %w", err)
+		}
+		delete(object, "needs_manual_test")
+	}
+
+	if raw, found := object["true_positives"]; found {
+		err = json.Unmarshal(raw, &a.TruePositives)
+		if err != nil {
+			return fmt.Errorf("error reading 'true_positives': %w", err)
+		}
+		delete(object, "true_positives")
+	}
+
+	if raw, found := object["undetermined"]; found {
+		err = json.Unmarshal(raw, &a.Undetermined)
+		if err != nil {
+			return fmt.Errorf("error reading 'undetermined': %w", err)
+		}
+		delete(object, "undetermined")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for TriageArtifactSummary to handle AdditionalProperties
+func (a TriageArtifactSummary) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["by_severity"], err = json.Marshal(a.BySeverity)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'by_severity': %w", err)
+	}
+
+	object["duplicates"], err = json.Marshal(a.Duplicates)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'duplicates': %w", err)
+	}
+
+	object["false_positives"], err = json.Marshal(a.FalsePositives)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'false_positives': %w", err)
+	}
+
+	object["hardening"], err = json.Marshal(a.Hardening)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'hardening': %w", err)
+	}
+
+	object["input_count"], err = json.Marshal(a.InputCount)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'input_count': %w", err)
+	}
+
+	if a.NeedsManualTest != nil {
+		object["needs_manual_test"], err = json.Marshal(a.NeedsManualTest)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'needs_manual_test': %w", err)
+		}
+	}
+
+	object["true_positives"], err = json.Marshal(a.TruePositives)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'true_positives': %w", err)
+	}
+
+	object["undetermined"], err = json.Marshal(a.Undetermined)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'undetermined': %w", err)
+	}
+
+	for fieldName, field := range a.AdditionalProperties {
+		object[fieldName], err = json.Marshal(field)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling '%s': %w", fieldName, err)
+		}
+	}
+	return json.Marshal(object)
+}
+
+// Getter for additional properties for TriageArtifactTriageContext. Returns the specified
+// element and whether it was found
+func (a TriageArtifactTriageContext) Get(fieldName string) (value interface{}, found bool) {
+	if a.AdditionalProperties != nil {
+		value, found = a.AdditionalProperties[fieldName]
+	}
+	return
+}
+
+// Setter for additional properties for TriageArtifactTriageContext
+func (a *TriageArtifactTriageContext) Set(fieldName string, value interface{}) {
+	if a.AdditionalProperties == nil {
+		a.AdditionalProperties = make(map[string]interface{})
+	}
+	a.AdditionalProperties[fieldName] = value
+}
+
+// Override default JSON handling for TriageArtifactTriageContext to handle AdditionalProperties
+func (a *TriageArtifactTriageContext) UnmarshalJSON(b []byte) error {
+	object := make(map[string]json.RawMessage)
+	err := json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["environment"]; found {
+		err = json.Unmarshal(raw, &a.Environment)
+		if err != nil {
+			return fmt.Errorf("error reading 'environment': %w", err)
+		}
+		delete(object, "environment")
+	}
+
+	if raw, found := object["findings_path"]; found {
+		err = json.Unmarshal(raw, &a.FindingsPath)
+		if err != nil {
+			return fmt.Errorf("error reading 'findings_path': %w", err)
+		}
+		delete(object, "findings_path")
+	}
+
+	if raw, found := object["harness_version"]; found {
+		err = json.Unmarshal(raw, &a.HarnessVersion)
+		if err != nil {
+			return fmt.Errorf("error reading 'harness_version': %w", err)
+		}
+		delete(object, "harness_version")
+	}
+
+	if raw, found := object["mode"]; found {
+		err = json.Unmarshal(raw, &a.Mode)
+		if err != nil {
+			return fmt.Errorf("error reading 'mode': %w", err)
+		}
+		delete(object, "mode")
+	}
+
+	if raw, found := object["noise_tolerance"]; found {
+		err = json.Unmarshal(raw, &a.NoiseTolerance)
+		if err != nil {
+			return fmt.Errorf("error reading 'noise_tolerance': %w", err)
+		}
+		delete(object, "noise_tolerance")
+	}
+
+	if raw, found := object["reemit_method"]; found {
+		err = json.Unmarshal(raw, &a.ReemitMethod)
+		if err != nil {
+			return fmt.Errorf("error reading 'reemit_method': %w", err)
+		}
+		delete(object, "reemit_method")
+	}
+
+	if raw, found := object["reemitted"]; found {
+		err = json.Unmarshal(raw, &a.Reemitted)
+		if err != nil {
+			return fmt.Errorf("error reading 'reemitted': %w", err)
+		}
+		delete(object, "reemitted")
+	}
+
+	if raw, found := object["repo"]; found {
+		err = json.Unmarshal(raw, &a.Repo)
+		if err != nil {
+			return fmt.Errorf("error reading 'repo': %w", err)
+		}
+		delete(object, "repo")
+	}
+
+	if raw, found := object["rerun_of"]; found {
+		err = json.Unmarshal(raw, &a.RerunOf)
+		if err != nil {
+			return fmt.Errorf("error reading 'rerun_of': %w", err)
+		}
+		delete(object, "rerun_of")
+	}
+
+	if raw, found := object["scoring"]; found {
+		err = json.Unmarshal(raw, &a.Scoring)
+		if err != nil {
+			return fmt.Errorf("error reading 'scoring': %w", err)
+		}
+		delete(object, "scoring")
+	}
+
+	if raw, found := object["source_report"]; found {
+		err = json.Unmarshal(raw, &a.SourceReport)
+		if err != nil {
+			return fmt.Errorf("error reading 'source_report': %w", err)
+		}
+		delete(object, "source_report")
+	}
+
+	if raw, found := object["threat_model"]; found {
+		err = json.Unmarshal(raw, &a.ThreatModel)
+		if err != nil {
+			return fmt.Errorf("error reading 'threat_model': %w", err)
+		}
+		delete(object, "threat_model")
+	}
+
+	if raw, found := object["votes_per_finding"]; found {
+		err = json.Unmarshal(raw, &a.VotesPerFinding)
+		if err != nil {
+			return fmt.Errorf("error reading 'votes_per_finding': %w", err)
+		}
+		delete(object, "votes_per_finding")
+	}
+
+	if len(object) != 0 {
+		a.AdditionalProperties = make(map[string]interface{})
+		for fieldName, fieldBuf := range object {
+			var fieldVal interface{}
+			err := json.Unmarshal(fieldBuf, &fieldVal)
+			if err != nil {
+				return fmt.Errorf("error unmarshaling field %s: %w", fieldName, err)
+			}
+			a.AdditionalProperties[fieldName] = fieldVal
+		}
+	}
+	return nil
+}
+
+// Override default JSON handling for TriageArtifactTriageContext to handle AdditionalProperties
+func (a TriageArtifactTriageContext) MarshalJSON() ([]byte, error) {
+	var err error
+	object := make(map[string]json.RawMessage)
+
+	object["environment"], err = json.Marshal(a.Environment)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'environment': %w", err)
+	}
+
+	if a.FindingsPath != nil {
+		object["findings_path"], err = json.Marshal(a.FindingsPath)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'findings_path': %w", err)
+		}
+	}
+
+	object["harness_version"], err = json.Marshal(a.HarnessVersion)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'harness_version': %w", err)
+	}
+
+	if a.Mode != nil {
+		object["mode"], err = json.Marshal(a.Mode)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'mode': %w", err)
+		}
+	}
+
+	if a.NoiseTolerance != nil {
+		object["noise_tolerance"], err = json.Marshal(a.NoiseTolerance)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'noise_tolerance': %w", err)
+		}
+	}
+
+	if a.ReemitMethod != nil {
+		object["reemit_method"], err = json.Marshal(a.ReemitMethod)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'reemit_method': %w", err)
+		}
+	}
+
+	if a.Reemitted != nil {
+		object["reemitted"], err = json.Marshal(a.Reemitted)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'reemitted': %w", err)
+		}
+	}
+
+	object["repo"], err = json.Marshal(a.Repo)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'repo': %w", err)
+	}
+
+	if a.RerunOf != nil {
+		object["rerun_of"], err = json.Marshal(a.RerunOf)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'rerun_of': %w", err)
+		}
+	}
+
+	if a.Scoring != nil {
+		object["scoring"], err = json.Marshal(a.Scoring)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'scoring': %w", err)
+		}
+	}
+
+	if a.SourceReport != nil {
+		object["source_report"], err = json.Marshal(a.SourceReport)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'source_report': %w", err)
+		}
+	}
+
+	if a.ThreatModel != nil {
+		object["threat_model"], err = json.Marshal(a.ThreatModel)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'threat_model': %w", err)
+		}
+	}
+
+	object["votes_per_finding"], err = json.Marshal(a.VotesPerFinding)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'votes_per_finding': %w", err)
 	}
 
 	for fieldName, field := range a.AdditionalProperties {
@@ -3222,6 +11762,267 @@ func (t Assessment_Kind) MarshalJSON() ([]byte, error) {
 
 func (t *Assessment_Kind) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsAttackMappingArtifactTechMap0 returns the union data inside the AttackMappingArtifactTechMap_AdditionalProperties as a AttackMappingArtifactTechMap0
+func (t AttackMappingArtifactTechMap_AdditionalProperties) AsAttackMappingArtifactTechMap0() (AttackMappingArtifactTechMap0, error) {
+	var body AttackMappingArtifactTechMap0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAttackMappingArtifactTechMap0 overwrites any union data inside the AttackMappingArtifactTechMap_AdditionalProperties as the provided AttackMappingArtifactTechMap0
+func (t *AttackMappingArtifactTechMap_AdditionalProperties) FromAttackMappingArtifactTechMap0(v AttackMappingArtifactTechMap0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAttackMappingArtifactTechMap0 performs a merge with any union data inside the AttackMappingArtifactTechMap_AdditionalProperties, using the provided AttackMappingArtifactTechMap0
+func (t *AttackMappingArtifactTechMap_AdditionalProperties) MergeAttackMappingArtifactTechMap0(v AttackMappingArtifactTechMap0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsAttackMappingArtifactTechMap1 returns the union data inside the AttackMappingArtifactTechMap_AdditionalProperties as a AttackMappingArtifactTechMap1
+func (t AttackMappingArtifactTechMap_AdditionalProperties) AsAttackMappingArtifactTechMap1() (AttackMappingArtifactTechMap1, error) {
+	var body AttackMappingArtifactTechMap1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromAttackMappingArtifactTechMap1 overwrites any union data inside the AttackMappingArtifactTechMap_AdditionalProperties as the provided AttackMappingArtifactTechMap1
+func (t *AttackMappingArtifactTechMap_AdditionalProperties) FromAttackMappingArtifactTechMap1(v AttackMappingArtifactTechMap1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeAttackMappingArtifactTechMap1 performs a merge with any union data inside the AttackMappingArtifactTechMap_AdditionalProperties, using the provided AttackMappingArtifactTechMap1
+func (t *AttackMappingArtifactTechMap_AdditionalProperties) MergeAttackMappingArtifactTechMap1(v AttackMappingArtifactTechMap1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t AttackMappingArtifactTechMap_AdditionalProperties) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *AttackMappingArtifactTechMap_AdditionalProperties) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsCodeFactsArtifact0 returns the union data inside the CodeFactsArtifact as a CodeFactsArtifact0
+func (t CodeFactsArtifact) AsCodeFactsArtifact0() (CodeFactsArtifact0, error) {
+	var body CodeFactsArtifact0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCodeFactsArtifact0 overwrites any union data inside the CodeFactsArtifact as the provided CodeFactsArtifact0
+func (t *CodeFactsArtifact) FromCodeFactsArtifact0(v CodeFactsArtifact0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCodeFactsArtifact0 performs a merge with any union data inside the CodeFactsArtifact, using the provided CodeFactsArtifact0
+func (t *CodeFactsArtifact) MergeCodeFactsArtifact0(v CodeFactsArtifact0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCodeFactsArtifact1 returns the union data inside the CodeFactsArtifact as a CodeFactsArtifact1
+func (t CodeFactsArtifact) AsCodeFactsArtifact1() (CodeFactsArtifact1, error) {
+	var body CodeFactsArtifact1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCodeFactsArtifact1 overwrites any union data inside the CodeFactsArtifact as the provided CodeFactsArtifact1
+func (t *CodeFactsArtifact) FromCodeFactsArtifact1(v CodeFactsArtifact1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCodeFactsArtifact1 performs a merge with any union data inside the CodeFactsArtifact, using the provided CodeFactsArtifact1
+func (t *CodeFactsArtifact) MergeCodeFactsArtifact1(v CodeFactsArtifact1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCodeFactsArtifact2 returns the union data inside the CodeFactsArtifact as a CodeFactsArtifact2
+func (t CodeFactsArtifact) AsCodeFactsArtifact2() (CodeFactsArtifact2, error) {
+	var body CodeFactsArtifact2
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCodeFactsArtifact2 overwrites any union data inside the CodeFactsArtifact as the provided CodeFactsArtifact2
+func (t *CodeFactsArtifact) FromCodeFactsArtifact2(v CodeFactsArtifact2) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCodeFactsArtifact2 performs a merge with any union data inside the CodeFactsArtifact, using the provided CodeFactsArtifact2
+func (t *CodeFactsArtifact) MergeCodeFactsArtifact2(v CodeFactsArtifact2) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsCodeFactsArtifact3 returns the union data inside the CodeFactsArtifact as a CodeFactsArtifact3
+func (t CodeFactsArtifact) AsCodeFactsArtifact3() (CodeFactsArtifact3, error) {
+	var body CodeFactsArtifact3
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromCodeFactsArtifact3 overwrites any union data inside the CodeFactsArtifact as the provided CodeFactsArtifact3
+func (t *CodeFactsArtifact) FromCodeFactsArtifact3(v CodeFactsArtifact3) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeCodeFactsArtifact3 performs a merge with any union data inside the CodeFactsArtifact, using the provided CodeFactsArtifact3
+func (t *CodeFactsArtifact) MergeCodeFactsArtifact3(v CodeFactsArtifact3) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t CodeFactsArtifact) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["artifact"], err = json.Marshal(t.Artifact)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'artifact': %w", err)
+	}
+
+	if t.Interfaces != nil {
+		object["interfaces"], err = json.Marshal(t.Interfaces)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'interfaces': %w", err)
+		}
+	}
+
+	object["languages"], err = json.Marshal(t.Languages)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'languages': %w", err)
+	}
+
+	if t.Packages != nil {
+		object["packages"], err = json.Marshal(t.Packages)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'packages': %w", err)
+		}
+	}
+
+	object["symbols"], err = json.Marshal(t.Symbols)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'symbols': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *CodeFactsArtifact) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["artifact"]; found {
+		err = json.Unmarshal(raw, &t.Artifact)
+		if err != nil {
+			return fmt.Errorf("error reading 'artifact': %w", err)
+		}
+	}
+
+	if raw, found := object["interfaces"]; found {
+		err = json.Unmarshal(raw, &t.Interfaces)
+		if err != nil {
+			return fmt.Errorf("error reading 'interfaces': %w", err)
+		}
+	}
+
+	if raw, found := object["languages"]; found {
+		err = json.Unmarshal(raw, &t.Languages)
+		if err != nil {
+			return fmt.Errorf("error reading 'languages': %w", err)
+		}
+	}
+
+	if raw, found := object["packages"]; found {
+		err = json.Unmarshal(raw, &t.Packages)
+		if err != nil {
+			return fmt.Errorf("error reading 'packages': %w", err)
+		}
+	}
+
+	if raw, found := object["symbols"]; found {
+		err = json.Unmarshal(raw, &t.Symbols)
+		if err != nil {
+			return fmt.Errorf("error reading 'symbols': %w", err)
+		}
+	}
+
 	return err
 }
 
@@ -3845,6 +12646,374 @@ func (t *OccurrenceClaimInput_CvssScore) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsPqcDecisionTreeArtifactRemediationEffortClasses0 returns the union data inside the PqcDecisionTreeArtifact_RemediationEffort_Classes as a PqcDecisionTreeArtifactRemediationEffortClasses0
+func (t PqcDecisionTreeArtifact_RemediationEffort_Classes) AsPqcDecisionTreeArtifactRemediationEffortClasses0() (PqcDecisionTreeArtifactRemediationEffortClasses0, error) {
+	var body PqcDecisionTreeArtifactRemediationEffortClasses0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPqcDecisionTreeArtifactRemediationEffortClasses0 overwrites any union data inside the PqcDecisionTreeArtifact_RemediationEffort_Classes as the provided PqcDecisionTreeArtifactRemediationEffortClasses0
+func (t *PqcDecisionTreeArtifact_RemediationEffort_Classes) FromPqcDecisionTreeArtifactRemediationEffortClasses0(v PqcDecisionTreeArtifactRemediationEffortClasses0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePqcDecisionTreeArtifactRemediationEffortClasses0 performs a merge with any union data inside the PqcDecisionTreeArtifact_RemediationEffort_Classes, using the provided PqcDecisionTreeArtifactRemediationEffortClasses0
+func (t *PqcDecisionTreeArtifact_RemediationEffort_Classes) MergePqcDecisionTreeArtifactRemediationEffortClasses0(v PqcDecisionTreeArtifactRemediationEffortClasses0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsPqcDecisionTreeArtifactRemediationEffortClasses1 returns the union data inside the PqcDecisionTreeArtifact_RemediationEffort_Classes as a PqcDecisionTreeArtifactRemediationEffortClasses1
+func (t PqcDecisionTreeArtifact_RemediationEffort_Classes) AsPqcDecisionTreeArtifactRemediationEffortClasses1() (PqcDecisionTreeArtifactRemediationEffortClasses1, error) {
+	var body PqcDecisionTreeArtifactRemediationEffortClasses1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromPqcDecisionTreeArtifactRemediationEffortClasses1 overwrites any union data inside the PqcDecisionTreeArtifact_RemediationEffort_Classes as the provided PqcDecisionTreeArtifactRemediationEffortClasses1
+func (t *PqcDecisionTreeArtifact_RemediationEffort_Classes) FromPqcDecisionTreeArtifactRemediationEffortClasses1(v PqcDecisionTreeArtifactRemediationEffortClasses1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergePqcDecisionTreeArtifactRemediationEffortClasses1 performs a merge with any union data inside the PqcDecisionTreeArtifact_RemediationEffort_Classes, using the provided PqcDecisionTreeArtifactRemediationEffortClasses1
+func (t *PqcDecisionTreeArtifact_RemediationEffort_Classes) MergePqcDecisionTreeArtifactRemediationEffortClasses1(v PqcDecisionTreeArtifactRemediationEffortClasses1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t PqcDecisionTreeArtifact_RemediationEffort_Classes) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *PqcDecisionTreeArtifact_RemediationEffort_Classes) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsRefutedRegisterArtifactEntryExclusionRule0 returns the union data inside the RefutedRegisterArtifactEntry_ExclusionRule as a RefutedRegisterArtifactEntryExclusionRule0
+func (t RefutedRegisterArtifactEntry_ExclusionRule) AsRefutedRegisterArtifactEntryExclusionRule0() (RefutedRegisterArtifactEntryExclusionRule0, error) {
+	var body RefutedRegisterArtifactEntryExclusionRule0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRefutedRegisterArtifactEntryExclusionRule0 overwrites any union data inside the RefutedRegisterArtifactEntry_ExclusionRule as the provided RefutedRegisterArtifactEntryExclusionRule0
+func (t *RefutedRegisterArtifactEntry_ExclusionRule) FromRefutedRegisterArtifactEntryExclusionRule0(v RefutedRegisterArtifactEntryExclusionRule0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRefutedRegisterArtifactEntryExclusionRule0 performs a merge with any union data inside the RefutedRegisterArtifactEntry_ExclusionRule, using the provided RefutedRegisterArtifactEntryExclusionRule0
+func (t *RefutedRegisterArtifactEntry_ExclusionRule) MergeRefutedRegisterArtifactEntryExclusionRule0(v RefutedRegisterArtifactEntryExclusionRule0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsRefutedRegisterArtifactEntryExclusionRule1 returns the union data inside the RefutedRegisterArtifactEntry_ExclusionRule as a RefutedRegisterArtifactEntryExclusionRule1
+func (t RefutedRegisterArtifactEntry_ExclusionRule) AsRefutedRegisterArtifactEntryExclusionRule1() (RefutedRegisterArtifactEntryExclusionRule1, error) {
+	var body RefutedRegisterArtifactEntryExclusionRule1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromRefutedRegisterArtifactEntryExclusionRule1 overwrites any union data inside the RefutedRegisterArtifactEntry_ExclusionRule as the provided RefutedRegisterArtifactEntryExclusionRule1
+func (t *RefutedRegisterArtifactEntry_ExclusionRule) FromRefutedRegisterArtifactEntryExclusionRule1(v RefutedRegisterArtifactEntryExclusionRule1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeRefutedRegisterArtifactEntryExclusionRule1 performs a merge with any union data inside the RefutedRegisterArtifactEntry_ExclusionRule, using the provided RefutedRegisterArtifactEntryExclusionRule1
+func (t *RefutedRegisterArtifactEntry_ExclusionRule) MergeRefutedRegisterArtifactEntryExclusionRule1(v RefutedRegisterArtifactEntryExclusionRule1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t RefutedRegisterArtifactEntry_ExclusionRule) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *RefutedRegisterArtifactEntry_ExclusionRule) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsReportArtifactMetadataLocReviewed0 returns the union data inside the ReportArtifactMetadata_LocReviewed as a ReportArtifactMetadataLocReviewed0
+func (t ReportArtifactMetadata_LocReviewed) AsReportArtifactMetadataLocReviewed0() (ReportArtifactMetadataLocReviewed0, error) {
+	var body ReportArtifactMetadataLocReviewed0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromReportArtifactMetadataLocReviewed0 overwrites any union data inside the ReportArtifactMetadata_LocReviewed as the provided ReportArtifactMetadataLocReviewed0
+func (t *ReportArtifactMetadata_LocReviewed) FromReportArtifactMetadataLocReviewed0(v ReportArtifactMetadataLocReviewed0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeReportArtifactMetadataLocReviewed0 performs a merge with any union data inside the ReportArtifactMetadata_LocReviewed, using the provided ReportArtifactMetadataLocReviewed0
+func (t *ReportArtifactMetadata_LocReviewed) MergeReportArtifactMetadataLocReviewed0(v ReportArtifactMetadataLocReviewed0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsReportArtifactMetadataLocReviewed1 returns the union data inside the ReportArtifactMetadata_LocReviewed as a ReportArtifactMetadataLocReviewed1
+func (t ReportArtifactMetadata_LocReviewed) AsReportArtifactMetadataLocReviewed1() (ReportArtifactMetadataLocReviewed1, error) {
+	var body ReportArtifactMetadataLocReviewed1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromReportArtifactMetadataLocReviewed1 overwrites any union data inside the ReportArtifactMetadata_LocReviewed as the provided ReportArtifactMetadataLocReviewed1
+func (t *ReportArtifactMetadata_LocReviewed) FromReportArtifactMetadataLocReviewed1(v ReportArtifactMetadataLocReviewed1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeReportArtifactMetadataLocReviewed1 performs a merge with any union data inside the ReportArtifactMetadata_LocReviewed, using the provided ReportArtifactMetadataLocReviewed1
+func (t *ReportArtifactMetadata_LocReviewed) MergeReportArtifactMetadataLocReviewed1(v ReportArtifactMetadataLocReviewed1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ReportArtifactMetadata_LocReviewed) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ReportArtifactMetadata_LocReviewed) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsReportArtifactNotAffectedEntry0 returns the union data inside the ReportArtifactNotAffectedEntry as a ReportArtifactNotAffectedEntry0
+func (t ReportArtifactNotAffectedEntry) AsReportArtifactNotAffectedEntry0() (ReportArtifactNotAffectedEntry0, error) {
+	var body ReportArtifactNotAffectedEntry0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromReportArtifactNotAffectedEntry0 overwrites any union data inside the ReportArtifactNotAffectedEntry as the provided ReportArtifactNotAffectedEntry0
+func (t *ReportArtifactNotAffectedEntry) FromReportArtifactNotAffectedEntry0(v ReportArtifactNotAffectedEntry0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeReportArtifactNotAffectedEntry0 performs a merge with any union data inside the ReportArtifactNotAffectedEntry, using the provided ReportArtifactNotAffectedEntry0
+func (t *ReportArtifactNotAffectedEntry) MergeReportArtifactNotAffectedEntry0(v ReportArtifactNotAffectedEntry0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsReportArtifactNotAffectedEntry1 returns the union data inside the ReportArtifactNotAffectedEntry as a ReportArtifactNotAffectedEntry1
+func (t ReportArtifactNotAffectedEntry) AsReportArtifactNotAffectedEntry1() (ReportArtifactNotAffectedEntry1, error) {
+	var body ReportArtifactNotAffectedEntry1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromReportArtifactNotAffectedEntry1 overwrites any union data inside the ReportArtifactNotAffectedEntry as the provided ReportArtifactNotAffectedEntry1
+func (t *ReportArtifactNotAffectedEntry) FromReportArtifactNotAffectedEntry1(v ReportArtifactNotAffectedEntry1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeReportArtifactNotAffectedEntry1 performs a merge with any union data inside the ReportArtifactNotAffectedEntry, using the provided ReportArtifactNotAffectedEntry1
+func (t *ReportArtifactNotAffectedEntry) MergeReportArtifactNotAffectedEntry1(v ReportArtifactNotAffectedEntry1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ReportArtifactNotAffectedEntry) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["dependency"], err = json.Marshal(t.Dependency)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'dependency': %w", err)
+	}
+
+	object["rationale"], err = json.Marshal(t.Rationale)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'rationale': %w", err)
+	}
+
+	if t.Reference != nil {
+		object["reference"], err = json.Marshal(t.Reference)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'reference': %w", err)
+		}
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *ReportArtifactNotAffectedEntry) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["dependency"]; found {
+		err = json.Unmarshal(raw, &t.Dependency)
+		if err != nil {
+			return fmt.Errorf("error reading 'dependency': %w", err)
+		}
+	}
+
+	if raw, found := object["rationale"]; found {
+		err = json.Unmarshal(raw, &t.Rationale)
+		if err != nil {
+			return fmt.Errorf("error reading 'rationale': %w", err)
+		}
+	}
+
+	if raw, found := object["reference"]; found {
+		err = json.Unmarshal(raw, &t.Reference)
+		if err != nil {
+			return fmt.Errorf("error reading 'reference': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsReportArtifactNotAffectedEntry0DependencyClassification0 returns the union data inside the ReportArtifactNotAffectedEntry_0_Dependency_Classification as a ReportArtifactNotAffectedEntry0DependencyClassification0
+func (t ReportArtifactNotAffectedEntry_0_Dependency_Classification) AsReportArtifactNotAffectedEntry0DependencyClassification0() (ReportArtifactNotAffectedEntry0DependencyClassification0, error) {
+	var body ReportArtifactNotAffectedEntry0DependencyClassification0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromReportArtifactNotAffectedEntry0DependencyClassification0 overwrites any union data inside the ReportArtifactNotAffectedEntry_0_Dependency_Classification as the provided ReportArtifactNotAffectedEntry0DependencyClassification0
+func (t *ReportArtifactNotAffectedEntry_0_Dependency_Classification) FromReportArtifactNotAffectedEntry0DependencyClassification0(v ReportArtifactNotAffectedEntry0DependencyClassification0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeReportArtifactNotAffectedEntry0DependencyClassification0 performs a merge with any union data inside the ReportArtifactNotAffectedEntry_0_Dependency_Classification, using the provided ReportArtifactNotAffectedEntry0DependencyClassification0
+func (t *ReportArtifactNotAffectedEntry_0_Dependency_Classification) MergeReportArtifactNotAffectedEntry0DependencyClassification0(v ReportArtifactNotAffectedEntry0DependencyClassification0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsReportArtifactNotAffectedEntry0DependencyClassification1 returns the union data inside the ReportArtifactNotAffectedEntry_0_Dependency_Classification as a ReportArtifactNotAffectedEntry0DependencyClassification1
+func (t ReportArtifactNotAffectedEntry_0_Dependency_Classification) AsReportArtifactNotAffectedEntry0DependencyClassification1() (ReportArtifactNotAffectedEntry0DependencyClassification1, error) {
+	var body ReportArtifactNotAffectedEntry0DependencyClassification1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromReportArtifactNotAffectedEntry0DependencyClassification1 overwrites any union data inside the ReportArtifactNotAffectedEntry_0_Dependency_Classification as the provided ReportArtifactNotAffectedEntry0DependencyClassification1
+func (t *ReportArtifactNotAffectedEntry_0_Dependency_Classification) FromReportArtifactNotAffectedEntry0DependencyClassification1(v ReportArtifactNotAffectedEntry0DependencyClassification1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeReportArtifactNotAffectedEntry0DependencyClassification1 performs a merge with any union data inside the ReportArtifactNotAffectedEntry_0_Dependency_Classification, using the provided ReportArtifactNotAffectedEntry0DependencyClassification1
+func (t *ReportArtifactNotAffectedEntry_0_Dependency_Classification) MergeReportArtifactNotAffectedEntry0DependencyClassification1(v ReportArtifactNotAffectedEntry0DependencyClassification1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ReportArtifactNotAffectedEntry_0_Dependency_Classification) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ReportArtifactNotAffectedEntry_0_Dependency_Classification) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsReviewReason returns the union data inside the ReviewItem_Reason as a ReviewReason
 func (t ReviewItem_Reason) AsReviewReason() (ReviewReason, error) {
 	var body ReviewReason
@@ -3969,6 +13138,549 @@ func (t *ReviewItem_Status) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsThreatModelArtifactThreat0 returns the union data inside the ThreatModelArtifactThreat as a ThreatModelArtifactThreat0
+func (t ThreatModelArtifactThreat) AsThreatModelArtifactThreat0() (ThreatModelArtifactThreat0, error) {
+	var body ThreatModelArtifactThreat0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromThreatModelArtifactThreat0 overwrites any union data inside the ThreatModelArtifactThreat as the provided ThreatModelArtifactThreat0
+func (t *ThreatModelArtifactThreat) FromThreatModelArtifactThreat0(v ThreatModelArtifactThreat0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeThreatModelArtifactThreat0 performs a merge with any union data inside the ThreatModelArtifactThreat, using the provided ThreatModelArtifactThreat0
+func (t *ThreatModelArtifactThreat) MergeThreatModelArtifactThreat0(v ThreatModelArtifactThreat0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsThreatModelArtifactThreat1 returns the union data inside the ThreatModelArtifactThreat as a ThreatModelArtifactThreat1
+func (t ThreatModelArtifactThreat) AsThreatModelArtifactThreat1() (ThreatModelArtifactThreat1, error) {
+	var body ThreatModelArtifactThreat1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromThreatModelArtifactThreat1 overwrites any union data inside the ThreatModelArtifactThreat as the provided ThreatModelArtifactThreat1
+func (t *ThreatModelArtifactThreat) FromThreatModelArtifactThreat1(v ThreatModelArtifactThreat1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeThreatModelArtifactThreat1 performs a merge with any union data inside the ThreatModelArtifactThreat, using the provided ThreatModelArtifactThreat1
+func (t *ThreatModelArtifactThreat) MergeThreatModelArtifactThreat1(v ThreatModelArtifactThreat1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ThreatModelArtifactThreat) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["actor"], err = json.Marshal(t.Actor)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'actor': %w", err)
+	}
+
+	if t.Asset != nil {
+		object["asset"], err = json.Marshal(t.Asset)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'asset': %w", err)
+		}
+	}
+
+	if t.AtlasRefs != nil {
+		object["atlas_refs"], err = json.Marshal(t.AtlasRefs)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'atlas_refs': %w", err)
+		}
+	}
+
+	if t.AttackRefs != nil {
+		object["attack_refs"], err = json.Marshal(t.AttackRefs)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'attack_refs': %w", err)
+		}
+	}
+
+	if t.Controls != nil {
+		object["controls"], err = json.Marshal(t.Controls)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'controls': %w", err)
+		}
+	}
+
+	if t.Evidence != nil {
+		object["evidence"], err = json.Marshal(t.Evidence)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'evidence': %w", err)
+		}
+	}
+
+	object["id"], err = json.Marshal(t.Id)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'id': %w", err)
+	}
+
+	object["impact"], err = json.Marshal(t.Impact)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'impact': %w", err)
+	}
+
+	if t.IsolationDimensions != nil {
+		object["isolation_dimensions"], err = json.Marshal(t.IsolationDimensions)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'isolation_dimensions': %w", err)
+		}
+	}
+
+	object["likelihood"], err = json.Marshal(t.Likelihood)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'likelihood': %w", err)
+	}
+
+	if t.OwaspLlmReferences != nil {
+		object["owasp_llm_references"], err = json.Marshal(t.OwaspLlmReferences)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'owasp_llm_references': %w", err)
+		}
+	}
+
+	if t.ReviewSurfaces != nil {
+		object["review_surfaces"], err = json.Marshal(t.ReviewSurfaces)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'review_surfaces': %w", err)
+		}
+	}
+
+	if t.RiskRating != nil {
+		object["risk_rating"], err = json.Marshal(t.RiskRating)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'risk_rating': %w", err)
+		}
+	}
+
+	object["status"], err = json.Marshal(t.Status)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'status': %w", err)
+	}
+
+	if t.Surface != nil {
+		object["surface"], err = json.Marshal(t.Surface)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'surface': %w", err)
+		}
+	}
+
+	object["threat"], err = json.Marshal(t.Threat)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'threat': %w", err)
+	}
+
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *ThreatModelArtifactThreat) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["actor"]; found {
+		err = json.Unmarshal(raw, &t.Actor)
+		if err != nil {
+			return fmt.Errorf("error reading 'actor': %w", err)
+		}
+	}
+
+	if raw, found := object["asset"]; found {
+		err = json.Unmarshal(raw, &t.Asset)
+		if err != nil {
+			return fmt.Errorf("error reading 'asset': %w", err)
+		}
+	}
+
+	if raw, found := object["atlas_refs"]; found {
+		err = json.Unmarshal(raw, &t.AtlasRefs)
+		if err != nil {
+			return fmt.Errorf("error reading 'atlas_refs': %w", err)
+		}
+	}
+
+	if raw, found := object["attack_refs"]; found {
+		err = json.Unmarshal(raw, &t.AttackRefs)
+		if err != nil {
+			return fmt.Errorf("error reading 'attack_refs': %w", err)
+		}
+	}
+
+	if raw, found := object["controls"]; found {
+		err = json.Unmarshal(raw, &t.Controls)
+		if err != nil {
+			return fmt.Errorf("error reading 'controls': %w", err)
+		}
+	}
+
+	if raw, found := object["evidence"]; found {
+		err = json.Unmarshal(raw, &t.Evidence)
+		if err != nil {
+			return fmt.Errorf("error reading 'evidence': %w", err)
+		}
+	}
+
+	if raw, found := object["id"]; found {
+		err = json.Unmarshal(raw, &t.Id)
+		if err != nil {
+			return fmt.Errorf("error reading 'id': %w", err)
+		}
+	}
+
+	if raw, found := object["impact"]; found {
+		err = json.Unmarshal(raw, &t.Impact)
+		if err != nil {
+			return fmt.Errorf("error reading 'impact': %w", err)
+		}
+	}
+
+	if raw, found := object["isolation_dimensions"]; found {
+		err = json.Unmarshal(raw, &t.IsolationDimensions)
+		if err != nil {
+			return fmt.Errorf("error reading 'isolation_dimensions': %w", err)
+		}
+	}
+
+	if raw, found := object["likelihood"]; found {
+		err = json.Unmarshal(raw, &t.Likelihood)
+		if err != nil {
+			return fmt.Errorf("error reading 'likelihood': %w", err)
+		}
+	}
+
+	if raw, found := object["owasp_llm_references"]; found {
+		err = json.Unmarshal(raw, &t.OwaspLlmReferences)
+		if err != nil {
+			return fmt.Errorf("error reading 'owasp_llm_references': %w", err)
+		}
+	}
+
+	if raw, found := object["review_surfaces"]; found {
+		err = json.Unmarshal(raw, &t.ReviewSurfaces)
+		if err != nil {
+			return fmt.Errorf("error reading 'review_surfaces': %w", err)
+		}
+	}
+
+	if raw, found := object["risk_rating"]; found {
+		err = json.Unmarshal(raw, &t.RiskRating)
+		if err != nil {
+			return fmt.Errorf("error reading 'risk_rating': %w", err)
+		}
+	}
+
+	if raw, found := object["status"]; found {
+		err = json.Unmarshal(raw, &t.Status)
+		if err != nil {
+			return fmt.Errorf("error reading 'status': %w", err)
+		}
+	}
+
+	if raw, found := object["surface"]; found {
+		err = json.Unmarshal(raw, &t.Surface)
+		if err != nil {
+			return fmt.Errorf("error reading 'surface': %w", err)
+		}
+	}
+
+	if raw, found := object["threat"]; found {
+		err = json.Unmarshal(raw, &t.Threat)
+		if err != nil {
+			return fmt.Errorf("error reading 'threat': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsTriageArtifactFindingExclusionRule0 returns the union data inside the TriageArtifactFinding_ExclusionRule as a TriageArtifactFindingExclusionRule0
+func (t TriageArtifactFinding_ExclusionRule) AsTriageArtifactFindingExclusionRule0() (TriageArtifactFindingExclusionRule0, error) {
+	var body TriageArtifactFindingExclusionRule0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTriageArtifactFindingExclusionRule0 overwrites any union data inside the TriageArtifactFinding_ExclusionRule as the provided TriageArtifactFindingExclusionRule0
+func (t *TriageArtifactFinding_ExclusionRule) FromTriageArtifactFindingExclusionRule0(v TriageArtifactFindingExclusionRule0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTriageArtifactFindingExclusionRule0 performs a merge with any union data inside the TriageArtifactFinding_ExclusionRule, using the provided TriageArtifactFindingExclusionRule0
+func (t *TriageArtifactFinding_ExclusionRule) MergeTriageArtifactFindingExclusionRule0(v TriageArtifactFindingExclusionRule0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTriageArtifactFindingExclusionRule1 returns the union data inside the TriageArtifactFinding_ExclusionRule as a TriageArtifactFindingExclusionRule1
+func (t TriageArtifactFinding_ExclusionRule) AsTriageArtifactFindingExclusionRule1() (TriageArtifactFindingExclusionRule1, error) {
+	var body TriageArtifactFindingExclusionRule1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTriageArtifactFindingExclusionRule1 overwrites any union data inside the TriageArtifactFinding_ExclusionRule as the provided TriageArtifactFindingExclusionRule1
+func (t *TriageArtifactFinding_ExclusionRule) FromTriageArtifactFindingExclusionRule1(v TriageArtifactFindingExclusionRule1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTriageArtifactFindingExclusionRule1 performs a merge with any union data inside the TriageArtifactFinding_ExclusionRule, using the provided TriageArtifactFindingExclusionRule1
+func (t *TriageArtifactFinding_ExclusionRule) MergeTriageArtifactFindingExclusionRule1(v TriageArtifactFindingExclusionRule1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TriageArtifactFinding_ExclusionRule) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TriageArtifactFinding_ExclusionRule) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTriageArtifactFindingSeverityAlignment0 returns the union data inside the TriageArtifactFinding_SeverityAlignment as a TriageArtifactFindingSeverityAlignment0
+func (t TriageArtifactFinding_SeverityAlignment) AsTriageArtifactFindingSeverityAlignment0() (TriageArtifactFindingSeverityAlignment0, error) {
+	var body TriageArtifactFindingSeverityAlignment0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTriageArtifactFindingSeverityAlignment0 overwrites any union data inside the TriageArtifactFinding_SeverityAlignment as the provided TriageArtifactFindingSeverityAlignment0
+func (t *TriageArtifactFinding_SeverityAlignment) FromTriageArtifactFindingSeverityAlignment0(v TriageArtifactFindingSeverityAlignment0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTriageArtifactFindingSeverityAlignment0 performs a merge with any union data inside the TriageArtifactFinding_SeverityAlignment, using the provided TriageArtifactFindingSeverityAlignment0
+func (t *TriageArtifactFinding_SeverityAlignment) MergeTriageArtifactFindingSeverityAlignment0(v TriageArtifactFindingSeverityAlignment0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTriageArtifactFindingSeverityAlignment1 returns the union data inside the TriageArtifactFinding_SeverityAlignment as a TriageArtifactFindingSeverityAlignment1
+func (t TriageArtifactFinding_SeverityAlignment) AsTriageArtifactFindingSeverityAlignment1() (TriageArtifactFindingSeverityAlignment1, error) {
+	var body TriageArtifactFindingSeverityAlignment1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTriageArtifactFindingSeverityAlignment1 overwrites any union data inside the TriageArtifactFinding_SeverityAlignment as the provided TriageArtifactFindingSeverityAlignment1
+func (t *TriageArtifactFinding_SeverityAlignment) FromTriageArtifactFindingSeverityAlignment1(v TriageArtifactFindingSeverityAlignment1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTriageArtifactFindingSeverityAlignment1 performs a merge with any union data inside the TriageArtifactFinding_SeverityAlignment, using the provided TriageArtifactFindingSeverityAlignment1
+func (t *TriageArtifactFinding_SeverityAlignment) MergeTriageArtifactFindingSeverityAlignment1(v TriageArtifactFindingSeverityAlignment1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TriageArtifactFinding_SeverityAlignment) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TriageArtifactFinding_SeverityAlignment) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsTriageArtifactTriageContextThreatModel0 returns the union data inside the TriageArtifactTriageContext_ThreatModel as a TriageArtifactTriageContextThreatModel0
+func (t TriageArtifactTriageContext_ThreatModel) AsTriageArtifactTriageContextThreatModel0() (TriageArtifactTriageContextThreatModel0, error) {
+	var body TriageArtifactTriageContextThreatModel0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTriageArtifactTriageContextThreatModel0 overwrites any union data inside the TriageArtifactTriageContext_ThreatModel as the provided TriageArtifactTriageContextThreatModel0
+func (t *TriageArtifactTriageContext_ThreatModel) FromTriageArtifactTriageContextThreatModel0(v TriageArtifactTriageContextThreatModel0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTriageArtifactTriageContextThreatModel0 performs a merge with any union data inside the TriageArtifactTriageContext_ThreatModel, using the provided TriageArtifactTriageContextThreatModel0
+func (t *TriageArtifactTriageContext_ThreatModel) MergeTriageArtifactTriageContextThreatModel0(v TriageArtifactTriageContextThreatModel0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsTriageArtifactTriageContextThreatModel1 returns the union data inside the TriageArtifactTriageContext_ThreatModel as a TriageArtifactTriageContextThreatModel1
+func (t TriageArtifactTriageContext_ThreatModel) AsTriageArtifactTriageContextThreatModel1() (TriageArtifactTriageContextThreatModel1, error) {
+	var body TriageArtifactTriageContextThreatModel1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromTriageArtifactTriageContextThreatModel1 overwrites any union data inside the TriageArtifactTriageContext_ThreatModel as the provided TriageArtifactTriageContextThreatModel1
+func (t *TriageArtifactTriageContext_ThreatModel) FromTriageArtifactTriageContextThreatModel1(v TriageArtifactTriageContextThreatModel1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeTriageArtifactTriageContextThreatModel1 performs a merge with any union data inside the TriageArtifactTriageContext_ThreatModel, using the provided TriageArtifactTriageContextThreatModel1
+func (t *TriageArtifactTriageContext_ThreatModel) MergeTriageArtifactTriageContextThreatModel1(v TriageArtifactTriageContextThreatModel1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t TriageArtifactTriageContext_ThreatModel) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *TriageArtifactTriageContext_ThreatModel) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsValidationErrorLoc0 returns the union data inside the ValidationError_Loc_Item as a ValidationErrorLoc0
+func (t ValidationError_Loc_Item) AsValidationErrorLoc0() (ValidationErrorLoc0, error) {
+	var body ValidationErrorLoc0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromValidationErrorLoc0 overwrites any union data inside the ValidationError_Loc_Item as the provided ValidationErrorLoc0
+func (t *ValidationError_Loc_Item) FromValidationErrorLoc0(v ValidationErrorLoc0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeValidationErrorLoc0 performs a merge with any union data inside the ValidationError_Loc_Item, using the provided ValidationErrorLoc0
+func (t *ValidationError_Loc_Item) MergeValidationErrorLoc0(v ValidationErrorLoc0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsValidationErrorLoc1 returns the union data inside the ValidationError_Loc_Item as a ValidationErrorLoc1
+func (t ValidationError_Loc_Item) AsValidationErrorLoc1() (ValidationErrorLoc1, error) {
+	var body ValidationErrorLoc1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromValidationErrorLoc1 overwrites any union data inside the ValidationError_Loc_Item as the provided ValidationErrorLoc1
+func (t *ValidationError_Loc_Item) FromValidationErrorLoc1(v ValidationErrorLoc1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeValidationErrorLoc1 performs a merge with any union data inside the ValidationError_Loc_Item, using the provided ValidationErrorLoc1
+func (t *ValidationError_Loc_Item) MergeValidationErrorLoc1(v ValidationErrorLoc1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ValidationError_Loc_Item) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ValidationError_Loc_Item) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // AsViewFilterInputFirstPartyDivisor0 returns the union data inside the ViewFilterInput_FirstPartyDivisor as a ViewFilterInputFirstPartyDivisor0
 func (t ViewFilterInput_FirstPartyDivisor) AsViewFilterInputFirstPartyDivisor0() (ViewFilterInputFirstPartyDivisor0, error) {
 	var body ViewFilterInputFirstPartyDivisor0
@@ -4027,6 +13739,188 @@ func (t ViewFilterInput_FirstPartyDivisor) MarshalJSON() ([]byte, error) {
 }
 
 func (t *ViewFilterInput_FirstPartyDivisor) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsVulnFindingsArtifactNotAffectedEntry0 returns the union data inside the VulnFindingsArtifactNotAffectedEntry as a VulnFindingsArtifactNotAffectedEntry0
+func (t VulnFindingsArtifactNotAffectedEntry) AsVulnFindingsArtifactNotAffectedEntry0() (VulnFindingsArtifactNotAffectedEntry0, error) {
+	var body VulnFindingsArtifactNotAffectedEntry0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromVulnFindingsArtifactNotAffectedEntry0 overwrites any union data inside the VulnFindingsArtifactNotAffectedEntry as the provided VulnFindingsArtifactNotAffectedEntry0
+func (t *VulnFindingsArtifactNotAffectedEntry) FromVulnFindingsArtifactNotAffectedEntry0(v VulnFindingsArtifactNotAffectedEntry0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeVulnFindingsArtifactNotAffectedEntry0 performs a merge with any union data inside the VulnFindingsArtifactNotAffectedEntry, using the provided VulnFindingsArtifactNotAffectedEntry0
+func (t *VulnFindingsArtifactNotAffectedEntry) MergeVulnFindingsArtifactNotAffectedEntry0(v VulnFindingsArtifactNotAffectedEntry0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsVulnFindingsArtifactNotAffectedEntry1 returns the union data inside the VulnFindingsArtifactNotAffectedEntry as a VulnFindingsArtifactNotAffectedEntry1
+func (t VulnFindingsArtifactNotAffectedEntry) AsVulnFindingsArtifactNotAffectedEntry1() (VulnFindingsArtifactNotAffectedEntry1, error) {
+	var body VulnFindingsArtifactNotAffectedEntry1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromVulnFindingsArtifactNotAffectedEntry1 overwrites any union data inside the VulnFindingsArtifactNotAffectedEntry as the provided VulnFindingsArtifactNotAffectedEntry1
+func (t *VulnFindingsArtifactNotAffectedEntry) FromVulnFindingsArtifactNotAffectedEntry1(v VulnFindingsArtifactNotAffectedEntry1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeVulnFindingsArtifactNotAffectedEntry1 performs a merge with any union data inside the VulnFindingsArtifactNotAffectedEntry, using the provided VulnFindingsArtifactNotAffectedEntry1
+func (t *VulnFindingsArtifactNotAffectedEntry) MergeVulnFindingsArtifactNotAffectedEntry1(v VulnFindingsArtifactNotAffectedEntry1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t VulnFindingsArtifactNotAffectedEntry) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	if err != nil {
+		return nil, err
+	}
+	object := make(map[string]json.RawMessage)
+	if t.union != nil {
+		err = json.Unmarshal(b, &object)
+		if err != nil {
+			return nil, err
+		}
+	}
+
+	object["dependency"], err = json.Marshal(t.Dependency)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'dependency': %w", err)
+	}
+
+	object["rationale"], err = json.Marshal(t.Rationale)
+	if err != nil {
+		return nil, fmt.Errorf("error marshaling 'rationale': %w", err)
+	}
+
+	if t.Reference != nil {
+		object["reference"], err = json.Marshal(t.Reference)
+		if err != nil {
+			return nil, fmt.Errorf("error marshaling 'reference': %w", err)
+		}
+	}
+	b, err = json.Marshal(object)
+	return b, err
+}
+
+func (t *VulnFindingsArtifactNotAffectedEntry) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	if err != nil {
+		return err
+	}
+	object := make(map[string]json.RawMessage)
+	err = json.Unmarshal(b, &object)
+	if err != nil {
+		return err
+	}
+
+	if raw, found := object["dependency"]; found {
+		err = json.Unmarshal(raw, &t.Dependency)
+		if err != nil {
+			return fmt.Errorf("error reading 'dependency': %w", err)
+		}
+	}
+
+	if raw, found := object["rationale"]; found {
+		err = json.Unmarshal(raw, &t.Rationale)
+		if err != nil {
+			return fmt.Errorf("error reading 'rationale': %w", err)
+		}
+	}
+
+	if raw, found := object["reference"]; found {
+		err = json.Unmarshal(raw, &t.Reference)
+		if err != nil {
+			return fmt.Errorf("error reading 'reference': %w", err)
+		}
+	}
+
+	return err
+}
+
+// AsVulnFindingsArtifactNotAffectedEntry0DependencyClassification0 returns the union data inside the VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification as a VulnFindingsArtifactNotAffectedEntry0DependencyClassification0
+func (t VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification) AsVulnFindingsArtifactNotAffectedEntry0DependencyClassification0() (VulnFindingsArtifactNotAffectedEntry0DependencyClassification0, error) {
+	var body VulnFindingsArtifactNotAffectedEntry0DependencyClassification0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromVulnFindingsArtifactNotAffectedEntry0DependencyClassification0 overwrites any union data inside the VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification as the provided VulnFindingsArtifactNotAffectedEntry0DependencyClassification0
+func (t *VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification) FromVulnFindingsArtifactNotAffectedEntry0DependencyClassification0(v VulnFindingsArtifactNotAffectedEntry0DependencyClassification0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeVulnFindingsArtifactNotAffectedEntry0DependencyClassification0 performs a merge with any union data inside the VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification, using the provided VulnFindingsArtifactNotAffectedEntry0DependencyClassification0
+func (t *VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification) MergeVulnFindingsArtifactNotAffectedEntry0DependencyClassification0(v VulnFindingsArtifactNotAffectedEntry0DependencyClassification0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsVulnFindingsArtifactNotAffectedEntry0DependencyClassification1 returns the union data inside the VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification as a VulnFindingsArtifactNotAffectedEntry0DependencyClassification1
+func (t VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification) AsVulnFindingsArtifactNotAffectedEntry0DependencyClassification1() (VulnFindingsArtifactNotAffectedEntry0DependencyClassification1, error) {
+	var body VulnFindingsArtifactNotAffectedEntry0DependencyClassification1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromVulnFindingsArtifactNotAffectedEntry0DependencyClassification1 overwrites any union data inside the VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification as the provided VulnFindingsArtifactNotAffectedEntry0DependencyClassification1
+func (t *VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification) FromVulnFindingsArtifactNotAffectedEntry0DependencyClassification1(v VulnFindingsArtifactNotAffectedEntry0DependencyClassification1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeVulnFindingsArtifactNotAffectedEntry0DependencyClassification1 performs a merge with any union data inside the VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification, using the provided VulnFindingsArtifactNotAffectedEntry0DependencyClassification1
+func (t *VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification) MergeVulnFindingsArtifactNotAffectedEntry0DependencyClassification1(v VulnFindingsArtifactNotAffectedEntry0DependencyClassification1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *VulnFindingsArtifactNotAffectedEntry_0_Dependency_Classification) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -11526,7 +21420,7 @@ func (r PackagesAffectedResponse) StatusCode() int {
 type GetArtifactResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *Artifact
+	JSON200      *ArtifactView
 	JSON401      *Problem
 	JSON404      *Problem
 	JSON422      *Problem
@@ -11551,6 +21445,7 @@ func (r GetArtifactResponse) StatusCode() int {
 type GetArtifactContentResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
+	JSON200      *openapi_types.File
 	JSON401      *Problem
 	JSON404      *Problem
 	JSON409      *Problem
@@ -11652,7 +21547,7 @@ func (r GetAssessmentResponse) StatusCode() int {
 type ListAssessmentArtifactsResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
-	JSON200      *[]Artifact
+	JSON200      *[]ArtifactView
 	JSON401      *Problem
 	JSON404      *Problem
 	JSON422      *Problem
@@ -15142,7 +25037,7 @@ func ParseGetArtifactResponse(rsp *http.Response) (*GetArtifactResponse, error) 
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest Artifact
+		var dest ArtifactView
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -15188,6 +25083,13 @@ func ParseGetArtifactContentResponse(rsp *http.Response) (*GetArtifactContentRes
 	}
 
 	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest openapi_types.File
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
@@ -15215,6 +25117,9 @@ func ParseGetArtifactContentResponse(rsp *http.Response) (*GetArtifactContentRes
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	case rsp.StatusCode == 200:
+		// Content-type (text/x-diff) unsupported
 
 	}
 
@@ -15384,7 +25289,7 @@ func ParseListAssessmentArtifactsResponse(rsp *http.Response) (*ListAssessmentAr
 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []Artifact
+		var dest []ArtifactView
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}

@@ -5,7 +5,6 @@ import (
 	"maps"
 	"mime"
 	"net/http"
-	"path/filepath"
 	"slices"
 	"strings"
 
@@ -122,7 +121,7 @@ func (h *Handler) artifactContent(w http.ResponseWriter, r *http.Request) {
 		web.Fail(w, r, err)
 		return
 	}
-	w.Header().Set("Content-Type", artifactMediaType(*found))
+	w.Header().Set("Content-Type", found.MediaType)
 	w.Header().Set("Content-Disposition", `attachment; filename="`+artifactFile(*found)+`"`)
 	w.WriteHeader(http.StatusOK)
 	_, _ = w.Write(content)
@@ -142,29 +141,21 @@ func intakeLabels(intake traust.AssessmentIntakeBindings) []string {
 }
 
 // artifactFile names an artifact's download after what core recorded of it — its kind, its
-// digest, the extension its uri names — keeping only the runes a filename may carry.
-func artifactFile(a traust.Artifact) string {
+// digest, the extension its media type names — keeping only the runes a filename may carry.
+func artifactFile(a traust.ArtifactView) string {
+	extension := ".bin"
+	if known, err := mime.ExtensionsByType(a.MediaType); err == nil && len(known) > 0 {
+		extension = known[0]
+	}
 	name := strings.Map(func(r rune) rune {
 		switch {
 		case r >= 'a' && r <= 'z', r >= 'A' && r <= 'Z', r >= '0' && r <= '9', r == '.', r == '-', r == '_':
 			return r
 		}
 		return -1
-	}, a.Kind+"-"+web.Short(&a.Digest)+filepath.Ext(a.Uri))
+	}, string(a.Kind)+"-"+web.Short(&a.Digest)+extension)
 	if name != "" {
 		return name
 	}
-	if a.Id != nil {
-		return a.Id.String()
-	}
 	return "artifact"
-}
-
-// artifactMediaType is the artifact's own, from the extension its uri names; anything core left
-// untyped downloads as octet stream.
-func artifactMediaType(a traust.Artifact) string {
-	if known := mime.TypeByExtension(filepath.Ext(a.Uri)); known != "" {
-		return known
-	}
-	return "application/octet-stream"
 }

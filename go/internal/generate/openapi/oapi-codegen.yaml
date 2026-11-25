@@ -7,4 +7,5 @@ generate:
   client: true
 output-options:
   client-type-name: RawClient
+  skip-prune: true # the <Kind>Artifact contract schemas back no operation; keep them for the loader
 output: v1/traust/client.gen.go
