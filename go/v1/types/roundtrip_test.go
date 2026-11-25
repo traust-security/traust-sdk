@@ -248,10 +248,60 @@ func TestReportNotAffectedRoundTrip(t *testing.T) {
 }
 
 // An advisory-backed vuln-scan finding's cvss and dependency blocks
-// (traust-contracts#190) survive a Go decode and re-encode, field for field,
-// and the re-encoded document still passes the contract.
+// (traust-contracts#190) decode to exactly the values the source JSON carries,
+// survive a re-encode byte-for-byte at the JSON level, and the re-encoded
+// document still passes the contract. Each case states its expected values
+// independently of the decoder, so a field the struct drops fails the test.
 func TestVulnFindingsAdvisoryFieldsRoundTrip(t *testing.T) {
-	doc := []byte(`{
+	ptr := func(s string) *string { return &s }
+	ecosystem := enums.EcosystemGo
+	classification := enums.ImpactClassificationLikelyAffected
+	level := enums.DependencyEvidenceLevelManifest
+	cases := []struct {
+		name           string
+		advisoryFields string // JSON members appended to the finding
+		wantCvss       *types.ReportFindingCvss
+		wantDependency *types.ReportFindingDependency
+	}{
+		{
+			name: "every dependency field populated",
+			advisoryFields: `,
+    "cvss": {"vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", "score": 9.8},
+    "dependency": {"advisory": "CVE-2024-0001", "module": "golang.org/x/net", "ecosystem": "go",
+      "purl": "pkg:golang/golang.org/x/net@v0.20.0", "vulnerable_range": "< v0.23.0",
+      "fixed_version": "v0.23.0", "installed_version": "v0.20.0",
+      "classification": "likely_affected", "evidence_level": "manifest",
+      "impact_artifact": "impact row: repo@abcdef0"}`,
+			wantCvss: &types.ReportFindingCvss{Vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", Score: 9.8},
+			wantDependency: &types.ReportFindingDependency{
+				Advisory:         "CVE-2024-0001",
+				Module:           "golang.org/x/net",
+				Ecosystem:        &ecosystem,
+				Purl:             ptr("pkg:golang/golang.org/x/net@v0.20.0"),
+				VulnerableRange:  ptr("< v0.23.0"),
+				FixedVersion:     ptr("v0.23.0"),
+				InstalledVersion: ptr("v0.20.0"),
+				Classification:   &classification,
+				EvidenceLevel:    &level,
+				ImpactArtifact:   ptr("impact row: repo@abcdef0"),
+			},
+		},
+		{
+			name: "required dependency fields only",
+			advisoryFields: `,
+    "cvss": {"vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N", "score": 5.9},
+    "dependency": {"advisory": "GHSA-xxxx-yyyy-zzzz", "module": "golang.org/x/crypto"}`,
+			wantCvss:       &types.ReportFindingCvss{Vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N", Score: 5.9},
+			wantDependency: &types.ReportFindingDependency{Advisory: "GHSA-xxxx-yyyy-zzzz", Module: "golang.org/x/crypto"},
+		},
+		{
+			name:           "no advisory fields",
+			advisoryFields: "",
+		},
+	}
+	for _, tc := range cases {
+		t.Run(tc.name, func(t *testing.T) {
+			doc := []byte(`{
   "target": "example/repo",
   "scanned_at": "2026-01-01T00:00:00Z",
   "focus_areas": ["dependencies"],
@@ -259,37 +309,59 @@ func TestVulnFindingsAdvisoryFieldsRoundTrip(t *testing.T) {
     "harness_version": "0.1.0", "baseline": null, "baseline_findings": 0},
   "findings": [{
     "id": "REPO-abcdef0-001", "file": "go.mod", "line": 3, "category": "supply-chain",
-    "severity": "critical", "confidence": 0.9, "title": "Vulnerable golang.org/x/net",
-    "description": "golang.org/x/net v0.20.0 is in the advisory's affected range.",
-    "recommendation": "Upgrade golang.org/x/net past the fixed version.",
-    "cvss": {"vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", "score": 9.8},
-    "dependency": {"advisory": "CVE-2024-0001", "module": "golang.org/x/net", "ecosystem": "go",
-      "installed_version": "v0.20.0", "classification": "likely_affected",
-      "evidence_level": "manifest", "impact_artifact": "impact row: repo@abcdef0"}
+    "severity": "critical", "confidence": 0.9, "title": "Vulnerable dependency",
+    "description": "The installed version is in the advisory's affected range.",
+    "recommendation": "Upgrade the dependency past the fixed version."` + tc.advisoryFields + `
   }],
   "summary": {"total": 1, "critical": 1, "high": 0, "medium": 0, "low": 0,
     "informational": 0, "known": 0, "low_confidence": 0}
 }`)
-	if err := validate.Validate("vuln-findings", doc); err != nil {
-		t.Fatalf("validate vuln-findings: %v", err)
+			if err := validate.Validate("vuln-findings", doc); err != nil {
+				t.Fatalf("validate vuln-findings: %v", err)
+			}
+			var decoded types.VulnFindings
+			if err := json.Unmarshal(doc, &decoded); err != nil {
+				t.Fatalf("unmarshal: %v", err)
+			}
+			if len(decoded.Findings) != 1 {
+				t.Fatalf("findings: got %d, want 1", len(decoded.Findings))
+			}
+			f := decoded.Findings[0]
+			if !reflect.DeepEqual(f.Cvss, tc.wantCvss) {
+				t.Errorf("cvss decoded wrong:\n got %+v\nwant %+v", f.Cvss, tc.wantCvss)
+			}
+			if !reflect.DeepEqual(f.Dependency, tc.wantDependency) {
+				t.Errorf("dependency decoded wrong:\n got %+v\nwant %+v", f.Dependency, tc.wantDependency)
+			}
+			again, err := json.Marshal(decoded)
+			if err != nil {
+				t.Fatalf("marshal: %v", err)
+			}
+			if err := validate.Validate("vuln-findings", again); err != nil {
+				t.Fatalf("validate re-encoded vuln-findings: %v", err)
+			}
+			// the re-encoded blocks equal the source's, member for member
+			for _, key := range []string{"cvss", "dependency"} {
+				if src, out := findingMember(t, doc, key), findingMember(t, again, key); !reflect.DeepEqual(src, out) {
+					t.Errorf("%s changed on re-encode:\n got %v\nwant %v", key, out, src)
+				}
+			}
+		})
 	}
-	var first types.VulnFindings
-	if err := json.Unmarshal(doc, &first); err != nil {
-		t.Fatalf("unmarshal: %v", err)
+}
+
+// findingMember returns the first finding's JSON member, decoded generically
+// (nil when absent), so it can be compared without the generated types.
+func findingMember(t *testing.T, doc []byte, key string) any {
+	t.Helper()
+	var raw struct {
+		Findings []map[string]any `json:"findings"`
 	}
-	again, err := json.Marshal(first)
-	if err != nil {
-		t.Fatalf("marshal: %v", err)
+	if err := json.Unmarshal(doc, &raw); err != nil {
+		t.Fatalf("decode %s: %v", key, err)
 	}
-	if err := validate.Validate("vuln-findings", again); err != nil {
-		t.Fatalf("validate re-encoded vuln-findings: %v", err)
+	if len(raw.Findings) != 1 {
+		t.Fatalf("findings: got %d, want 1", len(raw.Findings))
 	}
-	var second types.VulnFindings
-	if err := json.Unmarshal(again, &second); err != nil {
-		t.Fatalf("unmarshal re-encoded: %v", err)
-	}
-	f := second.Findings[0]
-	if f.Cvss == nil || f.Dependency == nil || !reflect.DeepEqual(first.Findings[0], f) {
-		t.Fatalf("advisory fields changed on round-trip:\n got %+v\nwant %+v", f, first.Findings[0])
-	}
+	return raw.Findings[0][key]
 }
