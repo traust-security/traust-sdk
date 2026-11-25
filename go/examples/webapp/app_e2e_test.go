@@ -86,12 +86,12 @@ func TestE2EOnboardScanTriageAndReview(t *testing.T) {
 	if done := e.finished(t, audit); !strings.Contains(done, string(traust.RunOrderStateSucceeded)) {
 		t.Fatalf("full_audit: %s, want succeeded", done)
 	}
-	// sci_triage carries no approval gate, so admission runs it without a person's release
-	triage := polled(t, send(e.app, http.MethodPost, "/runs", e.user, url.Values{"asset": {"sci_triage"}, "repository_id": {repo[1]}}), "/runs/")
+	// traust_triage carries no approval gate, so admission runs it without a person's release
+	triage := polled(t, send(e.app, http.MethodPost, "/runs", e.user, url.Values{"asset": {"traust_triage"}, "repository_id": {repo[1]}}), "/runs/")
 	if done := e.finished(t, triage); !strings.Contains(done, string(traust.RunOrderStateSucceeded)) {
-		t.Fatalf("sci_triage: %s, want succeeded", done)
+		t.Fatalf("traust_triage: %s, want succeeded", done)
 	}
-	if runs := e.get(t, "/repositories/"+repo[1]+"/runs"); !strings.Contains(runs, "sci_triage: succeeded, requested by ") {
+	if runs := e.get(t, "/repositories/"+repo[1]+"/runs"); !strings.Contains(runs, "traust_triage: succeeded, requested by ") {
 		t.Fatalf("run history: %s, want the person's triage", runs)
 	}
 	findings := e.get(t, "/repositories/"+repo[1]+"/findings")

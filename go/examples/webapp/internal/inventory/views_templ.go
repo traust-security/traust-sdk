@@ -488,7 +488,7 @@ func repository(repo traust.Repository, ref *traust.RepositoryRef) templ.Compone
 			if templ_7745c5c3_Err != nil {
 				return templ_7745c5c3_Err
 			}
-			for _, asset := range []struct{ Name, Label string }{{"full_audit", "Full audit"}, {"sci_triage", "Triage"}} {
+			for _, asset := range []struct{ Name, Label string }{{"full_audit", "Full audit"}, {"traust_triage", "Triage"}} {
 				templ_7745c5c3_Err = templruntime.WriteString(templ_7745c5c3_Buffer, 42, "<button hx-post=\"/runs\" hx-vals=\"")
 				if templ_7745c5c3_Err != nil {
 					return templ_7745c5c3_Err

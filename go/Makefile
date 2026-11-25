@@ -67,7 +67,7 @@ endef
 # public GitHub repository (a GITHUB_TOKEN, if set, lifts its rate limit) and the e2e stub
 # stands in for claude. The SDK suites run before the planner ticks (the gate).
 e2e: checkouts
-	$(call box_start,--worker e2e-box --asset full_audit --asset sci_triage --claude-dir ../box/e2eclaude --complete --gate "$$home/go"); \
+	$(call box_start,--worker e2e-box --asset full_audit --asset traust_triage --claude-dir ../box/e2eclaude --complete --gate "$$home/go"); \
 	export TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_ADMIN_TOKEN_FILE="$$home/admin" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner"; go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/...; touch "$$home/go"; \
 	for _ in $$(seq 120); do [ -f "$$home/boxed" ] && break; kill -0 "$$box" 2>/dev/null || break; sleep 1; done; [ -f "$$home/boxed" ] || { echo "--- box.log"; cat "$$home/box.log"; exit 1; }; \
 	(cd examples/webapp && go test -count=1 -tags e2e -run E2E -v .) || { echo "--- engine.log"; tail -40 "$$home/engine.log"; echo "--- claim.log"; tail -40 "$$home/claim.log"; echo "--- e2eclaude.log"; cat "$$home/e2eclaude.log" 2>/dev/null; exit 1; }

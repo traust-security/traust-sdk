@@ -9,4 +9,4 @@ engine: # the box's planner and claim worker
   ref: 0b8bd0a6ff82b75fffd9c51b88ee86200e10b91b
 traust: # the box's skill sessions, the shipped pack, the model registry
   repo: https://github.com/traust-security/traust.git
-  ref: 0eac366fd8edcfcd6ab0b8ab6d9f6708528dde75
+  ref: be3baf0378ba261185181d1fb2c4ab12e136a177
