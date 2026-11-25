@@ -928,12 +928,18 @@ func TestAnArtifactsEvidenceDownloadsUnderItsName(t *testing.T) {
 				MediaType: tt.mediaType, Size: len(tt.body),
 			})))
 			core.Handle("GET /v1/artifacts/{id}/content", onlyFor("ada", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+				w.Header().Set("Traust-Artifact-Kind", tt.kind)
+				w.Header().Set("ETag", `"4c7f0b9e2a1c3d4f"`)
+				w.Header().Set("Content-Type", tt.mediaType)
 				_, _ = w.Write([]byte(tt.body))
 			})))
 			h := newApp(t, core)
 			page := send(h, http.MethodGet, "/artifacts/"+evidence.String(), "ada", nil).Body.String()
 			if !strings.Contains(page, `href="/artifacts/`+evidence.String()+`/content"`) || !strings.Contains(page, "4c7f0b9e2a1c3d4f") {
 				t.Fatalf("artifact page: %s, want its digest and a download link", page)
+			}
+			if tt.kind == "report" && !strings.Contains(page, "Fixture audit") {
+				t.Fatalf("artifact page: %s, want the report's own title, decoded", page)
 			}
 			download := send(h, http.MethodGet, "/artifacts/"+evidence.String()+"/content", "ada", nil)
 			if download.Code != http.StatusOK || download.Body.String() != tt.body {

@@ -72,13 +72,19 @@ templ allAssessments(assessments []traust.Assessment) {
 	}
 }
 
-// artifact is one artifact's page: the evidence core kept, and its bytes as a download.
-templ artifact(a traust.ArtifactView) {
+// artifact is one artifact's page: the evidence core kept — a report as its own document —
+// and its bytes as a download.
+templ artifact(a traust.ArtifactView, report *traust.ReportArtifact) {
 	@web.Page(string(a.Kind)) {
 		<h1>{ string(a.Kind) }</h1>
 		<p>digest { a.Digest } · { a.MediaType } · { strconv.Itoa(a.Size) } bytes</p>
 		if a.CreatedAt != nil {
 			<p>recorded { a.CreatedAt.Format(time.DateOnly) }</p>
+		}
+		if report != nil {
+			<h2>{ report.Title }</h2>
+			<p>{ report.ExecutiveSummary.Prose }</p>
+			<p>{ strconv.Itoa(len(report.Findings)) } findings</p>
 		}
 		<p><a href={ templ.URL("/artifacts/" + a.Id.String() + "/content") }>Download</a></p>
 		if a.AssessmentId != nil {

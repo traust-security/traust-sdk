@@ -1,6 +1,7 @@
 package findings
 
 import (
+	"context"
 	"errors"
 	"maps"
 	"mime"
@@ -11,6 +12,7 @@ import (
 	"github.com/google/uuid"
 	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
+	"github.com/traust-security/traust-sdk/go/v1/traust/findings"
 )
 
 // scanKind is the assessment kind this app's scans record, so the section marks the latest one
@@ -91,7 +93,8 @@ func (h *Handler) allAssessments(w http.ResponseWriter, r *http.Request) {
 	web.Render(w, r, http.StatusOK, allAssessments(listed))
 }
 
-// artifact is one artifact's page: the evidence's metadata, and its bytes as a download.
+// artifact is one artifact's page: the evidence's metadata, and — for a report — the
+// document core kept, decoded as the contract type it publishes.
 func (h *Handler) artifact(w http.ResponseWriter, r *http.Request) {
 	id, ok := web.PathID(w, r, "id")
 	if !ok {
@@ -102,29 +105,42 @@ func (h *Handler) artifact(w http.ResponseWriter, r *http.Request) {
 		web.Fail(w, r, err)
 		return
 	}
-	web.Render(w, r, http.StatusOK, artifact(*found))
+	report, err := h.report(r.Context(), id, found.Kind)
+	if err != nil {
+		web.Fail(w, r, err)
+		return
+	}
+	web.Render(w, r, http.StatusOK, artifact(*found, report))
 }
 
-// artifactContent streams an artifact's bytes under the name and type its metadata earned it.
+// report is the artifact's report document when it is one, so the page reads the assessment's
+// own words instead of bytes; every other kind stays a download.
+func (h *Handler) report(ctx context.Context, id uuid.UUID, kind traust.ArtifactKind) (*traust.ReportArtifact, error) {
+	if kind != traust.ArtifactKindReport {
+		return nil, nil
+	}
+	obj, err := h.coreFindings.Get(ctx, id)
+	if err != nil {
+		return nil, err
+	}
+	return findings.Decode[traust.ReportArtifact](obj)
+}
+
+// artifactContent streams an artifact's bytes under the name and type its content earned it.
 func (h *Handler) artifactContent(w http.ResponseWriter, r *http.Request) {
 	id, ok := web.PathID(w, r, "id")
 	if !ok {
 		return
 	}
-	found, err := h.coreFindings.GetArtifact(r.Context(), id)
+	obj, err := h.coreFindings.Get(r.Context(), id)
 	if err != nil {
 		web.Fail(w, r, err)
 		return
 	}
-	content, err := h.coreFindings.GetArtifactContent(r.Context(), id)
-	if err != nil {
-		web.Fail(w, r, err)
-		return
-	}
-	w.Header().Set("Content-Type", found.MediaType)
-	w.Header().Set("Content-Disposition", `attachment; filename="`+artifactFile(*found)+`"`)
+	w.Header().Set("Content-Type", obj.MediaType)
+	w.Header().Set("Content-Disposition", `attachment; filename="`+artifactFile(obj)+`"`)
 	w.WriteHeader(http.StatusOK)
-	_, _ = w.Write(content)
+	_, _ = w.Write(obj.Body)
 }
 
 // assessmentKind words an assessment's kind; one core worded unexpectedly says so.
@@ -142,9 +158,9 @@ func intakeLabels(intake traust.AssessmentIntakeBindings) []string {
 
 // artifactFile names an artifact's download after what core recorded of it — its kind, its
 // digest, the extension its media type names — keeping only the runes a filename may carry.
-func artifactFile(a traust.ArtifactView) string {
+func artifactFile(obj *findings.Object) string {
 	extension := ".bin"
-	if known, err := mime.ExtensionsByType(a.MediaType); err == nil && len(known) > 0 {
+	if known, err := mime.ExtensionsByType(obj.MediaType); err == nil && len(known) > 0 {
 		extension = known[0]
 	}
 	name := strings.Map(func(r rune) rune {
@@ -153,7 +169,7 @@ func artifactFile(a traust.ArtifactView) string {
 			return r
 		}
 		return -1
-	}, string(a.Kind)+"-"+web.Short(&a.Digest)+extension)
+	}, string(obj.Kind)+"-"+web.Short(&obj.Digest)+extension)
 	if name != "" {
 		return name
 	}
