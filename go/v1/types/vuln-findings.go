@@ -1,4 +1,4 @@
-// Code generated from traust-contracts c2f6e6fb12270f8b3c8703da7bf39bd01776e4b1. DO NOT EDIT.
+// Code generated from traust-contracts 847e012cb3bf7af5dc16ade911ee0c813962b54e. DO NOT EDIT.
 
 package types
 
@@ -24,21 +24,23 @@ type KnownFinding struct {
 }
 
 type VulnFindingsFinding struct {
-	Category         string         `json:"category"`
-	Confidence       float64        `json:"confidence"`
-	ConfidenceReason *string        `json:"confidence_reason,omitempty"`
-	Cwe              *string        `json:"cwe,omitempty"`
-	Description      string         `json:"description"`
-	ExploitScenario  *string        `json:"exploit_scenario,omitempty"`
-	File             string         `json:"file"`
-	Fingerprint      *string        `json:"fingerprint,omitempty"`
-	FingerprintAlgo  *string        `json:"fingerprint_algo,omitempty"`
-	Id               string         `json:"id"`
-	Line             interface{}    `json:"line"`
-	Recommendation   string         `json:"recommendation"`
-	ScannerRef       *string        `json:"scanner_ref,omitempty"`
-	Severity         enums.Severity `json:"severity"`
-	Title            string         `json:"title"`
+	Category         string                   `json:"category"`
+	Confidence       float64                  `json:"confidence"`
+	ConfidenceReason *string                  `json:"confidence_reason,omitempty"`
+	Cvss             *ReportFindingCvss       `json:"cvss,omitempty"`
+	Cwe              *string                  `json:"cwe,omitempty"`
+	Dependency       *ReportFindingDependency `json:"dependency,omitempty"`
+	Description      string                   `json:"description"`
+	ExploitScenario  *string                  `json:"exploit_scenario,omitempty"`
+	File             string                   `json:"file"`
+	Fingerprint      *string                  `json:"fingerprint,omitempty"`
+	FingerprintAlgo  *string                  `json:"fingerprint_algo,omitempty"`
+	Id               string                   `json:"id"`
+	Line             interface{}              `json:"line"`
+	Recommendation   string                   `json:"recommendation"`
+	ScannerRef       *string                  `json:"scanner_ref,omitempty"`
+	Severity         enums.Severity           `json:"severity"`
+	Title            string                   `json:"title"`
 }
 
 type VulnFindingsMetadata struct {

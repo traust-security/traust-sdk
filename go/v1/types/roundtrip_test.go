@@ -2,6 +2,7 @@ package types_test
 
 import (
 	"encoding/json"
+	"reflect"
 	"testing"
 
 	"github.com/traust-security/traust-sdk/go/v1/enums"
@@ -238,10 +239,57 @@ func TestReportNotAffectedRoundTrip(t *testing.T) {
 			if err := validate.Validate("report", again); err != nil {
 				t.Fatalf("validate re-encoded report: %v", err)
 			}
-			if len(back.NotAffected) != 1 || back.NotAffected[0].Rationale != tc.entry.Rationale ||
-				back.NotAffected[0].Dependency.Advisory != tc.entry.Dependency.Advisory {
-				t.Fatalf("not_affected lost on round-trip: %+v", back.NotAffected)
+			// every field survives, the reference and impact fields included
+			if len(back.NotAffected) != 1 || !reflect.DeepEqual(back.NotAffected[0], tc.entry) {
+				t.Fatalf("not_affected changed on round-trip:\n got %+v\nwant %+v", back.NotAffected, tc.entry)
 			}
 		})
+	}
+}
+
+// An advisory-backed vuln-scan finding's cvss and dependency blocks
+// (traust-contracts#190) survive a Go decode and re-encode, field for field,
+// and the re-encoded document still passes the contract.
+func TestVulnFindingsAdvisoryFieldsRoundTrip(t *testing.T) {
+	doc := []byte(`{
+  "target": "example/repo",
+  "scanned_at": "2026-01-01T00:00:00Z",
+  "focus_areas": ["dependencies"],
+  "metadata": {"repo": "repo", "repo_slug": "REPO", "scanned_ref": "abcdef0",
+    "harness_version": "0.1.0", "baseline": null, "baseline_findings": 0},
+  "findings": [{
+    "id": "REPO-abcdef0-001", "file": "go.mod", "line": 3, "category": "supply-chain",
+    "severity": "critical", "confidence": 0.9, "title": "Vulnerable golang.org/x/net",
+    "description": "golang.org/x/net v0.20.0 is in the advisory's affected range.",
+    "recommendation": "Upgrade golang.org/x/net past the fixed version.",
+    "cvss": {"vector": "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", "score": 9.8},
+    "dependency": {"advisory": "CVE-2024-0001", "module": "golang.org/x/net", "ecosystem": "go",
+      "installed_version": "v0.20.0", "classification": "likely_affected",
+      "evidence_level": "manifest", "impact_artifact": "impact row: repo@abcdef0"}
+  }],
+  "summary": {"total": 1, "critical": 1, "high": 0, "medium": 0, "low": 0,
+    "informational": 0, "known": 0, "low_confidence": 0}
+}`)
+	if err := validate.Validate("vuln-findings", doc); err != nil {
+		t.Fatalf("validate vuln-findings: %v", err)
+	}
+	var first types.VulnFindings
+	if err := json.Unmarshal(doc, &first); err != nil {
+		t.Fatalf("unmarshal: %v", err)
+	}
+	again, err := json.Marshal(first)
+	if err != nil {
+		t.Fatalf("marshal: %v", err)
+	}
+	if err := validate.Validate("vuln-findings", again); err != nil {
+		t.Fatalf("validate re-encoded vuln-findings: %v", err)
+	}
+	var second types.VulnFindings
+	if err := json.Unmarshal(again, &second); err != nil {
+		t.Fatalf("unmarshal re-encoded: %v", err)
+	}
+	f := second.Findings[0]
+	if f.Cvss == nil || f.Dependency == nil || !reflect.DeepEqual(first.Findings[0], f) {
+		t.Fatalf("advisory fields changed on round-trip:\n got %+v\nwant %+v", f, first.Findings[0])
 	}
 }
