@@ -132,4 +132,6 @@ var artifactKinds = map[traust.ArtifactKind]bool{
 	"repo-state.json":               true,
 	"feed":                          true,
 	"sbom":                          true,
+	"validation-recording":          true,
+	"report-input":                  true,
 }

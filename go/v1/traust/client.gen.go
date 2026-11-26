@@ -77,6 +77,7 @@ const (
 	ArtifactKindRepoState                   ArtifactKind = "repo-state"
 	ArtifactKindRepoStateJson               ArtifactKind = "repo-state.json"
 	ArtifactKindReport                      ArtifactKind = "report"
+	ArtifactKindReportInput                 ArtifactKind = "report-input"
 	ArtifactKindRiskRatingMethodology       ArtifactKind = "risk-rating-methodology"
 	ArtifactKindRunManifest                 ArtifactKind = "run-manifest"
 	ArtifactKindSbom                        ArtifactKind = "sbom"
@@ -95,6 +96,7 @@ const (
 	ArtifactKindValidationAuthorization     ArtifactKind = "validation-authorization"
 	ArtifactKindValidationJson              ArtifactKind = "validation.json"
 	ArtifactKindValidationPlan              ArtifactKind = "validation-plan"
+	ArtifactKindValidationRecording         ArtifactKind = "validation-recording"
 	ArtifactKindVerification                ArtifactKind = "verification"
 	ArtifactKindVulnFindings                ArtifactKind = "vuln-findings"
 )
