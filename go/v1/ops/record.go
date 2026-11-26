@@ -26,13 +26,18 @@ func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte, prepar
 	id, generation = l.id(), l.origin.LeaseGeneration
 	provenance.RunId = id
 	if provenance.OccurredAt.IsZero() {
-		// No event time from the caller: the claim's start as Core recorded it, never this
-		// worker's clock, so worker skew cannot enter stored records. An explicit event time
-		// the caller set is kept; it is the caller's statement, not a lease credential.
+		// No event time from the caller: Core's clock at the run's latest lease renewal, so the
+		// record is dated within one heartbeat of when the report was produced (consumers read
+		// it as the scan's completion) and worker clock skew cannot enter stored records. Never
+		// earlier than the claim's start. An explicit event time the caller set is kept; it is
+		// the caller's statement, not a lease credential.
 		if l.origin.StartedAt == nil {
 			return receipt, errors.New("ops: the held order carries no start time to date the record")
 		}
 		provenance.OccurredAt = *l.origin.StartedAt
+		if renewed, ok := l.renewedAt(); ok && renewed.After(provenance.OccurredAt) {
+			provenance.OccurredAt = renewed
+		}
 	}
 	var err error
 	switch {

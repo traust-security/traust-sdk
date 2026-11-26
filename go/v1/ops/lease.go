@@ -38,6 +38,17 @@ func live(order *traust.RunOrder) error {
 
 func (l *lease) id() uuid.UUID { return *l.origin.Id }
 
+// renewedAt is Core's clock at the lease's latest claim or renewal. Core sets the expiry to its
+// own now plus the lease length the request named (and refuses a length it will not grant), so
+// that expiry less l.seconds is Core's time then: within one heartbeat interval of now, and
+// never this worker's clock.
+func (l *lease) renewedAt() (time.Time, bool) {
+	if l.current.LeaseExpiresAt == nil || l.seconds <= 0 {
+		return time.Time{}, false
+	}
+	return l.current.LeaseExpiresAt.Add(-time.Duration(l.seconds) * time.Second), true
+}
+
 // order is the server's original order with its own copies of the pointers an executor could
 // otherwise use to rewrite the lease.
 func (l *lease) order() traust.RunOrder {

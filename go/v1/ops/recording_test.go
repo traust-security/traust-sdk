@@ -8,6 +8,7 @@ import (
 	"net/http/httptest"
 	"os"
 	"path/filepath"
+	"slices"
 	"strings"
 	"sync"
 	"testing"
@@ -35,6 +36,20 @@ type lifecycleServer struct {
 	events          []string
 	completed       traust.JobResult
 	remediationBody traust.RemediationRecordBody
+	// asCore grants the lease length each request names on a clock this far from the
+	// worker's, the way Core does; grants are that clock at each claim or renewal.
+	asCore *time.Duration
+	grants []time.Time
+}
+
+// expiry is the lease the server grants now.
+func (server *lifecycleServer) expiry(requested int) time.Time {
+	if server.asCore == nil {
+		return time.Now().Add(server.leaseLength)
+	}
+	now := time.Now().Add(*server.asCore)
+	server.grants = append(server.grants, now)
+	return now.Add(time.Duration(requested) * time.Second)
 }
 
 func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Request) {
@@ -44,7 +59,9 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 	switch {
 	case request.URL.Path == "/v1/orders/start":
 		server.events = append(server.events, "start")
-		expires := time.Now().Add(server.leaseLength)
+		var body traust.StartRecordingRequest
+		_ = json.NewDecoder(request.Body).Decode(&body)
+		expires := server.expiry(body.LeaseSeconds)
 		server.order.LeaseExpiresAt = &expires
 		json.NewEncoder(w).Encode(server.order)
 	case strings.HasSuffix(request.URL.Path, "/heartbeat"):
@@ -63,7 +80,7 @@ func (server *lifecycleServer) ServeHTTP(w http.ResponseWriter, request *http.Re
 			json.NewEncoder(w).Encode(traust.Problem{Title: "lease refused", Status: server.heartbeatStatus})
 			return
 		}
-		expires := time.Now().Add(server.leaseLength)
+		expires := server.expiry(body.LeaseSeconds)
 		server.order.LeaseExpiresAt = &expires
 		if server.changeOrigin {
 			server.order.LeaseGeneration++
@@ -389,6 +406,8 @@ func TestRemediationTemplateRecordsThroughTheRemediationDoor(t *testing.T) {
 	}})
 	workItemID := uuid.MustParse("cbb60c79-1c48-4938-b71e-e19d0b9b9ca7")
 	server.order.WorkItemId = &workItemID
+	skew := time.Hour // Core's clock, not the worker's
+	server.asCore = &skew
 	result, err := run.Run(context.Background())
 	if err != nil {
 		t.Fatal(err)
@@ -406,10 +425,11 @@ func TestRemediationTemplateRecordsThroughTheRemediationDoor(t *testing.T) {
 	if server.order.Id == nil || body.LeaseGeneration != server.order.LeaseGeneration || body.RunOrderId != *server.order.Id || body.Provenance.RunId != *server.order.Id {
 		t.Fatal("the record was not stamped with the server's order identity")
 	}
-	// no event time in the template: the claim's start as the server recorded it, not the
-	// worker's clock at capture
-	if server.order.StartedAt == nil || !body.Provenance.OccurredAt.Equal(*server.order.StartedAt) || body.Payload != "remediation report" {
-		t.Fatalf("expected the server's claim start and original bytes, got %v and %q", body.Provenance.OccurredAt, body.Payload)
+	// no event time in the template: the server's clock (an hour off the worker's) at the
+	// run's latest lease renewal, never the worker's clock
+	// (renewals continue while the record and completion are sent, so: one of its grants)
+	if !slices.ContainsFunc(server.grants, body.Provenance.OccurredAt.Equal) || body.Payload != "remediation report" {
+		t.Fatalf("expected the server's clock at a lease grant %v and original bytes, got %v and %q", server.grants, body.Provenance.OccurredAt, body.Payload)
 	}
 	if body.Provenance.Source != traust.SourceTypeTriageReport {
 		t.Fatal("the record lost its explicit provenance source")
