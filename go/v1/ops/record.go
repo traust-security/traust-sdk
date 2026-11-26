@@ -6,7 +6,6 @@ import (
 	"errors"
 	"slices"
 	"strings"
-	"time"
 
 	"github.com/google/uuid"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
@@ -15,7 +14,7 @@ import (
 // record posts the executor's report through the run's one template. The remediation
 // template reconciles its source_finding refs to the door's bare finding ids first; every
 // other template posts the executor's exact original bytes.
-func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte, capturedAt time.Time, preparedFindings []uuid.UUID) (RecordingReceipt, error) {
+func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte, preparedFindings []uuid.UUID) (RecordingReceipt, error) {
 	var receipt RecordingReceipt
 	// raw passed utf8.Valid, so the string carries the exact original bytes.
 	payload := string(raw)
@@ -27,7 +26,13 @@ func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte, captur
 	id, generation = l.id(), l.origin.LeaseGeneration
 	provenance.RunId = id
 	if provenance.OccurredAt.IsZero() {
-		provenance.OccurredAt = capturedAt
+		// No event time from the caller: the claim's start as Core recorded it, never this
+		// worker's clock, so worker skew cannot enter stored records. An explicit event time
+		// the caller set is kept; it is the caller's statement, not a lease credential.
+		if l.origin.StartedAt == nil {
+			return receipt, errors.New("ops: the held order carries no start time to date the record")
+		}
+		provenance.OccurredAt = *l.origin.StartedAt
 	}
 	var err error
 	switch {

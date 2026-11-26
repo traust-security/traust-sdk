@@ -50,8 +50,7 @@ func TestCoreClaimReclaim(t *testing.T) {
 		return l
 	}
 	old := claim(nil, 8)
-	capturedAt := time.Now().UTC()
-	first, err := run.record(t.Context(), old, payload, capturedAt, nil)
+	first, err := run.record(t.Context(), old, payload, nil)
 	if err != nil || first.Assessment == nil || len(first.Assessment.Intake.Findings) != 2 {
 		t.Fatalf("first attempt receipt: %+v, %v", first, err)
 	}
@@ -75,22 +74,17 @@ func TestCoreClaimReclaim(t *testing.T) {
 	staleCompletion := traust.CompleteRequest{LeaseGeneration: old.origin.LeaseGeneration, Result: result}
 	_, err = client.Complete(t.Context(), id, staleCompletion)
 	wantConflict("stale completion", err)
-	// A re-executed report gets a new capture time, not the dead worker's timestamp.
-	reclaimedAt := time.Now().UTC()
-	if !reclaimedAt.After(capturedAt) {
-		t.Fatal("expected the reclaimed report to have a later event time")
-	}
-	refused := func(l *lease, data []byte, at time.Time) {
+	refused := func(l *lease, data []byte) {
 		t.Helper()
-		receipt, err := run.record(t.Context(), l, data, at, nil)
+		receipt, err := run.record(t.Context(), l, data, nil)
 		wantConflict("record", err)
 		if receipt.Assessment != nil {
 			t.Fatalf("rejected record returned a receipt: %+v", receipt)
 		}
 	}
-	refused(old, payload, capturedAt)
-	refused(current, append([]byte("\n"), payload...), reclaimedAt)
-	repeated, err := run.record(t.Context(), current, payload, reclaimedAt, nil)
+	refused(old, payload)
+	refused(current, append([]byte("\n"), payload...))
+	repeated, err := run.record(t.Context(), current, payload, nil)
 	if err != nil || repeated.Assessment == nil {
 		t.Fatalf("current attempt replay: %+v, %v", repeated, err)
 	}

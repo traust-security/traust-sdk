@@ -85,7 +85,6 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 		return run.preparationFailed(ctx, l, err)
 	}
 	produced, err := l.run(ctx, run.Executor, prepared)
-	capturedAt := time.Now().UTC()
 	switch {
 	case lost(err) || ctx.Err() != nil:
 		return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
@@ -108,7 +107,7 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 		return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
 	}
 	receipt, err := superviseRequest(ctx, l, func(work context.Context) (RecordingReceipt, error) {
-		return run.record(work, l, produced.Payload, capturedAt, preparedFindings)
+		return run.record(work, l, produced.Payload, preparedFindings)
 	})
 	if err != nil {
 		if lost(err) || ctx.Err() != nil {

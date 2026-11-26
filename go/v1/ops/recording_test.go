@@ -378,13 +378,11 @@ func TestUnknownExecutorOutcomeCompletesFailedWithoutRecording(t *testing.T) {
 // The remediation template posts the executor's report through core's remediation record door,
 // stamped with the held order's identity, and carries the recorded work item back.
 func TestRemediationTemplateRecordsThroughTheRemediationDoor(t *testing.T) {
-	var reportReady time.Time
 	run, server := newRecordingRun(t, executorFunc(func(_ context.Context, execution Execution) (ProducedReport, error) {
 		var input traust.RemediationInput
 		if err := json.Unmarshal(execution.Input, &input); err != nil || input.FixBranch != "server-fix-branch" {
 			return ProducedReport{}, errors.New("missing core-prepared remediation input")
 		}
-		reportReady = time.Now()
 		return ProducedReport{Payload: []byte("remediation report"), Result: traust.JobResult{Outcome: traust.OutcomeSucceeded}}, nil
 	}), RecordingRequest{Remediation: &traust.RemediationRecordBody{
 		Provenance: traust.Provenance{Source: traust.SourceTypeTriageReport},
@@ -408,8 +406,10 @@ func TestRemediationTemplateRecordsThroughTheRemediationDoor(t *testing.T) {
 	if server.order.Id == nil || body.LeaseGeneration != server.order.LeaseGeneration || body.RunOrderId != *server.order.Id || body.Provenance.RunId != *server.order.Id {
 		t.Fatal("the record was not stamped with the server's order identity")
 	}
-	if body.Provenance.OccurredAt.Before(reportReady) || body.Provenance.OccurredAt.After(time.Now()) || body.Payload != "remediation report" {
-		t.Fatalf("expected captured report time and original bytes, got %v and %q", body.Provenance.OccurredAt, body.Payload)
+	// no event time in the template: the claim's start as the server recorded it, not the
+	// worker's clock at capture
+	if server.order.StartedAt == nil || !body.Provenance.OccurredAt.Equal(*server.order.StartedAt) || body.Payload != "remediation report" {
+		t.Fatalf("expected the server's claim start and original bytes, got %v and %q", body.Provenance.OccurredAt, body.Payload)
 	}
 	if body.Provenance.Source != traust.SourceTypeTriageReport {
 		t.Fatal("the record lost its explicit provenance source")
