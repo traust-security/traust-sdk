@@ -106,6 +106,14 @@ func TestE2EQueryDashboardCountsARepositorySet(t *testing.T) {
 	if results == nil || results.Subject != SubjectFindings {
 		t.Fatalf("unexpected dashboard results: %+v", results)
 	}
+	// A repository the fresh server has never seen: the ungrouped count is one row, zero.
+	if len(results.Rows) != 1 {
+		t.Fatalf("want one ungrouped row, got %+v", results.Rows)
+	}
+	count, ok := results.Rows[0].Measures[string(MeasureFindings)]
+	if !ok || count == nil || *count != 0 {
+		t.Fatalf("want a zero findings count for an unseen repository, got %+v", results.Rows[0].Measures)
+	}
 }
 
 func TestE2ERequestReportQueuesAndReadsStatus(t *testing.T) {

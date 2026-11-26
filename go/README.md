@@ -74,7 +74,11 @@ job, err := client.RequestReport(ctx, traust.ReportRequest{
 })
 for err == nil && job.Status != traust.ReportStatusReady {
 	if job.Status == traust.ReportStatusFailed {
-		return fmt.Errorf("report failed: %v", job.Reason)
+		reason := "no reason given"
+		if job.Reason != nil {
+			reason = *job.Reason
+		}
+		return fmt.Errorf("report failed: %s", reason)
 	}
 	select {
 	case <-ctx.Done():

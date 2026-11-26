@@ -114,6 +114,7 @@ func TestGetReportFileAsDecodesStrictlyAndRejectsUnknownFields(t *testing.T) {
 	core := traustest.New(t)
 	goodID := uuid.New()
 	badID := uuid.New()
+	nullID := uuid.New()
 	notReadyID := uuid.New()
 	core.Handle("GET /v1/reports/{order_id}/file", http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 		switch r.PathValue("order_id") {
@@ -123,6 +124,9 @@ func TestGetReportFileAsDecodesStrictlyAndRejectsUnknownFields(t *testing.T) {
 		case badID.String():
 			w.Header().Set("Content-Type", "application/json")
 			_, _ = w.Write([]byte(`{"unexpected_field":true}`))
+		case nullID.String():
+			w.Header().Set("Content-Type", "application/json")
+			_, _ = w.Write([]byte(" null\n"))
 		case notReadyID.String():
 			traustest.Problem(http.StatusConflict, "report not ready").ServeHTTP(w, r)
 		}
@@ -138,6 +142,11 @@ func TestGetReportFileAsDecodesStrictlyAndRejectsUnknownFields(t *testing.T) {
 
 	if _, err := traust.GetReportFileAs[traust.FindingsRollupInsight](context.Background(), core.Client(), badID); err == nil {
 		t.Fatal("expected unknown field error, got nil")
+	}
+
+	// a null file is no view: a zero-value rollup must never read as a successful report
+	if view, err := traust.GetReportFileAs[traust.FindingsRollupInsight](context.Background(), core.Client(), nullID); err == nil || view != nil {
+		t.Fatalf("want an error for a null report file, got view=%+v err=%v", view, err)
 	}
 
 	var problem *traust.ProblemError

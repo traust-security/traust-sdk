@@ -26,6 +26,9 @@ func ViewNameOf[T any, PT insightView[T]]() ViewName {
 // (such as FindingsRollupInsight). Any field outside the contract is an error, never dropped.
 func DecodeReportView[T any, PT insightView[T]](body []byte) (*T, error) {
 	name := PT(nil).insightName()
+	if bytes.Equal(bytes.TrimSpace(body), []byte("null")) {
+		return nil, fmt.Errorf("decoding the %s report: the file is null, not a view", name)
+	}
 	var view T
 	decoder := json.NewDecoder(bytes.NewReader(body))
 	decoder.DisallowUnknownFields()
