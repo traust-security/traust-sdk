@@ -8,6 +8,7 @@ import (
 	"encoding/json"
 	"log/slog"
 	"os"
+	"os/exec"
 	"slices"
 	"strconv"
 	"strings"
@@ -34,6 +35,20 @@ func e2eClient(t *testing.T, tokens string) *traust.Client {
 	return client
 }
 
+// e2eAdmit queues a submitted order: Core stores it planned and only the engine's admission
+// queues it, so make e2e supplies TRAUST_E2E_ADMIT, which admits through Core's OpsService.admit.
+func e2eAdmit(t *testing.T, order traust.RunOrder) {
+	t.Helper()
+	admit := os.Getenv("TRAUST_E2E_ADMIT")
+	if admit == "" || order.Id == nil {
+		t.Fatalf("TRAUST_E2E_ADMIT and a submitted order are required; run make e2e (order=%+v)", order)
+	}
+	out, err := exec.Command("sh", "-c", admit+` "$1"`, "admit", order.Id.String()).CombinedOutput()
+	if err != nil || strings.TrimSpace(string(out)) != "queued" {
+		t.Fatalf("admitting %s: %v: %s", order.Id, err, out)
+	}
+}
+
 func TestE2ERunnerRunsASubmittedPackCommand(t *testing.T) {
 	raw, err := os.ReadFile("testdata/local-command.yaml")
 	if err != nil {
@@ -54,6 +69,7 @@ func TestE2ERunnerRunsASubmittedPackCommand(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	e2eAdmit(t, *want)
 
 	runner, err := NewRunner(RunnerConfig{
 		Client: e2eClient(t, "TRAUST_E2E_RUNNER_TOKEN_FILE"), Pack: pack, Executor: ProcessExecutor{},
@@ -109,6 +125,7 @@ func TestE2ERunnerResolvesEveryCommandParameter(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
+	e2eAdmit(t, *want)
 
 	var argv []string
 	runner, err := NewRunner(RunnerConfig{

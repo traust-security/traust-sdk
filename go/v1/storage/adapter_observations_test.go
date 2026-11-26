@@ -156,7 +156,7 @@ func TestAdapterObservationsRejectMalformedEncodedValues(t *testing.T) {
 		"severity": func(f *types.AdapterFinding) { f.Severity = enums.Severity("urgent") },
 		"cwe":      func(f *types.AdapterFinding) { f.Cwes = []string{"79"} },
 		"location": func(f *types.AdapterFinding) { f.Locations[0].Path = "" },
-		"cvss":     func(f *types.AdapterFinding) { f.Cvss.Score = 11 },
+		"cvss":     func(f *types.AdapterFinding) { score := 11.0; f.Cvss.Score = &score },
 		"validity": func(f *types.AdapterFinding) { f.Disposition.Validity = enums.Validity("unknown") },
 	} {
 		t.Run(name, func(t *testing.T) {

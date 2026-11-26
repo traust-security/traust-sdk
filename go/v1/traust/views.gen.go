@@ -3176,7 +3176,7 @@ type ValidationFuzzInsightCrasher struct {
 	// Crasher The crasher's id in its report.
 	Crasher string `json:"crasher"`
 
-	// Cvss The proposed CVSS base score; null when unscored.
+	// Cvss Optional: traust-core computes the score from the vector at intake with its CVSS calculator. A stated score that differs from the computed one is refused.
 	Cvss *float64 `json:"cvss"`
 
 	// Cwes Empty when not yet classified.

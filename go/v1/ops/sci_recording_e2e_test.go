@@ -77,6 +77,7 @@ assets:
 	if err != nil {
 		t.Fatal(err)
 	}
+	e2eAdmit(t, *queued)
 	// source-code-intelligence@ca42045f (also @d378b860): scan_input.go prepares the
 	// subject, runner.go extracts the report line; the pod never holds the Core client.
 	prepare := recordingPreparerFunc(func(ctx context.Context, order traust.RunOrder) (RecordingRequest, error) {
@@ -189,6 +190,7 @@ assets:
 		if err != nil {
 			t.Fatal(err)
 		}
+		e2eAdmit(t, *queued)
 		got, err := runner.RunOnce(ctx)
 		if got == nil || got.Id == nil || queued.Id == nil || *got.Id != *queued.Id {
 			t.Fatalf("wrong order: queued=%+v got=%+v err=%v", queued, got, err)

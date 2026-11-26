@@ -72,9 +72,10 @@ def normalize_problems(spec: dict) -> None:
 
 
 def normalize_file_downloads(spec: dict) -> None:
-    """Treat multi-format file downloads (e.g. GET /v1/reports/{order_id}/file) as raw bytes
-    rather than JSON strings: core declares application/json alongside text/* with schema
-    {type: string}, which would make oapi-codegen try to unmarshal JSON objects into *string."""
+    """Treat multi-format file downloads (e.g. GET /v1/reports/{order_id}/file) as raw bytes:
+    core declares the file's media types side by side (application/json, an object, beside
+    text/* strings) and serves the one the build asked for, so no single generated type fits.
+    The caller decodes the bytes (DecodeReportView decodes a JSON view strictly)."""
     for path in spec.get("paths", {}).values():
         for operation in path.values():
             if not isinstance(operation, dict):
@@ -86,8 +87,10 @@ def normalize_file_downloads(spec: dict) -> None:
             if (
                 isinstance(content, dict)
                 and len(content) > 1
+                and any(media_type.startswith("text/") for media_type in content)
                 and all(
-                    isinstance(media, dict) and media.get("schema") == {"type": "string"}
+                    isinstance(media, dict)
+                    and media.get("schema") in ({"type": "string"}, {"type": "object"})
                     for media in content.values()
                 )
             ):

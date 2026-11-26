@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 58803ea798ad6431e10da337eb3a28349c1c9992. DO NOT EDIT.
+// Code generated from traust-contracts 485578cbe584ad224d57b2c7c778174c0b66ba7c. DO NOT EDIT.
 
 package types
 
@@ -16,6 +16,7 @@ type Report struct {
 	Footer                *string                       `json:"footer,omitempty"`
 	Metadata              ReportMetadata                `json:"metadata"`
 	NegativeResults       []NegativeResult              `json:"negative_results,omitempty"`
+	NotAffected           []NotAffectedEntry            `json:"not_affected,omitempty"`
 	PeachIsolationReview  *PeachIsolationReview         `json:"peach_isolation_review,omitempty"`
 	RemediationRoadmap    []RoadmapItem                 `json:"remediation_roadmap"`
 	ReviewSurfaceCoverage map[string]ReviewSurfaceEntry `json:"review_surface_coverage,omitempty"`
@@ -109,6 +110,12 @@ type NegativeResult struct {
 	Result string  `json:"result"`
 }
 
+type NotAffectedEntry struct {
+	Dependency ReportFindingDependency `json:"dependency"`
+	Rationale  string                  `json:"rationale"`
+	Reference  *string                 `json:"reference,omitempty"`
+}
+
 type PeachIsolationReview struct {
 	Applicable bool                                 `json:"applicable"`
 	Interfaces []PeachIsolationReviewInterfacesItem `json:"interfaces,omitempty"`
@@ -180,8 +187,8 @@ type ReportFinding struct {
 }
 
 type ReportFindingCvss struct {
-	Score  float64 `json:"score"`
-	Vector string  `json:"vector"`
+	Score  *float64 `json:"score,omitempty"`
+	Vector string   `json:"vector"`
 }
 
 type ReportFindingDependency struct {

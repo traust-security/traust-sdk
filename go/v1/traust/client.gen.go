@@ -1831,12 +1831,11 @@ type OnboardingRequest struct {
 	Repositories *[]RepositorySpec `json:"repositories,omitempty"`
 }
 
-// OnboardingResult `skipped`: what onboarding couldn't refresh (a forge outage), each with its reason.
+// OnboardingResult defines model for OnboardingResult.
 type OnboardingResult struct {
 	OrderIds      *[]openapi_types.UUID `json:"order_ids,omitempty"`
 	ProductId     openapi_types.UUID    `json:"product_id"`
 	RepositoryIds *[]openapi_types.UUID `json:"repository_ids,omitempty"`
-	Skipped       *[]string             `json:"skipped,omitempty"`
 }
 
 // OrderManifest defines model for OrderManifest.
@@ -2128,8 +2127,10 @@ type RemediationFindingRequest struct {
 	RepositoryId openapi_types.UUID `json:"repository_id"`
 }
 
-// RemediationInput What the skill patches: the work item, its findings, where to push.
+// RemediationInput What the skill patches: the work item, its findings, where to push, and the machine
+// identity the fix commit is authored under.
 type RemediationInput struct {
+	Committer string         `json:"committer"`
 	Findings  FindingContext `json:"findings"`
 	FixBranch string         `json:"fix_branch"`
 
@@ -12231,7 +12232,9 @@ type OnboardResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *OnboardingResult
 	JSON401      *Problem
+	JSON404      *Problem
 	JSON422      *Problem
+	JSON502      *Problem
 }
 
 // Status returns HTTPResponse.Status
@@ -12256,6 +12259,7 @@ type PlanOnboardingResponse struct {
 	JSON200      *OnboardingPlan
 	JSON401      *Problem
 	JSON422      *Problem
+	JSON502      *Problem
 }
 
 // Status returns HTTPResponse.Status
@@ -16440,12 +16444,26 @@ func ParseOnboardResponse(rsp *http.Response) (*OnboardResponse, error) {
 		}
 		response.JSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON502 = &dest
 
 	}
 
@@ -16486,6 +16504,13 @@ func ParsePlanOnboardingResponse(rsp *http.Response) (*PlanOnboardingResponse, e
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON502 = &dest
 
 	}
 
