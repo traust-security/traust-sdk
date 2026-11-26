@@ -18,6 +18,8 @@ import (
 	"time"
 )
 
+const healthzPath = "/v1/healthz"
+
 // TokenSource supplies the app's own bearer token for each request: its machine identity, for
 // the calls it makes as itself (background jobs), never for a person's.
 type TokenSource interface {
@@ -54,8 +56,6 @@ func (t StaticToken) BearerToken(_ context.Context) (string, error) {
 }
 
 type onBehalfOfKey struct{}
-
-const healthzPath = "/v1/healthz"
 
 // OnBehalfOf sends the calls made with ctx under a person's bearer token instead of the client's,
 // so core authorizes and attributes them to that person: a BFF acting for its signed-in user.

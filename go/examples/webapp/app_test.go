@@ -162,6 +162,25 @@ func TestHomeShowsThePersonAndTheirRepositories(t *testing.T) {
 	}
 }
 
+// A measure core did not answer is unknown, never a measured zero.
+func TestHomeShowsAMissingMeasureAsUnknownNotZero(t *testing.T) {
+	core := traustest.New(t)
+	core.Handle("GET /v1/whoami", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Principal{Display: "Ada"})))
+	repo := uuid.New()
+	core.Handle("GET /v1/repositories", onlyFor("ada", traustest.JSON(http.StatusOK, traust.PageRepository{
+		Items: []traust.Repository{{Id: &repo, Url: "https://forge.example/a"}},
+	})))
+	high := "high"
+	core.Handle("POST /v1/dashboards:query", onlyFor("ada", traustest.JSON(http.StatusOK, traust.DashboardResults{
+		Subject: traust.SubjectFindings,
+		Rows:    []traust.DashboardRow{{Groups: map[string]*string{"severity": &high}}},
+	})))
+	body := send(newApp(t, core), http.MethodGet, "/", "ada", nil).Body.String()
+	if !strings.Contains(body, "<dt>high</dt><dd>n/a</dd>") || strings.Contains(body, "<dd>0</dd>") {
+		t.Fatalf("a measure core did not answer shows as a zero:\n%s", body)
+	}
+}
+
 func TestEachPageAsksWhoIsSignedInAndWatchesCoreHealth(t *testing.T) {
 	core := traustest.New(t)
 	core.Handle("GET /v1/whoami", onlyFor("ada", traustest.JSON(http.StatusOK, traust.Principal{Display: "Ada"})))

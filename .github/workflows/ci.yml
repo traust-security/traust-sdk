@@ -87,4 +87,4 @@ jobs:
           fetch-depth: 0
       - run: make lean
         env:
-          LEAN_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || github.event.before }}
+          LEAN_BASE: ${{ github.event_name == 'pull_request' && format('origin/{0}', github.base_ref) || (github.event_name == 'merge_group' && format('origin/{0}', github.event.merge_group.base_ref) || github.event.before) }}
