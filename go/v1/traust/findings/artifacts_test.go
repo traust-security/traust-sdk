@@ -27,8 +27,8 @@ func content(kind, mediaType, digest string, body []byte) http.Handler {
 	})
 }
 
-// Get reads the artifact in one call: the kind, digest and size from the content response's
-// headers, the exact bytes from its body — the ETag unquoted, nothing derived.
+// Get reads the artifact in one call: the kind and digest from the content response's
+// headers, the exact bytes — and their size — from its body.
 func TestGetReadsTheArtifactsHeadersAndBody(t *testing.T) {
 	id, body := uuid.New(), []byte(`{"title":"the audit"}`)
 	core := traustest.New(t)
@@ -51,6 +51,33 @@ func TestGetReadsTheArtifactsHeadersAndBody(t *testing.T) {
 	}
 	if string(obj.Body) != string(body) {
 		t.Errorf("body %q, want the exact bytes", obj.Body)
+	}
+}
+
+// Get reads content no Content-Length header describes — a proxy serving it chunked, a
+// transport decompressing it — sizing the artifact from the bytes it read.
+func TestGetReadsContentWithoutALengthHeader(t *testing.T) {
+	id, body := uuid.New(), []byte(`{"title":"the audit"}`)
+	core := traustest.New(t)
+	core.Handle("GET /v1/artifacts/{id}/content", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
+		w.Header().Set("Traust-Artifact-Kind", "report")
+		w.Header().Set("ETag", `"4c7f0b9e2a1c3d4f"`)
+		w.Header().Set("Content-Type", "application/json")
+		w.WriteHeader(http.StatusOK)
+		if flushable, ok := w.(http.Flusher); ok {
+			flushable.Flush() // the headers go out before the body: no Content-Length, chunked
+		}
+		_, _ = w.Write(body)
+	}))
+	obj, err := findings.New(core.Client()).Get(context.Background(), id)
+	if err != nil {
+		t.Fatal(err)
+	}
+	if string(obj.Body) != string(body) {
+		t.Errorf("body %q, want the exact bytes", obj.Body)
+	}
+	if obj.Size != int64(len(body)) {
+		t.Errorf("size %d, want %d from the bytes read", obj.Size, len(body))
 	}
 }
 
@@ -120,5 +147,14 @@ func TestDecodeRefusesAMediaTypeThatIsNotJSON(t *testing.T) {
 	reportish := &findings.Object{Kind: traust.ArtifactKindReport, MediaType: "text/markdown", Body: []byte("# the audit")}
 	if _, err := findings.Decode[traust.ReportArtifact](reportish); !errors.Is(err, findings.ErrNotJSON) {
 		t.Fatalf("decoding a markdown report: %v, want ErrNotJSON", err)
+	}
+}
+
+// Decode refuses a null body: a kind and media type that promise a document still carry none,
+// so a null report never reads as an empty one.
+func TestDecodeRefusesANullBody(t *testing.T) {
+	nullish := &findings.Object{Kind: traust.ArtifactKindReport, MediaType: "application/json", Body: []byte(" null ")}
+	if _, err := findings.Decode[traust.ReportArtifact](nullish); err == nil {
+		t.Fatal("decoding a null report: no error, want a refusal")
 	}
 }

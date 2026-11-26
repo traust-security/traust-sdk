@@ -94,7 +94,8 @@ func (h *Handler) allAssessments(w http.ResponseWriter, r *http.Request) {
 }
 
 // artifact is one artifact's page: the evidence's metadata, and — for a report — the
-// document core kept, decoded as the contract type it publishes.
+// document core kept, decoded as the contract type it publishes. A report that cannot be read
+// says so on the page instead of hiding the evidence already in hand.
 func (h *Handler) artifact(w http.ResponseWriter, r *http.Request) {
 	id, ok := web.PathID(w, r, "id")
 	if !ok {
@@ -105,12 +106,8 @@ func (h *Handler) artifact(w http.ResponseWriter, r *http.Request) {
 		web.Fail(w, r, err)
 		return
 	}
-	report, err := h.report(r.Context(), id, found.Kind)
-	if err != nil {
-		web.Fail(w, r, err)
-		return
-	}
-	web.Render(w, r, http.StatusOK, artifact(*found, report))
+	report, reportErr := h.report(r.Context(), id, found.Kind)
+	web.Render(w, r, http.StatusOK, artifact(*found, report, reportErr))
 }
 
 // report is the artifact's report document when it is one, so the page reads the assessment's

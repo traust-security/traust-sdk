@@ -955,6 +955,30 @@ func TestAnArtifactsEvidenceDownloadsUnderItsName(t *testing.T) {
 	}
 }
 
+// An artifact's page stays up when its report cannot be read: the evidence is already in hand,
+// so the page shows it — and why the report is missing — instead of failing wholesale.
+func TestAnArtifactPageSurvivesAReportItCannotRead(t *testing.T) {
+	evidence, assessment := uuid.New(), uuid.New()
+	core := traustest.New(t)
+	core.Handle("GET /v1/artifacts/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.ArtifactView{
+		Id: evidence, AssessmentId: &assessment, Kind: traust.ArtifactKindReport, Digest: "4c7f0b9e2a1c3d4f",
+		MediaType: "application/json", Size: 38,
+	})))
+	core.Handle("GET /v1/artifacts/{id}/content", onlyFor("ada", traustest.Problem(http.StatusForbidden, "the report is an admin's")))
+	page := send(newApp(t, core), http.MethodGet, "/artifacts/"+evidence.String(), "ada", nil)
+	if page.Code != http.StatusOK {
+		t.Fatalf("artifact page: %d %s, want the evidence shown", page.Code, page.Body)
+	}
+	for _, want := range []string{
+		"4c7f0b9e2a1c3d4f", `href="/artifacts/` + evidence.String() + `/content"`,
+		"the report could not be read", "admin&#39;s",
+	} {
+		if !strings.Contains(page.Body.String(), want) {
+			t.Fatalf("artifact page lacks %q:\n%s", want, page.Body)
+		}
+	}
+}
+
 func TestAssessmentRefusalsKeepTheirStatus(t *testing.T) {
 	core := traustest.New(t)
 	core.Handle("GET /v1/repositories/{id}/assessments", traustest.Problem(http.StatusForbidden, "assessments are an admin's"))
