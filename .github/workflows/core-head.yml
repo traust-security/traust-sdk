@@ -1,5 +1,5 @@
 # Nightly: does the client still generate, build and pass e2e against core's development tip?
-# Red means core moved: bump CORE_REF in go/Makefile, run `make -C go api-generate`, open a PR.
+# Red means core moved: bump core's ref in pins.yaml, run `make -C go api-generate`, open a PR.
 name: core-head
 
 on:
@@ -30,7 +30,13 @@ jobs:
       - run: make -C go api-generate CORE_REF="$CORE_REF"
       - run: go build ./... && go vet ./...
         working-directory: go
+      # the box the e2e runs through signs its ledger and observes repositories, and its
+      # onboarding reads a real forge — the token lifts the rate limit
+      - uses: sigstore/cosign-installer@v3
+      - run: go install github.com/zricethezav/gitleaks/v8@v8.18.4 && echo "$(go env GOPATH)/bin" >> "$GITHUB_PATH"
       - run: make -C go e2e CORE_REF="$CORE_REF"
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
       - name: Client changes since the pin
         run: |
           {

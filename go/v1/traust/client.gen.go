@@ -167,6 +167,23 @@ const (
 	SymbolUsage DependencyEvidenceLevel = "symbol-usage"
 )
 
+// Defines values for Dimension.
+const (
+	DimensionAgeBucket     Dimension = "age_bucket"
+	DimensionCategory      Dimension = "category"
+	DimensionChangedWeek   Dimension = "changed_week"
+	DimensionDecided       Dimension = "decided"
+	DimensionFirstSeenWeek Dimension = "first_seen_week"
+	DimensionProduct       Dimension = "product"
+	DimensionReason        Dimension = "reason"
+	DimensionRepository    Dimension = "repository"
+	DimensionSeverity      Dimension = "severity"
+	DimensionSlaStatus     Dimension = "sla_status"
+	DimensionState         Dimension = "state"
+	DimensionStatus        Dimension = "status"
+	DimensionTeam          Dimension = "team"
+)
+
 // Defines values for DispositionAssurance.
 const (
 	Claimed         DispositionAssurance = "claimed"
@@ -406,6 +423,15 @@ const (
 	Unknown  LivenessStatus = "unknown"
 )
 
+// Defines values for Measure.
+const (
+	MeasureFindings       Measure = "findings"
+	MeasureMedianOpenDays Measure = "median_open_days"
+	MeasureOldestOpenAge  Measure = "oldest_open_age"
+	MeasureRepositories   Measure = "repositories"
+	MeasureReviewItems    Measure = "review_items"
+)
+
 // Defines values for OccurrenceClaimOutcome.
 const (
 	AlreadyCarried  OccurrenceClaimOutcome = "already_carried"
@@ -491,7 +517,16 @@ const (
 const (
 	ReportFormatCsv      ReportFormat = "csv"
 	ReportFormatHtml     ReportFormat = "html"
+	ReportFormatJson     ReportFormat = "json"
 	ReportFormatMarkdown ReportFormat = "markdown"
+)
+
+// Defines values for ReportStatus.
+const (
+	ReportStatusBuilding ReportStatus = "building"
+	ReportStatusFailed   ReportStatus = "failed"
+	ReportStatusQueued   ReportStatus = "queued"
+	ReportStatusReady    ReportStatus = "ready"
 )
 
 // Defines values for RepositoryDisposition.
@@ -631,9 +666,9 @@ const (
 
 // Defines values for Signing.
 const (
-	Failed       Signing = "failed"
-	Signed       Signing = "signed"
-	Unconfigured Signing = "unconfigured"
+	SigningFailed       Signing = "failed"
+	SigningSigned       Signing = "signed"
+	SigningUnconfigured Signing = "unconfigured"
 )
 
 // Defines values for SortDirection.
@@ -664,6 +699,13 @@ const (
 	SourceTypeValidationReport   SourceType = "validation_report"
 	SourceTypeVerificationReport SourceType = "verification_report"
 	SourceTypeVulnScanReport     SourceType = "vuln_scan_report"
+)
+
+// Defines values for Subject.
+const (
+	SubjectFindings     Subject = "findings"
+	SubjectRepositories Subject = "repositories"
+	SubjectReviewItems  Subject = "review_items"
 )
 
 // Defines values for SymbolConfidence.
@@ -1013,6 +1055,48 @@ type CvssStatement struct {
 // CvssStatementVersion defines model for CvssStatement.Version.
 type CvssStatementVersion string
 
+// DashboardOrder defines model for DashboardOrder.
+type DashboardOrder struct {
+	By   DashboardOrder_By `json:"by"`
+	Desc *bool             `json:"desc,omitempty"`
+}
+
+// DashboardOrder_By defines model for DashboardOrder.By.
+type DashboardOrder_By struct {
+	union json.RawMessage
+}
+
+// DashboardQuery One metrics query: a subject, the repository filter that trims the answer
+// to a caller's access, and an allow-listed combination of measures and
+// dimensions. Empty ids with no other filter is the whole estate.
+type DashboardQuery struct {
+	GroupBy       *[]Dimension          `json:"group_by,omitempty"`
+	Limit         *int                  `json:"limit,omitempty"`
+	Measures      []Measure             `json:"measures"`
+	Order         *[]DashboardOrder     `json:"order,omitempty"`
+	ProductIds    *[]openapi_types.UUID `json:"product_ids,omitempty"`
+	RepositoryIds *[]openapi_types.UUID `json:"repository_ids,omitempty"`
+
+	// Subject What a query counts; each subject carries its own dimensions and measures.
+	Subject Subject               `json:"subject"`
+	TeamIds *[]openapi_types.UUID `json:"team_ids,omitempty"`
+	Where   *map[string][]string  `json:"where,omitempty"`
+}
+
+// DashboardResults defines model for DashboardResults.
+type DashboardResults struct {
+	Rows []DashboardRow `json:"rows"`
+
+	// Subject What a query counts; each subject carries its own dimensions and measures.
+	Subject Subject `json:"subject"`
+}
+
+// DashboardRow defines model for DashboardRow.
+type DashboardRow struct {
+	Groups   map[string]*string  `json:"groups"`
+	Measures map[string]*float32 `json:"measures"`
+}
+
 // Decision A judgement on a finding; corrections are new decisions (restates_id).
 type Decision struct {
 	Actor                *string                 `json:"actor"`
@@ -1130,6 +1214,9 @@ type Dependency struct {
 
 // DependencyEvidenceLevel defines model for DependencyEvidenceLevel.
 type DependencyEvidenceLevel string
+
+// Dimension The axes a query breaks its answer down by; the catalog serves a subset.
+type Dimension string
 
 // Disposition A finding's merged judgement, ordered only by explicit E0-E3 evidence strength.
 type Disposition struct {
@@ -1254,12 +1341,6 @@ type Finding_Kind struct {
 type FindingContext struct {
 	Baseline   *[]FindingView `json:"baseline,omitempty"`
 	Precedents *[]Precedent   `json:"precedents,omitempty"`
-}
-
-// FindingCount The filtered total a paged listing's pager reads: one number, from one bounded
-// fold that holds no views.
-type FindingCount struct {
-	Total int `json:"total"`
 }
 
 // FindingCvss A finding's CVSS as consumers render it: the occurrence's score and vector, the severity
@@ -1584,11 +1665,12 @@ type IntakeResult struct {
 
 // JobResult defines model for JobResult.
 type JobResult struct {
-	Degraded *map[string]int `json:"degraded,omitempty"`
-	Outcome  Outcome         `json:"outcome"`
-	Reason   *RunOrderReason `json:"reason"`
-	Usage    *[]ModelUsage   `json:"usage,omitempty"`
-	Written  *[]string       `json:"written,omitempty"`
+	Degraded *map[string]int       `json:"degraded,omitempty"`
+	Outcome  Outcome               `json:"outcome"`
+	Outputs  *[]openapi_types.UUID `json:"outputs,omitempty"`
+	Reason   *RunOrderReason       `json:"reason"`
+	Usage    *[]ModelUsage         `json:"usage,omitempty"`
+	Written  *[]string             `json:"written,omitempty"`
 }
 
 // JsonValue defines model for JsonValue.
@@ -1629,6 +1711,9 @@ type Location struct {
 	Path         string              `json:"path"`
 	Symbol       *string             `json:"symbol"`
 }
+
+// Measure What a query counts or sums; the catalog serves a subset.
+type Measure string
 
 // ModelUsage One model request's token usage, and the skill running then, as a transcript reader
 // parsed them.
@@ -1743,12 +1828,11 @@ type OnboardingRequest struct {
 	Repositories *[]RepositorySpec `json:"repositories,omitempty"`
 }
 
-// OnboardingResult `skipped`: what onboarding couldn't refresh (a forge outage), each with its reason.
+// OnboardingResult defines model for OnboardingResult.
 type OnboardingResult struct {
 	OrderIds      *[]openapi_types.UUID `json:"order_ids,omitempty"`
 	ProductId     openapi_types.UUID    `json:"product_id"`
 	RepositoryIds *[]openapi_types.UUID `json:"repository_ids,omitempty"`
-	Skipped       *[]string             `json:"skipped,omitempty"`
 }
 
 // OrderManifest defines model for OrderManifest.
@@ -2039,8 +2123,10 @@ type RemediationFindingRequest struct {
 	RepositoryId openapi_types.UUID `json:"repository_id"`
 }
 
-// RemediationInput What the skill patches: the work item, its findings, where to push.
+// RemediationInput What the skill patches: the work item, its findings, where to push, and the machine
+// identity the fix commit is authored under.
 type RemediationInput struct {
+	Committer string         `json:"committer"`
 	Findings  FindingContext `json:"findings"`
 	FixBranch string         `json:"fix_branch"`
 
@@ -2086,9 +2172,48 @@ type RemediationRequest struct {
 // RemediationStatus defines model for RemediationStatus.
 type RemediationStatus string
 
+// Report One build of a report: the order that runs it and, once ready, the file it produced.
+type Report struct {
+	ArtifactId *openapi_types.UUID `json:"artifact_id"`
+	BuiltAt    *time.Time          `json:"built_at"`
+
+	// Format A rendered report's format: markdown and html for every insight, csv for one with an
+	// export table, json for the view itself (the contract-checked model a page renders). Each
+	// format carries its media type and file suffix.
+	Format      ReportFormat       `json:"format"`
+	OrderId     openapi_types.UUID `json:"order_id"`
+	Reason      *string            `json:"reason"`
+	Report      ViewName           `json:"report"`
+	RequestedAt time.Time          `json:"requested_at"`
+
+	// Scope Scope (products, teams, category labels), the point in time, and for series a window and
+	// bucket; `artifact_id` or `repository_id` names what a single-item view renders.
+	Scope  ViewFilterOutput `json:"scope"`
+	Status ReportStatus     `json:"status"`
+}
+
 // ReportFormat A rendered report's format: markdown and html for every insight, csv for one with an
-// export table. Each format carries its media type and file suffix.
+// export table, json for the view itself (the contract-checked model a page renders). Each
+// format carries its media type and file suffix.
 type ReportFormat string
+
+// ReportRequest Which report, in which format, over which scope; `refresh` builds anew even when a
+// ready build of the same request exists (a build already in flight is shared).
+type ReportRequest struct {
+	// Format A rendered report's format: markdown and html for every insight, csv for one with an
+	// export table, json for the view itself (the contract-checked model a page renders). Each
+	// format carries its media type and file suffix.
+	Format  *ReportFormat `json:"format,omitempty"`
+	Refresh *bool         `json:"refresh,omitempty"`
+	Report  ViewName      `json:"report"`
+
+	// Scope Scope (products, teams, category labels), the point in time, and for series a window and
+	// bucket; `artifact_id` or `repository_id` names what a single-item view renders.
+	Scope *ViewFilterInput `json:"scope,omitempty"`
+}
+
+// ReportStatus defines model for ReportStatus.
+type ReportStatus string
 
 // Repository defines model for Repository.
 type Repository struct {
@@ -2255,6 +2380,7 @@ type RunOrder struct {
 	ForkScheduledAt *time.Time          `json:"fork_scheduled_at"`
 	ForkUrl         *string             `json:"fork_url"`
 	Id              *openapi_types.UUID `json:"id"`
+	InputArtifactId *openapi_types.UUID `json:"input_artifact_id"`
 	Lane            *string             `json:"lane"`
 	LeaseExpiresAt  *time.Time          `json:"lease_expires_at"`
 	LeaseHolder     *string             `json:"lease_holder"`
@@ -2346,6 +2472,9 @@ type StartRecordingRequest struct {
 	Order OrderRequest `json:"order"`
 }
 
+// Subject What a query counts; each subject carries its own dimensions and measures.
+type Subject string
+
 // SubjectRef What a skill works on: a commit of a repository, and the assessment when there is one.
 type SubjectRef struct {
 	AssessmentId    *openapi_types.UUID `json:"assessment_id"`
@@ -2405,6 +2534,12 @@ type Team struct {
 
 // TimeBucket defines model for TimeBucket.
 type TimeBucket string
+
+// TimeWindow defines model for TimeWindow.
+type TimeWindow struct {
+	End   time.Time `json:"end"`
+	Start time.Time `json:"start"`
+}
 
 // TriageInput defines model for TriageInput.
 type TriageInput struct {
@@ -2574,8 +2709,60 @@ type VerifyResult struct {
 	Warnings *[]string          `json:"warnings,omitempty"`
 }
 
-// ViewModel defines model for ViewModel.
-type ViewModel = map[string]interface{}
+// ViewFilterInput Scope (products, teams, category labels), the point in time, and for series a window and
+// bucket; `artifact_id` or `repository_id` names what a single-item view renders.
+type ViewFilterInput struct {
+	ArtifactId        *openapi_types.UUID                `json:"artifact_id"`
+	AsOf              *time.Time                         `json:"as_of"`
+	AssessmentId      *openapi_types.UUID                `json:"assessment_id"`
+	Bucket            *TimeBucket                        `json:"bucket,omitempty"`
+	Categories        *[]string                          `json:"categories,omitempty"`
+	CompareAsOf       *time.Time                         `json:"compare_as_of"`
+	ExecutivePanels   *[]ExecutivePanel                  `json:"executive_panels,omitempty"`
+	FirstPartyDivisor *ViewFilterInput_FirstPartyDivisor `json:"first_party_divisor"`
+	Framework         *ComplianceFramework               `json:"framework"`
+	PqcChokepoints    *[]string                          `json:"pqc_chokepoints,omitempty"`
+	PrecisionGate     *float32                           `json:"precision_gate"`
+	ProductIds        *[]openapi_types.UUID              `json:"product_ids,omitempty"`
+	ReportStem        *string                            `json:"report_stem"`
+	RepositoryId      *openapi_types.UUID                `json:"repository_id"`
+	RepositoryRefIds  *[]openapi_types.UUID              `json:"repository_ref_ids"`
+	TeamIds           *[]openapi_types.UUID              `json:"team_ids,omitempty"`
+	Window            *TimeWindow                        `json:"window"`
+}
+
+// ViewFilterInputFirstPartyDivisor0 defines model for .
+type ViewFilterInputFirstPartyDivisor0 = float32
+
+// ViewFilterInputFirstPartyDivisor1 defines model for .
+type ViewFilterInputFirstPartyDivisor1 = string
+
+// ViewFilterInput_FirstPartyDivisor defines model for ViewFilterInput.FirstPartyDivisor.
+type ViewFilterInput_FirstPartyDivisor struct {
+	union json.RawMessage
+}
+
+// ViewFilterOutput Scope (products, teams, category labels), the point in time, and for series a window and
+// bucket; `artifact_id` or `repository_id` names what a single-item view renders.
+type ViewFilterOutput struct {
+	ArtifactId        *openapi_types.UUID   `json:"artifact_id"`
+	AsOf              *time.Time            `json:"as_of"`
+	AssessmentId      *openapi_types.UUID   `json:"assessment_id"`
+	Bucket            *TimeBucket           `json:"bucket,omitempty"`
+	Categories        *[]string             `json:"categories,omitempty"`
+	CompareAsOf       *time.Time            `json:"compare_as_of"`
+	ExecutivePanels   *[]ExecutivePanel     `json:"executive_panels,omitempty"`
+	FirstPartyDivisor *string               `json:"first_party_divisor"`
+	Framework         *ComplianceFramework  `json:"framework"`
+	PqcChokepoints    *[]string             `json:"pqc_chokepoints,omitempty"`
+	PrecisionGate     *float32              `json:"precision_gate"`
+	ProductIds        *[]openapi_types.UUID `json:"product_ids,omitempty"`
+	ReportStem        *string               `json:"report_stem"`
+	RepositoryId      *openapi_types.UUID   `json:"repository_id"`
+	RepositoryRefIds  *[]openapi_types.UUID `json:"repository_ref_ids"`
+	TeamIds           *[]openapi_types.UUID `json:"team_ids,omitempty"`
+	Window            *TimeWindow           `json:"window"`
+}
 
 // ViewName defines model for ViewName.
 type ViewName string
@@ -2671,14 +2858,6 @@ type ListFindingsInParams struct {
 	Cursor        *string               `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
-// CountFindingsInParams defines parameters for CountFindingsIn.
-type CountFindingsInParams struct {
-	RepositoryIds *[]openapi_types.UUID `form:"repository_ids,omitempty" json:"repository_ids,omitempty"`
-	AsOf          *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
-	Exposure      *FindingExposure      `form:"exposure,omitempty" json:"exposure,omitempty"`
-	Severity      *[]string             `form:"severity,omitempty" json:"severity,omitempty"`
-}
-
 // ReviewQueueParams defines parameters for ReviewQueue.
 type ReviewQueueParams struct {
 	Status        *ReviewItemStatus     `form:"status,omitempty" json:"status,omitempty"`
@@ -2691,12 +2870,6 @@ type ReviewQueueParams struct {
 	Cursor        *string               `form:"cursor,omitempty" json:"cursor,omitempty"`
 }
 
-// SummarizeFindingsInParams defines parameters for SummarizeFindingsIn.
-type SummarizeFindingsInParams struct {
-	RepositoryIds *[]openapi_types.UUID `form:"repository_ids,omitempty" json:"repository_ids,omitempty"`
-	AsOf          *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
-}
-
 // ListImpactsParams defines parameters for ListImpacts.
 type ListImpactsParams struct {
 	AdvisoryId      *openapi_types.UUID   `form:"advisory_id,omitempty" json:"advisory_id,omitempty"`
@@ -2704,50 +2877,6 @@ type ListImpactsParams struct {
 	Classification  *ImpactClassification `form:"classification,omitempty" json:"classification,omitempty"`
 	Limit           *int                  `form:"limit,omitempty" json:"limit,omitempty"`
 	Cursor          *string               `form:"cursor,omitempty" json:"cursor,omitempty"`
-}
-
-// GetInsightParams defines parameters for GetInsight.
-type GetInsightParams struct {
-	// Refresh Fold the view on demand, ignoring any stored census build.
-	Refresh         *bool                 `form:"refresh,omitempty" json:"refresh,omitempty"`
-	ProductId       *[]openapi_types.UUID `form:"product_id,omitempty" json:"product_id,omitempty"`
-	TeamId          *[]openapi_types.UUID `form:"team_id,omitempty" json:"team_id,omitempty"`
-	AsOf            *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
-	Bucket          *TimeBucket           `form:"bucket,omitempty" json:"bucket,omitempty"`
-	ArtifactId      *openapi_types.UUID   `form:"artifact_id,omitempty" json:"artifact_id,omitempty"`
-	RepositoryId    *openapi_types.UUID   `form:"repository_id,omitempty" json:"repository_id,omitempty"`
-	Category        *[]string             `form:"category,omitempty" json:"category,omitempty"`
-	WindowStart     *time.Time            `form:"window_start,omitempty" json:"window_start,omitempty"`
-	WindowEnd       *time.Time            `form:"window_end,omitempty" json:"window_end,omitempty"`
-	RepositoryRefId *[]openapi_types.UUID `form:"repository_ref_id,omitempty" json:"repository_ref_id,omitempty"`
-	Chokepoint      *[]string             `form:"chokepoint,omitempty" json:"chokepoint,omitempty"`
-	Framework       *ComplianceFramework  `form:"framework,omitempty" json:"framework,omitempty"`
-	PrecisionGate   *float32              `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
-
-	// ExecutivePanel executive-summary only: its optional panels (repeatable).
-	ExecutivePanel *[]ExecutivePanel `form:"executive_panel,omitempty" json:"executive_panel,omitempty"`
-}
-
-// GetInsightReportParams defines parameters for GetInsightReport.
-type GetInsightReportParams struct {
-	// Format markdown or html for every insight; csv for one with an export table.
-	Format          *ReportFormat         `form:"format,omitempty" json:"format,omitempty"`
-	ProductId       *[]openapi_types.UUID `form:"product_id,omitempty" json:"product_id,omitempty"`
-	TeamId          *[]openapi_types.UUID `form:"team_id,omitempty" json:"team_id,omitempty"`
-	AsOf            *time.Time            `form:"as_of,omitempty" json:"as_of,omitempty"`
-	Bucket          *TimeBucket           `form:"bucket,omitempty" json:"bucket,omitempty"`
-	ArtifactId      *openapi_types.UUID   `form:"artifact_id,omitempty" json:"artifact_id,omitempty"`
-	RepositoryId    *openapi_types.UUID   `form:"repository_id,omitempty" json:"repository_id,omitempty"`
-	Category        *[]string             `form:"category,omitempty" json:"category,omitempty"`
-	WindowStart     *time.Time            `form:"window_start,omitempty" json:"window_start,omitempty"`
-	WindowEnd       *time.Time            `form:"window_end,omitempty" json:"window_end,omitempty"`
-	RepositoryRefId *[]openapi_types.UUID `form:"repository_ref_id,omitempty" json:"repository_ref_id,omitempty"`
-	Chokepoint      *[]string             `form:"chokepoint,omitempty" json:"chokepoint,omitempty"`
-	Framework       *ComplianceFramework  `form:"framework,omitempty" json:"framework,omitempty"`
-	PrecisionGate   *float32              `form:"precision_gate,omitempty" json:"precision_gate,omitempty"`
-
-	// ExecutivePanel executive-summary only: its optional panels (repeatable).
-	ExecutivePanel *[]ExecutivePanel `form:"executive_panel,omitempty" json:"executive_panel,omitempty"`
 }
 
 // ListEventsParams defines parameters for ListEvents.
@@ -2893,6 +3022,9 @@ type RecordAssessmentJSONRequestBody = AssessmentRecordRequest
 // RecordTriageJSONRequestBody defines body for RecordTriage for application/json ContentType.
 type RecordTriageJSONRequestBody = TriageRecordBody
 
+// QueryDashboardJSONRequestBody defines body for QueryDashboard for application/json ContentType.
+type QueryDashboardJSONRequestBody = DashboardQuery
+
 // RestateJSONRequestBody defines body for Restate for application/json ContentType.
 type RestateJSONRequestBody = RestatementBody
 
@@ -2940,6 +3072,9 @@ type RecordRemediationProgressJSONRequestBody = ProgressReport
 
 // RecordRemediationPullRequestJSONRequestBody defines body for RecordRemediationPullRequest for application/json ContentType.
 type RecordRemediationPullRequestJSONRequestBody = ExternalRef
+
+// RequestReportJSONRequestBody defines body for RequestReport for application/json ContentType.
+type RequestReportJSONRequestBody = ReportRequest
 
 // SetOwnersJSONRequestBody defines body for SetOwners for application/json ContentType.
 type SetOwnersJSONRequestBody = Owners
@@ -3086,6 +3221,68 @@ func (t Assessment_Kind) MarshalJSON() ([]byte, error) {
 }
 
 func (t *Assessment_Kind) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
+// AsMeasure returns the union data inside the DashboardOrder_By as a Measure
+func (t DashboardOrder_By) AsMeasure() (Measure, error) {
+	var body Measure
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromMeasure overwrites any union data inside the DashboardOrder_By as the provided Measure
+func (t *DashboardOrder_By) FromMeasure(v Measure) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeMeasure performs a merge with any union data inside the DashboardOrder_By, using the provided Measure
+func (t *DashboardOrder_By) MergeMeasure(v Measure) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsDimension returns the union data inside the DashboardOrder_By as a Dimension
+func (t DashboardOrder_By) AsDimension() (Dimension, error) {
+	var body Dimension
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromDimension overwrites any union data inside the DashboardOrder_By as the provided Dimension
+func (t *DashboardOrder_By) FromDimension(v Dimension) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeDimension performs a merge with any union data inside the DashboardOrder_By, using the provided Dimension
+func (t *DashboardOrder_By) MergeDimension(v Dimension) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t DashboardOrder_By) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *DashboardOrder_By) UnmarshalJSON(b []byte) error {
 	err := t.union.UnmarshalJSON(b)
 	return err
 }
@@ -3772,6 +3969,68 @@ func (t *ReviewItem_Status) UnmarshalJSON(b []byte) error {
 	return err
 }
 
+// AsViewFilterInputFirstPartyDivisor0 returns the union data inside the ViewFilterInput_FirstPartyDivisor as a ViewFilterInputFirstPartyDivisor0
+func (t ViewFilterInput_FirstPartyDivisor) AsViewFilterInputFirstPartyDivisor0() (ViewFilterInputFirstPartyDivisor0, error) {
+	var body ViewFilterInputFirstPartyDivisor0
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromViewFilterInputFirstPartyDivisor0 overwrites any union data inside the ViewFilterInput_FirstPartyDivisor as the provided ViewFilterInputFirstPartyDivisor0
+func (t *ViewFilterInput_FirstPartyDivisor) FromViewFilterInputFirstPartyDivisor0(v ViewFilterInputFirstPartyDivisor0) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeViewFilterInputFirstPartyDivisor0 performs a merge with any union data inside the ViewFilterInput_FirstPartyDivisor, using the provided ViewFilterInputFirstPartyDivisor0
+func (t *ViewFilterInput_FirstPartyDivisor) MergeViewFilterInputFirstPartyDivisor0(v ViewFilterInputFirstPartyDivisor0) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+// AsViewFilterInputFirstPartyDivisor1 returns the union data inside the ViewFilterInput_FirstPartyDivisor as a ViewFilterInputFirstPartyDivisor1
+func (t ViewFilterInput_FirstPartyDivisor) AsViewFilterInputFirstPartyDivisor1() (ViewFilterInputFirstPartyDivisor1, error) {
+	var body ViewFilterInputFirstPartyDivisor1
+	err := json.Unmarshal(t.union, &body)
+	return body, err
+}
+
+// FromViewFilterInputFirstPartyDivisor1 overwrites any union data inside the ViewFilterInput_FirstPartyDivisor as the provided ViewFilterInputFirstPartyDivisor1
+func (t *ViewFilterInput_FirstPartyDivisor) FromViewFilterInputFirstPartyDivisor1(v ViewFilterInputFirstPartyDivisor1) error {
+	b, err := json.Marshal(v)
+	t.union = b
+	return err
+}
+
+// MergeViewFilterInputFirstPartyDivisor1 performs a merge with any union data inside the ViewFilterInput_FirstPartyDivisor, using the provided ViewFilterInputFirstPartyDivisor1
+func (t *ViewFilterInput_FirstPartyDivisor) MergeViewFilterInputFirstPartyDivisor1(v ViewFilterInputFirstPartyDivisor1) error {
+	b, err := json.Marshal(v)
+	if err != nil {
+		return err
+	}
+
+	merged, err := runtime.JSONMerge(t.union, b)
+	t.union = merged
+	return err
+}
+
+func (t ViewFilterInput_FirstPartyDivisor) MarshalJSON() ([]byte, error) {
+	b, err := t.union.MarshalJSON()
+	return b, err
+}
+
+func (t *ViewFilterInput_FirstPartyDivisor) UnmarshalJSON(b []byte) error {
+	err := t.union.UnmarshalJSON(b)
+	return err
+}
+
 // RequestEditorFn  is the function signature for the RequestEditor callback function
 type RequestEditorFn func(ctx context.Context, req *http.Request) error
 
@@ -3894,6 +4153,11 @@ type ClientInterface interface {
 
 	RecordTriage(ctx context.Context, assessmentId openapi_types.UUID, body RecordTriageJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
 
+	// QueryDashboardWithBody request with any body
+	QueryDashboardWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	QueryDashboard(ctx context.Context, body QueryDashboardJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
 	// GetDecision request
 	GetDecision(ctx context.Context, decisionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
@@ -3917,14 +4181,8 @@ type ClientInterface interface {
 	// ListFindingsIn request
 	ListFindingsIn(ctx context.Context, params *ListFindingsInParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
-	// CountFindingsIn request
-	CountFindingsIn(ctx context.Context, params *CountFindingsInParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
 	// ReviewQueue request
 	ReviewQueue(ctx context.Context, params *ReviewQueueParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// SummarizeFindingsIn request
-	SummarizeFindingsIn(ctx context.Context, params *SummarizeFindingsInParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetFinding request
 	GetFinding(ctx context.Context, findingId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -3945,12 +4203,6 @@ type ClientInterface interface {
 
 	// ListImpacts request
 	ListImpacts(ctx context.Context, params *ListImpactsParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetInsight request
-	GetInsight(ctx context.Context, name ViewName, params *GetInsightParams, reqEditors ...RequestEditorFn) (*http.Response, error)
-
-	// GetInsightReport request
-	GetInsightReport(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// GetLayer request
 	GetLayer(ctx context.Context, layerId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4078,6 +4330,17 @@ type ClientInterface interface {
 	RecordRemediationPullRequestWithBody(ctx context.Context, workItemId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	RecordRemediationPullRequest(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationPullRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// RequestReportWithBody request with any body
+	RequestReportWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	RequestReport(ctx context.Context, body RequestReportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetReport request
+	GetReport(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
+
+	// GetReportFile request
+	GetReportFile(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error)
 
 	// ListRepositories request
 	ListRepositories(ctx context.Context, params *ListRepositoriesParams, reqEditors ...RequestEditorFn) (*http.Response, error)
@@ -4388,6 +4651,30 @@ func (c *RawClient) RecordTriage(ctx context.Context, assessmentId openapi_types
 	return c.Client.Do(req)
 }
 
+func (c *RawClient) QueryDashboardWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewQueryDashboardRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) QueryDashboard(ctx context.Context, body QueryDashboardJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewQueryDashboardRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
 func (c *RawClient) GetDecision(ctx context.Context, decisionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewGetDecisionRequest(c.Server, decisionId)
 	if err != nil {
@@ -4484,32 +4771,8 @@ func (c *RawClient) ListFindingsIn(ctx context.Context, params *ListFindingsInPa
 	return c.Client.Do(req)
 }
 
-func (c *RawClient) CountFindingsIn(ctx context.Context, params *CountFindingsInParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewCountFindingsInRequest(c.Server, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
 func (c *RawClient) ReviewQueue(ctx context.Context, params *ReviewQueueParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewReviewQueueRequest(c.Server, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *RawClient) SummarizeFindingsIn(ctx context.Context, params *SummarizeFindingsInParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewSummarizeFindingsInRequest(c.Server, params)
 	if err != nil {
 		return nil, err
 	}
@@ -4594,30 +4857,6 @@ func (c *RawClient) Healthz(ctx context.Context, reqEditors ...RequestEditorFn) 
 
 func (c *RawClient) ListImpacts(ctx context.Context, params *ListImpactsParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewListImpactsRequest(c.Server, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *RawClient) GetInsight(ctx context.Context, name ViewName, params *GetInsightParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetInsightRequest(c.Server, name, params)
-	if err != nil {
-		return nil, err
-	}
-	req = req.WithContext(ctx)
-	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
-		return nil, err
-	}
-	return c.Client.Do(req)
-}
-
-func (c *RawClient) GetInsightReport(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*http.Response, error) {
-	req, err := NewGetInsightReportRequest(c.Server, name, params)
 	if err != nil {
 		return nil, err
 	}
@@ -5182,6 +5421,54 @@ func (c *RawClient) RecordRemediationPullRequestWithBody(ctx context.Context, wo
 
 func (c *RawClient) RecordRemediationPullRequest(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationPullRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
 	req, err := NewRecordRemediationPullRequestRequest(c.Server, workItemId, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) RequestReportWithBody(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestReportRequestWithBody(c.Server, contentType, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) RequestReport(ctx context.Context, body RequestReportJSONRequestBody, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewRequestReportRequest(c.Server, body)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) GetReport(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetReportRequest(c.Server, orderId)
+	if err != nil {
+		return nil, err
+	}
+	req = req.WithContext(ctx)
+	if err := c.applyEditors(ctx, req, reqEditors); err != nil {
+		return nil, err
+	}
+	return c.Client.Do(req)
+}
+
+func (c *RawClient) GetReportFile(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*http.Response, error) {
+	req, err := NewGetReportFileRequest(c.Server, orderId)
 	if err != nil {
 		return nil, err
 	}
@@ -6311,6 +6598,46 @@ func NewRecordTriageRequestWithBody(server string, assessmentId openapi_types.UU
 	return req, nil
 }
 
+// NewQueryDashboardRequest calls the generic QueryDashboard builder with application/json body
+func NewQueryDashboardRequest(server string, body QueryDashboardJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewQueryDashboardRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewQueryDashboardRequestWithBody generates requests for QueryDashboard with any type of body
+func NewQueryDashboardRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/dashboards:query")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
 // NewGetDecisionRequest generates requests for GetDecision
 func NewGetDecisionRequest(server string, decisionId openapi_types.UUID) (*http.Request, error) {
 	var err error
@@ -6835,103 +7162,6 @@ func NewListFindingsInRequest(server string, params *ListFindingsInParams) (*htt
 	return req, nil
 }
 
-// NewCountFindingsInRequest generates requests for CountFindingsIn
-func NewCountFindingsInRequest(server string, params *CountFindingsInParams) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/findings/count")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.RepositoryIds != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ids", runtime.ParamLocationQuery, *params.RepositoryIds); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.AsOf != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "as_of", runtime.ParamLocationQuery, *params.AsOf); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Exposure != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "exposure", runtime.ParamLocationQuery, *params.Exposure); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Severity != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "severity", runtime.ParamLocationQuery, *params.Severity); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
 // NewReviewQueueRequest generates requests for ReviewQueue
 func NewReviewQueueRequest(server string, params *ReviewQueueParams) (*http.Request, error) {
 	var err error
@@ -7069,71 +7299,6 @@ func NewReviewQueueRequest(server string, params *ReviewQueueParams) (*http.Requ
 		if params.Cursor != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cursor", runtime.ParamLocationQuery, *params.Cursor); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewSummarizeFindingsInRequest generates requests for SummarizeFindingsIn
-func NewSummarizeFindingsInRequest(server string, params *SummarizeFindingsInParams) (*http.Request, error) {
-	var err error
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/findings/summaries")
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.RepositoryIds != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ids", runtime.ParamLocationQuery, *params.RepositoryIds); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.AsOf != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "as_of", runtime.ParamLocationQuery, *params.AsOf); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -7423,566 +7588,6 @@ func NewListImpactsRequest(server string, params *ListImpactsParams) (*http.Requ
 		if params.Cursor != nil {
 
 			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "cursor", runtime.ParamLocationQuery, *params.Cursor); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetInsightRequest generates requests for GetInsight
-func NewGetInsightRequest(server string, name ViewName, params *GetInsightParams) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/insights/%s", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Refresh != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "refresh", runtime.ParamLocationQuery, *params.Refresh); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.ProductId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "product_id", runtime.ParamLocationQuery, *params.ProductId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.TeamId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "team_id", runtime.ParamLocationQuery, *params.TeamId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.AsOf != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "as_of", runtime.ParamLocationQuery, *params.AsOf); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Bucket != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "bucket", runtime.ParamLocationQuery, *params.Bucket); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.ArtifactId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "artifact_id", runtime.ParamLocationQuery, *params.ArtifactId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.RepositoryId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_id", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Category != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "category", runtime.ParamLocationQuery, *params.Category); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.WindowStart != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "window_start", runtime.ParamLocationQuery, *params.WindowStart); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.WindowEnd != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "window_end", runtime.ParamLocationQuery, *params.WindowEnd); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.RepositoryRefId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ref_id", runtime.ParamLocationQuery, *params.RepositoryRefId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Chokepoint != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "chokepoint", runtime.ParamLocationQuery, *params.Chokepoint); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Framework != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "framework", runtime.ParamLocationQuery, *params.Framework); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.PrecisionGate != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "precision_gate", runtime.ParamLocationQuery, *params.PrecisionGate); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.ExecutivePanel != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "executive_panel", runtime.ParamLocationQuery, *params.ExecutivePanel); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		queryURL.RawQuery = queryValues.Encode()
-	}
-
-	req, err := http.NewRequest("GET", queryURL.String(), nil)
-	if err != nil {
-		return nil, err
-	}
-
-	return req, nil
-}
-
-// NewGetInsightReportRequest generates requests for GetInsightReport
-func NewGetInsightReportRequest(server string, name ViewName, params *GetInsightReportParams) (*http.Request, error) {
-	var err error
-
-	var pathParam0 string
-
-	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "name", runtime.ParamLocationPath, name)
-	if err != nil {
-		return nil, err
-	}
-
-	serverURL, err := url.Parse(server)
-	if err != nil {
-		return nil, err
-	}
-
-	operationPath := fmt.Sprintf("/v1/insights/%s/report", pathParam0)
-	if operationPath[0] == '/' {
-		operationPath = "." + operationPath
-	}
-
-	queryURL, err := serverURL.Parse(operationPath)
-	if err != nil {
-		return nil, err
-	}
-
-	if params != nil {
-		queryValues := queryURL.Query()
-
-		if params.Format != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "format", runtime.ParamLocationQuery, *params.Format); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.ProductId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "product_id", runtime.ParamLocationQuery, *params.ProductId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.TeamId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "team_id", runtime.ParamLocationQuery, *params.TeamId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.AsOf != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "as_of", runtime.ParamLocationQuery, *params.AsOf); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Bucket != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "bucket", runtime.ParamLocationQuery, *params.Bucket); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.ArtifactId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "artifact_id", runtime.ParamLocationQuery, *params.ArtifactId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.RepositoryId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_id", runtime.ParamLocationQuery, *params.RepositoryId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Category != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "category", runtime.ParamLocationQuery, *params.Category); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.WindowStart != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "window_start", runtime.ParamLocationQuery, *params.WindowStart); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.WindowEnd != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "window_end", runtime.ParamLocationQuery, *params.WindowEnd); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.RepositoryRefId != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "repository_ref_id", runtime.ParamLocationQuery, *params.RepositoryRefId); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Chokepoint != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "chokepoint", runtime.ParamLocationQuery, *params.Chokepoint); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.Framework != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "framework", runtime.ParamLocationQuery, *params.Framework); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.PrecisionGate != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "precision_gate", runtime.ParamLocationQuery, *params.PrecisionGate); err != nil {
-				return nil, err
-			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
-				return nil, err
-			} else {
-				for k, v := range parsed {
-					for _, v2 := range v {
-						queryValues.Add(k, v2)
-					}
-				}
-			}
-
-		}
-
-		if params.ExecutivePanel != nil {
-
-			if queryFrag, err := runtime.StyleParamWithLocation("form", true, "executive_panel", runtime.ParamLocationQuery, *params.ExecutivePanel); err != nil {
 				return nil, err
 			} else if parsed, err := url.ParseQuery(queryFrag); err != nil {
 				return nil, err
@@ -9583,6 +9188,114 @@ func NewRecordRemediationPullRequestRequestWithBody(server string, workItemId op
 	}
 
 	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewRequestReportRequest calls the generic RequestReport builder with application/json body
+func NewRequestReportRequest(server string, body RequestReportJSONRequestBody) (*http.Request, error) {
+	var bodyReader io.Reader
+	buf, err := json.Marshal(body)
+	if err != nil {
+		return nil, err
+	}
+	bodyReader = bytes.NewReader(buf)
+	return NewRequestReportRequestWithBody(server, "application/json", bodyReader)
+}
+
+// NewRequestReportRequestWithBody generates requests for RequestReport with any type of body
+func NewRequestReportRequestWithBody(server string, contentType string, body io.Reader) (*http.Request, error) {
+	var err error
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/reports")
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("POST", queryURL.String(), body)
+	if err != nil {
+		return nil, err
+	}
+
+	req.Header.Add("Content-Type", contentType)
+
+	return req, nil
+}
+
+// NewGetReportRequest generates requests for GetReport
+func NewGetReportRequest(server string, orderId openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "order_id", runtime.ParamLocationPath, orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/reports/%s", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+
+	return req, nil
+}
+
+// NewGetReportFileRequest generates requests for GetReportFile
+func NewGetReportFileRequest(server string, orderId openapi_types.UUID) (*http.Request, error) {
+	var err error
+
+	var pathParam0 string
+
+	pathParam0, err = runtime.StyleParamWithLocation("simple", false, "order_id", runtime.ParamLocationPath, orderId)
+	if err != nil {
+		return nil, err
+	}
+
+	serverURL, err := url.Parse(server)
+	if err != nil {
+		return nil, err
+	}
+
+	operationPath := fmt.Sprintf("/v1/reports/%s/file", pathParam0)
+	if operationPath[0] == '/' {
+		operationPath = "." + operationPath
+	}
+
+	queryURL, err := serverURL.Parse(operationPath)
+	if err != nil {
+		return nil, err
+	}
+
+	req, err := http.NewRequest("GET", queryURL.String(), nil)
+	if err != nil {
+		return nil, err
+	}
 
 	return req, nil
 }
@@ -11368,6 +11081,11 @@ type ClientWithResponsesInterface interface {
 
 	RecordTriageWithResponse(ctx context.Context, assessmentId openapi_types.UUID, body RecordTriageJSONRequestBody, reqEditors ...RequestEditorFn) (*RecordTriageResponse, error)
 
+	// QueryDashboardWithBodyWithResponse request with any body
+	QueryDashboardWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDashboardResponse, error)
+
+	QueryDashboardWithResponse(ctx context.Context, body QueryDashboardJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDashboardResponse, error)
+
 	// GetDecisionWithResponse request
 	GetDecisionWithResponse(ctx context.Context, decisionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetDecisionResponse, error)
 
@@ -11391,14 +11109,8 @@ type ClientWithResponsesInterface interface {
 	// ListFindingsInWithResponse request
 	ListFindingsInWithResponse(ctx context.Context, params *ListFindingsInParams, reqEditors ...RequestEditorFn) (*ListFindingsInResponse, error)
 
-	// CountFindingsInWithResponse request
-	CountFindingsInWithResponse(ctx context.Context, params *CountFindingsInParams, reqEditors ...RequestEditorFn) (*CountFindingsInResponse, error)
-
 	// ReviewQueueWithResponse request
 	ReviewQueueWithResponse(ctx context.Context, params *ReviewQueueParams, reqEditors ...RequestEditorFn) (*ReviewQueueResponse, error)
-
-	// SummarizeFindingsInWithResponse request
-	SummarizeFindingsInWithResponse(ctx context.Context, params *SummarizeFindingsInParams, reqEditors ...RequestEditorFn) (*SummarizeFindingsInResponse, error)
 
 	// GetFindingWithResponse request
 	GetFindingWithResponse(ctx context.Context, findingId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetFindingResponse, error)
@@ -11419,12 +11131,6 @@ type ClientWithResponsesInterface interface {
 
 	// ListImpactsWithResponse request
 	ListImpactsWithResponse(ctx context.Context, params *ListImpactsParams, reqEditors ...RequestEditorFn) (*ListImpactsResponse, error)
-
-	// GetInsightWithResponse request
-	GetInsightWithResponse(ctx context.Context, name ViewName, params *GetInsightParams, reqEditors ...RequestEditorFn) (*GetInsightResponse, error)
-
-	// GetInsightReportWithResponse request
-	GetInsightReportWithResponse(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*GetInsightReportResponse, error)
 
 	// GetLayerWithResponse request
 	GetLayerWithResponse(ctx context.Context, layerId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetLayerResponse, error)
@@ -11552,6 +11258,17 @@ type ClientWithResponsesInterface interface {
 	RecordRemediationPullRequestWithBodyWithResponse(ctx context.Context, workItemId openapi_types.UUID, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RecordRemediationPullRequestResponse, error)
 
 	RecordRemediationPullRequestWithResponse(ctx context.Context, workItemId openapi_types.UUID, body RecordRemediationPullRequestJSONRequestBody, reqEditors ...RequestEditorFn) (*RecordRemediationPullRequestResponse, error)
+
+	// RequestReportWithBodyWithResponse request with any body
+	RequestReportWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestReportResponse, error)
+
+	RequestReportWithResponse(ctx context.Context, body RequestReportJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestReportResponse, error)
+
+	// GetReportWithResponse request
+	GetReportWithResponse(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetReportResponse, error)
+
+	// GetReportFileWithResponse request
+	GetReportFileWithResponse(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetReportFileResponse, error)
 
 	// ListRepositoriesWithResponse request
 	ListRepositoriesWithResponse(ctx context.Context, params *ListRepositoriesParams, reqEditors ...RequestEditorFn) (*ListRepositoriesResponse, error)
@@ -12036,6 +11753,29 @@ func (r RecordTriageResponse) StatusCode() int {
 	return 0
 }
 
+type QueryDashboardResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *DashboardResults
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r QueryDashboardResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r QueryDashboardResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
 type GetDecisionResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -12207,30 +11947,6 @@ func (r ListFindingsInResponse) StatusCode() int {
 	return 0
 }
 
-type CountFindingsInResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *FindingCount
-	JSON401      *Problem
-	JSON422      *Problem
-}
-
-// Status returns HTTPResponse.Status
-func (r CountFindingsInResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r CountFindingsInResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type ReviewQueueResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -12249,30 +11965,6 @@ func (r ReviewQueueResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r ReviewQueueResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type SummarizeFindingsInResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *[]FindingRollup
-	JSON401      *Problem
-	JSON422      *Problem
-}
-
-// Status returns HTTPResponse.Status
-func (r SummarizeFindingsInResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r SummarizeFindingsInResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -12426,55 +12118,6 @@ func (r ListImpactsResponse) StatusCode() int {
 	return 0
 }
 
-type GetInsightResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON200      *ViewModel
-	JSON401      *Problem
-	JSON404      *Problem
-	JSON422      *Problem
-}
-
-// Status returns HTTPResponse.Status
-func (r GetInsightResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetInsightResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
-type GetInsightReportResponse struct {
-	Body         []byte
-	HTTPResponse *http.Response
-	JSON401      *Problem
-	JSON404      *Problem
-	JSON422      *Problem
-}
-
-// Status returns HTTPResponse.Status
-func (r GetInsightReportResponse) Status() string {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.Status
-	}
-	return http.StatusText(0)
-}
-
-// StatusCode returns HTTPResponse.StatusCode
-func (r GetInsightReportResponse) StatusCode() int {
-	if r.HTTPResponse != nil {
-		return r.HTTPResponse.StatusCode
-	}
-	return 0
-}
-
 type GetLayerResponse struct {
 	Body         []byte
 	HTTPResponse *http.Response
@@ -12580,7 +12223,9 @@ type OnboardResponse struct {
 	HTTPResponse *http.Response
 	JSON200      *OnboardingResult
 	JSON401      *Problem
+	JSON404      *Problem
 	JSON422      *Problem
+	JSON502      *Problem
 }
 
 // Status returns HTTPResponse.Status
@@ -12605,6 +12250,7 @@ type PlanOnboardingResponse struct {
 	JSON200      *OnboardingPlan
 	JSON401      *Problem
 	JSON422      *Problem
+	JSON502      *Problem
 }
 
 // Status returns HTTPResponse.Status
@@ -13302,6 +12948,83 @@ func (r RecordRemediationPullRequestResponse) Status() string {
 
 // StatusCode returns HTTPResponse.StatusCode
 func (r RecordRemediationPullRequestResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type RequestReportResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Report
+	JSON202      *Report
+	JSON401      *Problem
+	JSON409      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r RequestReportResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r RequestReportResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetReportResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *Report
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r GetReportResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetReportResponse) StatusCode() int {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.StatusCode
+	}
+	return 0
+}
+
+type GetReportFileResponse struct {
+	Body         []byte
+	HTTPResponse *http.Response
+	JSON200      *map[string]interface{}
+	JSON401      *Problem
+	JSON404      *Problem
+	JSON409      *Problem
+	JSON422      *Problem
+}
+
+// Status returns HTTPResponse.Status
+func (r GetReportFileResponse) Status() string {
+	if r.HTTPResponse != nil {
+		return r.HTTPResponse.Status
+	}
+	return http.StatusText(0)
+}
+
+// StatusCode returns HTTPResponse.StatusCode
+func (r GetReportFileResponse) StatusCode() int {
 	if r.HTTPResponse != nil {
 		return r.HTTPResponse.StatusCode
 	}
@@ -14207,6 +13930,23 @@ func (c *ClientWithResponses) RecordTriageWithResponse(ctx context.Context, asse
 	return ParseRecordTriageResponse(rsp)
 }
 
+// QueryDashboardWithBodyWithResponse request with arbitrary body returning *QueryDashboardResponse
+func (c *ClientWithResponses) QueryDashboardWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*QueryDashboardResponse, error) {
+	rsp, err := c.QueryDashboardWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseQueryDashboardResponse(rsp)
+}
+
+func (c *ClientWithResponses) QueryDashboardWithResponse(ctx context.Context, body QueryDashboardJSONRequestBody, reqEditors ...RequestEditorFn) (*QueryDashboardResponse, error) {
+	rsp, err := c.QueryDashboard(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseQueryDashboardResponse(rsp)
+}
+
 // GetDecisionWithResponse request returning *GetDecisionResponse
 func (c *ClientWithResponses) GetDecisionWithResponse(ctx context.Context, decisionId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetDecisionResponse, error) {
 	rsp, err := c.GetDecision(ctx, decisionId, reqEditors...)
@@ -14278,15 +14018,6 @@ func (c *ClientWithResponses) ListFindingsInWithResponse(ctx context.Context, pa
 	return ParseListFindingsInResponse(rsp)
 }
 
-// CountFindingsInWithResponse request returning *CountFindingsInResponse
-func (c *ClientWithResponses) CountFindingsInWithResponse(ctx context.Context, params *CountFindingsInParams, reqEditors ...RequestEditorFn) (*CountFindingsInResponse, error) {
-	rsp, err := c.CountFindingsIn(ctx, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseCountFindingsInResponse(rsp)
-}
-
 // ReviewQueueWithResponse request returning *ReviewQueueResponse
 func (c *ClientWithResponses) ReviewQueueWithResponse(ctx context.Context, params *ReviewQueueParams, reqEditors ...RequestEditorFn) (*ReviewQueueResponse, error) {
 	rsp, err := c.ReviewQueue(ctx, params, reqEditors...)
@@ -14294,15 +14025,6 @@ func (c *ClientWithResponses) ReviewQueueWithResponse(ctx context.Context, param
 		return nil, err
 	}
 	return ParseReviewQueueResponse(rsp)
-}
-
-// SummarizeFindingsInWithResponse request returning *SummarizeFindingsInResponse
-func (c *ClientWithResponses) SummarizeFindingsInWithResponse(ctx context.Context, params *SummarizeFindingsInParams, reqEditors ...RequestEditorFn) (*SummarizeFindingsInResponse, error) {
-	rsp, err := c.SummarizeFindingsIn(ctx, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseSummarizeFindingsInResponse(rsp)
 }
 
 // GetFindingWithResponse request returning *GetFindingResponse
@@ -14365,24 +14087,6 @@ func (c *ClientWithResponses) ListImpactsWithResponse(ctx context.Context, param
 		return nil, err
 	}
 	return ParseListImpactsResponse(rsp)
-}
-
-// GetInsightWithResponse request returning *GetInsightResponse
-func (c *ClientWithResponses) GetInsightWithResponse(ctx context.Context, name ViewName, params *GetInsightParams, reqEditors ...RequestEditorFn) (*GetInsightResponse, error) {
-	rsp, err := c.GetInsight(ctx, name, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetInsightResponse(rsp)
-}
-
-// GetInsightReportWithResponse request returning *GetInsightReportResponse
-func (c *ClientWithResponses) GetInsightReportWithResponse(ctx context.Context, name ViewName, params *GetInsightReportParams, reqEditors ...RequestEditorFn) (*GetInsightReportResponse, error) {
-	rsp, err := c.GetInsightReport(ctx, name, params, reqEditors...)
-	if err != nil {
-		return nil, err
-	}
-	return ParseGetInsightReportResponse(rsp)
 }
 
 // GetLayerWithResponse request returning *GetLayerResponse
@@ -14792,6 +14496,41 @@ func (c *ClientWithResponses) RecordRemediationPullRequestWithResponse(ctx conte
 		return nil, err
 	}
 	return ParseRecordRemediationPullRequestResponse(rsp)
+}
+
+// RequestReportWithBodyWithResponse request with arbitrary body returning *RequestReportResponse
+func (c *ClientWithResponses) RequestReportWithBodyWithResponse(ctx context.Context, contentType string, body io.Reader, reqEditors ...RequestEditorFn) (*RequestReportResponse, error) {
+	rsp, err := c.RequestReportWithBody(ctx, contentType, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestReportResponse(rsp)
+}
+
+func (c *ClientWithResponses) RequestReportWithResponse(ctx context.Context, body RequestReportJSONRequestBody, reqEditors ...RequestEditorFn) (*RequestReportResponse, error) {
+	rsp, err := c.RequestReport(ctx, body, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseRequestReportResponse(rsp)
+}
+
+// GetReportWithResponse request returning *GetReportResponse
+func (c *ClientWithResponses) GetReportWithResponse(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetReportResponse, error) {
+	rsp, err := c.GetReport(ctx, orderId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetReportResponse(rsp)
+}
+
+// GetReportFileWithResponse request returning *GetReportFileResponse
+func (c *ClientWithResponses) GetReportFileWithResponse(ctx context.Context, orderId openapi_types.UUID, reqEditors ...RequestEditorFn) (*GetReportFileResponse, error) {
+	rsp, err := c.GetReportFile(ctx, orderId, reqEditors...)
+	if err != nil {
+		return nil, err
+	}
+	return ParseGetReportFileResponse(rsp)
 }
 
 // ListRepositoriesWithResponse request returning *ListRepositoriesResponse
@@ -15846,6 +15585,39 @@ func ParseRecordTriageResponse(rsp *http.Response) (*RecordTriageResponse, error
 	return response, nil
 }
 
+// ParseQueryDashboardResponse parses an HTTP response from a QueryDashboardWithResponse call
+func ParseQueryDashboardResponse(rsp *http.Response) (*QueryDashboardResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &QueryDashboardResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest DashboardResults
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
 // ParseGetDecisionResponse parses an HTTP response from a GetDecisionWithResponse call
 func ParseGetDecisionResponse(rsp *http.Response) (*GetDecisionResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -16147,46 +15919,6 @@ func ParseListFindingsInResponse(rsp *http.Response) (*ListFindingsInResponse, e
 	return response, nil
 }
 
-// ParseCountFindingsInResponse parses an HTTP response from a CountFindingsInWithResponse call
-func ParseCountFindingsInResponse(rsp *http.Response) (*CountFindingsInResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &CountFindingsInResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest FindingCount
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseReviewQueueResponse parses an HTTP response from a ReviewQueueWithResponse call
 func ParseReviewQueueResponse(rsp *http.Response) (*ReviewQueueResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -16203,46 +15935,6 @@ func ParseReviewQueueResponse(rsp *http.Response) (*ReviewQueueResponse, error) 
 	switch {
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
 		var dest PageReviewCase
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseSummarizeFindingsInResponse parses an HTTP response from a SummarizeFindingsInWithResponse call
-func ParseSummarizeFindingsInResponse(rsp *http.Response) (*SummarizeFindingsInResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &SummarizeFindingsInResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest []FindingRollup
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
@@ -16528,93 +16220,6 @@ func ParseListImpactsResponse(rsp *http.Response) (*ListImpactsResponse, error) 
 	return response, nil
 }
 
-// ParseGetInsightResponse parses an HTTP response from a GetInsightWithResponse call
-func ParseGetInsightResponse(rsp *http.Response) (*GetInsightResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetInsightResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
-		var dest ViewModel
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON200 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
-	}
-
-	return response, nil
-}
-
-// ParseGetInsightReportResponse parses an HTTP response from a GetInsightReportWithResponse call
-func ParseGetInsightReportResponse(rsp *http.Response) (*GetInsightReportResponse, error) {
-	bodyBytes, err := io.ReadAll(rsp.Body)
-	defer func() { _ = rsp.Body.Close() }()
-	if err != nil {
-		return nil, err
-	}
-
-	response := &GetInsightReportResponse{
-		Body:         bodyBytes,
-		HTTPResponse: rsp,
-	}
-
-	switch {
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON401 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON404 = &dest
-
-	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
-		var dest Problem
-		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
-			return nil, err
-		}
-		response.JSON422 = &dest
-
-	}
-
-	return response, nil
-}
-
 // ParseGetLayerResponse parses an HTTP response from a GetLayerWithResponse call
 func ParseGetLayerResponse(rsp *http.Response) (*GetLayerResponse, error) {
 	bodyBytes, err := io.ReadAll(rsp.Body)
@@ -16831,12 +16436,26 @@ func ParseOnboardResponse(rsp *http.Response) (*OnboardResponse, error) {
 		}
 		response.JSON401 = &dest
 
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
 	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
 		var dest Problem
 		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON502 = &dest
 
 	}
 
@@ -16877,6 +16496,13 @@ func ParsePlanOnboardingResponse(rsp *http.Response) (*PlanOnboardingResponse, e
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 502:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON502 = &dest
 
 	}
 
@@ -18216,6 +17842,164 @@ func ParseRecordRemediationPullRequestResponse(rsp *http.Response) (*RecordRemed
 			return nil, err
 		}
 		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseRequestReportResponse parses an HTTP response from a RequestReportWithResponse call
+func ParseRequestReportResponse(rsp *http.Response) (*RequestReportResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &RequestReportResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Report
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 202:
+		var dest Report
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON202 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetReportResponse parses an HTTP response from a GetReportWithResponse call
+func ParseGetReportResponse(rsp *http.Response) (*GetReportResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetReportResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest Report
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	}
+
+	return response, nil
+}
+
+// ParseGetReportFileResponse parses an HTTP response from a GetReportFileWithResponse call
+func ParseGetReportFileResponse(rsp *http.Response) (*GetReportFileResponse, error) {
+	bodyBytes, err := io.ReadAll(rsp.Body)
+	defer func() { _ = rsp.Body.Close() }()
+	if err != nil {
+		return nil, err
+	}
+
+	response := &GetReportFileResponse{
+		Body:         bodyBytes,
+		HTTPResponse: rsp,
+	}
+
+	switch {
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 200:
+		var dest map[string]interface{}
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON200 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 401:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON401 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 404:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON404 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 409:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON409 = &dest
+
+	case strings.Contains(rsp.Header.Get("Content-Type"), "json") && rsp.StatusCode == 422:
+		var dest Problem
+		if err := json.Unmarshal(bodyBytes, &dest); err != nil {
+			return nil, err
+		}
+		response.JSON422 = &dest
+
+	case rsp.StatusCode == 200:
+		// Content-type (text/markdown) unsupported
 
 	}
 

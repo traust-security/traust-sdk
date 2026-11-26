@@ -1,0 +1,50 @@
+package web
+
+templ Page(title string) {
+	<!DOCTYPE html>
+	<html lang="en">
+		<head>
+			<meta charset="utf-8"/>
+			<title>{ title }</title>
+			<meta name="htmx-config" content={ htmxConfig }/>
+			<script src="https://unpkg.com/htmx.org@2.0.4/dist/htmx.min.js" integrity="sha384-HGfztofotfshcF7+8n44JQL2oJmowVChPTg48S+jvZoztPfvwD79OC/LTtG6dMp+" crossorigin="anonymous"></script>
+			<link rel="stylesheet" href="/static/app.css"/>
+		</head>
+		<body>
+			<nav><a class="brand" href="/">ᛏ traust</a><a href="/onboard">Onboard</a><a href="/products">Products</a><a href="/runs">Runs</a><a href="/approvals">Approvals</a><a href="/activity">Activity</a><a href="/findings">Findings</a><a href="/review">Review</a><a href="/advisories">Advisories</a><a href="/packages">Packages</a><a href="/exposure">Exposure</a></nav>
+			<div hx-get="/whoami" hx-trigger="load"></div>
+			<main>
+				{ children... }
+			</main>
+			<div hx-get="/health" hx-trigger="load"></div>
+		</body>
+	</html>
+}
+
+templ SignIn(problem string, sso string) {
+	@Page("Sign in to traust") {
+		<form method="post" action="/sign-in">
+			<label>Your traust token <input type="password" name="token" required autofocus/></label>
+			<button>Sign in</button>
+			if problem != "" {
+				<p role="alert">{ problem }</p>
+			}
+		</form>
+		if sso != "" {
+			<p><a href={ sso }>Sign in with SSO</a></p>
+		}
+	}
+}
+
+templ Failure(message string) {
+	<p role="alert">{ message }</p>
+}
+
+// Job is work core finishes later: until done, the row asks poll for itself every second.
+templ Job(poll string, done bool) {
+	if done {
+		<li>{ children... }</li>
+	} else {
+		<li hx-get={ poll } hx-trigger="every 1s" hx-swap="outerHTML">{ children... }…</li>
+	}
+}

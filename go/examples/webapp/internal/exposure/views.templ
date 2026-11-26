@@ -1,0 +1,124 @@
+package exposure
+
+import (
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// searchPage is the Advisories page: a form asking for an advisory's identifier, and what core
+// knows under the one asked for.
+templ searchPage(query string, record *traust.AdvisoryRecord) {
+	@web.Page("Advisories") {
+		<h1>Advisories</h1>
+		<form method="get" action="/advisories">
+			<label>Identifier <input name="q" value={ query } required placeholder="CVE-2026-1234"/></label>
+			<button>Find</button>
+		</form>
+		if record != nil {
+			@hit(record)
+		}
+	}
+}
+
+// hit is the search's one hit: the advisory as its source states it, the packages it names, and a
+// link to its own page once core has stored it.
+templ hit(record *traust.AdvisoryRecord) {
+	<section>
+		<h2>{ record.Identifier }</h2>
+		<p>{ severity(record) } · { record.Source } · published { published(record) }</p>
+		if summary := web.Text(record.Summary); summary != "" {
+			<p>{ summary }</p>
+		}
+		<h3>Affected packages</h3>
+		if len(web.Items(record.Affected)) == 0 {
+			<p>The source names none.</p>
+		}
+		<ul>
+			for _, p := range web.Items(record.Affected) {
+				<li>{ string(p.Ecosystem) } · { p.Name }</li>
+			}
+		</ul>
+		if record.AdvisoryId != nil {
+			<p><a href={ templ.URL("/advisories/" + record.AdvisoryId.String()) }>The advisory's page</a></p>
+		}
+	</section>
+}
+
+// advisoryPage is one advisory's page: the record's words for it, the packages core has recorded
+// for it, and the repositories and images whose SBOMs reach them.
+templ advisoryPage(advisory traust.Advisory, record *traust.AdvisoryRecord, packages []traust.AdvisoryPackage, affected []traust.AffectedDependency) {
+	@web.Page(advisory.Identifier) {
+		<h1>{ advisory.Identifier }</h1>
+		if record != nil {
+			<p>{ severity(record) } · { record.Source } · published { published(record) }</p>
+			if summary := web.Text(record.Summary); summary != "" {
+				<p>{ summary }</p>
+			}
+			if len(web.Items(record.References)) > 0 {
+				<h2>References</h2>
+				<ul>
+					for _, ref := range web.Items(record.References) {
+						<li><a href={ templ.URL(ref) }>{ ref }</a></li>
+					}
+				</ul>
+			}
+		}
+		<h2>Affected packages</h2>
+		if len(packages) == 0 {
+			<p>None recorded yet.</p>
+		}
+		<ul>
+			for _, p := range packages {
+				<li>package { p.PackageId.String() }</li>
+			}
+		</ul>
+		<h2>Affected repositories</h2>
+		if len(affected) == 0 {
+			<p>Nothing reaches these packages yet.</p>
+		}
+		<ul>
+			for _, a := range affected {
+				<li>
+					if a.RepositoryRefId != nil {
+						<a href={ templ.URL("/refs/" + a.RepositoryRefId.String()) }>its ref</a>
+					} else if a.ImageId != nil {
+						an image with no declared ref
+					} else {
+						an undeclared source
+					}
+					· { a.Dependency.Version } · { reach(a) }
+				</li>
+			}
+		</ul>
+		if advisory.Id != nil {
+			<h2>Impact inputs</h2>
+			if len(impactRefs(affected)) == 0 {
+				<p>Nothing to prepare yet.</p>
+			}
+			for _, ref := range impactRefs(affected) {
+				<div hx-get={ "/advisories/" + advisory.Id.String() + "/impact-inputs?ref=" + ref.String() } hx-trigger="load"></div>
+			}
+			<p><a href={ templ.URL("/advisories/" + advisory.Id.String() + "/impacts/export") }>Export impacts</a></p>
+		}
+	}
+}
+
+// tiedAdvisories is the finding page's advisory section: the advisories core has tied to the
+// finding, each linking to its own page.
+templ tiedAdvisories(advisories []traust.Advisory) {
+	if len(advisories) == 0 {
+		<p>No advisories tied to this finding.</p>
+	}
+	<ul>
+		for _, a := range advisories {
+			<li>
+				if a.Id != nil {
+					<a href={ templ.URL("/advisories/" + a.Id.String()) }>{ a.Identifier }</a>
+				} else {
+					{ a.Identifier }
+				}
+			</li>
+		}
+	</ul>
+}

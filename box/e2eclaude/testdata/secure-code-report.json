@@ -1,0 +1,61 @@
+{
+  "title": "Fixture audit: {{.Name}}",
+  "metadata": {
+    "date": "{{.Date}}",
+    "scope": "fixture scan: canned findings, not an audit of this repository's code",
+    "repository": {{json .Repo}},
+    "commit": "{{.Sha}}",
+    "audit_profile": "code"
+  },
+  "executive_summary": {
+    "prose": "A fixture scan: three canned findings recorded through traust so the workflow, dashboards and decisions have something to work on.",
+    "severity_counts": {"critical": 0, "high": 1, "medium": 1, "low": 1, "informational": 0}
+  },
+  "severity_criteria": [
+    {"level": "critical", "definition": "Exploitable remotely without authentication."},
+    {"level": "high", "definition": "Exploitable with a foothold or a common precondition."},
+    {"level": "medium", "definition": "Exploitable under specific, uncommon conditions."},
+    {"level": "low", "definition": "Defense in depth; no direct exploit path."}
+  ],
+  "findings": [
+    {
+      "id": "{{.Slug}}-{{.Short}}-001",
+      "title": "Fixture: SQL built from request input",
+      "severity": "high",
+      "cwes": ["CWE-89"],
+      "category": "injection",
+      "locations": [{"path": "fixture/db/query.go", "lines": "40-44"}],
+      "description": "A fixture finding: request input concatenated into a SQL statement lets a caller change the query.",
+      "remediation": "Use parameterised queries."
+    },
+    {
+      "id": "{{.Slug}}-{{.Short}}-002",
+      "title": "Fixture: credential committed to configuration",
+      "severity": "medium",
+      "cwes": ["CWE-798"],
+      "category": "secrets-management",
+      "locations": [{"path": "fixture/config/settings.yaml", "lines": "12"}],
+      "description": "A fixture finding: a static credential in a committed configuration file is readable by anyone with the source.",
+      "remediation": "Load the credential from a secret store at runtime and rotate it."
+    },
+    {
+      "id": "{{.Slug}}-{{.Short}}-003",
+      "title": "Fixture: verbose errors reach the caller",
+      "severity": "low",
+      "cwes": ["CWE-209"],
+      "category": "information-disclosure",
+      "locations": [{"path": "fixture/http/errors.go", "lines": "21"}],
+      "description": "A fixture finding: internal error detail returned to callers reveals implementation information.",
+      "remediation": "Return a generic message and log the detail server-side."
+    }
+  ],
+  "findings_summary": [
+    {"severity": "critical", "count": 0, "finding_ids": []},
+    {"severity": "high", "count": 1, "finding_ids": ["{{.Slug}}-{{.Short}}-001"]},
+    {"severity": "medium", "count": 1, "finding_ids": ["{{.Slug}}-{{.Short}}-002"]},
+    {"severity": "low", "count": 1, "finding_ids": ["{{.Slug}}-{{.Short}}-003"]}
+  ],
+  "remediation_roadmap": [
+    {"priority": "P1", "action": "Parameterise the query", "addresses": ["{{.Slug}}-{{.Short}}-001"]}
+  ]
+}

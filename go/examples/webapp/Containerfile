@@ -1,0 +1,32 @@
+# Containerfile — the example webapp as a container: a static binary from this module and the
+# SDK it replaces locally (go/examples/webapp/go.mod's replace points at the repository's go/
+# module, so the build context is the repository root). `make webapp-compose` builds it:
+#
+#   podman build -f go/examples/webapp/Containerfile .
+
+# ── Builder stage ───────────────────────────────────────────────────
+FROM docker.io/library/golang:1.26@sha256:3df77c8477bb2de6bea4e835b6d422a65ed88463a248fb2590467732af2f6f7d AS builder
+
+WORKDIR /src
+
+# The SDK module first, so the dependency download caches across source changes.
+COPY go/go.mod go/go.sum ./go/
+RUN cd go && go mod download
+
+COPY go/ ./go/
+# The app's generated templ files are committed, so this is a plain build.
+RUN cd go/examples/webapp \
+  && CGO_ENABLED=0 go build -trimpath -ldflags="-s -w" -o /out/webapp .
+
+# ── Runtime stage ───────────────────────────────────────────────────
+# ubi9-micro: no shell, no package manager, nothing but the static binary. Runs as a non-root
+# user; the container needs nothing else (compose passes -core-url; the app holds no token).
+FROM registry.access.redhat.com/ubi9/ubi-micro@sha256:4d31030f31dbe2c812eef22b8ac14c3ab1ff1bf43303e26e6d36b495aa2c4349
+
+COPY --from=builder /out/webapp /usr/local/bin/webapp
+
+USER 65532:65532
+EXPOSE 3000
+
+ENTRYPOINT ["/usr/local/bin/webapp"]
+CMD ["-addr", "0.0.0.0:3000"]

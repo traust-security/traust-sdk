@@ -1,0 +1,93 @@
+package exposure
+
+import (
+	"github.com/google/uuid"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// packagesPage is the Packages page: a form asking for a package's ecosystem and name, and what
+// core knows under the ones asked for.
+templ packagesPage(ecosystem, name string, found *traust.Package) {
+	@web.Page("Packages") {
+		<h1>Packages</h1>
+		<form method="get" action="/packages">
+			<label>Ecosystem <input name="ecosystem" value={ ecosystem } required placeholder="npm"/></label>
+			<label>Name <input name="name" value={ name } required placeholder="left-pad"/></label>
+			<button>Find</button>
+		</form>
+		if found != nil {
+			@packageHit(*found)
+		}
+	}
+}
+
+// packageHit is the search's one hit: the package as core recorded it, and a link to the refs
+// whose SBOMs depend on it.
+templ packageHit(found traust.Package) {
+	<section>
+		<h2>{ found.Ecosystem } · { found.Name }</h2>
+		if found.Id != nil {
+			<p>package { found.Id.String() }</p>
+			<p><a href={ templ.URL("/packages/" + found.Id.String()) }>Its dependents</a></p>
+		}
+		if found.SourceRepositoryId != nil {
+			<p><a href={ templ.URL("/repositories/" + found.SourceRepositoryId.String()) }>Its source repository</a></p>
+		}
+	</section>
+}
+
+// packagePage is one package's page: the refs whose SBOMs hold it, narrowed by the version asked
+// for, each linking to its own page.
+templ packagePage(id uuid.UUID, version string, dependents []uuid.UUID) {
+	@web.Page("A package") {
+		<h1>package { id.String() }</h1>
+		<form method="get" action={ "/packages/" + id.String() }>
+			<label>Version <input name="version" value={ version } placeholder="1.2.3"/></label>
+			<button>Narrow</button>
+		</form>
+		<h2>Dependents</h2>
+		if len(dependents) == 0 {
+			<p>Nothing depends on it yet.</p>
+		}
+		<ul>
+			for _, ref := range dependents {
+				<li><a href={ templ.URL("/refs/" + ref.String()) }>ref { ref.String() }</a></li>
+			}
+		</ul>
+	}
+}
+
+// dependencyList is the ref page's dependency section: the packages its SBOMs hold, as core
+// resolved them, each linking to the package's own page.
+templ dependencyList(dependencies []traust.RefDependency) {
+	<div id="dependencies">
+		if len(dependencies) == 0 {
+			<p>No dependencies recorded yet.</p>
+		}
+		<ul>
+			for _, d := range dependencies {
+				<li>
+					@packageLink(d.Package)
+					· { d.Dependency.Version }
+					if d.Dependency.Direct {
+						· direct
+					} else {
+						· transitive
+					}
+				</li>
+			}
+		</ul>
+	</div>
+}
+
+// packageLink is one resolved package, to its own page when core gave it an id.
+templ packageLink(pkg traust.Package) {
+	if pkg.Id != nil {
+		<a href={ templ.URL("/packages/" + pkg.Id.String()) }>{ pkg.Ecosystem } · { pkg.Name }</a>
+	} else {
+		{ pkg.Ecosystem } · { pkg.Name }
+	}
+}

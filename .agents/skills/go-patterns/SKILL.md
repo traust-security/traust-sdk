@@ -11,10 +11,7 @@ The SDK is a library other teams import: every exported symbol is a promise. Sma
 
 ```text
 go/
-├── v1/traust/              generated client (client.gen.go, calls.gen.go) + bindings (client.go); traustest
-├── v1/ops/                 the runner and the Executor extension point
-├── v1/feed/                feed receiver over GET /v1/feed
-├── v1/<pkg>/<pkg>test/     test doubles for <pkg>'s extension points
+├── v1/traust/              generated client (client.gen.go, calls.gen.go per domain package) + bindings (client.go); traustest
 └── internal/generate/      codegen only; nothing under v1/ imports it
 ```
 
@@ -27,7 +24,7 @@ go/
 
 | Need | Do |
 |---|---|
-| the SDK calls consumer code (`Executor`, `TokenSource`) | interface declared in the package that calls it; 1–3 methods |
+| the SDK calls consumer code (`TokenSource`) | interface declared in the package that calls it; 1–3 methods |
 | the consumer calls traust | the generated client method; no interface |
 | a test needs to fake an extension point | a double in `<pkg>test` (`NewStaticX`, `MemoryX`), shipped for consumers too |
 | "might want to swap it later" | nothing: no interface, factory or registry until a second implementation exists |
@@ -47,23 +44,21 @@ go/
 
 - `ctx context.Context` is the first parameter of anything that does I/O or blocks; never stored in a struct
 - Cancellation is honoured everywhere: every goroutine exits on `ctx.Done()`, and a function that starts one waits for it before returning
-- Executor contract: on cancel it stops the work (including child processes), waits, returns
 
 | Need | Pattern |
 |---|---|
 | parallel ops that can fail | `errgroup.WithContext` |
 | heartbeat / periodic work | `time.Ticker` in a goroutine selecting on `ctx.Done()` |
-| cancel work when a lease is lost | derived `context.WithCancelCause`; the cause is the typed error |
 | shared state | `sync.Mutex`, smallest critical section |
 | one-time init | `sync.Once` |
 
 ## Errors
 
 - Wrap with context: `fmt.Errorf("recording triage for order %s: %w", id, err)`; what was being done, on what
-- Sentinels (`ErrX`) for conditions a caller branches on; typed structs (`*traust.ProblemError`, `*ops.LeaseLostError`) when the caller needs data; both reachable through `errors.Is` / `errors.As`
+- Sentinels (`ErrX`) for conditions a caller branches on; typed structs (`*traust.ProblemError`) when the caller needs data; both reachable through `errors.Is` / `errors.As`
 - Problem responses map once, in `v1/traust`, keyed on HTTP status and, where core sends one, the problem `code`; nothing anywhere matches on `detail` or `err.Error()` text
 - Unknown code, malformed body, transport failure → an error, never a guess or a zero value
-- No `panic` in library code; no `log` or `fmt.Print` in library code: return the error. A long-running component that must report (the runner) takes a `*slog.Logger` from the consumer
+- No `panic` in library code; no `log` or `fmt.Print` in library code: return the error. A long-running component that must report takes a `*slog.Logger` from the consumer
 - Never put tokens, credentials or document bodies in errors or logs: IDs, counts, digests
 
 ## HTTP and generated code
@@ -77,7 +72,7 @@ go/
 ## Types and data
 
 - Request and response types are the generated ones; don't re-declare a struct that mirrors one
-- No `map[string]any` or `interface{}` across a function boundary; `json.RawMessage` only for opaque bytes passed through unchanged (an executor's report payload)
+- No `map[string]any` or `interface{}` across a function boundary; `json.RawMessage` only for opaque bytes passed through unchanged (a report payload)
 - Closed sets are the generated enum types, never bare strings
 - Unknown or unmeasured is a nil pointer, never `0` or `""`
 

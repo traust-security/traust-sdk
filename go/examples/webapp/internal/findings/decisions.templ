@@ -1,0 +1,52 @@
+package findings
+
+import (
+	"time"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// decisionList is a repository's decisions: who decided what, when, and whether it restates an
+// earlier one; each links to its own page.
+templ decisionList(decisions []traust.Decision) {
+	<div id="decisions">
+		if len(decisions) == 0 {
+			<p>No decisions yet.</p>
+		}
+		<ol>
+			for _, d := range decisions {
+				<li>
+					<a href={ templ.URL("/decisions/" + d.Id.String()) }>{ decisionValidity(d) }</a>
+					by { web.Text(d.Actor) } on { d.OccurredAt.Format(time.DateOnly) }
+					if d.RestatesId != nil {
+						· restates an earlier decision
+					}
+				</li>
+			}
+		</ol>
+	</div>
+}
+
+// decisionDetail is a decision's page: what was decided and why, the finding it judged, the
+// restatement it is (when it is one), and — for an admin — the form to correct it again.
+templ decisionDetail(d traust.Decision, view traust.FindingView) {
+	@web.Page("A decision") {
+		<h1>{ decisionValidity(d) } by { web.Text(d.Actor) } on { d.OccurredAt.Format(time.DateOnly) }</h1>
+		if d.Rationale != nil {
+			<p>{ *d.Rationale }</p>
+		}
+		<p>Reason: { decisionReason(d) }</p>
+		<p>Its finding: <a href={ templ.URL("/findings/" + d.FindingId.String()) }>{ view.Finding.Title }</a></p>
+		if d.RestatesId != nil {
+			<p>
+				It restates an earlier decision
+				if d.Ticket != nil {
+					· ticket { *d.Ticket }
+				}
+			</p>
+		}
+		@restateForm(d)
+	}
+}

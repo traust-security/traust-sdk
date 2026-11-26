@@ -1,0 +1,37 @@
+/* Nord: polar night, snow storm, frost, aurora. */
+:root {
+  --night: #2e3440; --night-2: #3b4252; --snow: #eceff4; --snow-2: #e5e9f0; --ink: #2e3440;
+  --frost: #88c0d0; --fjord: #5e81ac; --red: #bf616a; --orange: #d08770; --yellow: #ebcb8b;
+  --green: #a3be8c; --purple: #b48ead;
+}
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--snow); color: var(--ink); font: 15px/1.5 system-ui, sans-serif; }
+nav { display: flex; gap: 1.25rem; align-items: center; padding: .75rem 2rem; background: var(--night); }
+nav::after { content: ""; position: absolute; left: 0; right: 0; top: 3.1rem; height: 3px;
+  background: linear-gradient(90deg, var(--green), var(--frost), var(--purple)); }
+nav a { color: var(--snow-2); text-decoration: none; }
+nav a:hover { color: var(--frost); }
+nav .brand { font-weight: 700; letter-spacing: .08em; color: var(--frost); margin-right: auto; }
+main { max-width: 64rem; margin: 2rem auto; padding: 0 2rem; }
+h1, h2 { font-weight: 600; letter-spacing: .02em; color: var(--night-2); }
+h2 { font-size: 1rem; text-transform: uppercase; color: var(--fjord); margin: 1.5rem 0 .5rem; }
+section, form, #plan > section { background: #fff; border-radius: 6px; padding: 1rem 1.25rem; margin: 1rem 0;
+  box-shadow: 0 1px 2px rgba(46, 52, 64, .08); }
+.cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(14rem, 1fr)); gap: 1rem; }
+dl { display: grid; grid-template-columns: 1fr auto; gap: .25rem 1rem; margin: 0; }
+dt { color: var(--night-2); } dd { margin: 0; font-weight: 600; text-align: right; }
+ul, ol { padding-left: 1.1rem; } li { margin: .3rem 0; }
+a { color: var(--fjord); }
+button { background: var(--fjord); color: var(--snow); border: 0; border-radius: 4px; padding: .4rem .9rem; cursor: pointer; }
+button:hover { background: var(--night-2); }
+input, textarea, select { font: inherit; padding: .35rem .5rem; border: 1px solid var(--snow-2); border-radius: 4px; width: 100%; }
+label { display: block; margin: .5rem 0; color: var(--night-2); }
+label:has(> select) select, label input[type=checkbox] { width: auto; }
+[role=alert] { color: var(--red); }
+.sev { font-weight: 600; } .critical { color: var(--red); } .high { color: var(--orange); }
+.medium { color: #b8964f; } .low { color: var(--green); } .unrated { color: var(--purple); }
+.verdict { margin-left: .5rem; color: var(--green); }
+header { display: flex; align-items: center; justify-content: space-between; color: var(--night-2); }
+header form { background: none; box-shadow: none; padding: 0; margin: 0; }
+button + button { margin-left: .5rem; }
+section > h2:first-child { margin-top: 0; }

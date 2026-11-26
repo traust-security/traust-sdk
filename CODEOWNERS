@@ -9,5 +9,3 @@
 /go/Makefile                @smith-xyz @chubirka
 /go/internal/generate/      @smith-xyz @chubirka
 /go/v1/traust/client.go     @smith-xyz @chubirka
-/go/v1/ops/                 @smith-xyz @chubirka
-/go/v1/feed/                @smith-xyz @chubirka

@@ -1,0 +1,117 @@
+package findings
+
+import (
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+templ findingList(findings []traust.FindingView) {
+	if len(findings) == 0 {
+		<p>No findings yet. Run a scan.</p>
+	}
+	<ul>
+		for _, f := range findings {
+			<li>
+				<a href={ templ.URL("/findings/" + f.Finding.Id.String()) }>{ f.Finding.Title }</a>
+				<span class={ "sev", web.Severity(f.EffectiveSeverity) }>{ web.Severity(f.EffectiveSeverity) }</span> · { web.Validity(f.Disposition) }
+			</li>
+		}
+	</ul>
+}
+
+templ finding(f traust.FindingView, decisions []traust.Decision) {
+	@web.Page(f.Finding.Title) {
+		<h1>{ f.Finding.Title }</h1>
+		<p><span class={ "sev", web.Severity(f.EffectiveSeverity) }>{ web.Severity(f.EffectiveSeverity) }</span> · { web.Validity(f.Disposition) }</p>
+		if f.Description != nil {
+			<p>{ *f.Description }</p>
+		}
+		<h2>Advisories</h2>
+		<div hx-get={ "/findings/" + f.Finding.Id.String() + "/advisories" } hx-trigger="load"></div>
+		@decideForm(f)
+		<form id="fix" hx-post={ "/findings/" + f.Finding.Id.String() + "/fix" } hx-swap="outerHTML">
+			<h2>Fix this</h2>
+			<input type="hidden" name="repository_id" value={ f.Finding.RepositoryId.String() }/>
+			<label>Fork URL <input name="fork_url" required placeholder="https://forge.example/org/a-fork"/></label>
+			<label>Fork branch <input name="fork_branch" required placeholder="traust/fix-4c7f0b9"/></label>
+			<button>Fix this</button>
+		</form>
+		<h2>Decisions</h2>
+		<ol>
+			for _, d := range decisions {
+				<li>
+					{ decisionValidity(d) } by { web.Text(d.Actor) }: { web.Text(d.Rationale) }
+					if d.RestatesId != nil {
+						(restates an earlier decision)
+					}
+				</li>
+			}
+		</ol>
+		if len(decisions) > 0 {
+			@restateForm(decisions[len(decisions)-1])
+		}
+	}
+}
+
+// restateForm corrects a recorded decision with a reason and a ticket; core keeps both.
+templ restateForm(d traust.Decision) {
+	<form id="restate" hx-post={ "/decisions/" + d.Id.String() + "/restate" } hx-swap="outerHTML">
+		<h2>Restate the latest decision</h2>
+		<label>
+			Correct its validity to
+			<select name="validity">
+				for _, val := range validities {
+					<option value={ string(val) }>{ string(val) }</option>
+				}
+			</select>
+		</label>
+		<select name="reason">
+			for _, r := range restatements {
+				<option value={ string(r) }>{ string(r) }</option>
+			}
+		</select>
+		<label>Ticket <input name="ticket" required placeholder="SEC-123"/></label>
+		<label>Rationale <textarea name="rationale" required></textarea></label>
+		<button>Restate</button>
+	</form>
+}
+
+templ restated() {
+	<p id="restate">Restated. <a href="">Reload</a> to see the history.</p>
+}
+
+// review is the countersign queue: machine verdicts and conflicts a person settles.
+templ review(cases []traust.ReviewCase) {
+	@web.Page("Review") {
+		<h1>Review</h1>
+		if len(cases) == 0 {
+			<p>Nothing waits on you.</p>
+		}
+		<ul>
+			for _, c := range cases {
+				<li>
+					<a href={ templ.URL("/findings/" + c.FindingId.String()) }>{ caseTitle(c) }</a>
+					{ string(c.Kind) } · { web.Validity(c.Disposition) }
+				</li>
+			}
+		</ul>
+	}
+}
+
+templ decideForm(f traust.FindingView) {
+	<form id="decide" hx-post={ "/findings/" + f.Finding.Id.String() + "/decide" } hx-swap="outerHTML">
+		<h2>Decide</h2>
+		<select name="validity">
+			for _, v := range validities {
+				<option value={ string(v) }>{ string(v) }</option>
+			}
+		</select>
+		<label>Rationale <textarea name="rationale" required></textarea></label>
+		<button>Record the decision</button>
+	</form>
+}
+
+templ decided() {
+	<p id="decide">Decision recorded. <a href="">Reload</a> to see the finding's new state.</p>
+}

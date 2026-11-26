@@ -8,8 +8,6 @@ import (
 	"net/http"
 	"os"
 	"testing"
-
-	"github.com/google/uuid"
 )
 
 // Runs against traust-server built from core at CORE_REF; `make e2e` starts it.
@@ -27,37 +25,12 @@ func e2eClient(t *testing.T) *Client {
 }
 
 func TestE2ECallerIsVerified(t *testing.T) {
-	resp, err := e2eClient(t).WhoamiWithResponse(context.Background())
+	resp, err := e2eClient(t).Raw().WhoamiWithResponse(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
 	if resp.JSON200 == nil || resp.JSON200.Identity == "" {
 		t.Fatalf("whoami: %d %s", resp.StatusCode(), resp.Body)
-	}
-}
-
-func TestE2EPagingDecodesAnEmptyInventory(t *testing.T) {
-	var seen int
-	for _, err := range e2eClient(t).ListRepositoriesAll(context.Background(), nil) {
-		if err != nil {
-			t.Fatal(err)
-		}
-		seen++
-	}
-	if seen != 0 {
-		t.Fatalf("fresh server listed %d repositories", seen)
-	}
-}
-
-func TestE2EUnknownResourceIsATypedProblem(t *testing.T) {
-	resp, err := e2eClient(t).GetRepositoryWithResponse(context.Background(), uuid.New())
-	if err != nil {
-		t.Fatal(err)
-	}
-	var problem *ProblemError
-	_, err = Decode(resp.HTTPResponse, resp.Body, resp.JSON200)
-	if !errors.As(err, &problem) || problem.StatusCode != http.StatusNotFound || problem.Problem == nil || problem.Problem.RequestId == "" {
-		t.Fatalf("want a 404 problem with a request id, got %v", err)
 	}
 }
 
@@ -70,7 +43,7 @@ func TestE2EUnverifiedTokenIsUnauthorized(t *testing.T) {
 	if err != nil {
 		t.Fatal(err)
 	}
-	resp, err := c.WhoamiWithResponse(context.Background())
+	resp, err := c.Raw().WhoamiWithResponse(context.Background())
 	if err != nil {
 		t.Fatal(err)
 	}
@@ -78,128 +51,5 @@ func TestE2EUnverifiedTokenIsUnauthorized(t *testing.T) {
 	_, err = Decode(resp.HTTPResponse, resp.Body, resp.JSON200)
 	if !errors.As(err, &problem) || problem.StatusCode != http.StatusUnauthorized || problem.Problem == nil {
 		t.Fatalf("want a 401 problem, got %v", err)
-	}
-}
-
-func TestE2EBatchFindingsListingRefusesWithoutRepositories(t *testing.T) {
-	resp, err := e2eClient(t).ListFindingsInWithResponse(context.Background(), &ListFindingsInParams{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	var problem *ProblemError
-	_, err = Decode(resp.HTTPResponse, resp.Body, resp.JSON200)
-	if !errors.As(err, &problem) || problem.StatusCode != http.StatusUnprocessableEntity || problem.Problem == nil || problem.Problem.RequestId == "" {
-		t.Fatalf("want a 422 problem with a request id, got %v", err)
-	}
-}
-
-func TestE2ECountFindingsInCountsARepositorySet(t *testing.T) {
-	set := []uuid.UUID{uuid.New()}
-	counted, err := e2eClient(t).CountFindingsIn(context.Background(), &CountFindingsInParams{
-		RepositoryIds: &set,
-	})
-	if err != nil {
-		t.Fatal(err)
-	}
-	if counted == nil || counted.Total != 0 {
-		t.Fatalf("a repository the fresh server does not know counted %v", counted)
-	}
-}
-
-func TestE2ECountFindingsInRefusesWithoutRepositories(t *testing.T) {
-	resp, err := e2eClient(t).CountFindingsInWithResponse(context.Background(), &CountFindingsInParams{})
-	if err != nil {
-		t.Fatal(err)
-	}
-	var problem *ProblemError
-	_, err = Decode(resp.HTTPResponse, resp.Body, resp.JSON200)
-	if !errors.As(err, &problem) || problem.StatusCode != http.StatusUnprocessableEntity || problem.Problem == nil || problem.Problem.RequestId == "" {
-		t.Fatalf("want a 422 problem with a request id, got %v", err)
-	}
-}
-
-func TestE2EBatchFindingsListingPagesARepositorySet(t *testing.T) {
-	set := []uuid.UUID{uuid.New()}
-	var seen int
-	for _, err := range e2eClient(t).ListFindingsInAll(context.Background(), &ListFindingsInParams{
-		RepositoryIds: &set,
-	}) {
-		if err != nil {
-			t.Fatal(err)
-		}
-		seen++
-	}
-	if seen != 0 {
-		t.Fatalf("a repository the fresh server does not know listed %d findings", seen)
-	}
-}
-
-// The wave-f reads refuse without a named set exactly as the batch listing and count do:
-// a 422 problem with a request id, never a firehose of everything the server holds.
-func TestE2ESetScopedReadsRefuseWithoutRepositories(t *testing.T) {
-	client := e2eClient(t)
-	reads := []struct {
-		name string
-		read func() error
-	}{
-		{"assessments", func() error {
-			_, err := client.ListAssessments(context.Background(), &ListAssessmentsParams{})
-			return err
-		}},
-		{"refs", func() error {
-			_, err := client.ListRefsForRepositories(context.Background(), &ListRefsForRepositoriesParams{})
-			return err
-		}},
-		{"summaries", func() error {
-			_, err := client.SummarizeFindingsIn(context.Background(), &SummarizeFindingsInParams{})
-			return err
-		}},
-	}
-	for _, read := range reads {
-		t.Run(read.name, func(t *testing.T) {
-			err := read.read()
-			var problem *ProblemError
-			if !errors.As(err, &problem) || problem.StatusCode != http.StatusUnprocessableEntity || problem.Problem == nil || problem.Problem.RequestId == "" {
-				t.Fatalf("want a 422 problem with a request id, got %v", err)
-			}
-		})
-	}
-}
-
-// The wave-f reads over a repository set the fresh server does not know decode as an empty
-// page: the refusal, parse and decode branches all take their success paths.
-func TestE2ESetScopedReadsListARepositorySet(t *testing.T) {
-	client := e2eClient(t)
-	set := []uuid.UUID{uuid.New()}
-	reads := []struct {
-		name string
-		read func() (int, error)
-	}{
-		{"assessments", func() (int, error) {
-			found, err := client.ListAssessments(context.Background(), &ListAssessmentsParams{RepositoryIds: &set})
-			if found == nil {
-				return 0, err
-			}
-			return len(found.Items), err
-		}},
-		{"refs", func() (int, error) {
-			found, err := client.ListRefsForRepositories(context.Background(), &ListRefsForRepositoriesParams{RepositoryIds: &set})
-			return len(found), err
-		}},
-		{"summaries", func() (int, error) {
-			found, err := client.SummarizeFindingsIn(context.Background(), &SummarizeFindingsInParams{RepositoryIds: &set})
-			return len(found), err
-		}},
-	}
-	for _, read := range reads {
-		t.Run(read.name, func(t *testing.T) {
-			seen, err := read.read()
-			if err != nil {
-				t.Fatal(err)
-			}
-			if seen != 0 {
-				t.Fatalf("a repository the fresh server does not know listed %d rows", seen)
-			}
-		})
 	}
 }

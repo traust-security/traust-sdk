@@ -1,0 +1,46 @@
+package remediation
+
+import (
+	"time"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+)
+
+// verificationList is the work item page's lazy verifications section: the verifications core
+// has run on the repository for this work item's findings. Core publishes no run for a
+// verification, so a row carries its verdicts and when core recorded it.
+templ verificationList(verifications []traust.Verification) {
+	<div id="verifications">
+		if len(verifications) == 0 {
+			<p>Nothing verified yet.</p>
+		}
+		<ul>
+			for _, v := range verifications {
+				<li>
+					{ v.VerifiedAt.Format(time.RFC3339) }
+					for _, verdict := range v.Verdicts {
+						· <a href={ templ.URL("/findings/" + verdict.FindingId.String()) }>{ string(verdict.Verdict) }</a>
+					}
+				</li>
+			}
+		</ul>
+	</div>
+}
+
+// validationAttemptList is the work item page's lazy validation attempts section: the attempts
+// core has recorded on the findings the work item fixes, each linking the run that made it.
+templ validationAttemptList(attempts []traust.ValidationAttempt) {
+	<div id="validation-attempts">
+		if len(attempts) == 0 {
+			<p>No validation attempts yet.</p>
+		}
+		<ul>
+			for _, a := range attempts {
+				<li>
+					{ string(a.Verdict) } · { a.OccurredAt.Format(time.RFC3339) } · by
+					<a href={ templ.URL("/runs/" + a.RunId.String() + "/detail") }>run { a.RunId.String() }</a>
+				</li>
+			}
+		</ul>
+	</div>
+}

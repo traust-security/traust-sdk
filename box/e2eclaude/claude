@@ -1,0 +1,123 @@
+#!/usr/bin/env python3
+# Workaround: stands in for an agent the harness should ship as a fixture. Delete when traust
+# ships one.
+"""A stand-in for `claude -p --output-format json` in make e2e: the box runs the real `traust
+session run`, and this answers the two skills the webapp drives with canned, contracts-valid
+work recorded through the harness's own record doors. Anything else is an error result."""
+
+from __future__ import annotations
+
+import json
+import os
+import re
+import subprocess
+import sys
+import tempfile
+import uuid
+from datetime import UTC, datetime
+from pathlib import Path
+
+TESTDATA = Path(__file__).resolve().parent / "testdata"
+VERDICTS = ("true_positive", "false_positive", "undetermined")
+
+
+def traust(*argv: str) -> str:
+    done = subprocess.run(
+        [sys.executable, "-m", "traust.cli", *argv], capture_output=True, text=True, check=False
+    )
+    if done.returncode != 0:
+        raise RuntimeError(f"traust {' '.join(argv[:2])}: {done.stderr.strip() or done.stdout}")
+    return done.stdout
+
+
+def repository(url: str):
+    from traust.context import load
+    from traust_core.v1.models.values import HttpsRepoUrl
+
+    core = load()
+    services = core.services()
+    repo = services.portfolio.find_repository(HttpsRepoUrl.parse(url, core.config.forge_hosts))
+    if repo is None or repo.id is None:
+        raise RuntimeError(f"{url}: not in the inventory")
+    return services, repo
+
+
+def audit(url: str) -> str:
+    services, repo = repository(url)
+    head = services.portfolio.current_default_ref(repo.id)  # what onboarding registered
+    if head is None:
+        raise RuntimeError(f"{url}: no current default ref")
+    name = url.rstrip("/").removesuffix(".git").rsplit("/", 1)[-1]
+    slug = re.sub(r"[^A-Z0-9]", "_", name.upper())[:24]
+    report = (TESTDATA / "secure-code-report.json").read_text()
+    for key, value in {
+        "{{.Name}}": name,
+        "{{json .Repo}}": json.dumps(url),
+        "{{.Sha}}": head.sha,
+        "{{.Short}}": head.sha[:7].lower(),
+        "{{.Slug}}": slug,
+        "{{.Date}}": datetime.now(UTC).date().isoformat(),
+    }.items():
+        report = report.replace(key, value)
+    with tempfile.NamedTemporaryFile("w", suffix=".json", delete=False) as out:
+        out.write(report)
+    traust("reporting", "record", out.name, "--kind", "secure_code", "--repo-url", url, "--sha", head.sha)
+    return "recorded a canned secure-code audit"
+
+
+def triage(url: str) -> str:
+    from traust_core.v1.models.assessment import AssessmentKind
+
+    services, repo = repository(url)
+    assessment = services.assessment.latest_recorded(repo.id, AssessmentKind.SECURE_CODE_CANONICAL)
+    prepared = json.loads(traust("triage", "prepare", str(assessment.id)))
+    counts = dict.fromkeys(VERDICTS, 0)
+    findings = []
+    for i, item in enumerate(prepared["items"]):
+        verdict = VERDICTS[i % len(VERDICTS)]
+        counts[verdict] += 1
+        finding = item["finding"]
+        findings.append({
+            "id": f"f{i + 1:03d}", "title": finding["title"], "verdict": verdict,
+            "fingerprint": finding["fingerprint"], "fingerprint_algo": finding["fingerprint_algo"],
+            "confidence": 7, "rationale": "A canned verdict, for a person to countersign or override.",
+        })
+    document = {
+        "triage_completed": datetime.now(UTC).date().isoformat(),
+        "triage_context": {"environment": "e2e stand-in", "votes_per_finding": 1, "repo": url, "harness_version": "0.0.0"},
+        "summary": {
+            "input_count": len(findings), "true_positives": counts["true_positive"], "hardening": 0,
+            "false_positives": counts["false_positive"], "undetermined": counts["undetermined"], "duplicates": 0,
+            "by_severity": {"critical": 0, "high": 0, "medium": 0, "low": 0},
+        },
+        "findings": findings,
+    }
+    with tempfile.TemporaryDirectory() as checkout:
+        path = Path(checkout) / "triage.json"
+        path.write_text(json.dumps(document))
+        traust("triage", "record", str(assessment.id), str(path), "--repo", checkout)
+    return f"recorded a canned triage of {len(findings)} findings"
+
+
+def main(argv: list[str]) -> int:
+    model = argv[argv.index("--model") + 1] if "--model" in argv else "stand-in"
+    skill, _, rest = argv[-1].partition(" ")
+    target = rest.split()[-1] if rest.split() else ""
+    try:
+        result = {"/secure-code-audit": audit, "/triage": triage}[skill](target)
+        error = False
+    except Exception as e:  # the stand-in's answer is the session's, error or not
+        result, error = f"{skill}: {e}", True
+    home = os.environ.get("TRAUST_CONFIG_HOME")
+    if home:
+        with open(Path(home) / "e2eclaude.log", "a") as log:
+            log.write(f"{skill} {target}: {'error' if error else 'ok'}: {result}\n")
+    print(json.dumps({
+        "result": result, "is_error": error, "session_id": str(uuid.uuid4()),
+        "modelUsage": {model: {"inputTokens": 0, "outputTokens": 0}},
+    }))
+    return 0
+
+
+if __name__ == "__main__":
+    sys.exit(main(sys.argv[1:]))

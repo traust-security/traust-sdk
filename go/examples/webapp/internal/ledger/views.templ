@@ -1,0 +1,43 @@
+package ledger
+
+import (
+	"fmt"
+	"strings"
+
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// ledger is the repository's proof chain: decisions as Merkle layers, signed when a key is set.
+templ ledger(repo string, layers []traust.Layer) {
+	<div id="ledger">
+		if len(layers) == 0 {
+			<p>No decisions recorded yet.</p>
+		}
+		<ul>
+			for _, l := range layers {
+				<li>
+					{ web.Text(l.Line) } layer: { fmt.Sprint(web.Value(l.MerkleSize)) } events, root { web.Short(l.MerkleRoot) },
+					if l.MerkleRootSignature != nil {
+						signed
+					} else {
+						unsigned
+					}
+					· <a href={ templ.URL("/layers/" + l.Id.String()) }>detail</a>
+					<button hx-post={ "/layers/" + l.Id.String() + "/verify" } hx-target="next .verdict">Verify</button>
+					<span class="verdict"></span>
+				</li>
+			}
+		</ul>
+		<button hx-post={ "/repositories/" + repo + "/checkpoint" } hx-target="#ledger" hx-swap="outerHTML">Checkpoint (admins)</button>
+	</div>
+}
+
+templ verified(result traust.VerifyResult) {
+	if result.Passed != nil && *result.Passed {
+		<span class="verdict">verified</span>
+	} else {
+		<span class="verdict" role="alert">failed: { strings.Join(web.Items(result.Errors), "; ") }</span>
+	}
+}

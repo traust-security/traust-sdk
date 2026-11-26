@@ -1,0 +1,87 @@
+package findings
+
+import (
+	"time"
+
+	"github.com/google/uuid"
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+// assessmentList is a repository's assessments, the latest scan marked, each linking to its own
+// page; the person's every assessment is one link away.
+templ assessmentList(assessments []traust.Assessment, latest uuid.UUID) {
+	if len(assessments) == 0 {
+		<p>No assessments yet. Run a scan.</p>
+	}
+	<ul>
+		for _, a := range assessments {
+			<li>
+				<a href={ templ.URL("/assessments/" + a.Id.String()) }>{ assessmentKind(a) }</a> { a.Status } · { a.Assessor }
+				if a.Id != nil && *a.Id == latest {
+					· the latest scan
+				}
+			</li>
+		}
+	</ul>
+	<p><a href="/assessments">All assessments</a></p>
+}
+
+// assessment is one assessment's page: what core recorded it as, the findings its intake created
+// (each by its report label), and the evidence it left.
+templ assessment(a traust.Assessment, intake traust.AssessmentIntakeBindings, artifacts []traust.Artifact) {
+	@web.Page(assessmentKind(a)) {
+		<h1>{ assessmentKind(a) }</h1>
+		<p>{ a.Status } · { a.Assessor } { a.AssessorVersion } · { a.OccurredAt.Format(time.DateOnly) }</p>
+		<p>It examined the repository's <a href={ templ.URL("/refs/" + a.RepositoryRefId.String()) }>ref</a>.</p>
+		<h2>Intake</h2>
+		if len(intake.Findings) == 0 {
+			<p>The assessment recorded no findings.</p>
+		}
+		<dl>
+			for _, label := range intakeLabels(intake) {
+				<dt>{ label }</dt>
+				<dd><a href={ templ.URL("/findings/" + intake.Findings[label].String()) }>its finding</a></dd>
+			}
+		</dl>
+		<h2>Evidence</h2>
+		if len(artifacts) == 0 {
+			<p>No evidence recorded.</p>
+		}
+		<ul>
+			for _, artifact := range artifacts {
+				<li><a href={ templ.URL("/artifacts/" + artifact.Id.String()) }>{ artifact.Kind }</a> · { web.Short(&artifact.Digest) }</li>
+			}
+		</ul>
+	}
+}
+
+// allAssessments is the person's assessments, across every repository core records for them.
+templ allAssessments(assessments []traust.Assessment) {
+	@web.Page("Assessments") {
+		<h1>Assessments</h1>
+		if len(assessments) == 0 {
+			<p>No assessments recorded yet. Run a scan.</p>
+		}
+		<ul>
+			for _, a := range assessments {
+				<li><a href={ templ.URL("/assessments/" + a.Id.String()) }>{ assessmentKind(a) }</a> { a.Status } · { a.Assessor }</li>
+			}
+		</ul>
+	}
+}
+
+// artifact is one artifact's page: the evidence core kept, and its bytes as a download.
+templ artifact(a traust.Artifact) {
+	@web.Page(a.Kind) {
+		<h1>{ a.Kind }</h1>
+		<p>digest { a.Digest }</p>
+		if a.CreatedAt != nil {
+			<p>recorded { a.CreatedAt.Format(time.DateOnly) }</p>
+		}
+		<p><a href={ templ.URL("/artifacts/" + a.Id.String() + "/content") }>Download</a></p>
+		if a.AssessmentId != nil {
+			<p>The <a href={ templ.URL("/assessments/" + a.AssessmentId.String()) }>assessment</a> that produced it.</p>
+		}
+	}
+}

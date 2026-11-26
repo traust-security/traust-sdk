@@ -1,0 +1,126 @@
+package inventory
+
+import (
+	"github.com/traust-security/traust-sdk/go/v1/traust"
+
+	"github.com/traust-security/traust-sdk/go/examples/webapp/internal/web"
+)
+
+templ home(me traust.Principal, repos []traust.Repository, cards []card) {
+	@web.Page("traust") {
+		<header>
+			Signed in as { me.Display }
+			<form method="post" action="/sign-out"><button>Sign out</button></form>
+		</header>
+		<div class="cards">
+		for _, c := range cards {
+			<section>
+				<h2>{ c.Title }</h2>
+				if len(c.Rows) == 0 {
+					<p>Nothing yet.</p>
+				}
+				<dl>
+					for _, row := range c.Rows {
+						<dt>{ row.Label }</dt>
+						<dd>{ row.Count }</dd>
+					}
+				</dl>
+			</section>
+		}
+		</div>
+		<section>
+			<h2>Find a repository</h2>
+			@findForm()
+		</section>
+		<section>
+			<h2>Repositories</h2>
+			if len(repos) == 0 {
+				<p>Nothing onboarded yet. <a href="/onboard">Onboard a repository.</a></p>
+			}
+			<ul>
+				for _, repo := range repos {
+					<li><a href={ templ.URL("/repositories/" + repo.Id.String()) }>{ repo.Url }</a></li>
+				}
+			</ul>
+		</section>
+		<section>
+			<h2>Recent refs across your repositories</h2>
+			<div hx-get="/refs" hx-trigger="load"></div>
+		</section>
+		<section>
+			<h2>Reports</h2>
+			<button hx-post="/reports" hx-vals={ `{"report":"findings-rollup"}` } hx-target="#reports" hx-swap="afterbegin">Build the findings rollup</button>
+			<ul id="reports"></ul>
+		</section>
+	}
+}
+
+templ onboardForm() {
+	@web.Page("Onboard") {
+		<h1>Onboard repositories</h1>
+		<form hx-post="/onboard/plan" hx-target="#plan">
+			<label>Product <input name="product" required placeholder="payments"/></label>
+			<label>Label <input name="label" placeholder="Payments (new products only)"/></label>
+			<label>Repository URLs, one per line <textarea name="repositories" rows="4" required></textarea></label>
+			<button>Preview</button>
+		</form>
+		<div id="plan"></div>
+		<p>The engine schedules a scan of each new repository on its next pass; a repository's page runs one now.</p>
+	}
+}
+
+templ onboardPlan(plan traust.OnboardingPlan) {
+	<section>
+		<h2>What onboarding will do</h2>
+		<ul>
+			for _, spec := range web.Items(plan.New) {
+				<li>register { spec.Url }</li>
+			}
+			for _, id := range web.Items(plan.ExistingRepositoryIds) {
+				<li>refresh repository { id.String() }</li>
+			}
+			for _, gap := range web.Items(plan.Gaps) {
+				<li role="alert">{ gap.Subject }: { gap.Reason }</li>
+			}
+		</ul>
+		if len(web.Items(plan.Gaps)) == 0 {
+			<button hx-post="/onboard" hx-include="body form">Onboard</button>
+		}
+	</section>
+}
+
+templ repository(repo traust.Repository, ref *traust.RepositoryRef) {
+	@web.Page(repo.Url) {
+		<h1>{ repo.Url }</h1>
+		if ref != nil {
+			<p>Default branch { web.Text(ref.Name) } at { ref.Sha }</p>
+		}
+		@admin(repo)
+		<h2>Refs</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/refs" } hx-trigger="load"></div>
+		<h2>Products</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/products" } hx-trigger="load"></div>
+		<h2>Owners</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/owners" } hx-trigger="load"></div>
+		for _, asset := range []struct{ Name, Label string }{{"full_audit", "Full audit"}, {"traust_triage", "Triage"}} {
+			<button hx-post="/runs" hx-vals={ `{"asset":"` + asset.Name + `","repository_id":"` + repo.Id.String() + `"}` } hx-target="#runs" hx-swap="afterbegin">{ asset.Label }</button>
+		}
+		<ul id="runs"></ul>
+		<h2>Run history</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/runs" } hx-trigger="load, run-finished from:body"></div>
+		<h2>Work items</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/work-items" } hx-trigger="load, run-finished from:body"></div>
+		<h2>Findings</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/findings" } hx-trigger="load, run-finished from:body"></div>
+		<h2>Findings summary</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/findings/summary" } hx-trigger="load"></div>
+		<h2>Timeline</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/findings/timeline" } hx-trigger="load"></div>
+		<h2>Assessments</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/assessments" } hx-trigger="load, run-finished from:body"></div>
+		<h2>Decisions</h2>
+		<div hx-get={ "/repositories/" + repo.Id.String() + "/decisions" } hx-trigger="load"></div>
+		<h2>Ledger</h2>
+		<div id="ledger" hx-get={ "/repositories/" + repo.Id.String() + "/ledger" } hx-trigger="load"></div>
+	}
+}
