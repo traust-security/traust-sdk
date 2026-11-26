@@ -61,7 +61,7 @@ only claims, heartbeats, records and completes; approvals come from verified peo
 core.
 
 ```go
-poller, err := runs.New(client).BeginSkill(ctx, "scan") // submit a run by asset name and follow it
+poller, err := runs.New(client).BeginSkill(ctx, "scan", 1) // submit a run by asset name at a priority, and follow it
 ```
 
 `QueryOrders(ctx, traust.OrderQueryRequest{…})` posts filters, search, sort and bounded paging

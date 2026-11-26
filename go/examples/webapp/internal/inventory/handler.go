@@ -130,7 +130,7 @@ func (h *Handler) dashboard(ctx context.Context, repos []traust.Repository) ([]c
 		}
 		c := card{Title: q.title}
 		for _, row := range result.Rows {
-			label, count := "none", "0"
+			label, count := "none", "n/a"
 			if g := coreinsight.Group(row, q.by); g != nil {
 				label = *g
 			}
