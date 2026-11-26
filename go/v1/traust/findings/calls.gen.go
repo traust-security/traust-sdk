@@ -72,7 +72,7 @@ func (c *Client) FindingTimeline(ctx context.Context, repositoryId openapi_types
 }
 
 // GetArtifact is GET /v1/artifacts/{artifactId}: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) GetArtifact(ctx context.Context, artifactId openapi_types.UUID) (*traust.Artifact, error) {
+func (c *Client) GetArtifact(ctx context.Context, artifactId openapi_types.UUID) (*traust.ArtifactView, error) {
 	raw, err := c.core.Raw().GetArtifact(ctx, artifactId)
 	if err != nil {
 		return nil, fmt.Errorf("GetArtifact(%s): %w", artifactId, err)
@@ -233,7 +233,7 @@ func (c *Client) GetLatestRecordedAssessment(ctx context.Context, repositoryId o
 }
 
 // ListAssessmentArtifacts is GET /v1/assessments/{assessmentId}/artifacts: the decoded body, or a *ProblemError when core refuses.
-func (c *Client) ListAssessmentArtifacts(ctx context.Context, assessmentId openapi_types.UUID, params *traust.ListAssessmentArtifactsParams) ([]traust.Artifact, error) {
+func (c *Client) ListAssessmentArtifacts(ctx context.Context, assessmentId openapi_types.UUID, params *traust.ListAssessmentArtifactsParams) ([]traust.ArtifactView, error) {
 	raw, err := c.core.Raw().ListAssessmentArtifacts(ctx, assessmentId, params)
 	if err != nil {
 		return nil, fmt.Errorf("ListAssessmentArtifacts(%s): %w", assessmentId, err)

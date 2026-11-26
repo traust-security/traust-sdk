@@ -3,7 +3,7 @@
 # api-generate check-drift e2e` (per language).
 core: # the OpenAPI the client generates from; the box's server
   repo: https://github.com/traust-security/traust-core.git
-  ref: 189a3d8488b61ce2a2a4b6bb475c1a9eb9a0e7c9
+  ref: bc3e09012578506e0f7a2968f72b8e7087bdba75
 engine: # the box's planner and claim worker
   repo: https://github.com/traust-security/traust-engine.git
   ref: 0b8bd0a6ff82b75fffd9c51b88ee86200e10b91b

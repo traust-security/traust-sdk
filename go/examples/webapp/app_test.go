@@ -882,9 +882,9 @@ func TestAnAssessmentPageShowsItsIntakeAndEvidence(t *testing.T) {
 	core.Handle("GET /v1/assessments/{id}/intake", onlyFor("ada", traustest.JSON(http.StatusOK, traust.AssessmentIntakeBindings{
 		Findings: map[string]uuid.UUID{"ORG-A-4C7F0B9-001": finding},
 	})))
-	core.Handle("GET /v1/assessments/{id}/artifacts", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.Artifact{{
-		Id: &evidence, AssessmentId: &examined, Kind: "report", Digest: "4c7f0b9e2a1c3d4f",
-		Uri: "artifacts/report/4c7f0b9e2a1c3d4f.json",
+	core.Handle("GET /v1/assessments/{id}/artifacts", onlyFor("ada", traustest.JSON(http.StatusOK, []traust.ArtifactView{{
+		Id: evidence, AssessmentId: &examined, Kind: "report", Digest: "4c7f0b9e2a1c3d4f",
+		MediaType: "application/json", Size: 38,
 	}})))
 	page := send(newApp(t, core), http.MethodGet, "/assessments/"+examined.String(), "ada", nil).Body.String()
 	for _, want := range []string{
@@ -919,39 +919,49 @@ func TestAnArtifactsEvidenceDownloadsUnderItsName(t *testing.T) {
 	evidence, assessment := uuid.New(), uuid.New()
 	tests := []struct {
 		name        string
-		artifact    traust.Artifact
-		disposition string
+		kind        string
 		mediaType   string
+		body        string
+		disposition string
 	}{
 		{
-			name: "a report whose uri names json",
-			artifact: traust.Artifact{Id: &evidence, AssessmentId: &assessment, Kind: "report",
-				Digest: "4c7f0b9e2a1c3d4f", Uri: "artifacts/report/4c7f0b9e2a1c3d4f.json"},
-			disposition: `attachment; filename="report-4c7f0b9e2a1c.json"`,
+			name:        "a report core serves as json",
+			kind:        "report",
 			mediaType:   "application/json",
+			body:        `{"title":"Fixture audit","metadata":{"scope":"the fixture"},"findings":[]}`,
+			disposition: `attachment; filename="report-4c7f0b9e2a1c.json"`,
 		},
 		{
-			name: "a companion core left untyped",
-			artifact: traust.Artifact{Id: &evidence, AssessmentId: &assessment, Kind: "findings_layer",
-				Digest: "4c7f0b9e2a1c3d4f", Uri: "artifacts/report/4c7f0b9e2a1c3d4f-findings_layer"},
-			disposition: `attachment; filename="findings_layer-4c7f0b9e2a1c"`,
-			mediaType:   "application/octet-stream",
+			name:        "an sbom core left without a contract",
+			kind:        "sbom",
+			mediaType:   "application/zip",
+			body:        "PK\u0003\u0004fixture bytes",
+			disposition: `attachment; filename="sbom-4c7f0b9e2a1c.zip"`,
 		},
 	}
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			core := traustest.New(t)
-			core.Handle("GET /v1/artifacts/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, tt.artifact)))
+			core.Handle("GET /v1/artifacts/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.ArtifactView{
+				Id: evidence, AssessmentId: &assessment, Kind: traust.ArtifactKind(tt.kind), Digest: "4c7f0b9e2a1c3d4f",
+				MediaType: tt.mediaType, Size: len(tt.body),
+			})))
 			core.Handle("GET /v1/artifacts/{id}/content", onlyFor("ada", http.HandlerFunc(func(w http.ResponseWriter, _ *http.Request) {
-				_, _ = w.Write([]byte(`{"title": "Fixture audit"}`))
+				w.Header().Set("Traust-Artifact-Kind", tt.kind)
+				w.Header().Set("ETag", `"4c7f0b9e2a1c3d4f"`)
+				w.Header().Set("Content-Type", tt.mediaType)
+				_, _ = w.Write([]byte(tt.body))
 			})))
 			h := newApp(t, core)
 			page := send(h, http.MethodGet, "/artifacts/"+evidence.String(), "ada", nil).Body.String()
-			if !strings.Contains(page, `href="/artifacts/`+evidence.String()+`/content"`) || !strings.Contains(page, tt.artifact.Digest) {
+			if !strings.Contains(page, `href="/artifacts/`+evidence.String()+`/content"`) || !strings.Contains(page, "4c7f0b9e2a1c3d4f") {
 				t.Fatalf("artifact page: %s, want its digest and a download link", page)
 			}
+			if tt.kind == "report" && !strings.Contains(page, "Fixture audit") {
+				t.Fatalf("artifact page: %s, want the report's own title, decoded", page)
+			}
 			download := send(h, http.MethodGet, "/artifacts/"+evidence.String()+"/content", "ada", nil)
-			if download.Code != http.StatusOK || download.Body.String() != `{"title": "Fixture audit"}` {
+			if download.Code != http.StatusOK || download.Body.String() != tt.body {
 				t.Fatalf("download: %d %s, want core's bytes", download.Code, download.Body)
 			}
 			if ct := download.Header().Get("Content-Type"); ct != tt.mediaType {
@@ -961,6 +971,30 @@ func TestAnArtifactsEvidenceDownloadsUnderItsName(t *testing.T) {
 				t.Fatalf("download disposition: %q, want %q", cd, tt.disposition)
 			}
 		})
+	}
+}
+
+// An artifact's page stays up when its report cannot be read: the evidence is already in hand,
+// so the page shows it — and why the report is missing — instead of failing wholesale.
+func TestAnArtifactPageSurvivesAReportItCannotRead(t *testing.T) {
+	evidence, assessment := uuid.New(), uuid.New()
+	core := traustest.New(t)
+	core.Handle("GET /v1/artifacts/{id}", onlyFor("ada", traustest.JSON(http.StatusOK, traust.ArtifactView{
+		Id: evidence, AssessmentId: &assessment, Kind: traust.ArtifactKindReport, Digest: "4c7f0b9e2a1c3d4f",
+		MediaType: "application/json", Size: 38,
+	})))
+	core.Handle("GET /v1/artifacts/{id}/content", onlyFor("ada", traustest.Problem(http.StatusForbidden, "the report is an admin's")))
+	page := send(newApp(t, core), http.MethodGet, "/artifacts/"+evidence.String(), "ada", nil)
+	if page.Code != http.StatusOK {
+		t.Fatalf("artifact page: %d %s, want the evidence shown", page.Code, page.Body)
+	}
+	for _, want := range []string{
+		"4c7f0b9e2a1c3d4f", `href="/artifacts/` + evidence.String() + `/content"`,
+		"the report could not be read", "admin&#39;s",
+	} {
+		if !strings.Contains(page.Body.String(), want) {
+			t.Fatalf("artifact page lacks %q:\n%s", want, page.Body)
+		}
 	}
 }
 
