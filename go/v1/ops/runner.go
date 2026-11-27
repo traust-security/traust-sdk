@@ -13,6 +13,7 @@ import (
 	"reflect"
 	"regexp"
 	"slices"
+	"strconv"
 	"strings"
 	"time"
 
@@ -113,7 +114,7 @@ func (r *Runner) Run(ctx context.Context) error {
 				return err
 			}
 			r.logCompleted(ctx, order, err)
-		} else if order != nil && (order.State == traust.RunOrderStateFailed || order.State == traust.RunOrderStateRefused) {
+		} else if order != nil && (order.State == traust.RunOrderStateFailed || order.State == traust.RunOrderStateRefused || order.State == traust.RunOrderStateDegraded) {
 			r.logCompleted(ctx, order, nil)
 		}
 		if order != nil {
@@ -230,6 +231,10 @@ func (r *Runner) logCompleted(ctx context.Context, order *traust.RunOrder, err e
 		r.config.Logger.WarnContext(ctx, "ops: order refused", attrs...)
 		return
 	}
+	if order.State == traust.RunOrderStateDegraded && err == nil {
+		r.config.Logger.WarnContext(ctx, "ops: order completed degraded", attrs...)
+		return
+	}
 	r.config.Logger.ErrorContext(ctx, "ops: order completed with an error", attrs...)
 }
 
@@ -299,13 +304,11 @@ func (r *Runner) finish(ctx context.Context, l *lease, result traust.JobResult) 
 	return &order, err
 }
 
-// resolve fills the command's parameters from the order, its lease and the pack: the order's id
-// and routing rule, the claiming worker, the asset's model role, and — whatever the command
-// names — the repository URL of a repository-bound order, so no such order runs for a host off
-// the allowlist.
+// resolve fills the pinned command from the original lease and pack, checking the repository
+// URL against the host allowlist even when the command doesn't use it.
 func (r *Runner) resolve(ctx context.Context, l *lease, cmd command) ([]string, error) {
 	order := l.order()
-	values := map[string]string{paramRunID: l.id().String()}
+	values := map[string]string{paramRunID: l.id().String(), paramLeaseGeneration: strconv.Itoa(order.LeaseGeneration)}
 	if order.LeaseHolder != nil {
 		values[paramWorker] = *order.LeaseHolder
 	}

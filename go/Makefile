@@ -1,5 +1,5 @@
 CONTRACTS_REPO := https://github.com/traust-security/traust-contracts.git
-CONTRACTS_REF := 847e012cb3bf7af5dc16ade911ee0c813962b54e
+CONTRACTS_REF := 485578cbe584ad224d57b2c7c778174c0b66ba7c
 CONTRACTS_CACHE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/contracts
 CONTRACTS_SOURCE := $(CONTRACTS_CACHE)/checkout-$(CONTRACTS_REF)
 ENUMS_DIR := $(CONTRACTS_SOURCE)/enums/v1
@@ -8,7 +8,7 @@ SCHEMAS_DIR := $(CONTRACTS_SOURCE)/artifacts_schema/v1
 # db/v1 restructure dropped. Regenerating it is the G6 layout adaptation (plan 28), and plan 05
 # retires the package; until then v1/storage/ is hand-maintained and checked by drift.
 CORE_REPO := https://github.com/traust-security/traust-core.git
-CORE_REF := f2e297627864bbfaffb853f4fd37d9930c80326d
+CORE_REF := 5b8dea0e6c714190c38c51719cd2e25cc946009b
 CORE_SOURCE := $(or $(XDG_CACHE_HOME),$(HOME)/.cache)/traust-sdk/core/checkout-$(CORE_REF)
 CORE_PYTHON := cd "$(CORE_SOURCE)" && uv run --quiet python
 OPENAPI_DIR := ./internal/generate/openapi
@@ -85,11 +85,15 @@ mint = ($(CORE_PYTHON) -c "from pathlib import Path; from traust_core.v1.context
 # ephemeral self-signed certificate, trusted through SSL_CERT_FILE), and the e2e config
 # maps the mock's host to the gitlab kind in forge_hosts.
 # One package at a time: both share the server, and ops onboards what v1/traust expects empty.
+# No engine runs here: TRAUST_E2E_ADMIT admits a submitted (planned) order through Core's
+# OpsService.admit, the engine admission's own call (internal/e2eadmit/admit.py).
 e2e: core
 	@set -eu; \
 	home="$$(mktemp -d)"; port=18080; \
-	printf 'home: %s\nidentity:\n  trust_local: true\nforge_hosts:\n  e2e-forge.test: gitlab\n' "$$home" > "$$home/config.yaml"; \
+	printf 'home: %s\nidentity:\n  trust_local: true\nforge_hosts:\n  e2e-forge.test: gitlab\nrecording:\n  assessment: [audit, sci_scan]\n  start:\n    - principal: machine:e2e-runner\n      assets: [audit]\n      all_repositories: true\n' "$$home" > "$$home/config.yaml"; \
 	(cd "$(CORE_SOURCE)" && exec uv run --quiet python -c "import traust_core.v1.rest.server"); \
+	$(call mint,e2e@example.com,False,person); \
+	$(call mint,e2e-runner,True,runner); \
 	go build -o "$$home/e2eforge" ./internal/e2eforge; \
 	"$$home/e2eforge" -ca "$$home/forge-ca.pem" > "$$home/forge-port" & forge_pid=$$!; \
 	for _ in $$(seq 100); do [ -s "$$home/forge-port" ] && break; sleep 0.1; done; \
@@ -98,9 +102,8 @@ e2e: core
 	trap 'kill $$pid $$forge_pid 2>/dev/null || true; rm -rf "$$home"' EXIT; \
 	for _ in $$(seq 60); do curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz && break; sleep 1; done; \
 	curl -sf -o /dev/null http://127.0.0.1:$$port/v1/healthz || { cat "$$home/server.log"; exit 1; }; \
-	$(call mint,e2e@example.com,False,person); \
-	$(call mint,e2e-runner,True,runner); \
 	TRAUST_E2E_URL=http://127.0.0.1:$$port TRAUST_E2E_TOKEN_FILE="$$home/person" TRAUST_E2E_RUNNER_TOKEN_FILE="$$home/runner" \
+	  TRAUST_E2E_ADMIT="cd '$(CORE_SOURCE)' && uv run --quiet python '$(CURDIR)/internal/e2eadmit/admit.py' '$$home/config.yaml'" \
 	  go test -count=1 -p 1 -tags e2e -run E2E -v ./v1/traust/ ./v1/ops/
 
 fmt:

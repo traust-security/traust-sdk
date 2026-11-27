@@ -9,8 +9,7 @@ import (
 	"github.com/traust-security/traust-sdk/go/v1/traust"
 )
 
-// lease is an order this process holds. Every call after claim or start goes through it, and
-// origin keeps the server's id and start time, which no heartbeat may change.
+// origin holds the claim or start response. Never adopt a later attempt's generation.
 type lease struct {
 	client   *traust.Client
 	origin   traust.RunOrder
@@ -30,7 +29,7 @@ func hold(client *traust.Client, order *traust.RunOrder, seconds int, interval, 
 func live(order *traust.RunOrder) error {
 	if order == nil || order.State != traust.RunOrderStateLeased ||
 		order.Id == nil || *order.Id == uuid.Nil ||
-		order.StartedAt == nil || order.StartedAt.IsZero() ||
+		order.LeaseGeneration <= 0 ||
 		order.LeaseExpiresAt == nil || !order.LeaseExpiresAt.After(time.Now()) {
 		return errors.New("core returned no live order lease")
 	}
@@ -38,6 +37,17 @@ func live(order *traust.RunOrder) error {
 }
 
 func (l *lease) id() uuid.UUID { return *l.origin.Id }
+
+// renewedAt is Core's clock at the lease's latest claim or renewal. Core sets the expiry to its
+// own now plus the lease length the request named (and refuses a length it will not grant), so
+// that expiry less l.seconds is Core's time then: within one heartbeat interval of now, and
+// never this worker's clock.
+func (l *lease) renewedAt() (time.Time, bool) {
+	if l.current.LeaseExpiresAt == nil || l.seconds <= 0 {
+		return time.Time{}, false
+	}
+	return l.current.LeaseExpiresAt.Add(-time.Duration(l.seconds) * time.Second), true
+}
 
 // order is the server's original order with its own copies of the pointers an executor could
 // otherwise use to rewrite the lease.
@@ -76,12 +86,12 @@ func (l *lease) renew(ctx context.Context) error {
 		return err
 	}
 	defer cancel()
-	order, err := l.client.Heartbeat(ctx, l.id(), traust.LeaseRequest{LeaseSeconds: l.seconds})
+	order, err := l.client.Heartbeat(ctx, l.id(), traust.LeaseRequest{LeaseGeneration: l.origin.LeaseGeneration, LeaseSeconds: l.seconds})
 	if err == nil {
 		err = live(order)
 	}
-	if err == nil && (*order.Id != l.id() || !order.StartedAt.Equal(*l.origin.StartedAt)) {
-		err = errors.New("heartbeat changed the order's id or start time")
+	if err == nil && (*order.Id != l.id() || order.LeaseGeneration != l.origin.LeaseGeneration) {
+		err = errors.New("heartbeat changed the order's id or lease generation")
 	}
 	if err != nil {
 		return &LeaseLostError{Err: err}
@@ -170,7 +180,7 @@ func (l *lease) complete(ctx context.Context, result traust.JobResult) (*traust.
 		return nil, err
 	}
 	defer cancel()
-	return l.client.Complete(ctx, l.id(), traust.CompleteRequest{Result: result})
+	return l.client.Complete(ctx, l.id(), traust.CompleteRequest{LeaseGeneration: l.origin.LeaseGeneration, Result: result})
 }
 
 // snapshot is a copy of the lease's current view of the order.
@@ -189,6 +199,7 @@ func (l *lease) latest(completed *traust.RunOrder) traust.RunOrder {
 
 func copyOrder(order traust.RunOrder) traust.RunOrder {
 	order.ArtifactId = copyPointer(order.ArtifactId)
+	order.CompletedBy = copyPointer(order.CompletedBy)
 	order.CreatedAt = copyPointer(order.CreatedAt)
 	order.EventSource = copyPointer(order.EventSource)
 	order.FinishedAt = copyPointer(order.FinishedAt)
@@ -196,6 +207,7 @@ func copyOrder(order traust.RunOrder) traust.RunOrder {
 	order.ForkScheduledAt = copyPointer(order.ForkScheduledAt)
 	order.ForkUrl = copyPointer(order.ForkUrl)
 	order.Id = copyPointer(order.Id)
+	order.InputArtifactId = copyPointer(order.InputArtifactId)
 	order.Lane = copyPointer(order.Lane)
 	order.LeaseExpiresAt = copyPointer(order.LeaseExpiresAt)
 	order.LeaseHolder = copyPointer(order.LeaseHolder)

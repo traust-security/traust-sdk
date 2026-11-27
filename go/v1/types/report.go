@@ -1,4 +1,4 @@
-// Code generated from traust-contracts 847e012cb3bf7af5dc16ade911ee0c813962b54e. DO NOT EDIT.
+// Code generated from traust-contracts 485578cbe584ad224d57b2c7c778174c0b66ba7c. DO NOT EDIT.
 
 package types
 
@@ -187,8 +187,8 @@ type ReportFinding struct {
 }
 
 type ReportFindingCvss struct {
-	Score  float64 `json:"score"`
-	Vector string  `json:"vector"`
+	Score  *float64 `json:"score,omitempty"`
+	Vector string   `json:"vector"`
 }
 
 type ReportFindingDependency struct {

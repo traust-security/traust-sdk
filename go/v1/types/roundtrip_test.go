@@ -254,6 +254,7 @@ func TestReportNotAffectedRoundTrip(t *testing.T) {
 // independently of the decoder, so a field the struct drops fails the test.
 func TestVulnFindingsAdvisoryFieldsRoundTrip(t *testing.T) {
 	ptr := func(s string) *string { return &s }
+	score, medium := 9.8, 5.9 // the CVSS score is optional (contracts#192): absent, never 0
 	ecosystem := enums.EcosystemGo
 	classification := enums.ImpactClassificationLikelyAffected
 	level := enums.DependencyEvidenceLevelManifest
@@ -272,7 +273,7 @@ func TestVulnFindingsAdvisoryFieldsRoundTrip(t *testing.T) {
       "fixed_version": "v0.23.0", "installed_version": "v0.20.0",
       "classification": "likely_affected", "evidence_level": "manifest",
       "impact_artifact": "impact row: repo@abcdef0"}`,
-			wantCvss: &types.ReportFindingCvss{Vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", Score: 9.8},
+			wantCvss: &types.ReportFindingCvss{Vector: "CVSS:3.1/AV:N/AC:L/PR:N/UI:N/S:U/C:H/I:H/A:H", Score: &score},
 			wantDependency: &types.ReportFindingDependency{
 				Advisory:         "CVE-2024-0001",
 				Module:           "golang.org/x/net",
@@ -291,7 +292,7 @@ func TestVulnFindingsAdvisoryFieldsRoundTrip(t *testing.T) {
 			advisoryFields: `,
     "cvss": {"vector": "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N", "score": 5.9},
     "dependency": {"advisory": "GHSA-xxxx-yyyy-zzzz", "module": "golang.org/x/crypto"}`,
-			wantCvss:       &types.ReportFindingCvss{Vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N", Score: 5.9},
+			wantCvss:       &types.ReportFindingCvss{Vector: "CVSS:3.1/AV:N/AC:H/PR:N/UI:N/S:U/C:H/I:N/A:N", Score: &medium},
 			wantDependency: &types.ReportFindingDependency{Advisory: "GHSA-xxxx-yyyy-zzzz", Module: "golang.org/x/crypto"},
 		},
 		{

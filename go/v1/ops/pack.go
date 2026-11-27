@@ -60,14 +60,14 @@ type packAsset struct {
 // command is an asset's pinned argv. A whole argument may name a parameter the order supplies.
 type command []string
 
-// The parameters a command can name, each a whole argument: the order's id and routing rule,
-// the claiming worker, the asset's model role and its repository's URL.
+// Command parameters are substituted only as whole arguments.
 const (
-	paramRunID   = "{run_id}"
-	paramWorker  = "{worker}"
-	paramRole    = "{role}"
-	paramRule    = "{rule}"
-	paramRepoURL = "{repo_url}"
+	paramRunID           = "{run_id}"
+	paramLeaseGeneration = "{lease_generation}"
+	paramWorker          = "{worker}"
+	paramRole            = "{role}"
+	paramRule            = "{rule}"
+	paramRepoURL         = "{repo_url}"
 )
 
 // paramName is a parameter's name in a pack's params declaration (no braces).
@@ -79,7 +79,7 @@ const httpsRepoURLType = "HttpsRepoUrl"
 
 func isParam(arg string) bool {
 	switch arg {
-	case paramRunID, paramWorker, paramRole, paramRule, paramRepoURL:
+	case paramRunID, paramLeaseGeneration, paramWorker, paramRole, paramRule, paramRepoURL:
 		return true
 	}
 	return false

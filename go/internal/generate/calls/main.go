@@ -31,6 +31,7 @@ type call struct {
 	Name, Method, Path string
 	Params             []param
 	Result             string // JSON200 type; empty for a raw-bytes response
+	Accepted           bool   // core also documents 202 Accepted with the same JSON body
 	Item, Cursor       string // set for a paged listing
 	PageParam          string
 	PageValue          bool
@@ -164,7 +165,15 @@ func (c *Client) {{.Name}}({{.Signature}}) ({{.Returns}}, error) {
 	}
 	return *found, nil
 {{- else if .Result}}
+{{- if .Accepted}}
+	payload := response.JSON200
+	if payload == nil {
+		payload = response.JSON202
+	}
+	found, err := Decode(response.HTTPResponse, response.Body, payload)
+{{- else}}
 	found, err := Decode(response.HTTPResponse, response.Body, response.JSON200)
+{{- end}}
 	if err != nil {
 		return nil, fmt.Errorf("{{.WrapFormat}}", {{.WrapArgs "err"}})
 	}
@@ -389,11 +398,16 @@ func build(fset *token.FileSet, source []byte, name string, fn *ast.FuncDecl, st
 	if response == nil {
 		return c, fmt.Errorf("%s: no %sResponse", name, name)
 	}
+	var json202 string
 	for _, f := range response.Fields.List {
 		if len(f.Names) == 1 && f.Names[0].Name == "JSON200" {
 			c.Result = strings.TrimPrefix(render(fset, f.Type), "*")
 		}
+		if len(f.Names) == 1 && f.Names[0].Name == "JSON202" {
+			json202 = strings.TrimPrefix(render(fset, f.Type), "*")
+		}
 	}
+	c.Accepted = c.Result != "" && json202 == c.Result
 	page := structs[c.Result]
 	if page == nil {
 		return c, nil

@@ -71,6 +71,34 @@ def normalize_problems(spec: dict) -> None:
                     response["content"] = {"application/json": problem}
 
 
+def normalize_file_downloads(spec: dict) -> None:
+    """Treat multi-format file downloads (e.g. GET /v1/reports/{order_id}/file) as raw bytes:
+    core declares the file's media types side by side (application/json, an object, beside
+    text/* strings) and serves the one the build asked for, so no single generated type fits.
+    The caller decodes the bytes (DecodeReportView decodes a JSON view strictly)."""
+    for path in spec.get("paths", {}).values():
+        for operation in path.values():
+            if not isinstance(operation, dict):
+                continue
+            ok = operation.get("responses", {}).get("200")
+            if not isinstance(ok, dict):
+                continue
+            content = ok.get("content")
+            if (
+                isinstance(content, dict)
+                and len(content) > 1
+                and any(media_type.startswith("text/") for media_type in content)
+                and all(
+                    isinstance(media, dict)
+                    and media.get("schema") in ({"type": "string"}, {"type": "object"})
+                    for media in content.values()
+                )
+            ):
+                ok["content"] = {
+                    "application/octet-stream": {"schema": {"type": "string", "format": "binary"}}
+                }
+
+
 # Enums whose constants carry their type name, so a value shared with another enum never renames
 # existing constants (SourceType beside SourceChannel; RunOrderReason's not_found, bad_request;
 # FindingSort's severity beside the Severity type itself; ExecutivePanel's pqc beside the pqc
@@ -100,6 +128,7 @@ def main(argv: list[str]) -> int:
         spec = json.load(handle)
     normalize(spec)
     normalize_problems(spec)
+    normalize_file_downloads(spec)
     for name in NAMESPACED:
         schema = spec["components"]["schemas"].get(name)
         if schema is not None:

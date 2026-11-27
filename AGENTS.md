@@ -33,11 +33,11 @@ err = r.Run(ctx)
 | check the ledger | `c` | `ListLayers`, `ListEvents`, `VerifyLayer`, `Checkpoint`; core writes ledger events when records and decisions land, you never append them |
 | find exposure | `c` | `GetAdvisory`, `Affected`, `PackagesAffected`, `Dependents`, `Dependencies`, `ListImpacts`, `SummarizeExposure`, `ExposureTimeline`, `FeedStatuses` |
 | read validation | `c` | `ListValidationAttempts` |
-| show a dashboard, rollup or export | `c` | `GetInsight` (one call for every insight: findings-rollup, exposure, sla, sarif, …) |
+| show a dashboard, rollup or export | `c` | `QueryDashboard` (`POST /v1/dashboards:query`) for fast aggregates; `RequestReport`, `GetReport`, `GetReportFile` / `GetReportFileAs` for full views and exports |
 | react to changes | `c` | `ReadFeed` / `ReadFeedAll` |
 | test code that uses the SDK | `traustest` | a fake core: `traustest.New(t)`, `Handle`, `Client()`, `Requests()` |
 
-Counts, rollups and dashboards come from `SummarizeFindings`, `SummarizeExposure` and `GetInsight`; never compute them from listings.
+Counts, rollups and dashboards come from `QueryDashboard`, `SummarizeFindings`, `SummarizeExposure` and report jobs (`RequestReport` / `GetReportFileAs`); never compute them from listings.
 
 Method names are core's operation ids. A long or unclear name is fixed in core's route, never by a wrapper here.
 

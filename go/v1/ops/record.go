@@ -6,6 +6,7 @@ import (
 	"errors"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
@@ -14,47 +15,57 @@ import (
 // record posts the executor's report through the run's one template. The remediation
 // template reconciles its source_finding refs to the door's bare finding ids first; every
 // other template posts the executor's exact original bytes.
-func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte, preparedFindings []uuid.UUID) (RecordingReceipt, error) {
+func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte, renewed time.Time, preparedFindings []uuid.UUID) (RecordingReceipt, error) {
 	var receipt RecordingReceipt
-	var err error
 	// raw passed utf8.Valid, so the string carries the exact original bytes.
 	payload := string(raw)
 	request := run.Request
+	id, generation, _, provenance := request.template()
+	if err := l.validateBinding(id, generation, provenance); err != nil {
+		return receipt, err
+	}
+	id, generation = l.id(), l.origin.LeaseGeneration
+	provenance.RunId = id
+	if provenance.OccurredAt.IsZero() {
+		// No event time from the caller: Core's clock at the run's latest lease renewal, so the
+		// record is dated within one heartbeat of when the report was produced (consumers read
+		// it as the scan's completion) and worker clock skew cannot enter stored records. Never
+		// earlier than the claim's start. An explicit event time the caller set is kept; it is
+		// the caller's statement, not a lease credential.
+		if l.origin.StartedAt == nil {
+			return receipt, errors.New("ops: the held order carries no start time to date the record")
+		}
+		provenance.OccurredAt = *l.origin.StartedAt
+		if renewed.After(provenance.OccurredAt) {
+			provenance.OccurredAt = renewed // the caller read it before any concurrent renewal
+		}
+	}
+	var err error
 	switch {
 	case request.Assessment != nil:
 		body := *request.Assessment
-		if err := l.stamp(&body.RunOrderId, &body.Provenance, &body.Payload, payload); err != nil {
-			return receipt, err
-		}
+		body.RunOrderId, body.LeaseGeneration, body.Provenance, body.Payload = id, generation, provenance, payload
 		receipt.Assessment, err = run.Client.RecordAssessment(ctx, body)
 		return receipt, err
 	case request.Triage != nil:
 		body := *request.Triage
-		if err := l.stamp(&body.RunOrderId, &body.Provenance, &body.Payload, payload); err != nil {
-			return receipt, err
-		}
+		body.RunOrderId, body.LeaseGeneration, body.Provenance, body.Payload = id, generation, provenance, payload
 		receipt.Triage, err = run.Client.RecordTriage(ctx, request.AssessmentID, body)
 		return receipt, err
 	case request.Validation != nil:
 		body := *request.Validation
-		if err := l.stamp(&body.RunOrderId, &body.Provenance, &body.Payload, payload); err != nil {
-			return receipt, err
-		}
+		body.RunOrderId, body.LeaseGeneration, body.Provenance, body.Payload = id, generation, provenance, payload
 		receipt.Validation, err = run.Client.RecordValidation(ctx, body)
 		return receipt, err
 	case request.Verification != nil:
 		body := *request.Verification
-		if err := l.stamp(&body.RunOrderId, &body.Provenance, &body.Payload, payload); err != nil {
-			return receipt, err
-		}
+		body.RunOrderId, body.LeaseGeneration, body.Provenance, body.Payload = id, generation, provenance, payload
 		receipt.Verification, err = run.Client.RecordVerification(ctx, body)
 		return receipt, err
 	case request.Remediation != nil:
 		body := *request.Remediation
 		payload := string(reconcileFindingRefs(raw, preparedFindings))
-		if err := l.stamp(&body.RunOrderId, &body.Provenance, &body.Payload, payload); err != nil {
-			return receipt, err
-		}
+		body.RunOrderId, body.LeaseGeneration, body.Provenance, body.Payload = id, generation, provenance, payload
 		receipt.Remediation, err = run.Client.RecordRemediation(ctx, body)
 		return receipt, err
 	}
@@ -131,35 +142,34 @@ func reconcileFindingRefs(report []byte, prepared []uuid.UUID) []byte {
 	return encoded
 }
 
-// stamp binds a template to the held order: its id and start time are the record's run identity.
-func (l *lease) stamp(runOrderID *uuid.UUID, provenance *traust.Provenance, payload *string, raw string) error {
-	id, started := l.id(), *l.origin.StartedAt
+// A consumer may pre-bind a template, but never to a different order or attempt.
+func (l *lease) validateBinding(runOrderID uuid.UUID, generation int, provenance traust.Provenance) error {
+	id := l.id()
 	switch {
-	case *runOrderID != uuid.Nil && *runOrderID != id:
+	case runOrderID != uuid.Nil && runOrderID != id:
 		return errors.New("ops: template run_order_id is not the server's order")
 	case provenance.RunId != uuid.Nil && provenance.RunId != id:
 		return errors.New("ops: template provenance run_id is not the server's order")
-	case !provenance.OccurredAt.IsZero() && !provenance.OccurredAt.Equal(started):
-		return errors.New("ops: template provenance occurred_at is not the server's start time")
+	case generation != 0 && generation != l.origin.LeaseGeneration:
+		return errors.New("ops: template lease_generation is not the held generation")
 	case provenance.Source == "":
 		return errors.New("ops: template needs an explicit provenance source")
 	}
-	*runOrderID, provenance.RunId, provenance.OccurredAt, *payload = id, id, started, raw
 	return nil
 }
 
-func (request RecordingRequest) template() (uuid.UUID, string, traust.Provenance) {
+func (request RecordingRequest) template() (uuid.UUID, int, string, traust.Provenance) {
 	switch {
 	case request.Assessment != nil:
-		return request.Assessment.RunOrderId, request.Assessment.Payload, request.Assessment.Provenance
+		return request.Assessment.RunOrderId, request.Assessment.LeaseGeneration, request.Assessment.Payload, request.Assessment.Provenance
 	case request.Triage != nil:
-		return request.Triage.RunOrderId, request.Triage.Payload, request.Triage.Provenance
+		return request.Triage.RunOrderId, request.Triage.LeaseGeneration, request.Triage.Payload, request.Triage.Provenance
 	case request.Validation != nil:
-		return request.Validation.RunOrderId, request.Validation.Payload, request.Validation.Provenance
+		return request.Validation.RunOrderId, request.Validation.LeaseGeneration, request.Validation.Payload, request.Validation.Provenance
 	case request.Verification != nil:
-		return request.Verification.RunOrderId, request.Verification.Payload, request.Verification.Provenance
+		return request.Verification.RunOrderId, request.Verification.LeaseGeneration, request.Verification.Payload, request.Verification.Provenance
 	case request.Remediation != nil:
-		return request.Remediation.RunOrderId, request.Remediation.Payload, request.Remediation.Provenance
+		return request.Remediation.RunOrderId, request.Remediation.LeaseGeneration, request.Remediation.Payload, request.Remediation.Provenance
 	}
-	return uuid.Nil, "", traust.Provenance{}
+	return uuid.Nil, 0, "", traust.Provenance{}
 }
