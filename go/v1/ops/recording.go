@@ -106,8 +106,11 @@ func (run RecordingRun) runHeld(ctx context.Context, l *lease, execution Executi
 	if err := l.renew(ctx); err != nil {
 		return &RecordingResult{Order: *l.snapshot(), Result: produced.Result}, err
 	}
+	// Core's clock at this renewal dates an undated record. Read here, before the supervised
+	// request starts renewing the lease concurrently: record never reads the lease state.
+	renewed, _ := l.renewedAt()
 	receipt, err := superviseRequest(ctx, l, func(work context.Context) (RecordingReceipt, error) {
-		return run.record(work, l, produced.Payload, preparedFindings)
+		return run.record(work, l, produced.Payload, renewed, preparedFindings)
 	})
 	if err != nil {
 		if lost(err) || ctx.Err() != nil {

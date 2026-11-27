@@ -50,7 +50,7 @@ func TestCoreClaimReclaim(t *testing.T) {
 		return l
 	}
 	old := claim(nil, 8)
-	first, err := run.record(t.Context(), old, payload, nil)
+	first, err := run.record(t.Context(), old, payload, time.Time{}, nil)
 	if err != nil || first.Assessment == nil || len(first.Assessment.Intake.Findings) != 2 {
 		t.Fatalf("first attempt receipt: %+v, %v", first, err)
 	}
@@ -76,7 +76,7 @@ func TestCoreClaimReclaim(t *testing.T) {
 	wantConflict("stale completion", err)
 	refused := func(l *lease, data []byte) {
 		t.Helper()
-		receipt, err := run.record(t.Context(), l, data, nil)
+		receipt, err := run.record(t.Context(), l, data, time.Time{}, nil)
 		wantConflict("record", err)
 		if receipt.Assessment != nil {
 			t.Fatalf("rejected record returned a receipt: %+v", receipt)
@@ -84,7 +84,7 @@ func TestCoreClaimReclaim(t *testing.T) {
 	}
 	refused(old, payload)
 	refused(current, append([]byte("\n"), payload...))
-	repeated, err := run.record(t.Context(), current, payload, nil)
+	repeated, err := run.record(t.Context(), current, payload, time.Time{}, nil)
 	if err != nil || repeated.Assessment == nil {
 		t.Fatalf("current attempt replay: %+v, %v", repeated, err)
 	}

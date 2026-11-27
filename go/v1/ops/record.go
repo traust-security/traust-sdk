@@ -6,6 +6,7 @@ import (
 	"errors"
 	"slices"
 	"strings"
+	"time"
 
 	"github.com/google/uuid"
 	"github.com/traust-security/traust-sdk/go/v1/traust"
@@ -14,7 +15,7 @@ import (
 // record posts the executor's report through the run's one template. The remediation
 // template reconciles its source_finding refs to the door's bare finding ids first; every
 // other template posts the executor's exact original bytes.
-func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte, preparedFindings []uuid.UUID) (RecordingReceipt, error) {
+func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte, renewed time.Time, preparedFindings []uuid.UUID) (RecordingReceipt, error) {
 	var receipt RecordingReceipt
 	// raw passed utf8.Valid, so the string carries the exact original bytes.
 	payload := string(raw)
@@ -35,8 +36,8 @@ func (run RecordingRun) record(ctx context.Context, l *lease, raw []byte, prepar
 			return receipt, errors.New("ops: the held order carries no start time to date the record")
 		}
 		provenance.OccurredAt = *l.origin.StartedAt
-		if renewed, ok := l.renewedAt(); ok && renewed.After(provenance.OccurredAt) {
-			provenance.OccurredAt = renewed
+		if renewed.After(provenance.OccurredAt) {
+			provenance.OccurredAt = renewed // the caller read it before any concurrent renewal
 		}
 	}
 	var err error
